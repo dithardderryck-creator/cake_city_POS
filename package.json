@@ -1,0 +1,16 @@
+{
+  "name": "cake-pos",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @cake-pos/web",
+    "build": "npm run build -w @cake-pos/web",
+    "test": "npm run test -w @cake-pos/panel && npm run test -w @cake-pos/web",
+    "typecheck": "npm run typecheck -w @cake-pos/panel && npm run typecheck -w @cake-pos/design-system && npm run typecheck -w @cake-pos/web"
+  }
+}
