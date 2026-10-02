@@ -141,6 +141,7 @@ Browsers disable the "install as an app" and offline-shell features on plain `ht
 | "Too many wrong PINs" | Wait the time shown, or the owner resets the PIN |
 | Backup shows "failed" | Read the reason on the Panel map. Usually a full disk or an unplugged drive |
 | Server says it can't start: `...must be a whole number` | A setting is wrong. The message names it |
+| `npm ci` fails with `gyp ERR!` or talks about compilers | The project's `.npmrc` (which skips install scripts) was not used. Run `npm ci --ignore-scripts`. The database library ships ready-made binaries and needs no compiler |
 
 ## What this does NOT protect against
 
