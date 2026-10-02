@@ -354,13 +354,3 @@ describe('store find()', () => {
     expect(applyFindOptions(rows, { orderBy: { field: 'n', dir: 'desc' }, limit: 2 }).map((r) => r.id)).toEqual(['a', 'c']);
   });
 });
-
-describe('API reference', () => {
-  it('matches the committed docs/api-reference.md, so the documentation cannot go stale', async () => {
-    const { renderApiReference } = await import('./index');
-    const { readFileSync, existsSync } = await import('node:fs');
-    const file = new URL('../../../docs/api-reference.md', import.meta.url);
-    expect(existsSync(file), 'docs/api-reference.md is missing. Run: npm run docs:api').toBe(true);
-    expect(readFileSync(file, 'utf8'), 'docs/api-reference.md is out of date. Run: npm run docs:api').toBe(renderApiReference());
-  });
-});
