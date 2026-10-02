@@ -1,6 +1,6 @@
 import type { Staff } from './domain';
 import type { Panel } from './kernel';
-import { createIds, hashPin, type Store } from './ports';
+import { createIds, createSha256Hasher, type PinHasher, type Store } from './ports';
 
 /** Demo staff. PINs are shown on the sign-in screen in demo mode only. */
 export const DEMO_STAFF = [
@@ -11,14 +11,14 @@ export const DEMO_STAFF = [
   { name: 'Ibrahim (IT)', role: 'it', pin: '9999' },
 ] as const;
 
-export async function seedDemo(store: Store, panel: Panel): Promise<void> {
+export async function seedDemo(store: Store, panel: Panel, hasher: PinHasher = createSha256Hasher()): Promise<void> {
   const existing = await store.list<Staff>('staff');
   if (existing.length > 0) return;
 
   const ids = createIds();
   for (const s of DEMO_STAFF) {
     const id = ids.next('stf');
-    await store.put<Staff>('staff', { id, name: s.name, role: s.role, pinHash: await hashPin(id, s.pin), active: true });
+    await store.put<Staff>('staff', { id, name: s.name, role: s.role, pinHash: await hasher.hash(id, s.pin), active: true });
   }
 
   // Everything else goes through real intents, so the demo data is audited like any other change.

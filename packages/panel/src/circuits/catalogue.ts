@@ -111,7 +111,7 @@ export const catalogueIntents = {
       const [groups, values, existing] = await Promise.all([
         ctx.store.list<OptionGroup>('optionGroups'),
         ctx.store.list<OptionValue>('optionValues'),
-        ctx.store.list<Combination>('combinations'),
+        ctx.store.find<Combination>('combinations', { where: { productId: product.id } }),
       ]);
       const chosen = values.filter((v) => product.selectedValueIds.includes(v.id));
       const groupIds = groups
@@ -124,7 +124,7 @@ export const catalogueIntents = {
         chosen.filter((v) => v.groupId === gid).sort((a, b) => a.order - b.order).map((v) => v.id),
       );
       const wanted = cartesian(lists);
-      const mine = existing.filter((c) => c.productId === product.id);
+      const mine = existing;
       let created = 0;
       for (const valueIds of wanted) {
         const found = mine.find((c) => sameSet(c.valueIds, valueIds));
@@ -184,8 +184,8 @@ export const catalogueIntents = {
       Number.isFinite(p.price) && p.price >= 0 ? [] : ['Enter a price of zero or more.'],
     handle: async (p, ctx) => {
       const product = await loadProduct(ctx, p.productId);
-      const combos = (await ctx.store.list<Combination>('combinations')).filter(
-        (c) => c.productId === product.id && c.valueIds.includes(p.valueId),
+      const combos = (await ctx.store.find<Combination>('combinations', { where: { productId: product.id } })).filter((c) =>
+        c.valueIds.includes(p.valueId),
       );
       for (const c of combos) await ctx.store.put('combinations', { ...c, price: p.price });
       return {

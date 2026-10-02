@@ -6,7 +6,7 @@ export const syncIntents = {
     circuit: 'Sync',
     roles: ['owner', 'it'],
     handle: async (_p, ctx) => {
-      const items = (await ctx.store.list<OutboxItem>('outbox')).filter((i) => i.status === 'pending');
+      const items = await ctx.store.find<OutboxItem>('outbox', { where: { status: 'pending' }, orderBy: { field: 'createdAt' } });
       const terminal = ctx.terminals.sync;
       if (items.length === 0) return { summary: 'Everything is already synced', skipSync: true, data: { sent: 0 } };
       if (!terminal) {

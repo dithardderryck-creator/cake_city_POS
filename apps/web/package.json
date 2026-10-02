@@ -11,10 +11,13 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@cake-pos/client": "^0.2.0",
     "@fontsource-variable/nunito": "^5.3.0",
     "@fontsource/young-serif": "^5.3.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "@cake-pos/panel": "*",
+    "@cake-pos/design-system": "*"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",

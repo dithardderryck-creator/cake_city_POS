@@ -2,10 +2,16 @@
  * The bridge between the UI and the panel. Screens get exactly two tools from here:
  *   useFeed(name, params)  reads display-ready data
  *   useRun()               sends an intent
- * Nothing else in the app talks to the panel, storage or the network.
+ *
+ * Two ways to run, chosen by one setting at build time:
+ *   VITE_SERVER_URL unset   Standalone demo. The panel runs inside the browser (IndexedDB).
+ *   VITE_SERVER_URL set     Real mode. The panel runs on the shop server; this talks to it.
+ *                           Use "" or "/" when the server also serves this app.
+ * Screens do not know or care which one is in use.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Toasts, type ToastItem } from '@cake-pos/design-system';
+import { createClient, localStorageTokenStore } from '@cake-pos/client';
 import {
   createIndexedDbStore,
   createPanel,
@@ -18,28 +24,106 @@ import {
   type Role,
 } from '@cake-pos/panel';
 
-const devicePrefix = (() => {
-  try {
-    let d = localStorage.getItem('cake-pos-device');
-    if (!d) {
-      const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-      d = Array.from({ length: 2 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
-      localStorage.setItem('cake-pos-device', d);
-    }
-    return d;
-  } catch {
-    return 'X';
-  }
-})();
-
-const store = createIndexedDbStore('cake-pos');
-export const panel = createPanel({ store, devicePrefix });
+const SERVER_URL = (import.meta.env.VITE_SERVER_URL as string | undefined) ?? null;
+export const SERVER_MODE = SERVER_URL !== null;
 
 export interface SessionInfo {
   sessionId: string;
   name: string;
   role: Role;
 }
+
+/* ---------- the two backends, behind one small interface ---------- */
+
+interface Backend {
+  start(): Promise<void>;
+  signIn(userId: string, pin: string): Promise<{ session: SessionInfo } | { error: string }>;
+  restore(): Promise<SessionInfo | null>;
+  signOut(session: SessionInfo): Promise<void>;
+  dispatch<K extends IntentName>(type: K, payload: IntentMap[K], session: SessionInfo | null): Promise<DispatchResult>;
+  subscribe<K extends FeedName>(
+    name: K,
+    params: FeedMap[K]['params'],
+    session: SessionInfo | null,
+    cb: (r: { ok: true; data: FeedMap[K]['data'] } | { ok: false; message: string }) => void,
+  ): () => void;
+  /** Called when the server ends a sign-in behind our back. */
+  onSignedOut(cb: () => void): void;
+}
+
+function localBackend(): Backend {
+  const devicePrefix = (() => {
+    try {
+      let d = localStorage.getItem('cake-pos-device');
+      if (!d) {
+        const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        d = Array.from({ length: 2 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+        localStorage.setItem('cake-pos-device', d);
+      }
+      return d;
+    } catch {
+      return 'X';
+    }
+  })();
+  const store = createIndexedDbStore('cake-pos');
+  const panel = createPanel({ store, devicePrefix });
+  return {
+    start: () => seedDemo(store, panel),
+    signIn: async (userId, pin) => {
+      const r = await panel.dispatch('auth/sign_in', { userId, pin });
+      if (!r.ok) return { error: r.error.messages[0] ?? 'Could not sign in.' };
+      const d = r.data as { sessionId: string; session: { name: string; role: Role } };
+      return { session: { sessionId: d.sessionId, name: d.session.name, role: d.session.role } };
+    },
+    restore: async () => null,
+    signOut: async (s) => void (await panel.dispatch('auth/sign_out', {}, s.sessionId)),
+    dispatch: (type, payload, s) => panel.dispatch(type, payload, s?.sessionId),
+    subscribe: (name, params, s, cb) =>
+      panel.subscribe(name, params, s?.sessionId, (r) => cb(r.ok ? { ok: true, data: r.data } : { ok: false, message: r.error.messages[0] ?? 'Could not load.' })),
+    onSignedOut: () => undefined,
+  };
+}
+
+function serverBackend(baseUrl: string): Backend {
+  let signedOut: () => void = () => undefined;
+  const client = createClient({
+    baseUrl: baseUrl === '/' ? '' : baseUrl,
+    tokenStore: localStorageTokenStore(),
+    onSignedOut: () => signedOut(),
+  });
+  const tokenOf = () => 'server-session';
+  return {
+    start: async () => undefined,
+    signIn: async (userId, pin) => {
+      const r = await client.signIn(userId, pin);
+      return r.ok ? { session: { sessionId: tokenOf(), name: r.session.name, role: r.session.role } } : { error: r.messages[0] ?? 'Could not sign in.' };
+    },
+    restore: async () => {
+      const me = await client.restore();
+      return me ? { sessionId: tokenOf(), name: me.name, role: me.role } : null;
+    },
+    signOut: async () => client.signOut(),
+    dispatch: async (type, payload) => {
+      const r = await client.dispatch(type, payload);
+      // "offline" is the one result the panel never produces. The screens treat it as an ordinary error.
+      return r.ok || r.error.code !== 'offline' ? (r as DispatchResult) : { ok: false, error: { code: 'error', messages: r.error.messages } };
+    },
+    subscribe: (name, params, _s, cb) => {
+      if (name === 'staff_signin') {
+        // The sign-in list is needed before anyone has signed in, so it cannot use the live connection.
+        let alive = true;
+        void client.staff().then((data) => alive && cb({ ok: true, data: data as FeedMap[typeof name]['data'] }));
+        return () => void (alive = false);
+      }
+      return client.subscribe(name, params, (r) => cb(r.ok ? { ok: true, data: r.data } : { ok: false, message: r.error.messages[0] ?? 'Could not load.' }));
+    },
+    onSignedOut: (cb) => void (signedOut = cb),
+  };
+}
+
+const backend: Backend = SERVER_MODE ? serverBackend(SERVER_URL!) : localBackend();
+
+/* ---------- provider and hooks ---------- */
 
 interface PanelState {
   ready: boolean;
@@ -58,28 +142,36 @@ export function PanelProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  useEffect(() => {
-    seedDemo(store, panel)
-      .then(() => setReady(true))
-      .catch(() => setFailed(true));
-  }, []);
-
   const notify = useCallback((text: string, tone: ToastItem['tone'] = 'info') => {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t.slice(-2), { id, text, tone }]);
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), tone === 'info' ? 3000 : 5500);
   }, []);
 
+  useEffect(() => {
+    backend.onSignedOut(() => {
+      setSession(null);
+      notify('You were signed out. Sign in again to continue.', 'warning');
+    });
+    backend
+      .start()
+      .then(() => backend.restore())
+      .then((s) => {
+        if (s) setSession(s);
+        setReady(true);
+      })
+      .catch(() => setFailed(true));
+  }, [notify]);
+
   const signIn = useCallback(async (userId: string, pin: string) => {
-    const r = await panel.dispatch('auth/sign_in', { userId, pin });
-    if (!r.ok) return r.error.messages[0] ?? 'Could not sign in.';
-    const data = r.data as { sessionId: string; session: { name: string; role: Role } };
-    setSession({ sessionId: data.sessionId, name: data.session.name, role: data.session.role });
+    const r = await backend.signIn(userId, pin);
+    if ('error' in r) return r.error;
+    setSession(r.session);
     return null;
   }, []);
 
   const signOut = useCallback(async () => {
-    if (session) await panel.dispatch('auth/sign_out', {}, session.sessionId);
+    if (session) await backend.signOut(session);
     setSession(null);
   }, [session]);
 
@@ -109,7 +201,7 @@ export function useRun() {
   const { session, notify } = usePanelState();
   return useCallback(
     async <K extends IntentName>(type: K, payload: IntentMap[K], opts: RunOptions = {}): Promise<DispatchResult> => {
-      const r = await panel.dispatch(type, payload, session?.sessionId);
+      const r = await backend.dispatch(type, payload, session);
       if (r.ok) {
         notify(r.summary);
         for (const w of r.warnings) notify(w, 'warning');
@@ -128,7 +220,7 @@ export interface FeedState<K extends FeedName> {
   loading: boolean;
 }
 
-/** Read a feed. It updates by itself after every change the panel makes. */
+/** Read a feed. It updates by itself after every change anyone makes. */
 export function useFeed<K extends FeedName>(name: K, params: FeedMap[K]['params'], enabled = true): FeedState<K> {
   const { session } = usePanelState();
   const key = JSON.stringify(params);
@@ -137,10 +229,10 @@ export function useFeed<K extends FeedName>(name: K, params: FeedMap[K]['params'
   useEffect(() => {
     if (!enabled) return;
     setState((s) => ({ ...s, loading: s.data === null }));
-    return panel.subscribe(name, JSON.parse(key) as FeedMap[K]['params'], session?.sessionId, (r) => {
-      setState(r.ok ? { data: r.data, error: null, loading: false } : { data: null, error: r.error.messages[0] ?? 'Could not load.', loading: false });
+    return backend.subscribe(name, JSON.parse(key) as FeedMap[K]['params'], session, (r) => {
+      setState(r.ok ? { data: r.data, error: null, loading: false } : { data: null, error: r.message, loading: false });
     });
-  }, [name, key, session?.sessionId, enabled]);
+  }, [name, key, session, enabled]);
 
   return state;
 }

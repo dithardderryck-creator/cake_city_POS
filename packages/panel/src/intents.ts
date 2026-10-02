@@ -1,5 +1,5 @@
 import type { Id, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, Session } from './domain';
-import type { Clock, Ids, Store, Terminals } from './ports';
+import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
 /**
  * Every instruction the UI can send. This is the complete list of "wires" going into the panel.
@@ -8,6 +8,11 @@ import type { Clock, Ids, Store, Terminals } from './ports';
 export interface IntentMap {
   'auth/sign_in': { userId: Id; pin: string };
   'auth/sign_out': Record<string, never>;
+  'auth/change_pin': { currentPin: string; newPin: string };
+
+  'staff/create': { name: string; role: Role; pin: string };
+  'staff/set_pin': { userId: Id; pin: string };
+  'staff/set_active': { userId: Id; active: boolean };
 
   'catalogue/create_option_group': { name: string; values: { label: string; allergens?: string[] }[] };
   'catalogue/create_product': { name: string; category?: string; description?: string; allergens?: string[] };
@@ -46,7 +51,7 @@ export interface IntentMap {
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Catalogue' | 'Stock' | 'Orders' | 'Payments' | 'Sync';
+export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Payments' | 'Sync';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [
@@ -62,6 +67,14 @@ export const PLANNED_CIRCUITS = [
 export interface PanelConfig {
   devicePrefix: string;
   formatMoney: (n: number) => string;
+  /** Wrong PINs allowed before a lock. */
+  lockoutMaxFailures: number;
+  /** Lock length in minutes for the 1st, 2nd, 3rd... lock. The last value repeats. */
+  lockoutMinutes: number[];
+  /** A session ends after this long without use. */
+  sessionIdleMs: number;
+  /** A session ends this long after sign-in, however busy. */
+  sessionMaxMs: number;
 }
 
 export interface HandlerCtx {
@@ -70,10 +83,16 @@ export interface HandlerCtx {
   ids: Ids;
   config: PanelConfig;
   terminals: Terminals;
+  hasher: PinHasher;
+  secrets: Secrets;
   session: Session | null;
   now(): string;
-  issueSession(s: Session): string;
-  endSession(sessionId: string | undefined): void;
+  /** Returns the bearer token. Only its hash is stored. */
+  issueSession(s: Session): Promise<string>;
+  endSession(token: string | undefined): Promise<void>;
+  /** End every session of a person, optionally keeping the one they are using now. */
+  revokeSessions(userId: string, exceptToken?: string): Promise<void>;
+  /** The bearer token of the current request, if any. */
   sessionId: string | undefined;
 }
 
@@ -87,6 +106,11 @@ export interface HandlerResult {
   warnings?: string[];
   /** Skip queuing a sync item (sign-in, sign-out, and sync itself). */
   skipSync?: boolean;
+  /**
+   * The instruction is refused, but what the circuit wrote is still saved.
+   * Used where the refusal itself must be recorded, such as counting wrong PINs.
+   */
+  failure?: { code: 'forbidden' | 'invalid'; messages: string[] };
 }
 
 export interface IntentDef<P> {

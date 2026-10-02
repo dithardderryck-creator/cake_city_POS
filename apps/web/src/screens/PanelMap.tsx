@@ -68,6 +68,41 @@ export function PanelMap() {
         </div>
       </section>
 
+      <section aria-label="Backups">
+        <h2 className="cp-display" style={{ fontSize: 'var(--cp-text-lg)' }}>
+          Backups
+        </h2>
+        <div className="cp-card cp-stack" style={{ gap: 4 }}>
+          {d.backup ? (
+            <>
+              <span>
+                {d.backup.lastOkAt ? `Last good backup: ${new Date(d.backup.lastOkAt).toLocaleString()}` : 'No backup has been taken yet.'}
+              </span>
+              {d.backup.pendingUploads > 0 && <span className="cp-muted">{d.backup.pendingUploads} waiting to reach the cloud copy</span>}
+              {d.backup.lastError && <Note tone="danger">The last backup failed: {d.backup.lastError}</Note>}
+            </>
+          ) : (
+            <span className="cp-muted">Backups are not set up on this server.</span>
+          )}
+        </div>
+      </section>
+
+      {d.system.length > 0 && (
+        <section aria-label="This computer">
+          <h2 className="cp-display" style={{ fontSize: 'var(--cp-text-lg)' }}>
+            This computer
+          </h2>
+          <ul className="app-plain cp-card cp-card--flush">
+            {d.system.map((x) => (
+              <li key={x.label} className="app-activity" style={{ gridTemplateColumns: '10rem 1fr' }}>
+                <span className="cp-muted">{x.label}</span>
+                <span>{x.value}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section aria-label="Connections">
         <h2 className="cp-display" style={{ fontSize: 'var(--cp-text-lg)' }}>
           Connections

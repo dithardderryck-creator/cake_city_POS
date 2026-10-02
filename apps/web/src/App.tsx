@@ -7,6 +7,7 @@ import { Sell } from './screens/Sell';
 import { Orders } from './screens/Orders';
 import { Catalogue } from './screens/Catalogue';
 import { Activity } from './screens/Activity';
+import { ChangeMyPin, Staff } from './screens/Staff';
 import { PanelMap } from './screens/PanelMap';
 
 function useHashRoute() {
@@ -26,6 +27,7 @@ function Shell() {
   const online = useOnline();
   const [screen, setScreen] = useState<ScreenId | null>(null);
   const [draftOrderId, setDraftOrderId] = useState<string | null>(null);
+  const [changingPin, setChangingPin] = useState(false);
 
   const items = nav.data ?? [];
   const current = items.find((i) => i.id === screen)?.id ?? items[0]?.id;
@@ -38,6 +40,9 @@ function Shell() {
         <div className="app-top__right">
           <StatusChip label={online ? 'Online' : 'Offline, saving here'} tone={online ? 'ready' : 'attention'} />
           <span className="app-user">{session?.name}</span>
+          <Button variant="ghost" size="sm" onClick={() => setChangingPin(true)}>
+            My PIN
+          </Button>
           <Button variant="ghost" size="sm" onClick={signOut}>
             Sign out
           </Button>
@@ -47,10 +52,12 @@ function Shell() {
         {current === 'sell' && <Sell draftOrderId={draftOrderId} setDraftOrderId={setDraftOrderId} />}
         {current === 'orders' && <Orders />}
         {current === 'catalogue' && <Catalogue />}
+        {current === 'staff' && <Staff />}
         {current === 'audit' && <Activity />}
         {current === 'panel_map' && <PanelMap />}
         {!current && <EmptyState title="Nothing here for your role yet">Ask the owner what you should be able to see.</EmptyState>}
       </main>
+      {changingPin && <ChangeMyPin onClose={() => setChangingPin(false)} />}
       <footer className="app-foot">
         <a href="#/design">Design system</a>
       </footer>

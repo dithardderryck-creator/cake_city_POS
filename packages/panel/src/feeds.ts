@@ -15,8 +15,9 @@ import type {
   Session,
   Staff,
 } from './domain';
+import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
-import type { Clock, Store, Terminals } from './ports';
+import type { BackupStatus, Clock, Store, Terminals } from './ports';
 import {
   PAYMENT_LABEL,
   PAYMENT_TONE,
@@ -120,6 +121,14 @@ export interface AuditRow {
   outcome: AuditEntry['outcome'];
 }
 
+export interface StaffListRow {
+  id: string;
+  name: string;
+  role: Role;
+  active: boolean;
+  locked: boolean;
+}
+
 export interface PanelMapData {
   circuits: {
     name: string;
@@ -133,6 +142,8 @@ export interface PanelMapData {
   outbox: { pending: number; sent: number; failed: number };
   terminals: { name: string; state: string }[];
   activeSessions: number;
+  backup: BackupStatus | null;
+  system: { label: string; value: string }[];
 }
 
 export interface StaffSigninRow {
@@ -141,15 +152,17 @@ export interface StaffSigninRow {
   role: Role;
 }
 
-export type ScreenId = 'sell' | 'orders' | 'catalogue' | 'audit' | 'panel_map';
+export type ScreenId = 'sell' | 'orders' | 'catalogue' | 'staff' | 'audit' | 'panel_map';
 export interface NavItem {
   id: ScreenId;
   label: string;
 }
 
 export interface FeedMap {
+  me: { params: Record<string, never>; data: Session };
   navigation: { params: Record<string, never>; data: NavItem[] };
   staff_signin: { params: Record<string, never>; data: StaffSigninRow[] };
+  staff_list: { params: Record<string, never>; data: StaffListRow[] };
   catalogue_grid: { params: { includeArchived?: boolean }; data: CatalogueGridItem[] };
   order_list: { params: Record<string, never>; data: OrderListItem[] };
   order_card: { params: { orderId: string }; data: OrderCardData };
@@ -173,7 +186,6 @@ export interface FeedCtx {
   terminals: Terminals;
   session: Session | null;
   stats: () => Map<CircuitName, CircuitStat>;
-  activeSessions: () => number;
 }
 
 export interface FeedDef<K extends FeedName> {
@@ -227,6 +239,7 @@ const NAV: Record<Role, NavItem[]> = {
     { id: 'sell', label: 'Sell' },
     { id: 'orders', label: 'Orders' },
     { id: 'catalogue', label: 'Catalogue' },
+    { id: 'staff', label: 'Staff' },
     { id: 'audit', label: 'Activity' },
   ],
   cashier: [
@@ -240,6 +253,11 @@ const NAV: Record<Role, NavItem[]> = {
 };
 
 export const feeds: FeedRegistry = {
+  me: {
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
+    build: async ({ session }) => session!,
+  },
+
   navigation: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => NAV[session!.role],
@@ -252,6 +270,18 @@ export const feeds: FeedRegistry = {
         .filter((s) => s.active)
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((s) => ({ id: s.id, name: s.name, role: s.role })),
+  },
+
+  staff_list: {
+    roles: ['owner'],
+    build: async ({ store, clock }) => {
+      const [staff, states] = await Promise.all([store.list<Staff>('staff'), store.list<LoginState>('loginState')]);
+      const nowMs = clock.now().getTime();
+      const locked = new Set(states.filter((s) => s.lockedUntil && Date.parse(s.lockedUntil) > nowMs).map((s) => s.id));
+      return staff
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((s) => ({ id: s.id, name: s.name, role: s.role, active: s.active, locked: locked.has(s.id) }));
+    },
   },
 
   catalogue_grid: {
@@ -267,12 +297,10 @@ export const feeds: FeedRegistry = {
         store.list<OptionGroup>('optionGroups'),
         store.list<OptionValue>('optionValues'),
         store.list<Combination>('combinations'),
-        store.list<OrderLine>('orderLines'),
+        store.find<OrderLine>('orderLines', { where: { status: OPEN_LINE_STATUSES } }),
       ]);
       const committed = new Map<string, number>();
-      for (const l of lines) {
-        if (OPEN_LINE_STATUSES.includes(l.status)) committed.set(l.combinationId, (committed.get(l.combinationId) ?? 0) + l.qty);
-      }
+      for (const l of lines) committed.set(l.combinationId, (committed.get(l.combinationId) ?? 0) + l.qty);
       const groupById = new Map(groups.map((g) => [g.id, g]));
       const valueById = new Map(values.map((v) => [v.id, v]));
 
@@ -356,23 +384,24 @@ export const feeds: FeedRegistry = {
   order_list: {
     roles: ['owner', 'cashier'],
     build: async ({ store, config }) => {
-      const [orders, lines, payments, refunds] = await Promise.all([
-        store.list<Order>('orders'),
-        store.list<OrderLine>('orderLines'),
-        store.list<Payment>('payments'),
-        store.list<Refund>('refunds'),
-      ]);
-      return orders
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .map((o) =>
-          listItem(
-            o,
-            lines.filter((l) => l.orderId === o.id),
-            payments.filter((p) => p.orderId === o.id),
-            refunds.filter((r) => r.orderId === o.id),
-            config.formatMoney,
-          ),
-        );
+      const orders = await store.find<Order>('orders', { orderBy: { field: 'createdAt', dir: 'desc' }, limit: 200 });
+      const ids = orders.map((o) => o.id);
+      const [lines, payments, refunds] = ids.length
+        ? await Promise.all([
+            store.find<OrderLine>('orderLines', { where: { orderId: ids } }),
+            store.find<Payment>('payments', { where: { orderId: ids } }),
+            store.find<Refund>('refunds', { where: { orderId: ids } }),
+          ])
+        : [[], [], []];
+      return orders.map((o) =>
+        listItem(
+          o,
+          lines.filter((l) => l.orderId === o.id),
+          payments.filter((p) => p.orderId === o.id),
+          refunds.filter((r) => r.orderId === o.id),
+          config.formatMoney,
+        ),
+      );
     },
   },
 
@@ -443,24 +472,27 @@ export const feeds: FeedRegistry = {
   audit_view: {
     roles: ['owner'],
     build: async ({ store }) =>
-      (await store.list<AuditEntry>('audit'))
-        .sort((a, b) => b.at.localeCompare(a.at))
-        .slice(0, 200)
-        .map((a) => ({
-          id: a.id,
-          at: a.at,
-          who: a.actorName ?? 'Not signed in',
-          role: a.role,
-          intent: a.intent,
-          summary: a.summary,
-          outcome: a.outcome,
-        })),
+      (await store.find<AuditEntry>('audit', { orderBy: { field: 'at', dir: 'desc' }, limit: 200 })).map((a) => ({
+        id: a.id,
+        at: a.at,
+        who: a.actorName ?? 'Not signed in',
+        role: a.role,
+        intent: a.intent,
+        summary: a.summary,
+        outcome: a.outcome,
+      })),
   },
 
   panel_map: {
     roles: ['it'],
-    build: async ({ store, stats, terminals, activeSessions }) => {
-      const outbox = await store.list<OutboxItem>('outbox');
+    build: async ({ store, stats, terminals, clock }) => {
+      const [outbox, sessions, backup, system] = await Promise.all([
+        store.list<OutboxItem>('outbox'),
+        store.list<{ id: string; expiresAt: string }>('sessions'),
+        terminals.backup ? terminals.backup.status() : Promise.resolve(null),
+        terminals.system ? terminals.system.info() : Promise.resolve([]),
+      ]);
+      const nowMs = clock.now().getTime();
       const s = stats();
       const live = [...s.entries()].map(([name, st]) => ({ name, status: 'live' as const, ...st }));
       const planned = PLANNED_CIRCUITS.map((name) => ({
@@ -472,6 +504,13 @@ export const feeds: FeedRegistry = {
         errors: 0,
         lastActivityAt: null,
       }));
+      const backupState = !terminals.backup
+        ? 'not set up yet'
+        : backup?.lastError
+          ? 'last backup failed'
+          : backup?.lastOkAt
+            ? 'ok'
+            : 'no backup yet';
       return {
         circuits: [...live, ...planned],
         outbox: {
@@ -480,7 +519,8 @@ export const feeds: FeedRegistry = {
           failed: outbox.filter((o) => o.status === 'failed').length,
         },
         terminals: [
-          { name: 'Local storage', state: 'connected' },
+          { name: 'Storage', state: 'connected' },
+          { name: 'Backups', state: backupState },
           {
             name: 'Cloud sync',
             state: terminals.sync ? (terminals.sync.isOnline() ? 'online' : 'offline') : 'not set up yet',
@@ -489,7 +529,9 @@ export const feeds: FeedRegistry = {
           { name: 'Printer', state: 'not set up yet' },
           { name: 'Recipe generator', state: 'not set up yet' },
         ],
-        activeSessions: activeSessions(),
+        activeSessions: sessions.filter((x) => Date.parse(x.expiresAt) > nowMs).length,
+        backup,
+        system,
       };
     },
   },

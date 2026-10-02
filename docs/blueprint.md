@@ -1,6 +1,6 @@
 # Cake Shop POS: Master Blueprint
 
-**Version:** 0.2 | **Date:** 29 Sep 2026 | **Status:** Graph locked, first slice built (see section 18)
+**Version:** 0.3 | **Date:** 2 Oct 2026 | **Status:** Graph locked. First slice built. Phase 2a (shop server) built and tested (see section 18)
 
 This is the single source of truth for the project. When something feels unclear, contradictory, or lost, come back here, find the section by its ID, and reconcile.
 
@@ -358,16 +358,22 @@ Alerts are system requests routed by role. The owner can configure which are **c
 
 ---
 
-## 9. Offline and sync
+## 9. Offline, outages and sync
 
-- **Cloud is the shared record.** Each device holds a **full local copy** and works fully offline. When the connection returns, the Sync circuit reconciles (D-36).
-- **What must work offline:** taking orders, recording payments, the baker queue, usage logging and confirmation, counter counts, requests, order notes.
-- **What waits for a connection** and queues in the outbox: WhatsApp/SMS, recipe generation, cloud sync, and receipts by message. If generation cannot run, the baker gets a manual ingredient list.
-- **Original timestamps are preserved**, so request timelines and audit entries stay accurate.
-- **Conflict approach (A-12):** money, stock movements, and messages are append-only events, so they merge safely. Edits to the same record (for example an order's delivery date on two devices) resolve by last write, and the audit log keeps both.
-- Stock is **computed from movements**, never overwritten.
+*Replaced in v0.3. The earlier "full local copy on every device" design is superseded by D-45.*
 
----
+| Situation | What happens |
+| --- | --- |
+| The **internet** is down | No effect on selling. Everything runs on the shop network. Cloud backup copies wait and retry |
+| A **device's wifi** drops | That device cannot reach the server. The client library reports offline, retries with the same request id, and shows the last data it had as "stale". Nothing is lost or doubled |
+| The **server computer** is off or crashed | No device can sell. It restarts by itself if set up to (runbook). Anything half-done is discarded, and nobody is signed out |
+| The server computer **fails for good** | Restore the newest backup on a spare computer (about 15 minutes if practised). Sales since that backup are lost, so paper is the fallback until then |
+
+Consequences:
+- **There is one writer.** The server handles one instruction at a time, so there are no conflicts to resolve between devices.
+- Order numbers use the server's prefix, so they remain unique if a second server is ever introduced (BR-26).
+- Recipe generation and WhatsApp/SMS are still parked (outbox items queue in the database and show on the panel map).
+- The server stores each action's `requestId` so a retried instruction is not run twice (D-50).
 
 ## 10. Owner reports (v1)
 
@@ -394,11 +400,10 @@ Alerts are system requests routed by role. The owner can configure which are **c
 
 ## 12. Delivery approach
 
-- **Web app** that installs on any device (D-38). Native apps are a later option. Because the UI only reads feeds and sends intents, replacing the UI layer does not touch the panel.
-- **Cloud** as the shared record, with a **local copy** on each device.
-- The build proceeds in this order: design system, then a clickable prototype (order intake, baker queue, catalogue management), then the data model and panel.
-
----
+- **The server** (`packages/server`) runs on a computer in the shop: Node, SQLite, HTTP, WebSocket, backups, an admin tool. It can also serve the built UI so devices only need its address.
+- **The panel** (`packages/panel`) is unchanged in principle: pure TypeScript with no UI, now run by the server.
+- **The UI** is built by the owner in React against the API (`docs/api.md`, `docs/api-reference.md`), using `@cake-pos/client`. `apps/web` is a working reference. It also still runs standalone in a browser as a demo.
+- **Operations** are in `docs/runbook.md`.
 
 ## 13. Scope
 
@@ -428,7 +433,7 @@ Ingredient demand forecast from open orders; suggested bake quantities for count
 | A-09 | Completing with insufficient stock is allowed and logged, not blocked | Owner |
 | A-10 | Days-of-stock-left uses a 14-day rolling window with a minimum-data threshold | Owner |
 | A-11 | Default alert thresholds and critical flags as listed in §8 | Owner |
-| A-12 | Sync conflicts: append-only for money, stock, and messages; last write wins for edits, with audit | IT |
+| A-12 | ~~Sync conflicts: append-only for money, stock, messages; last write wins for edits.~~ Superseded by D-45: one server is the only writer, so there are no device-to-device conflicts | n/a |
 | A-13 | One shop, one currency, no tax | Owner |
 | A-14 | Every available combination carries a stock count | Owner |
 
@@ -447,6 +452,10 @@ Ingredient demand forecast from open orders; suggested bake quantities for count
 | Q-07 | Which WhatsApp/SMS service will send messages? | Before comms | IT |
 | Q-08 | What are the data backup and export needs? | Non-blocking | Owner, IT |
 | Q-09 | Language(s) for the interface | Non-blocking | Owner |
+| Q-10 | Should backups go to a cloud service directly (a storage API such as S3) as well as to a synced folder? Folder sync is built; direct upload is not | Non-blocking | Owner, IT |
+| Q-11 | Will devices need HTTPS (for the installable-app and offline-shell features)? Needs a locally trusted certificate on each device | Before the UI is finalised | Owner, IT |
+| Q-12 | Is a standby computer ready to take over if the server computer fails, and who restores to it? | Before go-live | Owner, IT |
+| Q-13 | What is the agreed paper procedure at the counter while the server is unreachable, and how are those orders entered afterwards? | Before go-live | Owner |
 
 ---
 
@@ -491,7 +500,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-33** | Catalogue goods are always in the shop, so there is no minimum-notice rule. Catalogue and counter goods are the same thing. Transport cost is outside the system. *(Supersedes the earlier minimum-notice and delivery-fee ideas)* |
 | **D-34** | v1 additions: PIN login, audit log, owner reports, reference photos, allergen tags, reorder levels |
 | **D-35** | Prediction in v1 is **days of stock left** only. Other prediction features are parked |
-| **D-36** | Panel runs in the **cloud with a local copy on each device** (online and offline) |
+| **D-36** | ~~Panel runs in the cloud with a local copy on each device.~~ **Superseded by D-45** |
 | **D-37** | The panel map is a technical view for IT only |
 | **D-38** | Delivered first as an installable web app, with native apps as a later option |
 | **D-39** | Architecture is the **panel**: the UI is pure I/O, reading feeds and sending intents |
@@ -500,6 +509,16 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-42** | The UI gets navigation and permissions from the panel (the `navigation` feed and the per-product `can` flags), so it holds no permission logic (BR-22) |
 | **D-43** | Until Q-01 is answered, completing an order with an unpaid balance is **allowed with a warning**, not blocked |
 | **D-44** | Design system palette: meringue, icing, raspberry, cocoa, pistachio, butter. Fonts: Young Serif for names and totals, Nunito for everything else, both bundled so the app works offline. Signature detail: the icing drip along the top of each product tile |
+| **D-45** | **Shop server.** One computer on the shop's own network is the single source of truth and runs the panel. Devices are clients over HTTP and WebSocket. The internet is not needed for selling. Cloud is used only for backup copies. *(Supersedes D-36)* |
+| **D-46** | The server targets **Windows and macOS** (Node 20 or newer). It is built and tested on Linux. Windows and macOS start-up files exist but are untested on those systems |
+| **D-47** | The owner builds the UI in **React**. The contract is the HTTP and WebSocket API (docs/api.md) with a generated reference (docs/api-reference.md). A React client library is provided. `apps/web` is a working reference UI |
+| **D-48** | Storage is **SQLite** with write-ahead logging and full durability on every commit. Queries use indexes. Structural changes go through numbered migrations. A database from a newer version refuses to open |
+| **D-49** | **Each instruction runs alone, in one all-or-nothing transaction.** The panel handles one instruction or feed at a time. A failure part-way leaves nothing behind |
+| **D-50** | **Retry safety.** Each instruction can carry a `requestId`. A repeat returns the original answer and does not run again. Remembered 7 days, per person, successes only |
+| **D-51** | **PINs** are stored with scrypt and a random salt. Five wrong PINs lock an account for 1, then 5, 15, then 60 minutes. **Sessions** are 256-bit tokens stored only as hashes, last 10 hours idle or 24 hours total, survive a server restart, and end when the person is switched off or their PIN changes |
+| **D-52** | Owners manage staff and PINs in the app. When no owner can, the **admin tool on the server** creates an owner, resets a PIN, takes a backup, restores one, and checks the database |
+| **D-53** | **Backups** (answers the cloud-only choice): each night the server takes a verified snapshot to a local folder, then copies it to a cloud-synced folder when it can, retrying until it succeeds. The local snapshot is the step that makes cloud backup work during an internet outage |
+| **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
 
@@ -509,6 +528,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 |---|---|---|
 | 0.1 | 29 Sep 2026 | Baseline: consolidated the locked graph, architecture, assumptions, and open questions |
 | 0.2 | 29 Sep 2026 | First slice built as a repo. Added D-41 to D-44 and section 18 (build status). No changes to rules |
+| 0.3 | 2 Oct 2026 | Phase 2a: shop server. Added D-45 to D-54 and Q-10 to Q-13. D-36 and A-12 superseded. Sections 9, 12 and 18 rewritten. Business rules unchanged |
 
 ---
 
@@ -517,22 +537,36 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 What exists in the repo today against this blueprint. Update this table whenever something is built.
 
 | Blueprint item | Status | Notes |
-|---|---|---|
-| Panel kernel: breakers (PIN and role, validation, audit), intents, feeds, events, outbox | Built | 22 tests in `packages/panel` |
-| Auth circuit (PIN sign-in, roles, sessions) | Built | PIN hashing is demo-grade. Sessions live in memory |
-| Catalogue circuit (products, option groups, combination grid, manual prices, archive, available today) | Built | No UI yet to *create* products or option groups. Demo data is seeded through real intents |
-| Stock (set count, decrement at completion, committed vs on hand, shortfall as count difference) | Partly built | No batches, daily count, or closing review yet |
-| Orders (catalogue lines, derived status, snapshot prices, device-prefixed numbers) | Built | Custom cake lines not built |
-| Payments (cash default, other methods, partial exception, owner-only refunds) | Built | Q-01 handled as allow with warning (D-43) |
-| Sync outbox | Partly built | Changes queue locally and show on the panel map. No cloud terminal yet |
-| Panel map (IT) | Built | Lists planned circuits honestly |
-| Activity (audit view, owner) | Built | |
-| Design system (tokens, components, docs page at `#/design`) | Built | Light and dark themes |
-| Web app (sign-in, Sell, Orders, Catalogue, Activity, Panel map), installable, offline shell | Built | UI tests run in jsdom. Not yet checked on real devices |
+| --- | --- | --- |
+| Panel kernel: breakers, intents, feeds, events, outbox | Built | Instructions run one at a time, each all-or-nothing |
+| Runtime request checking (schemas for every instruction and feed) | Built | Unknown fields and wrong types are refused. Docs are generated from them |
+| Auth: PIN sign-in, lockout, stored sessions, change PIN | Built | scrypt on the server. Sessions survive restarts |
+| Staff management (create, reset PIN, switch off) | Built | Last owner and own account protected |
+| Catalogue (products, option groups, combination grid, manual prices) | Built | No UI yet to *create* products or option groups |
+| Stock (set count, decrement at completion, committed vs on hand) | Partly built | No batches, daily count or closing review yet |
+| Orders (catalogue lines, derived status, snapshot prices) | Built | Custom cake lines not built |
+| Payments (cash default, partial exception, owner-only refunds) | Built | Q-01 handled as allow with warning (D-43) |
+| Shop server: HTTP API, WebSocket live feeds, static UI serving, optional HTTPS | Built | Tested end to end over real connections |
+| SQLite store: transactions, indexes, migrations | Built | Proven against a killed process (power-cut style) |
+| Retry safety (`requestId`) | Built | |
+| Backups: nightly, verified, local then cloud folder, retries | Built | Cloud = a synced folder. Direct cloud API is Q-10 |
+| Restore and admin tool (create owner, reset PIN, check, backup, restore) | Built | |
+| Panel map (IT) with backup and system facts | Built | |
+| Client library (core and React hooks) | Built | Tested through the reference UI against a real server |
+| Reference UI (`apps/web`), standalone and against the server | Built | Includes Staff and My PIN screens |
+| Windows and macOS start-up files | Written, **untested** | Never run on those systems |
 | Custom cake lines, quote requests, reference photos | Not built | |
 | Production stages, ingredient usage chain, inventory beyond finished goods | Not built | |
 | Messages (requests, notes, announcements) and alerts | Not built | |
 | Delivery record | Not built | |
 | Owner reports | Not built | |
 | Receipts (print, WhatsApp/SMS) | Not built | |
-| Cloud sync, real recipe generation | Not built | |
+| Counter day (batches, daily count, closing review) | Not built | |
+| Cloud sync of live data, real recipe generation | Not built | Not needed by the shop-server design |
+
+### Next in order
+1. Custom cake orders with owner quotes (the core of the business).
+2. Production queue and the ingredient usage chain.
+3. Messages and alerts.
+4. Counter day, delivery record, reports, receipts.
+Each is a new circuit plus its instructions and feeds, then the generated API reference updates itself.

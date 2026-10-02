@@ -49,8 +49,8 @@ describe('the app, end to end against the real panel', () => {
     const pay = await screen.findByRole('dialog', { name: 'Take payment' });
     await user.click(within(pay).getByRole('button', { name: 'Take payment' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect((await screen.findAllByText('Paid')).length).toBeGreaterThan(0);
-    expect(screen.queryByText('Unpaid')).toBeNull();
+    // "Paid" is also a row label in the totals, so wait for the Unpaid chip to go instead.
+    await waitFor(() => expect(screen.queryByText('Unpaid')).toBeNull());
 
     // Stock has NOT dropped yet (BR-03): still 4 on hand, with 1 committed on the open order.
     // A cashier can read stock but not edit it, so these are plain text cells.

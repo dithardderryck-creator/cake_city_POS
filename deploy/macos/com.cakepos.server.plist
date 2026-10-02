@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Starts the Cake POS server when you log in, and starts it again if it stops.
+  NOT YET TESTED ON A MAC. Edit the three paths marked CHANGE, then:
+    cp com.cakepos.server.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.cakepos.server.plist
+  To stop it:  launchctl unload ~/Library/LaunchAgents/com.cakepos.server.plist
+-->
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.cakepos.server</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/local/bin/node</string>                                   <!-- CHANGE: output of `which node` -->
+      <string>/Users/YOURNAME/cake-pos/packages/server/dist/cake-pos-server.mjs</string> <!-- CHANGE -->
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/YOURNAME/cake-pos/packages/server</string>               <!-- CHANGE -->
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PORT</key><string>8787</string>
+      <key>BACKUP_TIME</key><string>02:00</string>
+      <!-- <key>CLOUD_BACKUP_DIR</key><string>/Users/YOURNAME/Library/CloudStorage/OneDrive-Personal/CakePOS</string> -->
+      <!-- <key>STATIC_DIR</key><string>/Users/YOURNAME/cake-pos/apps/web/dist</string> -->
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/cakepos.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/cakepos.err.log</string>
+  </dict>
+</plist>

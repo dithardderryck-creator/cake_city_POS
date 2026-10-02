@@ -17,16 +17,11 @@ export async function loadOrderBundle(ctx: Pick<HandlerCtx, 'store'>, orderId: s
   const order = await ctx.store.get<Order>('orders', orderId);
   if (!order) throw new DomainError('invalid', ['That order no longer exists.']);
   const [lines, payments, refunds] = await Promise.all([
-    ctx.store.list<OrderLine>('orderLines'),
-    ctx.store.list<Payment>('payments'),
-    ctx.store.list<Refund>('refunds'),
+    ctx.store.find<OrderLine>('orderLines', { where: { orderId } }),
+    ctx.store.find<Payment>('payments', { where: { orderId } }),
+    ctx.store.find<Refund>('refunds', { where: { orderId } }),
   ]);
-  return {
-    order,
-    lines: lines.filter((l) => l.orderId === orderId),
-    payments: payments.filter((p) => p.orderId === orderId),
-    refunds: refunds.filter((r) => r.orderId === orderId),
-  };
+  return { order, lines, payments, refunds };
 }
 
 interface Counter {

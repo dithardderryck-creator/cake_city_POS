@@ -1,0 +1,33 @@
+{
+  "name": "@cake-pos/server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/cake-pos-server.mjs",
+    "build": "node build.mjs",
+    "admin": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.3",
+    "@types/ws": "^8.18.2",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2",
+    "@cake-pos/client": "*"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "ws": "^8.22.0",
+    "@cake-pos/panel": "*"
+  }
+}
