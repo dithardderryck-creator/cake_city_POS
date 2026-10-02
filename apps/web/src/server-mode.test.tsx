@@ -74,15 +74,15 @@ describe('the same app, running against the real shop server', () => {
     await waitFor(() => expect(screen.getAllByText('Completed').length).toBeGreaterThan(0));
 
     // Not just what the screen says: what the server actually recorded.
-    const payments = await server.store.list<{ amount: number; method: string }>('payments');
+    const payments = await server.store.list<{ id: string; amount: number; method: string }>('payments');
     expect(payments).toHaveLength(1);
     expect(payments[0]).toMatchObject({ amount: 5, method: 'cash' });
-    const sales = (await server.store.list<{ combinationId: string; qty: number; reason: string }>('stockMovements')).filter((m) => m.reason === 'sale');
+    const sales = (await server.store.list<{ id: string; combinationId: string; qty: number; reason: string }>('stockMovements')).filter((m) => m.reason === 'sale');
     expect(sales).toHaveLength(1);
     expect(sales[0]!.qty).toBe(-1);
     const sold = await server.store.get<{ id: string; stockCount: number }>('combinations', sales[0]!.combinationId);
     expect(sold?.stockCount).toBe(3); // that one slice went from 4 to 3
-    const audit = await server.store.list<{ actorName?: string; intent: string; outcome: string }>('audit');
+    const audit = await server.store.list<{ id: string; actorName?: string; intent: string; outcome: string }>('audit');
     expect(audit.some((a) => a.actorName?.startsWith('Baraka') && a.intent === 'orders/advance_line' && a.outcome === 'ok')).toBe(true);
     expect(audit.some((a) => a.intent === 'auth/sign_in' && a.outcome === 'denied')).toBe(true); // the wrong PIN is on record
   });
