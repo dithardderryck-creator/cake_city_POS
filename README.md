@@ -32,6 +32,7 @@ Needs **Node 20 or newer**.
 npm ci
 npm test                 # panel rules, server (HTTP, backups, crash tests), and UI tests
 npm run typecheck
+npm run build && npm run acceptance   # plays the owner against the built server: set up, sell, back up, crash, recover, restore
 
 # Run the real thing:
 npm run build

@@ -152,6 +152,8 @@ Browsers disable the "install as an app" and offline-shell features on plain `ht
 
 ## Pilot checklist (before relying on it)
 
+On a developer machine, `npm run acceptance` automates the crash, backup and restore parts of this list against a throwaway database. It does not replace trying them on the real shop computer.
+
 - [ ] Restart the computer: the server comes back by itself
 - [ ] Unplug the internet: selling still works
 - [ ] Unplug the server's power (or kill the process) mid-sale: after restart, no half-saved orders, nobody signed out
