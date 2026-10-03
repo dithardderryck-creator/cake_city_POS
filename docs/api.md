@@ -101,7 +101,7 @@ function BakerQueue() {
 }
 ```
 
-`apps/web` is a complete working example. Set `VITE_SERVER_URL` to run it against a real server (see the runbook).
+`apps/web` shows a full UI against the real server (set `VITE_SERVER_URL`, see the runbook), but it uses `createClient` through its own small bridge rather than these hooks. The hooks are tested against a real server in `packages/server/src/client-react.test.tsx`. See [known-issues.md](known-issues.md), O-2.
 
 What `useRun` returns is the result described above, plus one more case your UI should handle: `error.code === "offline"` means the server could not be reached even after retrying. **Nothing was changed.** Show a plain message ("Cannot reach the shop server, check the wifi") and let them try again.
 

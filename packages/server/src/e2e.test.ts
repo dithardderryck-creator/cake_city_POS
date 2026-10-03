@@ -1,12 +1,13 @@
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
+import net from 'node:net';
 import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WebSocket } from 'ws';
-import { createClient, type Client, type ClientOptions } from '@cake-pos/client';
+import { CLIENT_DEFAULTS, createClient, type Client, type ClientOptions } from '@cake-pos/client';
 import { seedDemo } from '@cake-pos/panel';
 import { startServer, type RunningServer } from './app';
 import { loadConfig } from './config';
@@ -196,6 +197,63 @@ describe('retries and outages', () => {
     expect(await down.staff()).toEqual([]);
   });
 
+  it('gives up on a server that accepts connections but never answers, within the deadline', async () => {
+    const sockets = new Set<net.Socket>();
+    const hung = net.createServer((sock) => void sockets.add(sock)); // takes the connection, says nothing
+    await new Promise<void>((r) => hung.listen(0, '127.0.0.1', r));
+    cleanups.push(() => new Promise<void>((r) => {
+      for (const sock of sockets) sock.destroy();
+      hung.close(() => r());
+    }));
+    const port = (hung.address() as net.AddressInfo).port;
+    const c = createClient({ baseUrl: `http://127.0.0.1:${port}`, timeoutMs: 300, deadlineMs: 900 });
+    const t0 = Date.now();
+    const r = await c.dispatch('orders/create_order', { source: 'walk_in', fulfilment: 'pickup' });
+    const took = Date.now() - t0;
+    expect(!r.ok && r.error.code).toBe('offline');
+    expect(took).toBeLessThan(1_800);
+  });
+
+  it('has defaults that keep a stuck tap to about fifteen seconds', () => {
+    expect(CLIENT_DEFAULTS.deadlineMs).toBeLessThanOrEqual(15_000);
+    expect(CLIENT_DEFAULTS.timeoutMs).toBeLessThanOrEqual(CLIENT_DEFAULTS.deadlineMs);
+  });
+
+  it('signs out on this device at once even when the server is unreachable, then ends the sign-in when it can', async () => {
+    const first = await boot();
+    const port = first.server.port;
+    const store: { t: string | null } = { t: null };
+    const c = clientFor(first.server, {
+      tokenStore: { get: () => store.t, set: (t) => void (store.t = t) },
+      retries: 0,
+      timeoutMs: 300,
+      deadlineMs: 600,
+      signOutRetryMs: 150,
+    });
+    const who = (await c.staff()).find((s) => s.role === 'cashier')!;
+    await c.signIn(who.id, PINS.cashier);
+    const oldToken = store.t!;
+    expect(oldToken).toBeTruthy();
+
+    await first.server.close(); // the till loses the server
+    const out = await c.signOut();
+    expect(out.serverEnded).toBe(false);
+    expect(c.signedIn).toBe(false); // the device is signed out regardless
+    expect(store.t).toBeNull();
+
+    // The server comes back. The old token must be ended there, without anyone doing anything.
+    const second = await boot({ dataDir: first.dataDir, env: { PORT: String(port) } });
+    const probe = createClient({ baseUrl: second.server.url, tokenStore: { get: () => oldToken, set: () => undefined } });
+    cleanups.push(() => probe.close());
+    const deadline = Date.now() + 5_000;
+    let ended = false;
+    while (Date.now() < deadline && !ended) {
+      ended = (await probe.restore()) === null;
+      if (!ended) await new Promise((r) => setTimeout(r, 100));
+    }
+    expect(ended).toBe(true);
+  }, 15_000);
+
   it('keeps people signed in across a server restart', async () => {
     const first = await boot();
     const token = await (async () => {
@@ -355,7 +413,10 @@ describe('secrets stay secret', () => {
       .concat(fs.readdirSync(logDir).map((f) => fs.readFileSync(path.join(logDir, f), 'utf8')))
       .join('\n');
     expect(everything).not.toContain(token);
-    expect(everything).not.toContain(wrong);
+    // A bare 4-digit string can turn up by chance inside random hex ids, so look for the PIN the way it would be written down.
+    expect(everything).not.toContain(`"${wrong}"`);
+    expect(everything).not.toContain(`pin=${wrong}`);
+    expect(everything).not.toMatch(new RegExp(`pin\\W{1,4}${wrong}`, 'i'));
     expect(everything).not.toContain(`"pin":"${PINS.cashier}"`);
     expect(everything).toContain('scrypt$'); // PINs are stored only as salted scrypt hashes
   });

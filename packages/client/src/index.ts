@@ -22,6 +22,9 @@ export interface OfflineError {
 export type ClientResult = DispatchResult | OfflineError;
 export type ClientFeedResult<D> = FeedResult<D> | OfflineError;
 
+/** Timing defaults. A tap on a stuck server gives up after about `deadlineMs`, not after the sum of every retry. */
+export const CLIENT_DEFAULTS = { retries: 2, timeoutMs: 8_000, deadlineMs: 15_000, signOutRetryMs: 20_000 } as const;
+
 export type ConnectionState = 'connecting' | 'online' | 'offline';
 
 export interface TokenStore {
@@ -70,6 +73,12 @@ export interface ClientOptions {
   tokenStore?: TokenStore;
   /** How many times to retry when the network fails. The same request id is reused, so nothing runs twice. */
   retries?: number;
+  /** How long one attempt may take before it is abandoned. */
+  timeoutMs?: number;
+  /** The most time one call may take in total, retries included. */
+  deadlineMs?: number;
+  /** When sign-out could not reach the server, how often to try again in the background to end the sign-in there. */
+  signOutRetryMs?: number;
   /** Called when the server says the sign-in is no longer valid (expired, signed out elsewhere, switched off). */
   onSignedOut?: () => void;
 }
@@ -81,12 +90,18 @@ export interface Client {
   signIn(userId: string, pin: string): Promise<SignInResult>;
   /** Use a saved token. Returns who is signed in, or null if there is no valid sign-in. */
   restore(): Promise<SessionInfo | null>;
-  signOut(): Promise<void>;
+  /**
+   * Signs out on this device immediately. Then asks the server to end the sign-in too;
+   * `serverEnded` is false when it could not be reached (it keeps trying in the background).
+   */
+  signOut(): Promise<{ serverEnded: boolean }>;
   dispatch<K extends IntentName>(type: K, payload: IntentMap[K]): Promise<ClientResult>;
   feed<K extends FeedName>(name: K, params: FeedMap[K]['params']): Promise<ClientFeedResult<FeedMap[K]['data']>>;
   /** Live data: called now, and again after every change anyone makes. Returns an unsubscribe function. */
   subscribe<K extends FeedName>(name: K, params: FeedMap[K]['params'], listener: (r: FeedResult<FeedMap[K]['data']>) => void): () => void;
   onConnection(listener: (s: ConnectionState) => void): () => void;
+  /** Fires when the sign-in ends without the user asking: expired, signed out elsewhere, or switched off. */
+  onSignedOut(listener: () => void): () => void;
   readonly connection: ConnectionState;
   readonly signedIn: boolean;
   close(): void;
@@ -107,7 +122,11 @@ const offlineResult = (): OfflineError => ({
 
 export function createClient(options: ClientOptions = {}): Client {
   const f: typeof fetch = options.fetch ?? ((...a) => globalThis.fetch(...a));
-  const retries = options.retries ?? 3;
+  const retries = options.retries ?? CLIENT_DEFAULTS.retries;
+  const timeoutMs = options.timeoutMs ?? CLIENT_DEFAULTS.timeoutMs;
+  const deadlineMs = options.deadlineMs ?? CLIENT_DEFAULTS.deadlineMs;
+  const signOutRetryMs = options.signOutRetryMs ?? CLIENT_DEFAULTS.signOutRetryMs;
+  const signedOutListeners = new Set<() => void>();
   const base = (options.baseUrl ?? '').replace(/\/$/, '');
   let token: string | null = options.tokenStore?.get() ?? null;
 
@@ -118,23 +137,30 @@ export function createClient(options: ClientOptions = {}): Client {
   const lostSignIn = () => {
     if (token === null) return;
     setToken(null);
+    socket?.close();
     options.onSignedOut?.();
+    for (const l of signedOutListeners) l();
   };
 
-  async function post(path: string, body: unknown): Promise<{ status: number; json: unknown } | 'offline'> {
+  async function post(path: string, body: unknown, authToken: string | null = token): Promise<{ status: number; json: unknown } | 'offline'> {
+    const started = Date.now();
     for (let attempt = 0; ; attempt++) {
+      const left = deadlineMs - (Date.now() - started);
+      if (left <= 0) return 'offline';
       try {
         const res = await f(base + path, {
           method: 'POST',
-          headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+          headers: { 'content-type': 'application/json', ...(authToken ? { authorization: `Bearer ${authToken}` } : {}) },
           body: JSON.stringify(body),
-          signal: AbortSignal.timeout(15_000),
+          signal: AbortSignal.timeout(Math.min(timeoutMs, left)),
         });
         if ([502, 503, 504].includes(res.status) && attempt < retries) throw new Error('server busy');
         return { status: res.status, json: await res.json().catch(() => null) };
       } catch {
         if (attempt >= retries) return 'offline';
-        await sleep(200 * 3 ** attempt);
+        const pause = 200 * 3 ** attempt;
+        if (deadlineMs - (Date.now() - started) <= pause) return 'offline';
+        await sleep(pause);
       }
     }
   }
@@ -218,6 +244,18 @@ export function createClient(options: ClientOptions = {}): Client {
     ws.onerror = () => undefined; // onclose follows
   }
 
+  /** An old sign-in the server has not yet been told to end. Retried quietly until it works or we give up. */
+  const pendingRevokes = new Set<ReturnType<typeof setTimeout>>();
+  function scheduleRevoke(_old: string, tryRevoke: () => Promise<boolean>, tries = 0) {
+    if (closed || tries >= 40) return;
+    const t = setTimeout(async () => {
+      pendingRevokes.delete(t);
+      if (closed) return;
+      if (!(await tryRevoke())) scheduleRevoke(_old, tryRevoke, tries + 1);
+    }, signOutRetryMs);
+    pendingRevokes.add(t);
+  }
+
   return {
     get connection() {
       return state;
@@ -228,7 +266,7 @@ export function createClient(options: ClientOptions = {}): Client {
 
     async staff() {
       try {
-        const res = await f(base + '/api/staff', { signal: AbortSignal.timeout(15_000) });
+        const res = await f(base + '/api/staff', { signal: AbortSignal.timeout(timeoutMs) });
         const json = (await res.json()) as FeedResult<StaffSigninRow[]>;
         return json.ok ? json.data : [];
       } catch {
@@ -262,9 +300,19 @@ export function createClient(options: ClientOptions = {}): Client {
     },
 
     async signOut() {
-      await post('/api/sign-out', {});
+      // Sign out on this device first so the next person at the till can never inherit it, whatever the network does.
+      const old = token;
       setToken(null);
       socket?.close();
+      if (!old) return { serverEnded: true };
+      const tryRevoke = async () => {
+        const r = await post('/api/sign-out', {}, old);
+        // 401 means the server no longer honours this token, which is the outcome we wanted.
+        return r !== 'offline';
+      };
+      if (await tryRevoke()) return { serverEnded: true };
+      scheduleRevoke(old, tryRevoke);
+      return { serverEnded: false };
     },
 
     async dispatch(type, payload) {
@@ -296,6 +344,11 @@ export function createClient(options: ClientOptions = {}): Client {
       };
     },
 
+    onSignedOut(listener) {
+      signedOutListeners.add(listener);
+      return () => signedOutListeners.delete(listener);
+    },
+
     onConnection(listener) {
       connListeners.add(listener);
       return () => connListeners.delete(listener);
@@ -303,6 +356,8 @@ export function createClient(options: ClientOptions = {}): Client {
 
     close() {
       closed = true;
+      for (const t of pendingRevokes) clearTimeout(t);
+      pendingRevokes.clear();
       if (retryTimer) clearTimeout(retryTimer);
       socket?.close();
       subs.clear();

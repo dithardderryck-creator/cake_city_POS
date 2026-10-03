@@ -102,7 +102,7 @@ function serverBackend(baseUrl: string): Backend {
       const me = await client.restore();
       return me ? { sessionId: tokenOf(), name: me.name, role: me.role } : null;
     },
-    signOut: async () => client.signOut(),
+    signOut: async () => void (await client.signOut()),
     dispatch: async (type, payload) => {
       const r = await client.dispatch(type, payload);
       // "offline" is the one result the panel never produces. The screens treat it as an ordinary error.

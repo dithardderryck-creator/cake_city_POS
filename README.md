@@ -20,7 +20,7 @@ packages/server         The shop server: HTTP + WebSocket, SQLite, backups, admi
 packages/client         Client library for UIs (framework-agnostic core + React hooks).
 packages/design-system  Tokens (CSS variables), React components, living docs page.
 apps/web                A working reference UI. Runs standalone, or against the server.
-docs/                   blueprint.md (the plan), api.md + api-reference.md (build a UI), runbook.md (run the server)
+docs/                   blueprint.md (the plan), api.md + api-reference.md (build a UI), runbook.md (run the server), known-issues.md (open bugs and gaps)
 deploy/                 Start-up files for macOS and Windows (not yet tested on those systems)
 ```
 

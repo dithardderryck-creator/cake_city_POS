@@ -552,7 +552,8 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Backups: nightly, verified, local then cloud folder, retries | Built | Cloud = a synced folder. Direct cloud API is Q-10 |
 | Restore and admin tool (create owner, reset PIN, check, backup, restore) | Built | |
 | Panel map (IT) with backup and system facts | Built | |
-| Client library (core and React hooks) | Built | Tested through the reference UI against a real server |
+| Client library (core and React hooks) | Built | Core and hooks are tested against a real server (`e2e.test.ts`, `client-react.test.tsx`). `apps/web` uses the core client but not the hooks |
+| Outbox: queue for WhatsApp/SMS, print and other retried jobs | **Partly built** | Rows are written on every action but nothing consumes or prunes them. Open issue O-5 in [known-issues.md](known-issues.md) |
 | Reference UI (`apps/web`), standalone and against the server | Built | Includes Staff and My PIN screens |
 | Windows and macOS start-up files | Written, **untested** | Never run on those systems |
 | Custom cake lines, quote requests, reference photos | Not built | |
@@ -563,6 +564,8 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Receipts (print, WhatsApp/SMS) | Not built | |
 | Counter day (batches, daily count, closing review) | Not built | |
 | Cloud sync of live data, real recipe generation | Not built | Not needed by the shop-server design |
+
+Known bugs and gaps found in review: [known-issues.md](known-issues.md).
 
 ### Next in order
 1. Custom cake orders with owner quotes (the core of the business).

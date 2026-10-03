@@ -17,7 +17,7 @@ export interface SessionState {
   status: 'loading' | 'signedOut' | 'signedIn';
   session: SessionInfo | null;
   signIn: (userId: string, pin: string) => Promise<SignInResult>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{ serverEnded: boolean }>;
 }
 
 /** Who is signed in. Restores a saved sign-in on load and drops it the moment the server ends it. */
@@ -34,11 +34,9 @@ export function useSession(): SessionState {
       setStatus(s ? 'signedIn' : 'signedOut');
     });
     // If the server ends the sign-in while someone is working, any feed that notices updates this.
-    const off = client.onConnection(() => {
-      if (!client.signedIn) {
-        setSession(null);
-        setStatus('signedOut');
-      }
+    const off = client.onSignedOut(() => {
+      setSession(null);
+      setStatus('signedOut');
     });
     return () => {
       alive = false;
@@ -57,10 +55,11 @@ export function useSession(): SessionState {
     },
     [client],
   );
-  const signOut = useCallback(async () => {
-    await client.signOut();
+  const signOut = useCallback(() => {
+    // The screen goes to signed-out at once; the server is told in the background.
     setSession(null);
     setStatus('signedOut');
+    return client.signOut();
   }, [client]);
 
   return useMemo(() => ({ status, session, signIn, signOut }), [status, session, signIn, signOut]);
