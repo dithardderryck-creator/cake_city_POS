@@ -220,6 +220,8 @@ Unpaid → Partial → Paid. Refunds add Partially refunded and Refunded. The ba
 - **Acknowledged**: one person claims it, and the request shows who owns it.
 - **Resolved**: only by the sender or the owner. The sender is notified.
 
+> **Quote requests** (BR-05) use a shorter version of this lifecycle, built before the general Requests system: `Sent → Seen → Quoted` (or `Declined`, or `Withdrawn` by the sender or owner). The owner's answer closes it, so there is no separate "Acknowledged" step. When the Messages circuit is built, quote requests should appear in the same inbox (see D-55).
+
 ### 5.5 Announcement
 `Sent → Seen`, or `Sent → Seen → Acknowledged` when `requires_ack` is set.
 
@@ -266,6 +268,10 @@ Unpaid → Partial → Paid. Refunds add Partially refunded and Refunded. The ba
 | **BR-24** | Critical alerts also go to the owner by WhatsApp/SMS through the outbox, at most one message per `dedupe_key` until resolved |
 | **BR-25** | Receipts can be printed and/or sent by WhatsApp/SMS. They include order number, items with options, allergens, payments, balance, and delivery date |
 | **BR-26** | Order numbers are unique across devices (for example a device prefix plus a sequence), so offline devices never collide |
+| **BR-28** | A custom cake needs a delivery date before the owner can be asked to price it. Payment is refused while any custom cake on the order has no price |
+| **BR-29** | The cashier may remove a custom cake before it is priced and paid. After that, or once baking starts, only the owner may cancel it, and any refund is a separate owner decision (BR-08) |
+| **BR-30** | The owner may change a quoted price only until baking starts, with a reason. The change is audited and warns about money already taken |
+| **BR-31** | Custom cakes use ingredients, not counter stock, so handing one over never changes a catalogue stock count |
 | **BR-27** | Days-of-stock-left and stock alerts consider ingredients and packaging. Finished goods use the counter count |
 
 ---
@@ -518,6 +524,10 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-51** | **PINs** are stored with scrypt and a random salt. Five wrong PINs lock an account for 1, then 5, 15, then 60 minutes. **Sessions** are 256-bit tokens stored only as hashes, last 10 hours idle or 24 hours total, survive a server restart, and end when the person is switched off or their PIN changes |
 | **D-52** | Owners manage staff and PINs in the app. When no owner can, the **admin tool on the server** creates an owner, resets a PIN, takes a backup, restores one, and checks the database |
 | **D-53** | **Backups** (answers the cloud-only choice): each night the server takes a verified snapshot to a local folder, then copies it to a cloud-synced folder when it can, retrying until it succeeds. The local snapshot is the step that makes cloud backup work during an internet outage |
+| **D-55** | **Quotes are their own small circuit** (`Quotes`), with the lifecycle above, rather than waiting for the general Requests system. They are data a later inbox can adopt. |
+| **D-56** | **Who moves a custom cake:** the baker starts baking, decorates and marks ready; the cashier hands over or sends it out; the owner can do any step. The Decorating stage is a shop setting the owner turns on (D-11), default off |
+| **D-57** | **Reference photos are stored in the database** (not loose files) so backups and restores always include them. Upload and fetch are plain HTTP calls with sign-in, 5 MB maximum, JPEG/PNG/WebP checked by content. Unattached pictures are deleted after a day |
+| **D-58** | **Custom cake details** use the blueprint set plus `allergyNotes` (what the customer told us, shown to the baker) and a free-text `sizeNote`. Q-04 may still change the set for recipe generation |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -544,7 +554,7 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Staff management (create, reset PIN, switch off) | Built | Last owner and own account protected |
 | Catalogue (products, option groups, combination grid, manual prices) | Built | No UI yet to *create* products or option groups |
 | Stock (set count, decrement at completion, committed vs on hand) | Partly built | No batches, daily count or closing review yet |
-| Orders (catalogue lines, derived status, snapshot prices) | Built | Custom cake lines not built |
+| Orders (catalogue lines, derived status, snapshot prices) | Built | Delivery details can be changed after the order is started |
 | Payments (cash default, partial exception, owner-only refunds) | Built | Q-01 handled as allow with warning (D-43) |
 | Shop server: HTTP API, WebSocket live feeds, static UI serving, optional HTTPS | Built | Tested end to end over real connections |
 | SQLite store: transactions, indexes, migrations | Built | Proven against a killed process (power-cut style) |
@@ -556,7 +566,8 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Outbox: queue for WhatsApp/SMS, print and other retried jobs | **Partly built** | Rows are written on every action but nothing consumes or prunes them. Open issue O-5 in [known-issues.md](known-issues.md) |
 | Reference UI (`apps/web`), standalone and against the server | Built | Includes Staff and My PIN screens |
 | Windows and macOS start-up files | Written, **untested** | Never run on those systems |
-| Custom cake lines, quote requests, reference photos | Not built | |
+| Custom cake lines, owner quotes, reference photos | Built | Details, photos (up to 6), quote request/answer/decline/withdraw/revise, role-based baking steps, owner-switched Decorating stage. Tested over the real server |
+| Baker's queue (`bake_queue`) | Built | Priced cakes by delivery date with urgency. Stages, capacity and the ingredient chain are still to come |
 | Production stages, ingredient usage chain, inventory beyond finished goods | Not built | |
 | Messages (requests, notes, announcements) and alerts | Not built | |
 | Delivery record | Not built | |
@@ -568,7 +579,7 @@ What exists in the repo today against this blueprint. Update this table whenever
 Known bugs and gaps found in review: [known-issues.md](known-issues.md).
 
 ### Next in order
-1. Custom cake orders with owner quotes (the core of the business).
+1. ~~Custom cake orders with owner quotes~~ (built; see the status table).
 2. Production queue and the ingredient usage chain.
 3. Messages and alerts.
 4. Counter day, delivery record, reports, receipts.

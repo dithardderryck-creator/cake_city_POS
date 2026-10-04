@@ -91,7 +91,7 @@ export async function startServer({ config, log, hasher }: StartOptions): Promis
     const maintain = () =>
       panel
         .maintain()
-        .then((r) => (r.sessionsPruned || r.requestsPruned) && log.info('Housekeeping', r))
+        .then((r) => (r.sessionsPruned || r.requestsPruned || r.photosPruned) && log.info('Housekeeping', r))
         .catch((err) => log.error('Housekeeping failed', errorFields(err)));
     void maintain();
     const timer = setInterval(maintain, 3_600_000);

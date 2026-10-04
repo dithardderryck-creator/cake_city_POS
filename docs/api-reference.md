@@ -173,6 +173,17 @@ Allowed: **owner, cashier**
 | `deliveryDate` | string | no | max length 10 |
 | `deliveryAddress` | string | no | max length 300 |
 
+#### `orders/set_delivery`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `fulfilment` | "pickup" \| "delivery" | no |  |
+| `deliveryDate` | string | no | max length 10 |
+| `deliveryAddress` | string | no | max length 300 |
+
 #### `orders/add_catalogue_line`
 
 Allowed: **owner, cashier**
@@ -194,13 +205,13 @@ Allowed: **owner, cashier**
 
 #### `orders/advance_line`
 
-Allowed: **owner, cashier**
+Allowed: **owner, cashier, baker**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
 | `lineId` | string | yes | min length 1, max length 64 |
-| `to` | "new" \| "ready" \| "out_for_delivery" \| "completed" \| "cancelled" | yes |  |
+| `to` | "draft" \| "awaiting_quote" \| "new" \| "in_production" \| "decorating" \| "ready" \| "out_for_delivery" \| "completed" \| "cancelled" | yes |  |
 
 #### `orders/cancel_order`
 
@@ -209,6 +220,112 @@ Allowed: **owner, cashier**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
+
+#### `orders/add_custom_line`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `spec` | object | yes |  |
+
+#### `orders/update_custom_line`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `lineId` | string | yes | min length 1, max length 64 |
+| `spec` | object | yes |  |
+
+#### `orders/attach_reference_photo`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `lineId` | string | yes | min length 1, max length 64 |
+| `photoId` | string | yes | min length 1, max length 64 |
+
+#### `orders/remove_reference_photo`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `lineId` | string | yes | min length 1, max length 64 |
+| `photoId` | string | yes | min length 1, max length 64 |
+
+### Quotes
+
+#### `quotes/request`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `lineId` | string | yes | min length 1, max length 64 |
+| `note` | string | no | max length 500 |
+
+#### `quotes/mark_seen`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `quoteId` | string | yes | min length 1, max length 64 |
+
+#### `quotes/provide`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `quoteId` | string | yes | min length 1, max length 64 |
+| `price` | number | yes | min 0, max 1000000000 |
+| `note` | string | no | max length 500 |
+
+#### `quotes/decline`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `quoteId` | string | yes | min length 1, max length 64 |
+| `reason` | string | yes | max length 500 |
+
+#### `quotes/withdraw`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `quoteId` | string | yes | min length 1, max length 64 |
+
+#### `quotes/revise`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `quoteId` | string | yes | min length 1, max length 64 |
+| `price` | number | yes | min 0, max 1000000000 |
+| `reason` | string | yes | max length 500 |
+
+### Settings
+
+#### `settings/update`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `decoratingStage` | boolean | no |  |
 
 ### Payments
 
@@ -292,6 +409,24 @@ Allowed: **owner, cashier**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
+
+#### `quote_inbox`
+
+Allowed: **owner, cashier**
+
+_No fields. Send an empty object `{}`._
+
+#### `bake_queue`
+
+Allowed: **owner, baker**
+
+_No fields. Send an empty object `{}`._
+
+#### `shop_settings`
+
+Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
 
 #### `audit_view`
 

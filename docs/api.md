@@ -105,6 +105,42 @@ function BakerQueue() {
 
 What `useRun` returns is the result described above, plus one more case your UI should handle: `error.code === "offline"` means the server could not be reached even after retrying. **Nothing was changed.** Show a plain message ("Cannot reach the shop server, check the wifi") and let them try again.
 
+## Custom cakes
+
+A custom cake is a line on an order (`kind: "custom"` in the `order_card` feed). The panel decides every step; your UI shows what the feeds offer.
+
+**The cashier's side**
+
+1. `orders/create_order` with a `deliveryDate` (a quote needs one), then `orders/add_custom_line` with the cake details. The line starts as a *draft* and shows "Not priced yet".
+2. Optionally add pictures (below), and fix details with `orders/update_custom_line`.
+3. `quotes/request` sends it to the owner. The line is *awaiting quote*. `canWithdrawQuote` is true until the owner answers, and `quotes/withdraw` takes it back to a draft so it can be edited.
+4. The owner answers with `quotes/provide` (a price, and an optional note) and the line becomes *new*. If the owner uses `quotes/decline` instead, the line goes back to a draft with the owner's reason in `quote.answer`, and the cashier can adjust it and ask again.
+5. Payment is refused until every custom cake on the order has a price (`canRecordPayment` says so, and the refusal explains it).
+
+**Reading it.** `order_card` lines have `cake` (the details), `quote` (status, price, the notes), and the flags `canEdit`, `canRequestQuote` (with `quoteBlockedReason` when it cannot), `canWithdrawQuote`, `canRemove` and `actions`. `quote_inbox` is the owner's list of requests waiting for a price, soonest delivery first, plus the last 20 answered. It updates live.
+
+**The baker's side.** The `bake_queue` feed lists priced cakes that are not yet handed over, soonest delivery first, each with `dueLabel` ("Today", "2 days late"), `urgency`, the cake details, pictures, allergy notes, and `actions` for that person. The baker sends `orders/advance_line` with `to` set to one of those actions: *new → in production → ready*. If the owner has switched on the Decorating stage (`settings/update`, read from `shop_settings`), it goes *in production → decorating → ready*. Handover (`ready → completed`, or out for delivery first) is the cashier's. The baker's feeds carry no prices or payments.
+
+**Changing things later.** `orders/set_delivery` changes the date, pickup or delivery, and address (the result warns when the baker has already started). `quotes/revise` lets the owner change a price until baking starts, with a reason, and warns about money already taken. The cashier can remove a cake until it is priced and paid; after that, or once baking starts, only the owner can (`canRemove` tells you).
+
+### Pictures
+
+Reference photos are binary, so they use two plain HTTP calls (the client library wraps both), not an instruction:
+
+| | |
+| --- | --- |
+| `POST /api/photos` | Body is the picture, `Content-Type: image/jpeg`, `image/png` or `image/webp`, with the usual `Authorization: Bearer ...`. Up to 5 MB. Returns `{ ok: true, photoId, mime, size }`. Owner and cashier only |
+| `GET /api/photos/{photoId}` | Returns the picture. Owner, cashier and baker only. Needs the `Authorization` header, so an `<img src>` cannot fetch it; use `client.photo(id)` and `URL.createObjectURL(blob)` |
+
+Then attach it with `orders/attach_reference_photo` (up to 6 per cake, each picture on one cake only) or remove it with `orders/remove_reference_photo`. The server checks the first bytes of the file, not its name or header, so a renamed document is refused. **Shrink phone photos in the browser first** (about 1600 pixels on the long side is plenty) and convert iPhone HEIC to JPEG; the server will not. A picture that is uploaded but never attached is deleted after a day.
+
+```ts
+const up = await client.uploadPhoto(file); // file is a File or Blob
+if (up.ok) await client.dispatch('orders/attach_reference_photo', { orderId, lineId, photoId: up.photoId });
+const shown = await client.photo(photoId);
+if (shown.ok) img.src = URL.createObjectURL(shown.blob);
+```
+
 ## Things that will bite you on a shop network
 
 - **Plain `http://` addresses are "insecure" to browsers.** On `http://192.168.x.x` a browser disables `crypto.subtle`, `crypto.randomUUID()` and **service workers** (so no installable-app offline shell). The client library avoids the first two. For the third, run the server with HTTPS (see the runbook), or accept that each device loads the app from the server when it opens (fine, because nothing works without the server anyway).
@@ -113,4 +149,4 @@ What `useRun` returns is the result described above, plus one more case your UI 
 
 ## Limits
 
-Request body 256 KB. WebSocket message 64 KB. 30 live feeds per connection. Sign-in 20 per minute per address. Orders list shows the latest 200, activity the latest 200.
+Request body 256 KB (pictures: 5 MB). WebSocket message 64 KB. 30 live feeds per connection. Sign-in 20 per minute per address. Orders list shows the latest 200, activity the latest 200.

@@ -38,6 +38,15 @@ The only checks are `npm test`, `npm run typecheck` and the generated-docs stale
 - GitHub Actions: install, typecheck, lint, test, `npm run docs:api` followed by a diff check, build, `npm run acceptance`. Linux required; Windows and macOS allowed to fail at first (the start-up files have never been run on them).
 - ESLint with typescript-eslint, `import-x/no-extraneous-dependencies` (this catches O-1 automatically) and `react-hooks`.
 
+### O-7. The reference UI has no custom cake screens
+`apps/web` was built before custom cakes. It still compiles and passes its tests, but it cannot create custom cakes, send or answer quotes, attach photos, or show the baker's queue. The server, the feeds and the client library all support them (see "Custom cakes" in `docs/api.md`). This is expected while the real UI is being built separately.
+
+### O-8. Dates and time zones
+Delivery dates are plain calendar dates, and "today", "tomorrow" and "late" in `bake_queue` are worked out in the **server computer's time zone**. If the server computer is set to the wrong time zone, those labels are off by a day near midnight. Check the computer's time zone when installing.
+
+### O-9. Custom cake details are not final (Q-04)
+The set of cake attributes follows the blueprint plus `allergyNotes` and `sizeNote`. The owner and baker still need to confirm what the recipe generator will need (blueprint Q-04). Changing the set later means a migration for cakes already stored; the stored `spec` is a single object, so adding optional fields is cheap but renaming or removing is not.
+
 ## Corrected claims
 
 - `docs/blueprint.md` said the client library was "tested through the reference UI against a real server". It was not. It is now tested directly (F-4), and the build-status table says so, and has a row for the outbox that points at O-5.

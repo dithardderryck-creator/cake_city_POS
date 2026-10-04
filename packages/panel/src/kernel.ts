@@ -1,4 +1,4 @@
-import type { AuditEntry, OutboxItem, PanelEvent, Session, Staff } from './domain';
+import type { AuditEntry, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
 import { feeds, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } from './feeds';
 import {
   DomainError,
@@ -13,13 +13,19 @@ import {
 } from './intents';
 import { authIntents } from './circuits/auth';
 import { catalogueIntents } from './circuits/catalogue';
+import { customIntents } from './circuits/custom';
 import { orderIntents } from './circuits/orders';
+import { MAX_PHOTO_BYTES, UNATTACHED_PHOTO_TTL_MS, sniffImage } from './circuits/photos';
+import { quoteIntents } from './circuits/quotes';
+import { settingsIntents } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
 import { staffIntents } from './circuits/staff';
 import { stockIntents } from './circuits/stock';
 import { syncIntents } from './circuits/sync';
 import { describeSchemaProblems, feedSchemas, schemas } from './schemas';
 import {
+  base64ToBytes,
+  bytesToBase64,
   createIds,
   createMemoryStore,
   createSecrets,
@@ -54,6 +60,13 @@ export interface PanelOptions {
   onError?: (err: unknown, info: { intent?: string; feed?: string }) => void;
 }
 
+export type PhotoUploadResult =
+  | { ok: true; photoId: string; mime: Photo['mime']; size: number }
+  | { ok: false; error: { code: 'unauthenticated' | 'forbidden' | 'invalid' | 'error'; messages: string[] } };
+export type PhotoReadResult =
+  | { ok: true; mime: Photo['mime']; bytes: Uint8Array }
+  | { ok: false; error: { code: 'unauthenticated' | 'forbidden' | 'invalid' | 'error'; messages: string[] } };
+
 export interface DispatchOptions {
   /** Send the same id when retrying. If it already succeeded, you get the same answer and nothing runs twice. */
   requestId?: string;
@@ -76,8 +89,15 @@ export interface Panel {
     listener: (r: FeedResult<FeedMap[K]['data']>) => void,
   ): () => void;
   onEvent(listener: (e: PanelEvent) => void): () => void;
-  /** Housekeeping: drop expired sessions and old request ids. Safe to call any time. */
-  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number }>;
+  /**
+   * Store a picture (jpeg, png or webp, up to 5 MB) for a custom cake. Returns an id to pass to
+   * `orders/attach_reference_photo`. Pictures that are never attached are removed after a day.
+   */
+  uploadPhoto(bytes: Uint8Array, token?: string): Promise<PhotoUploadResult>;
+  /** Read a stored picture. */
+  readPhoto(photoId: string, token?: string): Promise<PhotoReadResult>;
+  /** Housekeeping: drop expired sessions, old request ids and unused pictures. Safe to call any time. */
+  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number; photosPruned: number }>;
   /** Run something while no instruction or feed is running. Used for consistent backups. */
   exclusive<T>(fn: () => Promise<T>): Promise<T>;
 }
@@ -102,6 +122,9 @@ const registry = {
   ...catalogueIntents,
   ...stockIntents,
   ...orderIntents,
+  ...customIntents,
+  ...quoteIntents,
+  ...settingsIntents,
   ...paymentIntents,
   ...syncIntents,
 } as Registry;
@@ -385,6 +408,43 @@ export function createPanel(options: PanelOptions = {}): Panel {
 
   const feed: Panel['feed'] = (name, params, token) => serial(() => feedInner(name, params, token));
 
+  /* ---------- pictures (binary, so they do not travel as intents) ---------- */
+
+  const photoFail = (code: 'unauthenticated' | 'forbidden' | 'invalid' | 'error', message: string) => ({ ok: false as const, error: { code, messages: [message] } });
+  const PHOTO_WRITERS: Role[] = ['owner', 'cashier'];
+  const PHOTO_READERS: Role[] = ['owner', 'cashier', 'baker'];
+
+  async function uploadPhotoInner(bytes: Uint8Array, token: string | undefined): Promise<PhotoUploadResult> {
+    const session = await resolveSession(token);
+    if (!session) return photoFail('unauthenticated', 'Sign in with your PIN to continue.');
+    if (!PHOTO_WRITERS.includes(session.role)) return photoFail('forbidden', 'Your role cannot do this. Ask the owner.');
+    if (bytes.length === 0) return photoFail('invalid', 'That file is empty.');
+    if (bytes.length > MAX_PHOTO_BYTES) return photoFail('invalid', 'That picture is too big. Pictures can be up to 5 MB.');
+    const mime = sniffImage(bytes);
+    if (!mime) return photoFail('invalid', 'Use a JPEG, PNG or WebP picture.');
+    try {
+      const photo: Photo = { id: ids.next('pho'), mime, size: bytes.length, uploadedBy: session.userId, uploadedAt: now() };
+      await store.transaction(async () => {
+        await store.put<Photo>('photos', photo);
+        await store.put<PhotoData>('photoData', { id: photo.id, data: bytesToBase64(bytes) });
+        await writeAudit({ actorId: session.userId, actorName: session.name, role: session.role, intent: 'photos/upload', target: photo.id, summary: 'Uploaded a reference photo', outcome: 'ok' });
+      });
+      return { ok: true, photoId: photo.id, mime, size: bytes.length };
+    } catch (err) {
+      options.onError?.(err, { intent: 'photos/upload' });
+      return photoFail('error', 'Something went wrong. Nothing was saved, so it is safe to try again.');
+    }
+  }
+
+  async function readPhotoInner(photoId: string, token: string | undefined): Promise<PhotoReadResult> {
+    const session = await resolveSession(token);
+    if (!session) return photoFail('unauthenticated', 'Sign in with your PIN to continue.');
+    if (!PHOTO_READERS.includes(session.role)) return photoFail('forbidden', 'Your role cannot see this.');
+    const [meta, data] = await Promise.all([store.get<Photo>('photos', photoId), store.get<PhotoData>('photoData', photoId)]);
+    if (!meta || !data) return photoFail('invalid', 'That picture is no longer available.');
+    return { ok: true, mime: meta.mime, bytes: base64ToBytes(data.data) };
+  }
+
   const subscribe: Panel['subscribe'] = (name, params, token, listener) => {
     let alive = true;
     const run = () => {
@@ -404,6 +464,8 @@ export function createPanel(options: PanelOptions = {}): Panel {
     dispatch: (type, payload, token, opts = {}) => serial(() => dispatchInner(type, payload, token, opts)),
     feed,
     subscribe,
+    uploadPhoto: (bytes, token) => serial(() => uploadPhotoInner(bytes, token)),
+    readPhoto: (photoId, token) => serial(() => readPhotoInner(photoId, token)),
     onEvent: (l) => {
       eventListeners.add(l);
       return () => eventListeners.delete(l);
@@ -427,7 +489,15 @@ export function createPanel(options: PanelOptions = {}): Panel {
               requestsPruned++;
             }
           }
-          return { sessionsPruned, requestsPruned };
+          let photosPruned = 0;
+          for (const ph of await store.list<Photo>('photos')) {
+            if (!ph.attachedTo && nowMs - Date.parse(ph.uploadedAt) > UNATTACHED_PHOTO_TTL_MS) {
+              await store.delete('photos', ph.id);
+              await store.delete('photoData', ph.id);
+              photosPruned++;
+            }
+          }
+          return { sessionsPruned, requestsPruned, photosPruned };
         }),
       ),
   };

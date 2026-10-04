@@ -19,6 +19,10 @@ export const COLLECTIONS = [
   'sessions',
   'loginState',
   'requests',
+  'quotes',
+  'photos',
+  'photoData',
+  'settings',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
@@ -180,6 +184,22 @@ export function createMemoryStore(): Store {
     },
   };
   return store;
+}
+
+/* ---------- Bytes <-> base64 (works in browsers and Node) ---------- */
+
+export function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  return btoa(binary);
+}
+
+export function base64ToBytes(text: string): Uint8Array {
+  const binary = atob(text);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+  return out;
 }
 
 /* ---------- Ids, secrets, hashing (all work in browsers and in Node) ---------- */

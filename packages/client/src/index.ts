@@ -8,6 +8,12 @@ import type { DispatchResult, FeedMap, FeedName, FeedResult, IntentMap, IntentNa
 
 export type { DispatchResult, FeedMap, FeedName, FeedResult, IntentMap, IntentName, Role, StaffSigninRow };
 
+/** The error shape every call uses when the server answers with a refusal. */
+export interface ServerError {
+  ok: false;
+  error: { code: 'unauthenticated' | 'forbidden' | 'invalid' | 'error'; messages: string[] };
+}
+
 export interface SessionInfo {
   userId: string;
   name: string;
@@ -21,6 +27,8 @@ export interface OfflineError {
 }
 export type ClientResult = DispatchResult | OfflineError;
 export type ClientFeedResult<D> = FeedResult<D> | OfflineError;
+export type PhotoUpload = { ok: true; photoId: string; mime: string; size: number } | ServerError | OfflineError;
+export type PhotoDownload = { ok: true; blob: Blob; mime: string } | ServerError | OfflineError;
 
 /** Timing defaults. A tap on a stuck server gives up after about `deadlineMs`, not after the sum of every retry. */
 export const CLIENT_DEFAULTS = { retries: 2, timeoutMs: 8_000, deadlineMs: 15_000, signOutRetryMs: 20_000 } as const;
@@ -95,6 +103,13 @@ export interface Client {
    * `serverEnded` is false when it could not be reached (it keeps trying in the background).
    */
   signOut(): Promise<{ serverEnded: boolean }>;
+  /**
+   * Upload a reference picture (JPEG, PNG or WebP, up to 5 MB; shrink phone photos first).
+   * Pass the returned `photoId` to the `orders/attach_reference_photo` instruction.
+   */
+  uploadPhoto(data: Blob | ArrayBuffer | Uint8Array, mime?: string): Promise<PhotoUpload>;
+  /** Fetch a stored picture. Show it with `URL.createObjectURL(result.blob)`. */
+  photo(photoId: string): Promise<PhotoDownload>;
   dispatch<K extends IntentName>(type: K, payload: IntentMap[K]): Promise<ClientResult>;
   feed<K extends FeedName>(name: K, params: FeedMap[K]['params']): Promise<ClientFeedResult<FeedMap[K]['data']>>;
   /** Live data: called now, and again after every change anyone makes. Returns an unsubscribe function. */
@@ -142,27 +157,49 @@ export function createClient(options: ClientOptions = {}): Client {
     for (const l of signedOutListeners) l();
   };
 
-  async function post(path: string, body: unknown, authToken: string | null = token): Promise<{ status: number; json: unknown } | 'offline'> {
+  interface Limits {
+    timeoutMs: number;
+    deadlineMs: number;
+  }
+  const normalLimits: Limits = { timeoutMs, deadlineMs };
+
+  /** One call with retries inside an overall deadline. `read` turns the response into what the caller wants. */
+  async function send<T>(
+    path: string,
+    init: (authToken: string | null) => RequestInit,
+    read: (res: Response) => Promise<T>,
+    authToken: string | null = token,
+    limits: Limits = normalLimits,
+  ): Promise<{ status: number; value: T } | 'offline'> {
     const started = Date.now();
     for (let attempt = 0; ; attempt++) {
-      const left = deadlineMs - (Date.now() - started);
+      const left = limits.deadlineMs - (Date.now() - started);
       if (left <= 0) return 'offline';
       try {
-        const res = await f(base + path, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', ...(authToken ? { authorization: `Bearer ${authToken}` } : {}) },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(Math.min(timeoutMs, left)),
-        });
+        const res = await f(base + path, { ...init(authToken), signal: AbortSignal.timeout(Math.min(limits.timeoutMs, left)) });
         if ([502, 503, 504].includes(res.status) && attempt < retries) throw new Error('server busy');
-        return { status: res.status, json: await res.json().catch(() => null) };
+        return { status: res.status, value: await read(res) };
       } catch {
         if (attempt >= retries) return 'offline';
         const pause = 200 * 3 ** attempt;
-        if (deadlineMs - (Date.now() - started) <= pause) return 'offline';
+        if (limits.deadlineMs - (Date.now() - started) <= pause) return 'offline';
         await sleep(pause);
       }
     }
+  }
+
+  async function post(path: string, body: unknown, authToken: string | null = token): Promise<{ status: number; json: unknown } | 'offline'> {
+    const r = await send(
+      path,
+      (t) => ({
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) },
+        body: JSON.stringify(body),
+      }),
+      (res) => res.json().catch(() => null) as Promise<unknown>,
+      authToken,
+    );
+    return r === 'offline' ? r : { status: r.status, json: r.value };
   }
 
   const bad = (status: number): DispatchResult => ({
@@ -313,6 +350,41 @@ export function createClient(options: ClientOptions = {}): Client {
       if (await tryRevoke()) return { serverEnded: true };
       scheduleRevoke(old, tryRevoke);
       return { serverEnded: false };
+    },
+
+    async uploadPhoto(data, mime) {
+      const body = data instanceof Blob ? data : new Blob([data as BlobPart]);
+      const type = mime ?? (data instanceof Blob && data.type ? data.type : 'application/octet-stream');
+      // A picture is big, so give it more time than a tap, but still never hang forever.
+      const limits: Limits = { timeoutMs: Math.max(timeoutMs, 30_000), deadlineMs: Math.max(deadlineMs, 60_000) };
+      const r = await send(
+        '/api/photos',
+        (t) => ({ method: 'POST', headers: { 'content-type': type, ...(t ? { authorization: `Bearer ${t}` } : {}) } as Record<string, string>, body }),
+        (res) => res.json().catch(() => null) as Promise<PhotoUpload | null>,
+        token,
+        limits,
+      );
+      if (r === 'offline') return offlineResult();
+      if (r.status === 401) lostSignIn();
+      return r.value ?? { ok: false, error: { code: 'error', messages: ['The server gave an answer this app does not understand.'] } };
+    },
+
+    async photo(photoId) {
+      type Body = { kind: 'image'; blob: Blob; mime: string } | { kind: 'error'; error: ServerError | null };
+      const r = await send<Body>(
+        `/api/photos/${encodeURIComponent(photoId)}`,
+        (t) => ({ method: 'GET', headers: t ? ({ authorization: `Bearer ${t}` } as Record<string, string>) : ({} as Record<string, string>) }),
+        async (res) =>
+          res.ok
+            ? { kind: 'image', blob: await res.blob(), mime: res.headers.get('content-type') ?? 'application/octet-stream' }
+            : { kind: 'error', error: (await res.json().catch(() => null)) as ServerError | null },
+        token,
+        { timeoutMs: Math.max(timeoutMs, 20_000), deadlineMs: Math.max(deadlineMs, 30_000) },
+      );
+      if (r === 'offline') return offlineResult();
+      if (r.status === 401) lostSignIn();
+      if (r.value.kind === 'image') return { ok: true, blob: r.value.blob, mime: r.value.mime };
+      return r.value.error ?? { ok: false, error: { code: 'error', messages: ['The server gave an answer this app does not understand.'] } };
     },
 
     async dispatch(type, payload) {

@@ -2,7 +2,9 @@ export * from './domain';
 export * from './intents';
 export { createPanel, INTENT_NAMES, describeIntents, describeFeeds } from './kernel';
 export { renderApiReference } from './api-reference';
-export type { Panel, PanelOptions, FeedResult, DispatchOptions } from './kernel';
+export type { Panel, PanelOptions, FeedResult, DispatchOptions, PhotoUploadResult, PhotoReadResult } from './kernel';
+export { MAX_PHOTO_BYTES, sniffImage } from './circuits/photos';
+export { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 export type * from './feeds';
 export { schemas, feedSchemas } from './schemas';
 export {
@@ -13,6 +15,8 @@ export {
   sha256Hex,
   hashPin,
   systemClock,
+  bytesToBase64,
+  base64ToBytes,
   applyFindOptions,
   matchesWhere,
   COLLECTIONS,

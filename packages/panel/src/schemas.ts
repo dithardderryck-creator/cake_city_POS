@@ -12,9 +12,20 @@ const money = z.number().finite().min(0).max(1_000_000_000);
 const name = z.string().max(120);
 const longText = z.string().max(500);
 const method = z.enum(['cash', 'card', 'bank_transfer', 'mobile_money']);
-const lineStatus = z.enum(['new', 'ready', 'out_for_delivery', 'completed', 'cancelled']);
+const lineStatus = z.enum(['draft', 'awaiting_quote', 'new', 'in_production', 'decorating', 'ready', 'out_for_delivery', 'completed', 'cancelled']);
 const role = z.enum(['owner', 'cashier', 'baker', 'inventory', 'it']);
 const empty = z.strictObject({});
+const cakeSpec = z.strictObject({
+  servings: z.number().int().min(1).max(500),
+  sizeNote: z.string().max(80).optional(),
+  flavor: z.string().min(1).max(80),
+  filling: z.string().max(80).optional(),
+  layers: z.number().int().min(1).max(10).optional(),
+  dietary: z.array(z.string().max(40)).max(8).optional(),
+  decorationNotes: z.string().max(1000).optional(),
+  inscription: z.string().max(120).optional(),
+  allergyNotes: z.string().max(300).optional(),
+});
 
 export const schemas = {
   'auth/sign_in': z.strictObject({ userId: id, pin }),
@@ -52,10 +63,29 @@ export const schemas = {
     deliveryDate: z.string().max(10).optional(),
     deliveryAddress: z.string().max(300).optional(),
   }),
+  'orders/set_delivery': z.strictObject({
+    orderId: id,
+    fulfilment: z.enum(['pickup', 'delivery']).optional(),
+    deliveryDate: z.string().max(10).optional(),
+    deliveryAddress: z.string().max(300).optional(),
+  }),
   'orders/add_catalogue_line': z.strictObject({ orderId: id, combinationId: id, qty: z.number().int().min(1).max(10_000) }),
+  'orders/add_custom_line': z.strictObject({ orderId: id, spec: cakeSpec }),
+  'orders/update_custom_line': z.strictObject({ orderId: id, lineId: id, spec: cakeSpec }),
+  'orders/attach_reference_photo': z.strictObject({ orderId: id, lineId: id, photoId: id }),
+  'orders/remove_reference_photo': z.strictObject({ orderId: id, lineId: id, photoId: id }),
   'orders/cancel_line': z.strictObject({ orderId: id, lineId: id }),
   'orders/advance_line': z.strictObject({ orderId: id, lineId: id, to: lineStatus }),
   'orders/cancel_order': z.strictObject({ orderId: id }),
+
+  'quotes/request': z.strictObject({ orderId: id, lineId: id, note: longText.optional() }),
+  'quotes/mark_seen': z.strictObject({ quoteId: id }),
+  'quotes/provide': z.strictObject({ quoteId: id, price: z.number().finite().min(0).max(1_000_000_000), note: longText.optional() }),
+  'quotes/decline': z.strictObject({ quoteId: id, reason: longText }),
+  'quotes/withdraw': z.strictObject({ quoteId: id }),
+  'quotes/revise': z.strictObject({ quoteId: id, price: z.number().finite().min(0).max(1_000_000_000), reason: longText }),
+
+  'settings/update': z.strictObject({ decoratingStage: z.boolean().optional() }),
 
   'payments/record_payment': z.strictObject({
     orderId: id,
@@ -87,6 +117,9 @@ export const feedSchemas = {
   catalogue_grid: z.strictObject({ includeArchived: z.boolean().optional() }),
   order_list: empty,
   order_card: z.strictObject({ orderId: id }),
+  quote_inbox: empty,
+  bake_queue: empty,
+  shop_settings: empty,
   audit_view: empty,
   panel_map: empty,
 } as const;

@@ -3,7 +3,7 @@ import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
-import type { DispatchResult, FeedName, FeedResult, IntentName, Panel } from '@cake-pos/panel';
+import { MAX_PHOTO_BYTES, type DispatchResult, type FeedName, type FeedResult, type IntentName, type Panel } from '@cake-pos/panel';
 import type { ServerConfig } from './config';
 import { errorFields, type Logger } from './log';
 
@@ -112,6 +112,20 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
     }
   }
 
+  /** The raw bytes of an upload, refusing anything over the limit before it is all read. */
+  async function readBytes(req: http.IncomingMessage, limit: number): Promise<Uint8Array> {
+    const declared = Number(req.headers['content-length']);
+    if (Number.isFinite(declared) && declared > limit) throw new HttpError(413, 'invalid', 'That picture is too big. Pictures can be up to 5 MB.');
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of req) {
+      size += (chunk as Buffer).length;
+      if (size > limit) throw new HttpError(413, 'invalid', 'That picture is too big. Pictures can be up to 5 MB.');
+      chunks.push(chunk as Buffer);
+    }
+    return new Uint8Array(Buffer.concat(chunks));
+  }
+
   const bearer = (req: http.IncomingMessage) => {
     const m = /^Bearer\s+(\S{20,200})$/.exec(req.headers.authorization ?? '');
     return m?.[1];
@@ -180,6 +194,35 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
       const r = await panel.feed('staff_signin', {});
       sendJson(req, res, r.ok ? 200 : statusFor(r.error.code), r);
       return {};
+    }
+
+    if (req.method === 'GET' && p.startsWith('/api/photos/')) {
+      const id = decodeURIComponent(p.slice('/api/photos/'.length));
+      const r = await panel.readPhoto(id.slice(0, 64), bearer(req));
+      if (!r.ok) {
+        sendJson(req, res, r.error.code === 'invalid' ? 404 : statusFor(r.error.code), r);
+        return {};
+      }
+      // Pictures never change once stored, so the browser may keep them. They are still private to signed-in staff.
+      res.writeHead(200, {
+        ...baseHeaders(req, true),
+        'Cache-Control': 'private, max-age=86400',
+        'Content-Type': r.mime,
+        'Content-Length': r.bytes.length,
+        'Content-Security-Policy': "default-src 'none'; sandbox",
+      });
+      res.end(Buffer.from(r.bytes));
+      return { note: 'photo' };
+    }
+
+    if (req.method === 'POST' && p === '/api/photos') {
+      const type = req.headers['content-type'] ?? '';
+      if (!/^(image\/(jpeg|png|webp)|application\/octet-stream)\b/i.test(type))
+        throw new HttpError(415, 'invalid', 'Send the picture as image/jpeg, image/png or image/webp.');
+      const bytes = await readBytes(req, MAX_PHOTO_BYTES);
+      const r = await panel.uploadPhoto(bytes, bearer(req));
+      sendJson(req, res, r.ok ? 200 : statusFor(r.error.code), r);
+      return { note: r.ok ? 'photo upload' : `photo upload -> ${r.error.code}` };
     }
 
     if (req.method !== 'POST') throw new HttpError(405, 'invalid', 'Use POST for this address.');

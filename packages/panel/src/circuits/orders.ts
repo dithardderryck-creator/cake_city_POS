@@ -11,7 +11,10 @@ import type {
   StockMovement,
 } from '../domain';
 import { DomainError, type HandlerCtx, type Registry } from '../intents';
-import { canAdvance, moneySummary, deriveOrderStatus, activeLines } from './order-logic';
+import { isIsoDate, todayLocal } from './dates';
+import { canAdvance, canRemoveLine, moneySummary, deriveOrderStatus, activeLines, isCustom } from './order-logic';
+import { closeOpenQuote } from './quote-util';
+import { loadSettings } from './settings';
 
 export async function loadOrderBundle(ctx: Pick<HandlerCtx, 'store'>, orderId: string) {
   const order = await ctx.store.get<Order>('orders', orderId);
@@ -37,16 +40,21 @@ async function nextOrderNumber(ctx: HandlerCtx) {
   return `${ctx.config.devicePrefix}-${String(counter.value).padStart(4, '0')}`;
 }
 
-const isIsoDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+function dateProblems(date: string | undefined, ctx: Pick<HandlerCtx, 'clock'>): string[] {
+  if (!date) return [];
+  if (!isIsoDate(date)) return ['Choose a valid delivery date.'];
+  if (date < todayLocal(ctx.clock.now())) return ['Choose today or a later date.'];
+  return [];
+}
 
 export const orderIntents = {
   'orders/create_order': {
     circuit: 'Orders',
     roles: ['owner', 'cashier'],
-    validate: (p) => {
+    validate: (p, ctx) => {
       const errors: string[] = [];
       if (p.fulfilment === 'delivery' && !p.deliveryAddress?.trim()) errors.push('Add a delivery address.');
-      if (p.deliveryDate && !isIsoDate(p.deliveryDate)) errors.push('Choose a valid delivery date.');
+      errors.push(...dateProblems(p.deliveryDate, ctx));
       return errors;
     },
     handle: async (p, ctx) => {
@@ -68,6 +76,44 @@ export const orderIntents = {
         target: order.id,
         data: { orderId: order.id, number: order.number },
         events: [{ type: 'OrderCreated', payload: { orderId: order.id } }],
+      };
+    },
+  },
+
+  'orders/set_delivery': {
+    circuit: 'Orders',
+    roles: ['owner', 'cashier'],
+    validate: async (p, ctx) => {
+      const { order, lines } = await loadOrderBundle(ctx, p.orderId);
+      const status = deriveOrderStatus(lines);
+      if (status === 'completed' || status === 'cancelled') return [`Order ${order.number} is ${status}.`];
+      if (p.deliveryDate === undefined && p.fulfilment === undefined && p.deliveryAddress === undefined) return ['Choose what to change.'];
+      const errors = dateProblems(p.deliveryDate, ctx);
+      const fulfilment = p.fulfilment ?? order.fulfilment;
+      const address = p.deliveryAddress !== undefined ? p.deliveryAddress.trim() : order.deliveryAddress;
+      if (fulfilment === 'delivery' && !address) errors.push('Add a delivery address.');
+      if (fulfilment === 'pickup' && lines.some((l) => l.status === 'out_for_delivery'))
+        errors.push('Something is already out for delivery, so this order cannot become a pickup.');
+      return errors;
+    },
+    handle: async (p, ctx) => {
+      const { order, lines } = await loadOrderBundle(ctx, p.orderId);
+      const fulfilment = p.fulfilment ?? order.fulfilment;
+      const next: Order = {
+        ...order,
+        fulfilment,
+        deliveryDate: p.deliveryDate ?? order.deliveryDate,
+        deliveryAddress: fulfilment === 'delivery' ? (p.deliveryAddress !== undefined ? p.deliveryAddress.trim() : order.deliveryAddress) : undefined,
+      };
+      await ctx.store.put('orders', next);
+      const warnings: string[] = [];
+      if (p.deliveryDate && p.deliveryDate !== order.deliveryDate && lines.some((l) => isCustom(l) && (l.status === 'in_production' || l.status === 'decorating' || l.status === 'ready')))
+        warnings.push('The baker has already started a cake on this order. Tell them about the new date.');
+      return {
+        summary: `Changed delivery details on order ${order.number}`,
+        target: order.id,
+        warnings,
+        events: [{ type: 'DeliveryChanged', payload: { orderId: order.id } }],
       };
     },
   },
@@ -144,27 +190,36 @@ export const orderIntents = {
       const { lines, payments } = await loadOrderBundle(ctx, p.orderId);
       const line = lines.find((l) => l.id === p.lineId);
       if (!line) return ['That item is not on the order.'];
-      if (line.status !== 'new') return ['Only items that have not been prepared can be removed.'];
-      if (payments.length > 0 && ctx.session?.role !== 'owner')
-        return ['This order has payments. Ask the owner to change it.'];
+      if (line.status === 'cancelled') return ['That item is already removed.'];
+      if (line.status === 'completed') return ['That item has already been handed over.'];
+      if (!canRemoveLine(line, ctx.session!.role, payments.length > 0)) {
+        if (line.type === 'custom' && line.status !== 'new' && line.status !== 'draft' && line.status !== 'awaiting_quote')
+          return ['This cake is already being made. Ask the owner to cancel it.'];
+        if (payments.length > 0) return ['This order has payments. Ask the owner to change it.'];
+        return ['Only items that have not been prepared can be removed.'];
+      }
       return [];
     },
     handle: async (p, ctx) => {
       const { lines } = await loadOrderBundle(ctx, p.orderId);
       const line = lines.find((l) => l.id === p.lineId)!;
       await ctx.store.put('orderLines', { ...line, status: 'cancelled' as const });
+      if (line.type === 'custom') await closeOpenQuote(ctx, line.id, 'The cake was removed from the order');
       return { summary: `Removed ${line.snapshot.productName}`, target: line.id };
     },
   },
 
   'orders/advance_line': {
     circuit: 'Orders',
-    roles: ['owner', 'cashier'],
+    roles: ['owner', 'cashier', 'baker'],
     validate: async (p, ctx) => {
       const { order, lines } = await loadOrderBundle(ctx, p.orderId);
       const line = lines.find((l) => l.id === p.lineId);
       if (!line) return ['That item is not on the order.'];
-      return canAdvance(order, line, p.to) ? [] : ['That step is not available for this item right now.'];
+      const settings = await loadSettings(ctx.store);
+      return canAdvance(order, line, p.to, ctx.session!.role, settings)
+        ? []
+        : ['That step is not available for this item right now, or not for your role.'];
     },
     handle: async (p, ctx) => {
       const bundle = await loadOrderBundle(ctx, p.orderId);
@@ -175,9 +230,15 @@ export const orderIntents = {
         { type: 'StatusChanged', payload: { orderId: p.orderId, lineId: line.id, to: p.to } },
       ];
 
+      if (line.type === 'custom' && p.to === 'in_production') {
+        const money = moneySummary(bundle.lines, bundle.payments, bundle.refunds);
+        if (money.paid <= 0) warnings.push(`Nothing has been paid on order ${bundle.order.number} yet.`);
+      }
+
       if (p.to === 'completed') {
         // BR-03: stock drops only now. A shortfall is allowed but recorded, never silently lost.
-        const combo = await ctx.store.get<Combination>('combinations', line.combinationId);
+        // Custom cakes use ingredients, not counter stock; their usage is handled by the production circuits later.
+        const combo = line.combinationId ? await ctx.store.get<Combination>('combinations', line.combinationId) : undefined;
         if (combo) {
           const taken = Math.min(combo.stockCount, line.qty);
           const shortfall = line.qty - taken;
@@ -220,6 +281,8 @@ export const orderIntents = {
       }
 
       const verb: Record<string, string> = {
+        in_production: 'Started baking',
+        decorating: 'Started decorating',
         ready: 'Marked ready',
         out_for_delivery: 'Sent out for delivery',
         completed: bundle.order.fulfilment === 'delivery' ? 'Delivered' : 'Handed over',
@@ -241,6 +304,8 @@ export const orderIntents = {
       const status = deriveOrderStatus(lines);
       if (status === 'cancelled') return [`Order ${order.number} is already cancelled.`];
       if (lines.some((l) => l.status === 'completed')) return ['Some items were already handed over, so the order cannot be cancelled.'];
+      if (ctx.session?.role !== 'owner' && lines.some((l) => isCustom(l) && ['in_production', 'decorating', 'ready', 'out_for_delivery'].includes(l.status)))
+        return ['A cake on this order is already being made. Only the owner can cancel it.'];
       const money = moneySummary(lines, payments, refunds);
       if (money.net > 0 && ctx.session?.role !== 'owner')
         return ['This order has been paid. Only the owner can cancel it and decide on a refund.'];
@@ -248,7 +313,10 @@ export const orderIntents = {
     },
     handle: async (p, ctx) => {
       const { order, lines } = await loadOrderBundle(ctx, p.orderId);
-      for (const l of activeLines(lines)) await ctx.store.put('orderLines', { ...l, status: 'cancelled' as const });
+      for (const l of activeLines(lines)) {
+        await ctx.store.put('orderLines', { ...l, status: 'cancelled' as const });
+        if (l.type === 'custom') await closeOpenQuote(ctx, l.id, 'The order was cancelled');
+      }
       return {
         summary: `Cancelled order ${order.number}`,
         target: order.id,

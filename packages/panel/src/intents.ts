@@ -1,4 +1,4 @@
-import type { Id, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, Session } from './domain';
+import type { CakeSpecInput, Id, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
 /**
@@ -33,10 +33,24 @@ export interface IntentMap {
     deliveryDate?: string;
     deliveryAddress?: string;
   };
+  'orders/set_delivery': { orderId: Id; fulfilment?: 'pickup' | 'delivery'; deliveryDate?: string; deliveryAddress?: string };
   'orders/add_catalogue_line': { orderId: Id; combinationId: Id; qty: number };
+  'orders/add_custom_line': { orderId: Id; spec: CakeSpecInput };
+  'orders/update_custom_line': { orderId: Id; lineId: Id; spec: CakeSpecInput };
+  'orders/attach_reference_photo': { orderId: Id; lineId: Id; photoId: Id };
+  'orders/remove_reference_photo': { orderId: Id; lineId: Id; photoId: Id };
   'orders/cancel_line': { orderId: Id; lineId: Id };
   'orders/advance_line': { orderId: Id; lineId: Id; to: LineStatus };
   'orders/cancel_order': { orderId: Id };
+
+  'quotes/request': { orderId: Id; lineId: Id; note?: string };
+  'quotes/mark_seen': { quoteId: Id };
+  'quotes/provide': { quoteId: Id; price: number; note?: string };
+  'quotes/decline': { quoteId: Id; reason: string };
+  'quotes/withdraw': { quoteId: Id };
+  'quotes/revise': { quoteId: Id; price: number; reason: string };
+
+  'settings/update': { decoratingStage?: boolean };
 
   'payments/record_payment': {
     orderId: Id;
@@ -51,7 +65,7 @@ export interface IntentMap {
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Payments' | 'Sync';
+export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Payments' | 'Sync';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [

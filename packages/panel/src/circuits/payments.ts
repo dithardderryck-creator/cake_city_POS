@@ -12,6 +12,7 @@ export const paymentIntents = {
       const { order, lines, payments, refunds } = await loadOrderBundle(ctx, p.orderId);
       if (deriveOrderStatus(lines) === 'cancelled') return [`Order ${order.number} is cancelled.`];
       const money = moneySummary(lines, payments, refunds);
+      if (money.quotePending) return ['A custom cake on this order has no price yet. Wait for the owner\'s quote, or remove the cake, before taking payment.'];
       if (money.total <= 0) return ['Add items to the order before taking a payment.'];
       const amount = round2(p.amount);
       if (amount > money.balance + 0.005)

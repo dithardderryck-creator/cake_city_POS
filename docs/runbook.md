@@ -80,7 +80,9 @@ If a night's backup fails, it retries after 30 minutes. IT sees "last backup fai
 
 **Cloud copy:** set `CLOUD_BACKUP_DIR` to a folder that OneDrive, iCloud Drive, Dropbox or Google Drive is already syncing. That app does the uploading whenever the internet is available. Only the newest `BACKUP_KEEP` files are kept there.
 
-> **Backups contain every sale, customer name and payment. Protect that cloud account** with a strong password and two-step sign-in.
+**Pictures are inside the backup.** Reference photos for custom cakes are stored in the database, so every backup and restore includes them, and they grow the file. At 5 MB maximum and a typical 300 KB to 1 MB each, a busy shop can add a few hundred megabytes a year. Check the database size on the Panel map now and then.
+
+> **Backups contain every sale, customer name, payment and customer photo. Protect that cloud account** with a strong password and two-step sign-in.
 
 A backup is taken on demand with: `npm run admin -- backup`
 

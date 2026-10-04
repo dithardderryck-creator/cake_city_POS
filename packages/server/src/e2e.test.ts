@@ -532,3 +532,116 @@ describe('operating the server', () => {
     expect(JSON.parse(body).ok).toBe(true);
   });
 });
+
+/* ---------- custom cakes over the real network ---------- */
+
+describe('custom cakes through the real server', () => {
+  const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 7, 7, 7, 7]);
+  const tomorrow = () => {
+    const d = new Date(Date.now() + 5 * 86_400_000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  it('takes a cake order with a photo, gets it quoted, and lets the baker see and bake it', async () => {
+    const { server } = await boot();
+    const { client: cashier } = await login(server, 'cashier');
+    const { client: owner } = await login(server, 'owner');
+    const { client: baker } = await login(server, 'baker');
+
+    const made = await cashier.dispatch('orders/create_order', { source: 'phone', fulfilment: 'pickup', customerName: 'Zawadi', deliveryDate: tomorrow() });
+    const { orderId } = (made.ok ? made.data : {}) as { orderId: string };
+    const line = await cashier.dispatch('orders/add_custom_line', { orderId, spec: { servings: 20, flavor: 'Vanilla', layers: 3, inscription: 'Congratulations' } });
+    const { lineId } = (line.ok ? line.data : {}) as { lineId: string };
+
+    const up = await cashier.uploadPhoto(PNG, 'image/png');
+    expect(up.ok).toBe(true);
+    const photoId = up.ok ? up.photoId : '';
+    expect((await cashier.dispatch('orders/attach_reference_photo', { orderId, lineId, photoId })).ok).toBe(true);
+
+    // The owner's inbox updates live when the cashier asks for a price.
+    let open = -1;
+    owner.subscribe('quote_inbox', {}, (r) => r.ok && (open = r.data.open.length));
+    await waitFor(() => open === 0);
+    const asked = await cashier.dispatch('quotes/request', { orderId, lineId, note: 'Wants gold leaf' });
+    expect(asked.ok).toBe(true);
+    await waitFor(() => open === 1);
+    const inbox = await owner.feed('quote_inbox', {});
+    const quoteId = inbox.ok ? inbox.data.open[0]!.quoteId : '';
+    expect(inbox.ok && inbox.data.open[0]!.cake.photoIds).toEqual([photoId]);
+
+    expect((await cashier.dispatch('quotes/provide', { quoteId, price: 200 })).ok).toBe(false); // not the cashier's call
+    expect((await owner.dispatch('quotes/provide', { quoteId, price: 200, note: 'Gold leaf included' })).ok).toBe(true);
+    await waitFor(() => open === 0);
+
+    // The baker sees the cake and the reference picture, but not the money.
+    let queue = 0;
+    baker.subscribe('bake_queue', {}, (r) => r.ok && (queue = r.data.rows.length));
+    await waitFor(() => queue === 1);
+    const pic = await baker.photo(photoId);
+    expect(pic.ok && pic.mime).toBe('image/png');
+    expect(pic.ok && Array.from(new Uint8Array(await pic.blob.arrayBuffer()))).toEqual(Array.from(PNG));
+    const card = await baker.feed('order_card', { orderId });
+    expect(!card.ok && card.error.code).toBe('forbidden');
+
+    expect((await baker.dispatch('orders/advance_line', { orderId, lineId, to: 'in_production' })).ok).toBe(true);
+    expect((await baker.dispatch('orders/advance_line', { orderId, lineId, to: 'ready' })).ok).toBe(true);
+    expect((await cashier.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 200 })).ok).toBe(true);
+    expect((await cashier.dispatch('orders/advance_line', { orderId, lineId, to: 'completed' })).ok).toBe(true);
+  });
+
+  it('keeps pictures safe: signed-in staff only, real pictures only, size limited, kept across a restart', async () => {
+    const first = await boot();
+    const { client: cashier } = await login(first.server, 'cashier');
+    const { client: inventory } = await login(first.server, 'inventory');
+    const url = first.server.url;
+
+    const up = await cashier.uploadPhoto(PNG, 'image/png');
+    const photoId = up.ok ? up.photoId : '';
+    expect(photoId).toBeTruthy();
+
+    // No sign-in, no picture, whether uploading or looking.
+    expect((await call(`${url}/api/photos/${photoId}`)).status).toBe(401);
+    const anon = await call(`${url}/api/photos`, { method: 'POST', headers: { 'content-type': 'image/png' }, body: PNG });
+    expect(anon.status).toBe(401);
+    // Inventory staff have no reason to see customer pictures.
+    const denied = await inventory.photo(photoId);
+    expect(!denied.ok && denied.error.code).toBe('forbidden');
+    expect((await inventory.uploadPhoto(PNG, 'image/png')).ok).toBe(false);
+
+    // Text pretending to be a picture is refused, whatever it is called.
+    const fake = await cashier.uploadPhoto(new TextEncoder().encode('<html>not a picture</html>'), 'image/png');
+    expect(!fake.ok && fake.error.messages[0]).toMatch(/JPEG, PNG or WebP/);
+    // Too big: refused up front from the declared size.
+    const big = new Uint8Array(5 * 1024 * 1024 + 10);
+    big.set(PNG);
+    const tooBig = await cashier.uploadPhoto(big, 'image/png');
+    expect(!tooBig.ok && tooBig.error.messages[0]).toMatch(/too big/);
+
+    // Pictures live in the database, so they survive a restart.
+    await first.server.close();
+    const second = await boot({ dataDir: first.dataDir });
+    const { client: owner } = await login(second.server, 'owner');
+    const again = await owner.photo(photoId);
+    expect(again.ok && again.mime).toBe('image/png');
+  }, 20_000);
+
+  it('rejects a wrong content type for an upload with a clear answer', async () => {
+    const { server } = await boot();
+    const c = clientFor(server);
+    const who = (await c.staff()).find((s) => s.role === 'cashier')!;
+    const r = await call(server.url + '/api/sign-in', { method: 'POST', headers: json, body: JSON.stringify({ userId: who.id, pin: PINS.cashier }) });
+    const { token } = (await r.json()) as { token: string };
+    const bad = await call(server.url + '/api/photos', { method: 'POST', headers: { 'content-type': 'text/html', authorization: `Bearer ${token}` }, body: '<b>x</b>' });
+    expect(bad.status).toBe(415);
+    const ok = await call(server.url + '/api/photos', { method: 'POST', headers: { 'content-type': 'image/png', authorization: `Bearer ${token}` }, body: PNG });
+    expect(ok.status).toBe(200);
+    const { photoId } = (await ok.json()) as { photoId: string };
+    const got = await call(`${server.url}/api/photos/${photoId}`, { headers: { authorization: `Bearer ${token}` } });
+    expect(got.status).toBe(200);
+    expect(got.headers.get('content-type')).toBe('image/png');
+    expect(got.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(got.headers.get('content-security-policy')).toMatch(/sandbox/);
+    const missing = await call(`${server.url}/api/photos/pho_doesnotexist`, { headers: { authorization: `Bearer ${token}` } });
+    expect(missing.status).toBe(404);
+  });
+});

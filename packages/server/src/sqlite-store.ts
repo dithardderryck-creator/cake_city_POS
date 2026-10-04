@@ -17,6 +17,8 @@ export const INDEXES: Partial<Record<CollectionName, string[]>> = {
   outbox: ['status', 'createdAt'],
   sessions: ['userId'],
   requests: ['at'],
+  quotes: ['status', 'orderId'],
+  photos: ['attachedTo'],
 };
 
 /**

@@ -5,7 +5,20 @@
 export type Id = string;
 export type Role = 'owner' | 'cashier' | 'baker' | 'inventory' | 'it';
 export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'mobile_money';
-export type LineStatus = 'new' | 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
+/**
+ * Where one line of an order is. Catalogue lines use new, ready, out_for_delivery, completed, cancelled.
+ * Custom cake lines also use draft, awaiting_quote, in_production and decorating (blueprint 5.1).
+ */
+export type LineStatus =
+  | 'draft'
+  | 'awaiting_quote'
+  | 'new'
+  | 'in_production'
+  | 'decorating'
+  | 'ready'
+  | 'out_for_delivery'
+  | 'completed'
+  | 'cancelled';
 export type OrderStatus = LineStatus | 'empty';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
 
@@ -81,14 +94,105 @@ export interface LineSnapshot {
   allergens: string[];
 }
 
+/** What a customer asked for in a one-off cake. Attributes are the set in blueprint 4.4 (Q-04 may refine them). */
+export interface CakeSpec {
+  /** How many people it should serve. */
+  servings: number;
+  /** Optional wording for the size, such as "8 inch round". */
+  sizeNote?: string;
+  flavor: string;
+  filling?: string;
+  layers: number;
+  /** For example eggless, gluten-free, sugar-free. */
+  dietary: string[];
+  decorationNotes?: string;
+  /** Text to pipe on the cake. */
+  inscription?: string;
+  /** Allergies the customer mentioned. Shown to the baker. */
+  allergyNotes?: string;
+  /** Photos of the customer's idea. See the photos collection. */
+  photoIds: Id[];
+}
+
+/** The fields a person types. The panel fills in photoIds itself. */
+export type CakeSpecInput = Omit<CakeSpec, 'photoIds' | 'layers' | 'dietary'> & { layers?: number; dietary?: string[] };
+
+export interface CustomLineData {
+  spec: CakeSpec;
+  /** The latest quote request for this line. Older ones stay in the quotes collection. */
+  quoteId?: Id;
+  quotedBy?: Id;
+  quotedAt?: string;
+}
+
 export interface OrderLine {
   id: Id;
   orderId: Id;
-  type: 'catalogue';
-  combinationId: Id;
+  type: 'catalogue' | 'custom';
+  /** Catalogue lines only. */
+  combinationId?: Id;
+  /** Always 1 for a custom cake. */
   qty: number;
   snapshot: LineSnapshot;
   status: LineStatus;
+  /** Custom cake lines only. */
+  custom?: CustomLineData;
+}
+
+export type QuoteStatus = 'sent' | 'seen' | 'quoted' | 'declined' | 'withdrawn';
+
+export interface QuoteEvent {
+  at: string;
+  by: Id;
+  byName: string;
+  event: 'sent' | 'seen' | 'quoted' | 'declined' | 'withdrawn' | 'revised';
+  note?: string;
+  price?: number;
+}
+
+/**
+ * A request to the owner to price one custom cake (BR-05). Follows the request lifecycle in
+ * blueprint 5.4: sent, seen, then closed by the owner's answer or by the sender withdrawing it.
+ */
+export interface Quote {
+  id: Id;
+  orderId: Id;
+  lineId: Id;
+  status: QuoteStatus;
+  requestedBy: Id;
+  requestedByName: string;
+  requestedAt: string;
+  note?: string;
+  price?: number;
+  /** The owner's note with a quote, or the reason for declining. */
+  answer?: string;
+  resolvedAt?: string;
+  timeline: QuoteEvent[];
+}
+
+/** Stored metadata for an uploaded picture. The bytes live in photoData. */
+export interface Photo {
+  id: Id;
+  mime: 'image/jpeg' | 'image/png' | 'image/webp';
+  size: number;
+  uploadedBy: Id;
+  uploadedAt: string;
+  /** Set when the photo is attached to a custom cake line. Unattached photos are cleaned up after a day. */
+  attachedTo?: Id;
+  orderId?: Id;
+}
+
+export interface PhotoData {
+  id: Id;
+  /** Base64 of the image bytes. Stored in the database so backups include it. */
+  data: string;
+}
+
+/** Shop-wide switches the owner controls. One record, id "shop". */
+export interface ShopSettings {
+  id: 'shop';
+  /** Custom cakes pass through a Decorating stage between In production and Ready (D-11). */
+  decoratingStage: boolean;
 }
 
 export interface Payment {

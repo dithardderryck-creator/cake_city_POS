@@ -1,5 +1,8 @@
 import type {
   AuditEntry,
+  CakeSpec,
+  Quote,
+  QuoteStatus,
   Combination,
   Order,
   OrderLine,
@@ -15,6 +18,9 @@ import type {
   Session,
   Staff,
 } from './domain';
+import { daysBetween, todayLocal } from './circuits/dates';
+import { loadSettings } from './circuits/settings';
+import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
 import type { BackupStatus, Clock, Store, Terminals } from './ports';
@@ -23,7 +29,9 @@ import {
   PAYMENT_TONE,
   STATUS_LABEL,
   STATUS_TONE,
+  canRemoveLine,
   deriveOrderStatus,
+  isCustom,
   lineTotal,
   moneySummary,
   nextActions,
@@ -78,6 +86,40 @@ export interface OrderListItem {
   totalLabel: string;
   balanceLabel: string;
   itemCount: number;
+  /** A custom cake is waiting for the owner to price it. */
+  needsQuote: boolean;
+  /** The total is not final yet because a custom cake has no price. */
+  quotePending: boolean;
+  hasCustomCake: boolean;
+}
+
+/** What the customer asked for in a custom cake, ready to display. */
+export interface CakeDetails {
+  servings: number;
+  sizeNote?: string;
+  flavor: string;
+  filling?: string;
+  layers: number;
+  dietary: string[];
+  decorationNotes?: string;
+  inscription?: string;
+  allergyNotes?: string;
+  /** Fetch each picture with the client's photo() call. */
+  photoIds: string[];
+}
+
+export interface QuoteState {
+  quoteId: string;
+  status: QuoteStatus;
+  statusLabel: string;
+  priceLabel?: string;
+  /** The cashier's note to the owner. */
+  note?: string;
+  /** The owner's note with the price, or the reason for declining. */
+  answer?: string;
+  requestedByName: string;
+  requestedAt: string;
+  resolvedAt?: string;
 }
 
 export interface OrderCardLine {
@@ -94,6 +136,17 @@ export interface OrderCardLine {
   cancelled: boolean;
   actions: LineAction[];
   canRemove: boolean;
+  kind: 'catalogue' | 'custom';
+  /** Custom cakes only. */
+  cake?: CakeDetails;
+  quote?: QuoteState;
+  /** Details and photos can be changed (draft, or quoted but not yet started). */
+  canEdit: boolean;
+  canRequestQuote: boolean;
+  /** Why the quote cannot be requested yet, in plain words. */
+  quoteBlockedReason: string | null;
+  canWithdrawQuote: boolean;
+  maxPhotos: number;
 }
 export interface OrderCardData extends OrderListItem {
   source: 'walk_in' | 'phone';
@@ -105,6 +158,7 @@ export interface OrderCardData extends OrderListItem {
   total: number;
   canRecordPayment: boolean;
   canCancel: boolean;
+  canEditDelivery: boolean;
   canRefund: boolean;
   refundableLabel: string;
   payments: { id: string; methodLabel: string; amountLabel: string; at: string; reference?: string }[];
@@ -152,10 +206,64 @@ export interface StaffSigninRow {
   role: Role;
 }
 
-export type ScreenId = 'sell' | 'orders' | 'catalogue' | 'staff' | 'audit' | 'panel_map';
+export type ScreenId = 'sell' | 'orders' | 'quotes' | 'bake_queue' | 'catalogue' | 'staff' | 'settings' | 'audit' | 'panel_map';
 export interface NavItem {
   id: ScreenId;
   label: string;
+}
+
+export interface QuoteRow {
+  quoteId: string;
+  orderId: string;
+  orderNumber: string;
+  lineId: string;
+  customerName: string;
+  deliveryDate?: string;
+  fulfilment: 'pickup' | 'delivery';
+  status: QuoteStatus;
+  statusLabel: string;
+  requestedByName: string;
+  requestedAt: string;
+  note?: string;
+  priceLabel?: string;
+  answer?: string;
+  resolvedAt?: string;
+  cake: CakeDetails;
+}
+export interface QuoteInboxData {
+  /** Waiting for the owner. Soonest delivery date first. */
+  open: QuoteRow[];
+  /** The most recent answered or withdrawn requests. */
+  recent: QuoteRow[];
+  can: { provide: boolean; withdraw: boolean };
+}
+
+export type Urgency = 'late' | 'today' | 'soon' | 'later' | 'undated';
+export interface BakeRow {
+  lineId: string;
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  deliveryDate?: string;
+  fulfilment: 'pickup' | 'delivery';
+  /** For example "Today", "Tomorrow", "In 3 days", "2 days late". */
+  dueLabel: string;
+  urgency: Urgency;
+  status: string;
+  statusLabel: string;
+  statusTone: Tone;
+  actions: LineAction[];
+  cake: CakeDetails;
+}
+export interface BakeQueueData {
+  rows: BakeRow[];
+  counts: { late: number; today: number; toStart: number; inProduction: number; ready: number };
+  decoratingStage: boolean;
+}
+
+export interface ShopSettingsData {
+  decoratingStage: boolean;
+  can: { edit: boolean };
 }
 
 export interface FeedMap {
@@ -166,6 +274,9 @@ export interface FeedMap {
   catalogue_grid: { params: { includeArchived?: boolean }; data: CatalogueGridItem[] };
   order_list: { params: Record<string, never>; data: OrderListItem[] };
   order_card: { params: { orderId: string }; data: OrderCardData };
+  quote_inbox: { params: Record<string, never>; data: QuoteInboxData };
+  bake_queue: { params: Record<string, never>; data: BakeQueueData };
+  shop_settings: { params: Record<string, never>; data: ShopSettingsData };
   audit_view: { params: Record<string, never>; data: AuditRow[] };
   panel_map: { params: Record<string, never>; data: PanelMapData };
 }
@@ -203,7 +314,50 @@ const METHOD_LABEL: Record<string, string> = {
   mobile_money: 'Mobile money',
 };
 
+const needsPrice = (status: string) => status === 'draft' || status === 'awaiting_quote';
 const OPEN_LINE_STATUSES = ['new', 'ready', 'out_for_delivery'];
+
+const QUOTE_LABEL: Record<QuoteStatus, string> = {
+  sent: 'Sent to the owner',
+  seen: 'Seen by the owner',
+  quoted: 'Priced',
+  declined: 'Declined',
+  withdrawn: 'Withdrawn',
+};
+
+const cakeDetails = (spec: CakeSpec): CakeDetails => ({
+  servings: spec.servings,
+  sizeNote: spec.sizeNote,
+  flavor: spec.flavor,
+  filling: spec.filling,
+  layers: spec.layers,
+  dietary: spec.dietary,
+  decorationNotes: spec.decorationNotes,
+  inscription: spec.inscription,
+  allergyNotes: spec.allergyNotes,
+  photoIds: spec.photoIds,
+});
+
+const quoteState = (q: Quote, fmt: (n: number) => string): QuoteState => ({
+  quoteId: q.id,
+  status: q.status,
+  statusLabel: QUOTE_LABEL[q.status],
+  priceLabel: q.price !== undefined ? fmt(q.price) : undefined,
+  note: q.note,
+  answer: q.answer,
+  requestedByName: q.requestedByName,
+  requestedAt: q.requestedAt,
+  resolvedAt: q.resolvedAt,
+});
+
+function dueInfo(deliveryDate: string | undefined, today: string): { label: string; urgency: Urgency } {
+  if (!deliveryDate) return { label: 'No date set', urgency: 'undated' };
+  const d = daysBetween(today, deliveryDate);
+  if (d < 0) return { label: d === -1 ? '1 day late' : `${-d} days late`, urgency: 'late' };
+  if (d === 0) return { label: 'Today', urgency: 'today' };
+  if (d === 1) return { label: 'Tomorrow', urgency: 'soon' };
+  return { label: `In ${d} days`, urgency: d <= 2 ? 'soon' : 'later' };
+}
 
 function listItem(
   order: Order,
@@ -229,6 +383,9 @@ function listItem(
     totalLabel: fmt(money.total),
     balanceLabel: fmt(money.balance),
     itemCount: lines.filter((l) => l.status !== 'cancelled').reduce((s, l) => s + l.qty, 0),
+    needsQuote: lines.some((l) => l.status === 'awaiting_quote'),
+    quotePending: money.quotePending,
+    hasCustomCake: lines.some((l) => isCustom(l) && l.status !== 'cancelled'),
   };
 }
 
@@ -238,16 +395,23 @@ const NAV: Record<Role, NavItem[]> = {
   owner: [
     { id: 'sell', label: 'Sell' },
     { id: 'orders', label: 'Orders' },
+    { id: 'quotes', label: 'Quotes' },
+    { id: 'bake_queue', label: 'Cakes to bake' },
     { id: 'catalogue', label: 'Catalogue' },
     { id: 'staff', label: 'Staff' },
+    { id: 'settings', label: 'Settings' },
     { id: 'audit', label: 'Activity' },
   ],
   cashier: [
     { id: 'sell', label: 'Sell' },
     { id: 'orders', label: 'Orders' },
+    { id: 'quotes', label: 'Quotes' },
     { id: 'catalogue', label: 'Catalogue' },
   ],
-  baker: [{ id: 'catalogue', label: 'Catalogue' }],
+  baker: [
+    { id: 'bake_queue', label: 'Cakes to bake' },
+    { id: 'catalogue', label: 'Catalogue' },
+  ],
   inventory: [{ id: 'catalogue', label: 'Catalogue' }],
   it: [{ id: 'panel_map', label: 'Panel map' }],
 };
@@ -300,7 +464,10 @@ export const feeds: FeedRegistry = {
         store.find<OrderLine>('orderLines', { where: { status: OPEN_LINE_STATUSES } }),
       ]);
       const committed = new Map<string, number>();
-      for (const l of lines) committed.set(l.combinationId, (committed.get(l.combinationId) ?? 0) + l.qty);
+      for (const l of lines) {
+        if (l.type !== 'catalogue' || !l.combinationId) continue; // custom cakes do not use counter stock
+        committed.set(l.combinationId, (committed.get(l.combinationId) ?? 0) + l.qty);
+      }
       const groupById = new Map(groups.map((g) => [g.id, g]));
       const valueById = new Map(values.map((v) => [v.id, v]));
 
@@ -417,23 +584,42 @@ export const feeds: FeedRegistry = {
       const cancelledOrder = base.status === 'cancelled';
       const finished = base.status === 'completed' || cancelledOrder;
 
+      const settings = await loadSettings(ctx.store);
+      const quotes = await ctx.store.find<Quote>('quotes', { where: { orderId: order.id } });
+      const hasPayments = payments.length > 0;
       const cardLines = lines.map((l): OrderCardLine => {
         const cancelled = l.status === 'cancelled';
         const lineStatus = (l.status as OrderStatus) ?? 'new';
+        const custom = isCustom(l) && l.custom;
+        const q = custom && l.custom?.quoteId ? quotes.find((x) => x.id === l.custom!.quoteId) : undefined;
+        const front = role === 'owner' || role === 'cashier';
+        let blocked: string | null = null;
+        if (custom && l.status === 'draft') {
+          if (!order.deliveryDate) blocked = 'Set the delivery date first. The owner needs it to price the cake.';
+          else if (order.deliveryDate < todayLocal(ctx.clock.now())) blocked = 'The delivery date has passed. Choose a new one first.';
+        }
         return {
           lineId: l.id,
           title: l.snapshot.productName,
-          options: Object.values(l.snapshot.options).join(', '),
+          options: Object.entries(l.snapshot.options).length && custom ? Object.entries(l.snapshot.options).map(([k, v]) => `${k}: ${v}`).join(', ') : Object.values(l.snapshot.options).join(', '),
           allergens: l.snapshot.allergens,
           qty: l.qty,
-          unitPriceLabel: fmt(l.snapshot.unitPrice),
-          totalLabel: fmt(lineTotal(l)),
+          unitPriceLabel: custom && needsPrice(l.status) ? 'Not priced yet' : fmt(l.snapshot.unitPrice),
+          totalLabel: custom && needsPrice(l.status) ? 'Not priced yet' : fmt(lineTotal(l)),
           status: l.status,
           statusLabel: STATUS_LABEL[lineStatus],
           statusTone: STATUS_TONE[lineStatus],
           cancelled,
-          actions: nextActions(order, l, role),
-          canRemove: !cancelled && l.status === 'new' && (payments.length === 0 || role === 'owner'),
+          actions: nextActions(order, l, role, settings),
+          canRemove: canRemoveLine(l, role, hasPayments),
+          kind: custom ? 'custom' : 'catalogue',
+          cake: custom ? cakeDetails(l.custom!.spec) : undefined,
+          quote: q ? quoteState(q, fmt) : undefined,
+          canEdit: !!custom && front && (l.status === 'draft' || l.status === 'new'),
+          canRequestQuote: !!custom && front && l.status === 'draft' && blocked === null,
+          quoteBlockedReason: blocked,
+          canWithdrawQuote: !!custom && front && l.status === 'awaiting_quote',
+          maxPhotos: MAX_PHOTOS_PER_CAKE,
         };
       });
 
@@ -441,6 +627,7 @@ export const feeds: FeedRegistry = {
       if (money.balance > 0 && base.status !== 'new' && base.status !== 'empty' && !cancelledOrder)
         warnings.push(`${fmt(money.balance)} is still unpaid.`);
       if (money.overpaid > 0) warnings.push(`${fmt(money.overpaid)} has been paid above the current total.`);
+      if (money.quotePending) warnings.push('A custom cake has no price yet, so the total is not final.');
 
       return {
         ...base,
@@ -451,8 +638,14 @@ export const feeds: FeedRegistry = {
         refundedLabel: money.refunded > 0 ? fmt(money.refunded) : null,
         balance: money.balance,
         total: money.total,
-        canRecordPayment: (role === 'owner' || role === 'cashier') && !cancelledOrder && money.balance > 0,
-        canCancel: !finished && (role === 'owner' || (role === 'cashier' && money.net <= 0)),
+        canRecordPayment: (role === 'owner' || role === 'cashier') && !cancelledOrder && !money.quotePending && money.balance > 0,
+        canCancel:
+          !finished &&
+          (role === 'owner' ||
+            (role === 'cashier' &&
+              money.net <= 0 &&
+              !lines.some((l) => isCustom(l) && ['in_production', 'decorating', 'ready', 'out_for_delivery'].includes(l.status)))),
+        canEditDelivery: !finished,
         canRefund: role === 'owner' && money.net > 0,
         refundableLabel: fmt(money.net),
         payments: payments
@@ -467,6 +660,113 @@ export const feeds: FeedRegistry = {
         warnings,
       };
     },
+  },
+
+  quote_inbox: {
+    roles: ['owner', 'cashier'],
+    build: async (ctx) => {
+      const { store, config, session } = ctx;
+      const fmt = config.formatMoney;
+      const quotes = await store.list<Quote>('quotes');
+      const orderIds = [...new Set(quotes.map((q) => q.orderId))];
+      const [orders, lines] = orderIds.length
+        ? await Promise.all([
+            store.find<Order>('orders', { where: { id: orderIds } }),
+            store.find<OrderLine>('orderLines', { where: { orderId: orderIds } }),
+          ])
+        : [[], []];
+      const toRow = (q: Quote): QuoteRow | null => {
+        const order = orders.find((o) => o.id === q.orderId);
+        const line = lines.find((l) => l.id === q.lineId);
+        if (!order || !line?.custom) return null;
+        return {
+          quoteId: q.id,
+          orderId: order.id,
+          orderNumber: order.number,
+          lineId: line.id,
+          customerName: order.customerName,
+          deliveryDate: order.deliveryDate,
+          fulfilment: order.fulfilment,
+          status: q.status,
+          statusLabel: QUOTE_LABEL[q.status],
+          requestedByName: q.requestedByName,
+          requestedAt: q.requestedAt,
+          note: q.note,
+          priceLabel: q.price !== undefined ? fmt(q.price) : undefined,
+          answer: q.answer,
+          resolvedAt: q.resolvedAt,
+          cake: cakeDetails(line.custom.spec),
+        };
+      };
+      const rows = quotes.map((q) => ({ q, row: toRow(q) })).filter((x): x is { q: Quote; row: QuoteRow } => x.row !== null);
+      const open = rows
+        .filter((x) => x.q.status === 'sent' || x.q.status === 'seen')
+        .sort((a, b) => (a.row.deliveryDate ?? '9999').localeCompare(b.row.deliveryDate ?? '9999') || a.q.requestedAt.localeCompare(b.q.requestedAt))
+        .map((x) => x.row);
+      const recent = rows
+        .filter((x) => x.q.status !== 'sent' && x.q.status !== 'seen')
+        .sort((a, b) => (b.q.resolvedAt ?? '').localeCompare(a.q.resolvedAt ?? ''))
+        .slice(0, 20)
+        .map((x) => x.row);
+      return { open, recent, can: { provide: session?.role === 'owner', withdraw: true } };
+    },
+  },
+
+  bake_queue: {
+    roles: ['owner', 'baker'],
+    build: async (ctx) => {
+      const { store, session, clock } = ctx;
+      const settings = await loadSettings(store);
+      const lines = (await store.find<OrderLine>('orderLines', { where: { status: ['new', 'in_production', 'decorating', 'ready'] } })).filter(isCustom);
+      const orderIds = [...new Set(lines.map((l) => l.orderId))];
+      const orders = orderIds.length ? await store.find<Order>('orders', { where: { id: orderIds } }) : [];
+      const today = todayLocal(clock.now());
+      const rank: Record<string, number> = { late: 0, today: 1, soon: 2, later: 3, undated: 4 };
+      const rows = lines
+        .map((l): BakeRow | null => {
+          const order = orders.find((o) => o.id === l.orderId);
+          if (!order || !l.custom) return null;
+          const due = dueInfo(order.deliveryDate, today);
+          const status = l.status as OrderStatus;
+          return {
+            lineId: l.id,
+            orderId: order.id,
+            orderNumber: order.number,
+            customerName: order.customerName,
+            deliveryDate: order.deliveryDate,
+            fulfilment: order.fulfilment,
+            dueLabel: due.label,
+            urgency: due.urgency,
+            status: l.status,
+            statusLabel: STATUS_LABEL[status],
+            statusTone: STATUS_TONE[status],
+            actions: nextActions(order, l, session!.role, settings),
+            cake: cakeDetails(l.custom.spec),
+          };
+        })
+        .filter((r): r is BakeRow => r !== null)
+        .sort((a, b) => (a.deliveryDate ?? '9999').localeCompare(b.deliveryDate ?? '9999') || rank[a.urgency]! - rank[b.urgency]!);
+      const open = rows.filter((r) => r.status !== 'ready');
+      return {
+        rows,
+        counts: {
+          late: open.filter((r) => r.urgency === 'late').length,
+          today: open.filter((r) => r.urgency === 'today').length,
+          toStart: rows.filter((r) => r.status === 'new').length,
+          inProduction: rows.filter((r) => r.status === 'in_production' || r.status === 'decorating').length,
+          ready: rows.filter((r) => r.status === 'ready').length,
+        },
+        decoratingStage: settings.decoratingStage,
+      };
+    },
+  },
+
+  shop_settings: {
+    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    build: async ({ store, session }) => ({
+      decoratingStage: (await loadSettings(store)).decoratingStage,
+      can: { edit: session?.role === 'owner' },
+    }),
   },
 
   audit_view: {
