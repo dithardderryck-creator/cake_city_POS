@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
+import { convertToMetric } from './metric-migration';
 import { COLLECTIONS, type CollectionName, type FindOptions, type Store } from '@cake-pos/panel';
 
 /** Fields queried often. Each becomes an index, so feeds stay fast after years of orders. */
@@ -30,6 +31,8 @@ export const INDEXES: Partial<Record<CollectionName, string[]>> = {
 const MIGRATIONS: Array<(db: Database.Database) => void> = [
   // 1: the first layout is created by ensureCollections below.
   () => undefined,
+  // 2: stock quantities move from g / ml to the metric base units kg / l.
+  (db) => void convertToMetric(db),
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

@@ -336,7 +336,7 @@ Allowed: **owner, inventory**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `name` | string | yes | max length 120 |
-| `unit` | "g" \| "kg" \| "ml" \| "l" \| "pcs" | yes |  |
+| `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | yes |  |
 | `reorderLevel` | number | no | min 0, max 1000000000 |
 | `allergens` | string[] | no | max 20 items |
 | `ranges` | { label: string, min: number, max: number }[] | no | max 12 items |
@@ -354,6 +354,7 @@ Allowed: **owner, inventory**
 | `allergens` | string[] | no | max 20 items |
 | `ranges` | { id?: string, label: string, min: number, max: number }[] | no | max 12 items |
 | `active` | boolean | no |  |
+| `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | no |  |
 
 #### `inventory/receive`
 
@@ -363,6 +364,7 @@ Allowed: **owner, inventory**
 | --- | --- | --- | --- |
 | `ingredientId` | string | yes | min length 1, max length 64 |
 | `qty` | number | yes | min 0, max 1000000000 |
+| `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | no |  |
 | `note` | string | no | max length 500 |
 
 #### `inventory/count`
@@ -373,6 +375,7 @@ Allowed: **owner, inventory**
 | --- | --- | --- | --- |
 | `ingredientId` | string | yes | min length 1, max length 64 |
 | `counted` | number | yes | min 0, max 1000000000 |
+| `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | no |  |
 | `note` | string | no | max length 500 |
 
 #### `inventory/write_off`
@@ -383,6 +386,7 @@ Allowed: **owner, inventory**
 | --- | --- | --- | --- |
 | `ingredientId` | string | yes | min length 1, max length 64 |
 | `qty` | number | yes | min 0, max 1000000000 |
+| `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | no |  |
 | `note` | string | no | max length 500 |
 
 ### Recipes
@@ -396,6 +400,7 @@ Allowed: **owner, baker**
 | `ruleId` | string | no | min length 1, max length 64 |
 | `ingredientId` | string | yes | min length 1, max length 64 |
 | `quantity` | number | yes | min 0, max 1000000000 |
+| `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | no |  |
 | `scaling` | "per_serving" \| "per_layer_gap" \| "fixed" | yes |  |
 | `flavors` | string[] | no | max 20 items |
 | `fillings` | string[] | no | max 20 items |
@@ -431,7 +436,7 @@ Allowed: **owner, inventory**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `reportId` | string | yes | min length 1, max length 64 |
-| `items` | { ingredientId: string, qty: number }[] | yes | max 60 items |
+| `items` | { ingredientId: string, qty: number, unit?: "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" }[] | yes | max 60 items |
 
 #### `usage/send_back`
 
@@ -565,6 +570,12 @@ Allowed: **owner, baker**
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
 | `lineId` | string | yes | min length 1, max length 64 |
+
+#### `unit_list`
+
+Allowed: **owner, baker, inventory**
+
+_No fields. Send an empty object `{}`._
 
 #### `usage_inbox`
 

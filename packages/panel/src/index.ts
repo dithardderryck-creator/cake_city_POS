@@ -3,6 +3,7 @@ export * from './intents';
 export { createPanel, INTENT_NAMES, describeIntents, describeFeeds } from './kernel';
 export { renderApiReference } from './api-reference';
 export type { Panel, PanelOptions, FeedResult, DispatchOptions, PhotoUploadResult, PhotoReadResult } from './kernel';
+export * from './units';
 export { MAX_PHOTO_BYTES, sniffImage } from './circuits/photos';
 export { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 export type * from './feeds';

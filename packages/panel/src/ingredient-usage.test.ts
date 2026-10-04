@@ -54,8 +54,12 @@ async function ingredient(name: string, unit: 'g' | 'ml' | 'pcs', openingStock: 
   rangeOf[name] = Object.fromEntries(ing.ranges.map((x) => [x.label, x.id]));
 }
 
+/** The shop types these in grams, millilitres and pieces; the system stores kg, l and pcs. */
+const TYPED_IN: Record<string, 'g' | 'ml' | 'pcs'> = { Flour: 'g', 'Egg replacer': 'g', Cocoa: 'g', Cream: 'g', Vanilla: 'ml', Eggs: 'pcs', 'Gold leaf': 'pcs' };
+const amount = (name: string, qty: number) => ({ ingredientId: ids[name]!, qty, unit: TYPED_IN[name]! });
+
 async function rule(name: string, quantity: number, scaling: 'per_serving' | 'per_layer_gap' | 'fixed', extra: object = {}) {
-  ok(await send('baker', 'recipes/save_rule', { ingredientId: ids[name]!, quantity, scaling, ...extra }));
+  ok(await send('baker', 'recipes/save_rule', { ingredientId: ids[name]!, quantity, unit: TYPED_IN[name], scaling, ...extra }));
 }
 
 async function setup() {
@@ -122,7 +126,7 @@ beforeEach(async () => {
 });
 
 describe('the recipe generator', () => {
-  const ing = (name: string, unit: Ingredient['unit'] = 'g'): Ingredient => ({ id: name, name, unit, onHand: 0, allergens: [], ranges: [], active: true, createdAt: '' });
+  const ing = (name: string, unit: Ingredient['unit'] = 'kg'): Ingredient => ({ id: name, name, unit, onHand: 0, allergens: [], ranges: [], active: true, createdAt: '' });
   const r = (o: Partial<RecipeRule> & { ingredientId: string; quantity: number; scaling: RecipeRule['scaling'] }): RecipeRule => ({
     id: Math.random().toString(),
     flavors: [],
@@ -140,7 +144,7 @@ describe('the recipe generator', () => {
       r({ ingredientId: 'Cream', quantity: 5, scaling: 'per_layer_gap' }),
     ];
     const ings = [ing('Flour'), ing('Cream')];
-    expect(generateSuggestionLines(spec, rules, ings)).toEqual([{ ingredientId: 'Flour', name: 'Flour', unit: 'g', qty: 210 }]); // one layer: no gap, so no cream
+    expect(generateSuggestionLines(spec, rules, ings)).toEqual([{ ingredientId: 'Flour', name: 'Flour', unit: 'kg', qty: 210 }]); // one layer: no gap, so no cream
     expect(generateSuggestionLines({ ...spec, layers: 3 }, rules, ings).find((l) => l.name === 'Cream')!.qty).toBe(100); // 5 x 10 servings x 2 gaps
   });
 
@@ -173,15 +177,16 @@ describe('the suggestion', () => {
     expect(warningsOf(start)).toBe('Nothing has been paid on order ' + (await store.get<{ id: string; number: string }>('orders', orderId))!.number + ' yet.');
     const f = await form('baker', orderId, lineId);
     expect(f.suggested.map((s) => [s.name, s.suggestedQty])).toEqual([
-      ['Cocoa', 36],
-      ['Cream', 120],
-      ['Egg replacer', 60],
-      ['Flour', 240],
-      ['Vanilla', 5],
+      ['Cocoa', 0.036],
+      ['Cream', 0.12],
+      ['Egg replacer', 0.06],
+      ['Flour', 0.24],
+      ['Vanilla', 0.005],
     ]); // no eggs: the cake is eggless
     // The baker can tap the amount that fits.
     const flour = f.suggested.find((s) => s.name === 'Flour')!;
-    expect(flour.suggestedRangeId).toBe(rangeOf.Flour!.Medium); // 240 is inside 200 to 300
+    expect(flour.suggestedRangeId).toBe(rangeOf.Flour!.Medium); // 240 g is inside 200 g to 300 g
+    expect(flour.suggestedText).toBe('240 g');
     expect(f.suggested.find((s) => s.name === 'Cream')!.suggestedRangeId).toBe(rangeOf.Cream!.Thick);
     expect(f.extras.map((e) => e.name)).toEqual(['Eggs', 'Gold leaf']);
     expect(f.canReport).toBe(true);
@@ -191,7 +196,7 @@ describe('the suggestion', () => {
     const { orderId, lineId } = await cakeInProduction();
     const before = await form('baker', orderId, lineId);
     const ruleId = (await store.list<RecipeRule>('recipeRules')).find((x) => x.ingredientId === ids.Flour)!.id;
-    ok(await send('baker', 'recipes/save_rule', { ruleId, ingredientId: ids.Flour!, quantity: 99, scaling: 'per_serving' }));
+    ok(await send('baker', 'recipes/save_rule', { ruleId, ingredientId: ids.Flour!, quantity: 99, unit: 'g', scaling: 'per_serving' }));
     expect((await form('baker', orderId, lineId)).suggested).toEqual(before.suggested);
   });
 
@@ -226,8 +231,8 @@ describe('report, confirm, then stock moves (BR-12, BR-13)', () => {
     const { orderId, lineId } = await cakeInProduction();
     await reportAll(orderId, lineId);
     const flour = await row('Flour');
-    expect(flour.onHand).toBe(5000);
-    expect(flour.pending).toEqual({ min: 200, max: 300, reports: 1 });
+    expect(flour.onHand).toBe(5);
+    expect(flour.pending).toEqual({ min: 0.2, max: 0.3, text: '200 g to 300 g', reports: 1 });
     expect(await store.list('ingredientMovements')).toHaveLength(7); // only the opening stock
     expect((await form('baker', orderId, lineId)).canReport).toBe(false);
     const q = await panel.feed('bake_queue', {}, sid.baker);
@@ -243,7 +248,7 @@ describe('report, confirm, then stock moves (BR-12, BR-13)', () => {
     const rep = inbox.data.pending[0]!;
     expect(rep).toMatchObject({ reportId, reportedByName: 'Neema (Baker)', note: 'Used a bit more cream', cake: { flavor: 'Chocolate' } });
     expect(rep.items.find((i) => i.name === 'Gold leaf')).toMatchObject({ extra: true, suggestedQty: null, rangeLabel: 'One sheet' });
-    expect(rep.items.find((i) => i.name === 'Flour')).toMatchObject({ extra: false, suggestedQty: 240, rangeLabel: 'Medium', onHand: 5000 });
+    expect(rep.items.find((i) => i.name === 'Flour')).toMatchObject({ extra: false, suggestedQty: 0.24, suggestedText: '240 g', rangeLabel: 'Medium', rangeText: '200 g to 300 g', onHand: 5, onHandText: '5 kg' });
     const items = rep.items.map((i) => ({ ingredientId: i.ingredientId, qty: i.min }));
     expect(errOf(await send('baker', 'usage/confirm', { reportId, items }))).toMatch(/^forbidden/);
     expect((await panel.feed('usage_inbox', {}, sid.baker)).ok).toBe(false);
@@ -254,21 +259,21 @@ describe('report, confirm, then stock moves (BR-12, BR-13)', () => {
     const { reportId } = await reportAll(orderId, lineId);
     const rep = ((await panel.feed('usage_inbox', {}, sid.inventory)) as { ok: true; data: { pending: Array<{ items: Array<{ ingredientId: string; name: string }> }> } }).data.pending[0]!;
     const exact: Record<string, number> = { Flour: 250, Cocoa: 38, Cream: 130, 'Egg replacer': 60, Vanilla: 5, 'Gold leaf': 1 };
-    const items = rep.items.map((i) => ({ ingredientId: i.ingredientId, qty: exact[i.name]! }));
+    const items = rep.items.map((i) => amount(i.name, exact[i.name]!));
 
     // Missing an ingredient is refused.
     expect(errOf(await send('inventory', 'usage/confirm', { reportId, items: items.slice(1) }))).toMatch(/every ingredient/);
-    expect(await row('Flour').then((x) => x.onHand)).toBe(5000);
+    expect(await row('Flour').then((x) => x.onHand)).toBe(5);
 
     const done = await send('inventory', 'usage/confirm', { reportId, items });
     expect(warningsOf(done)).toBe(''); // every exact amount sits inside the range the baker tapped
-    expect((await row('Flour')).onHand).toBe(4750);
-    expect((await row('Cocoa')).onHand).toBe(762);
+    expect((await row('Flour')).onHand).toBe(4.75);
+    expect((await row('Cocoa')).onHand).toBe(0.762);
     expect((await row('Gold leaf')).onHand).toBe(9);
     expect((await row('Flour')).pending).toBeNull();
     const moves = (await store.list<{ id: string; reason: string; ingredientId: string; qty: number; reportId?: string }>('ingredientMovements')).filter((m) => m.reason === 'usage');
     expect(moves).toHaveLength(6);
-    expect(moves.find((m) => m.ingredientId === ids.Flour)).toMatchObject({ qty: -250, reportId });
+    expect(moves.find((m) => m.ingredientId === ids.Flour)).toMatchObject({ qty: -0.25, reportId });
     const after = await panel.feed('usage_inbox', {}, sid.owner);
     expect(after.ok && after.data.pending).toHaveLength(0);
     expect(after.ok && after.data.recent[0]).toMatchObject({ status: 'confirmed', confirmedByName: 'Juma (Inventory)' });
@@ -276,7 +281,7 @@ describe('report, confirm, then stock moves (BR-12, BR-13)', () => {
 
     // Confirming twice never takes stock twice.
     expect(errOf(await send('inventory', 'usage/confirm', { reportId, items }))).toMatch(/already been dealt with/);
-    expect((await row('Flour')).onHand).toBe(4750);
+    expect((await row('Flour')).onHand).toBe(4.75);
     // A further report for the same cake is allowed once the first is confirmed.
     expect((await form('baker', orderId, lineId)).canReport).toBe(true);
   });
@@ -285,10 +290,10 @@ describe('report, confirm, then stock moves (BR-12, BR-13)', () => {
     const { orderId, lineId } = await cakeInProduction();
     ok(await send('baker', 'usage/report', { orderId, lineId, items: [{ ingredientId: ids.Flour!, rangeId: rangeOf.Flour!.Light! }] }));
     const rid = (await store.list<{ id: string }>('usageReports'))[0]!.id;
-    ok(await send('inventory', 'inventory/count', { ingredientId: ids.Flour!, counted: 1100 }));
+    ok(await send('inventory', 'inventory/count', { ingredientId: ids.Flour!, counted: 1100, unit: 'g' }));
     events.length = 0;
-    const r = await send('inventory', 'usage/confirm', { reportId: rid, items: [{ ingredientId: ids.Flour!, qty: 250 }] });
-    expect(warningsOf(r)).toMatch(/Flour: 250 g is outside the "Light" amount the baker chose \(100 to 200\)/);
+    const r = await send('inventory', 'usage/confirm', { reportId: rid, items: [amount('Flour', 250)] });
+    expect(warningsOf(r)).toMatch(/Flour: 250 g is outside the "Light" amount the baker chose \(100 g to 200 g\)/);
     expect((await row('Flour')).low).toBe(true); // 850 <= 1000
     expect(events.map((e) => e.type)).toContain('ReorderLevelBreached');
   });
@@ -297,12 +302,12 @@ describe('report, confirm, then stock moves (BR-12, BR-13)', () => {
     const { orderId, lineId } = await cakeInProduction();
     ok(await send('baker', 'usage/report', { orderId, lineId, items: [{ ingredientId: ids.Vanilla!, rangeId: rangeOf.Vanilla!.Splash! }] }));
     const rid = (await store.list<{ id: string }>('usageReports'))[0]!.id;
-    ok(await send('inventory', 'inventory/count', { ingredientId: ids.Vanilla!, counted: 2 }));
-    const r = await send('inventory', 'usage/confirm', { reportId: rid, items: [{ ingredientId: ids.Vanilla!, qty: 5 }] });
+    ok(await send('inventory', 'inventory/count', { ingredientId: ids.Vanilla!, counted: 2, unit: 'ml' }));
+    const r = await send('inventory', 'usage/confirm', { reportId: rid, items: [amount('Vanilla', 5)] });
     expect(warningsOf(r)).toMatch(/only 2 ml was on hand, so the count is 3 ml short/);
     expect((await row('Vanilla')).onHand).toBe(0);
     const m = (await store.list<{ id: string; reason: string; qty: number; shortfall?: number }>('ingredientMovements')).find((x) => x.reason === 'usage')!;
-    expect(m).toMatchObject({ qty: -2, shortfall: 3 });
+    expect(m).toMatchObject({ qty: -0.002, shortfall: 0.003 });
   });
 
   it('can be sent back with a reason, then reported again', async () => {
@@ -349,15 +354,15 @@ describe('managing ingredients', () => {
   it('keeps stock changes in the right hands and records every one', async () => {
     expect(errOf(await send('baker', 'inventory/receive', { ingredientId: ids.Flour!, qty: 10 }))).toMatch(/^forbidden/);
     expect(errOf(await send('cashier', 'inventory/count', { ingredientId: ids.Flour!, counted: 10 }))).toMatch(/^forbidden/);
-    ok(await send('inventory', 'inventory/receive', { ingredientId: ids.Flour!, qty: 1000, note: 'Delivery from the mill' }));
-    expect((await row('Flour')).onHand).toBe(6000);
-    ok(await send('inventory', 'inventory/count', { ingredientId: ids.Flour!, counted: 5900, note: 'Spilled a bag' }));
-    expect((await row('Flour')).onHand).toBe(5900);
+    ok(await send('inventory', 'inventory/receive', { ingredientId: ids.Flour!, qty: 1000, unit: 'g', note: 'Delivery from the mill' }));
+    expect((await row('Flour')).onHand).toBe(6);
+    ok(await send('inventory', 'inventory/count', { ingredientId: ids.Flour!, counted: 5900, unit: 'g', note: 'Spilled a bag' }));
+    expect((await row('Flour')).onHand).toBe(5.9);
     expect(errOf(await send('inventory', 'inventory/write_off', { ingredientId: ids.Flour!, qty: 50 }))).toMatch(/Say what happened/);
-    expect(errOf(await send('inventory', 'inventory/write_off', { ingredientId: ids.Flour!, qty: 99999, note: 'x' }))).toMatch(/Only 5900 g is on hand/);
-    ok(await send('inventory', 'inventory/write_off', { ingredientId: ids.Flour!, qty: 100, note: 'Weevils' }));
+    expect(errOf(await send('inventory', 'inventory/write_off', { ingredientId: ids.Flour!, qty: 99999, unit: 'g', note: 'x' }))).toMatch(/Only 5.9 kg is on hand/);
+    ok(await send('inventory', 'inventory/write_off', { ingredientId: ids.Flour!, qty: 100, unit: 'g', note: 'Weevils' }));
     const kinds = (await store.list<{ id: string; ingredientId: string; reason: string; qty: number }>('ingredientMovements')).filter((m) => m.ingredientId === ids.Flour);
-    expect(kinds.map((m) => [m.reason, m.qty]).sort()).toEqual([['correction', -100], ['delivery', 1000], ['opening', 5000], ['waste', -100]].sort());
+    expect(kinds.map((m) => [m.reason, m.qty]).sort()).toEqual([['correction', -0.1], ['delivery', 1], ['opening', 5], ['waste', -0.1]].sort());
     const audit = await panel.feed('audit_view', {}, sid.owner);
     expect(audit.ok && audit.data.some((a) => a.summary.includes('Weevils'))).toBe(true);
   });
@@ -368,9 +373,9 @@ describe('managing ingredients', () => {
     expect(errOf(await send('inventory', 'inventory/create_ingredient', { name: 'Salt', unit: 'g', ranges: [{ label: 'A', min: 1, max: 2 }, { label: 'a', min: 3, max: 4 }] }))).toMatch(/same name/);
     expect(errOf(await send('inventory', 'inventory/create_ingredient', { name: 'Salt', unit: 'g', openingStock: -4 }))).toMatch(/invalid/);
     const keep = rangeOf.Flour!.Medium!;
-    ok(await send('inventory', 'inventory/update_ingredient', { ingredientId: ids.Flour!, ranges: [{ id: keep, label: 'Middle', min: 200, max: 320 }, { label: 'Tiny', min: 1, max: 5 }] }));
+    ok(await send('inventory', 'inventory/update_ingredient', { ingredientId: ids.Flour!, unit: 'g', ranges: [{ id: keep, label: 'Middle', min: 200, max: 320 }, { label: 'Tiny', min: 1, max: 5 }] }));
     const after = (await row('Flour')).ranges;
-    expect(after.find((r) => r.rangeId === keep)).toMatchObject({ label: 'Middle', max: 320 });
+    expect(after.find((r) => r.rangeId === keep)).toMatchObject({ label: 'Middle', max: 0.32, text: '200 g to 320 g' });
     expect(after).toHaveLength(2);
     ok(await send('inventory', 'inventory/update_ingredient', { ingredientId: ids.Flour!, reorderLevel: null }));
     expect((await row('Flour')).reorderLevel).toBeNull();
@@ -404,6 +409,74 @@ describe('managing ingredients', () => {
   });
 });
 
+describe('metric base units and conversions (D-62)', () => {
+  it('stores weight in kg, liquid in l and counted things in pcs, whatever unit was typed', async () => {
+    ok(await send('inventory', 'inventory/create_ingredient', { name: 'Butter', unit: 'lb', openingStock: 10, reorderLevel: 2, ranges: [{ label: 'A block', min: 1, max: 1 }] }));
+    ok(await send('inventory', 'inventory/create_ingredient', { name: 'Milk', unit: 'cup', openingStock: 8 }));
+    ok(await send('inventory', 'inventory/create_ingredient', { name: 'Sprinkles', unit: 'dozen', openingStock: 2 }));
+    const butter = await row('Butter');
+    expect(butter).toMatchObject({ unit: 'kg', onHand: 4.535924, onHandText: '4.536 kg', reorderLevel: 0.907185 });
+    expect(butter.ranges[0]).toMatchObject({ min: 0.453592, max: 0.453592, text: '453.6 g' });
+    expect(await row('Milk')).toMatchObject({ unit: 'l', onHand: 2, onHandText: '2 l' });
+    expect(await row('Sprinkles')).toMatchObject({ unit: 'pcs', onHand: 24, onHandText: '24 pcs' });
+    const moves = (await store.list<{ id: string; ingredientId: string; reason: string; qty: number }>('ingredientMovements')).filter((m) => m.ingredientId === butter.ingredientId);
+    expect(moves).toEqual([expect.objectContaining({ reason: 'opening', qty: 4.535924 })]);
+  });
+
+  it('takes a delivery, a count and a write-off in any unit of the right kind', async () => {
+    ok(await send('inventory', 'inventory/receive', { ingredientId: ids.Flour!, qty: 2, unit: 'lb' }));
+    expect((await row('Flour')).onHand).toBe(5.907185);
+    ok(await send('inventory', 'inventory/receive', { ingredientId: ids.Flour!, qty: 0.5 })); // no unit: kg
+    expect((await row('Flour')).onHand).toBe(6.407185);
+    ok(await send('inventory', 'inventory/count', { ingredientId: ids.Vanilla!, counted: 3, unit: 'tbsp' }));
+    expect(await row('Vanilla')).toMatchObject({ onHand: 0.045, onHandText: '45 ml' });
+    ok(await send('inventory', 'inventory/write_off', { ingredientId: ids.Eggs!, qty: 1, unit: 'dozen', note: 'Dropped a tray' }));
+    expect((await row('Eggs')).onHand).toBe(18);
+  });
+
+  it('refuses a unit that does not fit the ingredient, in plain words, and changes nothing', async () => {
+    const before = (await row('Flour')).onHand;
+    expect(errOf(await send('inventory', 'inventory/receive', { ingredientId: ids.Flour!, qty: 1, unit: 'l' }))).toMatch(/Flour is weighed.*"l" does not fit/);
+    expect(errOf(await send('inventory', 'inventory/count', { ingredientId: ids.Eggs!, counted: 1, unit: 'kg' }))).toMatch(/Eggs is counted/);
+    expect(errOf(await send('inventory', 'inventory/write_off', { ingredientId: ids.Vanilla!, qty: 1, unit: 'g', note: 'x' }))).toMatch(/Vanilla is measured by volume/);
+    expect(errOf(await send('baker', 'recipes/save_rule', { ingredientId: ids.Flour!, quantity: 1, unit: 'ml', scaling: 'fixed' }))).toMatch(/does not fit/);
+    expect(errOf(await send('inventory', 'inventory/update_ingredient', { ingredientId: ids.Flour!, reorderLevel: 1, unit: 'pcs' }))).toMatch(/does not fit/);
+    expect(errOf(await send('inventory', 'inventory/receive', { ingredientId: ids.Flour!, qty: 1, unit: 'cubit' as never }))).toMatch(/invalid/);
+    expect((await row('Flour')).onHand).toBe(before);
+  });
+
+  it('refuses an amount too small to count instead of recording a zero delivery', async () => {
+    expect(errOf(await send('inventory', 'inventory/receive', { ingredientId: ids.Flour!, qty: 0.0000001, unit: 'g' }))).toMatch(/too small/);
+  });
+
+  it('takes the confirmed usage in any unit and compares it with the range in the same units', async () => {
+    const { orderId, lineId } = await cakeInProduction();
+    ok(await send('baker', 'usage/report', { orderId, lineId, items: [{ ingredientId: ids.Flour!, rangeId: rangeOf.Flour!.Light! }] }));
+    const rid = (await store.list<{ id: string }>('usageReports'))[0]!.id;
+    expect(errOf(await send('inventory', 'usage/confirm', { reportId: rid, items: [{ ingredientId: ids.Flour!, qty: 1, unit: 'l' }] }))).toMatch(/does not fit/);
+    const done = await send('inventory', 'usage/confirm', { reportId: rid, items: [{ ingredientId: ids.Flour!, qty: 0.4, unit: 'lb' }] }); // 181 g: inside 100 g to 200 g
+    expect(warningsOf(done)).toBe('');
+    expect((await row('Flour')).onHand).toBe(4.818563);
+  });
+
+  it('keeps recipe lines in the base unit and reads them back in plain units', async () => {
+    ok(await send('baker', 'recipes/save_rule', { ingredientId: ids.Vanilla!, quantity: 1, unit: 'tsp', scaling: 'fixed', note: 'extra' }));
+    const r = await panel.feed('recipe_rules', {}, sid.baker);
+    if (!r.ok) throw new Error('rules');
+    const line = r.data.find((x) => x.note === 'extra')!;
+    expect(line).toMatchObject({ unit: 'l', quantity: 0.005, quantityText: '5 ml' });
+    expect(line.summary).toBe('5 ml of Vanilla for every cake, for any cake');
+  });
+
+  it('shows the conversion table to the staff who need it, and no one else', async () => {
+    const r = await panel.feed('unit_list', {}, sid.baker);
+    if (!r.ok) throw new Error('units');
+    expect(r.data.baseUnits.map((b) => b.code)).toEqual(['kg', 'l', 'pcs']);
+    expect(r.data.units.find((u) => u.code === 'lb')).toMatchObject({ dimension: 'mass', base: 'kg', perUnit: 0.45359237 });
+    expect((await panel.feed('unit_list', {}, sid.cashier)).ok).toBe(false);
+  });
+});
+
 describe('days of stock left (BR-14)', () => {
   it('says there is not enough data at first, then works it out from confirmed use only', async () => {
     const { orderId, lineId } = await cakeInProduction();
@@ -412,7 +485,7 @@ describe('days of stock left (BR-14)', () => {
     const useFlour = async (qty: number) => {
       ok(await send('baker', 'usage/report', { orderId, lineId, items: [{ ingredientId: ids.Flour!, rangeId: rangeOf.Flour!.Light! }] }));
       const rid = (await store.list<{ id: string; status: string }>('usageReports')).find((r) => r.status === 'reported')!.id;
-      ok(await send('inventory', 'usage/confirm', { reportId: rid, items: [{ ingredientId: ids.Flour!, qty }] }));
+      ok(await send('inventory', 'usage/confirm', { reportId: rid, items: [amount('Flour', qty)] }));
     };
     await useFlour(100);
     t += 2 * 86_400_000;
@@ -425,11 +498,11 @@ describe('days of stock left (BR-14)', () => {
     ok(await send('baker', 'usage/report', { orderId, lineId, items: [{ ingredientId: ids.Flour!, rangeId: rangeOf.Flour!.Heavy! }] }));
     expect((await row('Flour')).daysLeftLabel).toBe('Not enough data yet');
     const rid = (await store.list<{ id: string; status: string }>('usageReports')).find((r) => r.status === 'reported')!.id;
-    ok(await send('inventory', 'usage/confirm', { reportId: rid, items: [{ ingredientId: ids.Flour!, qty: 100 }] }));
+    ok(await send('inventory', 'usage/confirm', { reportId: rid, items: [amount('Flour', 100)] }));
 
     // 300 g over a 4-day history = 75 g a day; 4700 g left is 62 days.
     const flour = await row('Flour');
-    expect(flour.onHand).toBe(4700);
+    expect(flour.onHand).toBe(4.7);
     expect(flour.daysLeft).toBe(62.7);
     expect(flour.daysLeftLabel).toBe('About 62 days');
     expect((await row('Cocoa')).daysLeftLabel).toBe('Not enough data yet');
@@ -440,7 +513,7 @@ describe('days of stock left (BR-14)', () => {
     for (let i = 0; i < 3; i++) {
       ok(await send('baker', 'usage/report', { orderId, lineId, items: [{ ingredientId: ids.Vanilla!, rangeId: rangeOf.Vanilla!.Splash! }] }));
       const rid = (await store.list<{ id: string; status: string }>('usageReports')).find((r) => r.status === 'reported')!.id;
-      ok(await send('inventory', 'usage/confirm', { reportId: rid, items: [{ ingredientId: ids.Vanilla!, qty: 1 }] }));
+      ok(await send('inventory', 'usage/confirm', { reportId: rid, items: [amount('Vanilla', 1)] }));
       t += 86_400_000;
       await relog();
     }

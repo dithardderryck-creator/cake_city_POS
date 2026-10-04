@@ -1,7 +1,8 @@
 import type { Ingredient, UsageReport, UsageReportItem, UsageSuggestion } from '../domain';
 import type { Registry } from '../intents';
 import { loadCustomLine } from './custom';
-import { crossedReorder, moveIngredient, round3 } from './inventory';
+import { formatQty } from '../units';
+import { crossedReorder, moveIngredient, qtyFor, round3, unitProblem } from './inventory';
 
 /** A cake can have its usage reported once it has been started and until it is handed over. */
 const REPORTABLE = ['in_production', 'decorating', 'ready', 'out_for_delivery', 'completed'];
@@ -92,6 +93,11 @@ export const usageIntents = {
         if (!wanted.has(it.ingredientId)) errors.push('One amount is for an ingredient that is not in the report.');
         else if (given.has(it.ingredientId)) errors.push('An ingredient is listed twice.');
         else if (!(it.qty >= 0)) errors.push('Amounts cannot be negative.');
+        else {
+          const ing = await ctx.store.get<Ingredient>('ingredients', it.ingredientId);
+          const bad = ing && unitProblem(ing, it.unit);
+          if (bad) errors.push(bad);
+        }
         given.add(it.ingredientId);
       }
       for (const w of wanted) if (!given.has(w)) errors.push('Enter the exact amount for every ingredient in the report (0 if none was used).');
@@ -104,22 +110,23 @@ export const usageIntents = {
       for (const it of p.items) {
         const ing = (await ctx.store.get<Ingredient>('ingredients', it.ingredientId))!;
         const item = report.items.find((i) => i.ingredientId === it.ingredientId)!;
-        if (it.qty < item.min || it.qty > item.max)
-          warnings.push(`${ing.name}: ${it.qty} ${ing.unit} is outside the "${item.rangeLabel}" amount the baker chose (${item.min} to ${item.max}).`);
-        const taken = Math.min(ing.onHand, it.qty);
-        const shortfall = round3(it.qty - taken);
+        const qty = qtyFor(ing, it.qty, it.unit)!;
+        if (qty < item.min || qty > item.max)
+          warnings.push(`${ing.name}: ${formatQty(qty, ing.unit)} is outside the "${item.rangeLabel}" amount the baker chose (${formatQty(item.min, ing.unit)} to ${formatQty(item.max, ing.unit)}).`);
+        const taken = Math.min(ing.onHand, qty);
+        const shortfall = round3(qty - taken);
         const after = round3(ing.onHand - taken);
         await ctx.store.put('ingredients', { ...ing, onHand: after });
-        if (it.qty > 0)
+        if (qty > 0)
           await moveIngredient(ctx, ing, { qty: -taken, reason: 'usage', shortfall: shortfall > 0 ? shortfall : undefined, reportId: report.id, orderId: report.orderId });
         events.push({ type: 'StockMoved', payload: { ingredientId: ing.id, delta: -taken } });
-        if (shortfall > 0) warnings.push(`${ing.name}: only ${ing.onHand} ${ing.unit} was on hand, so the count is ${shortfall} ${ing.unit} short. Do a stock count.`);
+        if (shortfall > 0) warnings.push(`${ing.name}: only ${formatQty(ing.onHand, ing.unit)} was on hand, so the count is ${formatQty(shortfall, ing.unit)} short. Do a stock count.`);
         if (crossedReorder(ing.onHand, after, ing.reorderLevel)) events.push({ type: 'ReorderLevelBreached', payload: { ingredientId: ing.id } });
       }
       await ctx.store.put('usageReports', {
         ...report,
         status: 'confirmed' as const,
-        confirmed: p.items.map((i) => ({ ingredientId: i.ingredientId, qty: i.qty })),
+        confirmed: await Promise.all(p.items.map(async (i) => ({ ingredientId: i.ingredientId, qty: qtyFor((await ctx.store.get<Ingredient>('ingredients', i.ingredientId))!, i.qty, i.unit)! }))),
         confirmedBy: ctx.session!.userId,
         confirmedByName: ctx.session!.name,
         confirmedAt: ctx.now(),

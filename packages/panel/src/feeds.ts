@@ -28,6 +28,7 @@ import type {
 import { daysBetween, todayLocal } from './circuits/dates';
 import { loadSettings } from './circuits/settings';
 import { DomainError } from './intents';
+import { BASE_UNIT_FOR, formatQty, unitTable } from './units';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
@@ -282,19 +283,31 @@ export interface BakeQueueData {
   decoratingStage: boolean;
 }
 
+export interface RangeRow {
+  rangeId: string;
+  label: string;
+  min: number;
+  max: number;
+  /** "100 g to 200 g" */
+  text: string;
+}
+
 export interface IngredientRow {
   ingredientId: string;
   name: string;
   unit: IngredientUnit;
   onHand: number;
+  /** Reads well to a person: "250 g", "1.5 kg", "12 pcs". The numbers above are always in the base unit (kg, l, pcs). */
+  onHandText: string;
   reorderLevel: number | null;
+  reorderLevelText: string | null;
   /** On hand is at or below the reorder level. */
   low: boolean;
   allergens: string[];
-  ranges: { rangeId: string; label: string; min: number; max: number }[];
+  ranges: RangeRow[];
   active: boolean;
   /** Reported by bakers but not yet confirmed by Inventory (BR-12). Stock has not moved yet. */
-  pending: { min: number; max: number; reports: number } | null;
+  pending: { min: number; max: number; text: string; reports: number } | null;
   /** From confirmed usage over the last 14 days (BR-14). Null when there is not enough history. */
   daysLeft: number | null;
   daysLeftLabel: string;
@@ -307,6 +320,7 @@ export interface RecipeRuleRow {
   ingredientName: string;
   unit: IngredientUnit;
   quantity: number;
+  quantityText: string;
   scaling: RuleScaling;
   scalingLabel: string;
   flavors: string[];
@@ -324,7 +338,8 @@ export interface UsageFormItem {
   unit: IngredientUnit;
   /** What the system expects for this cake. Null for ingredients that are not on the suggestion. */
   suggestedQty: number | null;
-  ranges: { rangeId: string; label: string; min: number; max: number }[];
+  suggestedText: string | null;
+  ranges: RangeRow[];
   /** The amount that fits the suggestion best, so the baker can tap to accept. */
   suggestedRangeId: string | null;
 }
@@ -360,14 +375,25 @@ export interface UsageReportRow {
     min: number;
     max: number;
     extra: boolean;
+    rangeText: string;
     suggestedQty: number | null;
+    suggestedText: string | null;
     onHand: number;
+    onHandText: string;
     confirmedQty?: number;
+    confirmedText?: string;
   }[];
   confirmedByName?: string;
   confirmedAt?: string;
   sentBackReason?: string;
 }
+export interface UnitListData {
+  /** What stock is stored in: kg for weight, l for liquids, pcs for things you count. */
+  baseUnits: { code: 'kg' | 'l' | 'pcs'; kind: 'mass' | 'volume' | 'count'; label: string }[];
+  /** Every unit the shop can type a quantity in, with how many base units it is. For unit pickers and conversion. */
+  units: ReturnType<typeof unitTable>;
+}
+
 export interface UsageInboxData {
   /** Waiting for Inventory, oldest first. */
   pending: UsageReportRow[];
@@ -395,6 +421,7 @@ export interface FeedMap {
   recipe_rules: { params: Record<string, never>; data: RecipeRuleRow[] };
   usage_form: { params: { orderId: string; lineId: string }; data: UsageFormData };
   usage_inbox: { params: Record<string, never>; data: UsageInboxData };
+  unit_list: { params: Record<string, never>; data: UnitListData };
   audit_view: { params: Record<string, never>; data: AuditRow[] };
   panel_map: { params: Record<string, never>; data: PanelMapData };
 }
@@ -503,7 +530,8 @@ function bestRange(ranges: Ingredient['ranges'], qty: number | null): string | n
   return [...ranges].sort((a, b) => Math.abs((a.min + a.max) / 2 - qty) - Math.abs((b.min + b.max) / 2 - qty))[0]!.id;
 }
 
-const rangeRows = (i: Ingredient) => i.ranges.map((r) => ({ rangeId: r.id, label: r.label, min: r.min, max: r.max }));
+const rangeText = (min: number, max: number, unit: Ingredient['unit']) => (min === max ? formatQty(min, unit) : `${formatQty(min, unit)} to ${formatQty(max, unit)}`);
+const rangeRows = (i: Ingredient): RangeRow[] => i.ranges.map((r) => ({ rangeId: r.id, label: r.label, min: r.min, max: r.max, text: rangeText(r.min, r.max, i.unit) }));
 
 function usageStateFor(lineStatus: string, hasSuggestion: boolean, reports: UsageReport[]): BakeRow['usage'] {
   const latest = [...reports].sort((a, b) => b.reportedAt.localeCompare(a.reportedAt))[0];
@@ -975,12 +1003,14 @@ export const feeds: FeedRegistry = {
             name: i.name,
             unit: i.unit,
             onHand: i.onHand,
+            onHandText: formatQty(i.onHand, i.unit),
             reorderLevel: i.reorderLevel ?? null,
+            reorderLevelText: i.reorderLevel === undefined ? null : formatQty(i.reorderLevel, i.unit),
             low: i.reorderLevel !== undefined && i.onHand <= i.reorderLevel,
             allergens: i.allergens,
             ranges: rangeRows(i),
             active: i.active,
-            pending: waiting.length ? { min: waiting.reduce((s, x) => s + x.min, 0), max: waiting.reduce((s, x) => s + x.max, 0), reports: waiting.length } : null,
+            pending: waiting.length ? { min: waiting.reduce((s, x) => s + x.min, 0), max: waiting.reduce((s, x) => s + x.max, 0), text: rangeText(waiting.reduce((s, x) => s + x.min, 0), waiting.reduce((s, x) => s + x.max, 0), i.unit), reports: waiting.length } : null,
             daysLeft: dl.days === null ? null : Math.round(dl.days * 10) / 10,
             daysLeftLabel: dl.label,
             can: { edit: canEdit },
@@ -1007,6 +1037,7 @@ export const feeds: FeedRegistry = {
             ingredientName: ing.name,
             unit: ing.unit,
             quantity: r.quantity,
+            quantityText: formatQty(r.quantity, ing.unit),
             scaling: r.scaling,
             scalingLabel: SCALING_LABEL[r.scaling],
             flavors: r.flavors,
@@ -1014,7 +1045,7 @@ export const feeds: FeedRegistry = {
             needsDietary: r.needsDietary,
             excludedByDietary: r.excludedByDietary,
             note: r.note,
-            summary: `${r.quantity} ${ing.unit} of ${ing.name} ${SCALING_LABEL[r.scaling]}, for ${subject}`,
+            summary: `${formatQty(r.quantity, ing.unit)} of ${ing.name} ${SCALING_LABEL[r.scaling]}, for ${subject}`,
           };
         })
         .filter((r): r is RecipeRuleRow => r !== null)
@@ -1041,6 +1072,7 @@ export const feeds: FeedRegistry = {
         name: i.name,
         unit: i.unit,
         suggestedQty: qty,
+        suggestedText: qty === null ? null : formatQty(qty, i.unit),
         ranges: rangeRows(i),
         suggestedRangeId: bestRange(i.ranges, qty),
       });
@@ -1062,6 +1094,18 @@ export const feeds: FeedRegistry = {
         blockedReason: state.canReport ? null : open ? 'Already waiting for Inventory to confirm.' : 'Start baking this cake first.',
       };
     },
+  },
+
+  unit_list: {
+    roles: ['owner', 'baker', 'inventory'],
+    build: async () => ({
+      baseUnits: [
+        { code: BASE_UNIT_FOR.mass, kind: 'mass' as const, label: 'Weight' },
+        { code: BASE_UNIT_FOR.volume, kind: 'volume' as const, label: 'Liquid' },
+        { code: BASE_UNIT_FOR.count, kind: 'count' as const, label: 'Counted' },
+      ],
+      units: unitTable(),
+    }),
   },
 
   usage_inbox: {
@@ -1101,9 +1145,19 @@ export const feeds: FeedRegistry = {
             min: i.min,
             max: i.max,
             extra: i.extra,
+            rangeText: rangeText(i.min, i.max, i.unit),
             suggestedQty: sug?.lines.find((l) => l.ingredientId === i.ingredientId)?.qty ?? null,
+            suggestedText: (() => {
+              const q = sug?.lines.find((l) => l.ingredientId === i.ingredientId)?.qty;
+              return q === undefined ? null : formatQty(q, i.unit);
+            })(),
             onHand: ingredients.find((x) => x.id === i.ingredientId)?.onHand ?? 0,
+            onHandText: formatQty(ingredients.find((x) => x.id === i.ingredientId)?.onHand ?? 0, i.unit),
             confirmedQty: r.confirmed?.find((c) => c.ingredientId === i.ingredientId)?.qty,
+            confirmedText: (() => {
+              const q = r.confirmed?.find((c) => c.ingredientId === i.ingredientId)?.qty;
+              return q === undefined ? undefined : formatQty(q, i.unit);
+            })(),
           })),
           confirmedByName: r.confirmedByName,
           confirmedAt: r.confirmedAt,

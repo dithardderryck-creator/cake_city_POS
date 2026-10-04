@@ -1,3 +1,4 @@
+import type { UnitCode } from './units';
 import type { CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
@@ -61,9 +62,14 @@ export interface IntentMap {
   };
   'payments/approve_refund': { orderId: Id; amount: number; reason: string; method: PaymentMethod };
 
+  /**
+   * `unit` on these intents is the unit the numbers are written in. Leave it out and they are in the ingredient's
+   * base unit (kg, l or pcs). Stock is always stored in the base unit, whatever was typed.
+   */
   'inventory/create_ingredient': {
     name: string;
-    unit: IngredientUnit;
+    /** Any unit. Its kind (weight, volume, count) decides the ingredient's base unit; the numbers below are in this unit. */
+    unit: UnitCode;
     reorderLevel?: number;
     allergens?: string[];
     ranges?: { label: string; min: number; max: number }[];
@@ -77,15 +83,19 @@ export interface IntentMap {
     /** Replaces the whole list. Keep an `id` to keep that amount's identity. */
     ranges?: { id?: Id; label: string; min: number; max: number }[];
     active?: boolean;
+    /** The unit `reorderLevel` and `ranges` are written in. */
+    unit?: UnitCode;
   };
-  'inventory/receive': { ingredientId: Id; qty: number; note?: string };
-  'inventory/count': { ingredientId: Id; counted: number; note?: string };
-  'inventory/write_off': { ingredientId: Id; qty: number; note?: string };
+  'inventory/receive': { ingredientId: Id; qty: number; unit?: UnitCode; note?: string };
+  'inventory/count': { ingredientId: Id; counted: number; unit?: UnitCode; note?: string };
+  'inventory/write_off': { ingredientId: Id; qty: number; unit?: UnitCode; note?: string };
 
   'recipes/save_rule': {
     ruleId?: Id;
     ingredientId: Id;
     quantity: number;
+    /** The unit `quantity` is written in. */
+    unit?: UnitCode;
     scaling: RuleScaling;
     flavors?: string[];
     fillings?: string[];
@@ -96,7 +106,7 @@ export interface IntentMap {
   'recipes/remove_rule': { ruleId: Id };
 
   'usage/report': { orderId: Id; lineId: Id; items: { ingredientId: Id; rangeId: Id }[]; note?: string };
-  'usage/confirm': { reportId: Id; items: { ingredientId: Id; qty: number }[] };
+  'usage/confirm': { reportId: Id; items: { ingredientId: Id; qty: number; unit?: UnitCode }[] };
   'usage/send_back': { reportId: Id; reason: string };
 
   'sync/flush': Record<string, never>;

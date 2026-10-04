@@ -668,7 +668,7 @@ describe('ingredient usage through the real server', () => {
       ranges: [{ label: 'Light', min: 100, max: 200 }, { label: 'Medium', min: 200, max: 400 }],
     });
     const ingredientId = ((made.ok ? made.data : {}) as { ingredientId: string }).ingredientId;
-    expect((await baker.dispatch('recipes/save_rule', { ingredientId, quantity: 25, scaling: 'per_serving' })).ok).toBe(true);
+    expect((await baker.dispatch('recipes/save_rule', { ingredientId, quantity: 25, unit: 'g', scaling: 'per_serving' })).ok).toBe(true);
 
     const o = await cashier.dispatch('orders/create_order', { source: 'phone', fulfilment: 'pickup', deliveryDate: soon() });
     const orderId = ((o.ok ? o.data : {}) as { orderId: string }).orderId;
@@ -684,7 +684,7 @@ describe('ingredient usage through the real server', () => {
 
     expect((await baker.dispatch('orders/advance_line', { orderId, lineId, to: 'in_production' })).ok).toBe(true);
     const form = await baker.feed('usage_form', { orderId, lineId });
-    expect(form.ok && form.data.suggested[0]).toMatchObject({ name: 'Flour', suggestedQty: 250 });
+    expect(form.ok && form.data.suggested[0]).toMatchObject({ name: 'Flour', suggestedQty: 0.25, suggestedText: '250 g' });
     const rangeId = form.ok ? form.data.suggested[0]!.suggestedRangeId! : '';
 
     expect((await baker.dispatch('usage/report', { orderId, lineId, items: [{ ingredientId, rangeId }] })).ok).toBe(true);
@@ -693,13 +693,13 @@ describe('ingredient usage through the real server', () => {
       const r = await inventory.feed('ingredient_list', {});
       return r.ok ? r.data[0]! : undefined;
     };
-    expect(await stock()).toMatchObject({ onHand: 2000, pending: { min: 200, max: 400, reports: 1 } });
+    expect(await stock()).toMatchObject({ unit: 'kg', onHand: 2, onHandText: '2 kg', pending: { min: 0.2, max: 0.4, reports: 1 } });
 
     const inbox = await inventory.feed('usage_inbox', {});
     const reportId = inbox.ok ? inbox.data.pending[0]!.reportId : '';
-    expect((await baker.dispatch('usage/confirm', { reportId, items: [{ ingredientId, qty: 250 }] })).ok).toBe(false);
-    expect((await inventory.dispatch('usage/confirm', { reportId, items: [{ ingredientId, qty: 250 }] })).ok).toBe(true);
+    expect((await baker.dispatch('usage/confirm', { reportId, items: [{ ingredientId, qty: 250, unit: 'g' }] })).ok).toBe(false);
+    expect((await inventory.dispatch('usage/confirm', { reportId, items: [{ ingredientId, qty: 250, unit: 'g' }] })).ok).toBe(true);
     await waitFor(() => pending === 0);
-    expect(await stock()).toMatchObject({ onHand: 1750, pending: null });
+    expect(await stock()).toMatchObject({ onHand: 1.75, pending: null });
   });
 });

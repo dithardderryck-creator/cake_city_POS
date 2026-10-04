@@ -1,11 +1,14 @@
 import type { CakeSpec, Ingredient, RecipeRule, UsageSuggestion, UsageSuggestionLine } from '../domain';
 import type { HandlerCtx, Registry } from '../intents';
 import { DomainError } from '../intents';
+import { toBaseQty } from '../units';
+import { unitProblem } from './inventory';
 
 /** "Eggless", "eggless" and "Gluten-free" / "gluten free" compare equal. */
 export const normaliseTag = (s: string) => s.trim().toLowerCase().replace(/[-_\s]+/g, ' ');
 
-const roundFor = (unit: Ingredient['unit'], n: number) => (unit === 'pcs' ? Math.ceil(n - 1e-9) : Math.round(n * 100) / 100);
+/** Whole pieces round up; weights and volumes keep gram / millilitre precision. */
+const roundFor = (unit: Ingredient['unit'], n: number) => (unit === 'pcs' ? Math.ceil(n - 1e-9) : Math.round(n * 1000) / 1000);
 
 export function ruleApplies(rule: RecipeRule, spec: CakeSpec): boolean {
   const dietary = new Set(spec.dietary.map(normaliseTag));
@@ -78,7 +81,11 @@ export const recipeIntents = {
       if (!(p.quantity > 0)) errors.push('Enter an amount greater than zero.');
       const ing = await ctx.store.get<Ingredient>('ingredients', p.ingredientId);
       if (!ing) errors.push('That ingredient does not exist.');
-      else if (!ing.active) errors.push(`${ing.name} is switched off.`);
+      else {
+        if (!ing.active) errors.push(`${ing.name} is switched off.`);
+        const bad = unitProblem(ing, p.unit);
+        if (bad) errors.push(bad);
+      }
       if (p.ruleId && !(await ctx.store.get<RecipeRule>('recipeRules', p.ruleId))) errors.push('That recipe line no longer exists.');
       return errors;
     },
@@ -87,7 +94,7 @@ export const recipeIntents = {
       const rule: RecipeRule = {
         id: p.ruleId ?? ctx.ids.next('rul'),
         ingredientId: p.ingredientId,
-        quantity: p.quantity,
+        quantity: toBaseQty(p.quantity, ing.unit, p.unit)!,
         scaling: p.scaling,
         flavors: cleanTags(p.flavors),
         fillings: cleanTags(p.fillings),

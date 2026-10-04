@@ -1,7 +1,16 @@
 import type { Ingredient, IngredientMovement, IngredientRange } from '../domain';
 import type { HandlerCtx, Registry } from '../intents';
+import { baseUnitOf, formatQty, roundQty, toBaseQty, unitMismatch, type BaseUnit } from '../units';
 
-export const round3 = (n: number) => Math.round(n * 1000) / 1000;
+/** Stock arithmetic is kept to a milligram / millilitre so nothing is lost when quantities are converted. */
+export const round3 = roundQty;
+
+/** A quantity written in `unit` (or already in the ingredient's base unit) as the ingredient's base unit. Null if the unit does not fit. */
+export const qtyFor = (ing: Pick<Ingredient, 'unit'>, qty: number, unit?: string) => toBaseQty(qty, ing.unit, unit);
+
+/** The one-line error for a unit that does not fit an ingredient, or null when it fits (or none was given). */
+export const unitProblem = (ing: Pick<Ingredient, 'unit' | 'name'>, unit?: string) =>
+  unit === undefined || toBaseQty(1, ing.unit, unit) !== null ? null : unitMismatch(ing.name, ing.unit, unit);
 
 interface RangeInput {
   id?: string;
@@ -21,8 +30,8 @@ function rangeProblems(ranges: RangeInput[] | undefined): string[] {
   return errors;
 }
 
-const toRanges = (ctx: HandlerCtx, ranges: RangeInput[]): IngredientRange[] =>
-  ranges.map((r) => ({ id: r.id ?? ctx.ids.next('rng'), label: r.label.trim(), min: r.min, max: r.max }));
+const toRanges = (ctx: HandlerCtx, ranges: RangeInput[], base: BaseUnit, unit?: string): IngredientRange[] =>
+  ranges.map((r) => ({ id: r.id ?? ctx.ids.next('rng'), label: r.label.trim(), min: toBaseQty(r.min, base, unit)!, max: toBaseQty(r.max, base, unit)! }));
 
 export async function moveIngredient(ctx: HandlerCtx, ing: Ingredient, m: Omit<IngredientMovement, 'id' | 'ingredientId' | 'by' | 'at'>) {
   const movement: IngredientMovement = { id: ctx.ids.next('imv'), ingredientId: ing.id, by: ctx.session!.userId, at: ctx.now(), ...m };
@@ -47,14 +56,16 @@ export const inventoryIntents = {
       return errors;
     },
     handle: async (p, ctx) => {
+      // The unit chosen decides the kind (weight, volume, count); everything is stored in that kind's base unit.
+      const base = baseUnitOf(p.unit);
       const ing: Ingredient = {
         id: ctx.ids.next('ing'),
         name: p.name.trim(),
-        unit: p.unit,
-        onHand: p.openingStock ?? 0,
-        reorderLevel: p.reorderLevel,
+        unit: base,
+        onHand: p.openingStock === undefined ? 0 : toBaseQty(p.openingStock, base, p.unit)!,
+        reorderLevel: p.reorderLevel === undefined ? undefined : toBaseQty(p.reorderLevel, base, p.unit)!,
         allergens: [...new Set((p.allergens ?? []).map((a) => a.trim()).filter(Boolean))],
-        ranges: toRanges(ctx, p.ranges ?? []),
+        ranges: toRanges(ctx, p.ranges ?? [], base, p.unit),
         active: true,
         createdAt: ctx.now(),
       };
@@ -78,6 +89,8 @@ export const inventoryIntents = {
       }
       if (p.reorderLevel !== undefined && p.reorderLevel !== null && !(p.reorderLevel >= 0)) errors.push('The reorder level cannot be negative.');
       errors.push(...rangeProblems(p.ranges));
+      const bad = unitProblem(ing, p.unit);
+      if (bad) errors.push(bad);
       return errors;
     },
     handle: async (p, ctx) => {
@@ -85,9 +98,9 @@ export const inventoryIntents = {
       const next: Ingredient = {
         ...ing,
         name: p.name !== undefined ? p.name.trim() : ing.name,
-        reorderLevel: p.reorderLevel === undefined ? ing.reorderLevel : (p.reorderLevel ?? undefined),
+        reorderLevel: p.reorderLevel === undefined ? ing.reorderLevel : p.reorderLevel === null ? undefined : toBaseQty(p.reorderLevel, ing.unit, p.unit)!,
         allergens: p.allergens ? [...new Set(p.allergens.map((a) => a.trim()).filter(Boolean))] : ing.allergens,
-        ranges: p.ranges ? toRanges(ctx, p.ranges) : ing.ranges,
+        ranges: p.ranges ? toRanges(ctx, p.ranges, ing.unit, p.unit) : ing.ranges,
         active: p.active ?? ing.active,
       };
       await ctx.store.put('ingredients', next);
@@ -100,17 +113,22 @@ export const inventoryIntents = {
     roles: ['owner', 'inventory'],
     validate: async (p, ctx) => {
       if (!(p.qty > 0)) return ['Enter an amount greater than zero.'];
-      return (await ctx.store.get('ingredients', p.ingredientId)) ? [] : ['That ingredient does not exist.'];
+      const ing = await ctx.store.get<Ingredient>('ingredients', p.ingredientId);
+      if (!ing) return ['That ingredient does not exist.'];
+      const bad = unitProblem(ing, p.unit);
+      if (bad) return [bad];
+      return qtyFor(ing, p.qty, p.unit)! > 0 ? [] : ['That amount is too small to count.'];
     },
     handle: async (p, ctx) => {
       const ing = (await ctx.store.get<Ingredient>('ingredients', p.ingredientId))!;
-      const next = { ...ing, onHand: round3(ing.onHand + p.qty) };
+      const qty = qtyFor(ing, p.qty, p.unit)!;
+      const next = { ...ing, onHand: round3(ing.onHand + qty) };
       await ctx.store.put('ingredients', next);
-      await moveIngredient(ctx, ing, { qty: p.qty, reason: 'delivery', note: p.note?.trim() || undefined });
+      await moveIngredient(ctx, ing, { qty, reason: 'delivery', note: p.note?.trim() || undefined });
       return {
-        summary: `Received ${p.qty} ${ing.unit} of ${ing.name}`,
+        summary: `Received ${formatQty(qty, ing.unit)} of ${ing.name}`,
         target: ing.id,
-        events: [{ type: 'StockMoved', payload: { ingredientId: ing.id, delta: p.qty } }],
+        events: [{ type: 'StockMoved', payload: { ingredientId: ing.id, delta: qty } }],
       };
     },
   },
@@ -120,16 +138,20 @@ export const inventoryIntents = {
     roles: ['owner', 'inventory'],
     validate: async (p, ctx) => {
       if (!(p.counted >= 0)) return ['The count cannot be negative.'];
-      return (await ctx.store.get('ingredients', p.ingredientId)) ? [] : ['That ingredient does not exist.'];
+      const ing = await ctx.store.get<Ingredient>('ingredients', p.ingredientId);
+      if (!ing) return ['That ingredient does not exist.'];
+      const bad = unitProblem(ing, p.unit);
+      return bad ? [bad] : [];
     },
     handle: async (p, ctx) => {
       const ing = (await ctx.store.get<Ingredient>('ingredients', p.ingredientId))!;
-      const delta = round3(p.counted - ing.onHand);
-      await ctx.store.put('ingredients', { ...ing, onHand: p.counted });
+      const counted = qtyFor(ing, p.counted, p.unit)!;
+      const delta = round3(counted - ing.onHand);
+      await ctx.store.put('ingredients', { ...ing, onHand: counted });
       if (delta !== 0) await moveIngredient(ctx, ing, { qty: delta, reason: 'correction', note: p.note?.trim() || undefined });
       const events: Array<{ type: string; payload?: Record<string, unknown> }> = [{ type: 'StockMoved', payload: { ingredientId: ing.id, delta } }];
-      if (crossedReorder(ing.onHand, p.counted, ing.reorderLevel)) events.push({ type: 'ReorderLevelBreached', payload: { ingredientId: ing.id } });
-      return { summary: `Counted ${ing.name}: ${p.counted} ${ing.unit} (was ${ing.onHand})`, target: ing.id, events };
+      if (crossedReorder(ing.onHand, counted, ing.reorderLevel)) events.push({ type: 'ReorderLevelBreached', payload: { ingredientId: ing.id } });
+      return { summary: `Counted ${ing.name}: ${formatQty(counted, ing.unit)} (was ${formatQty(ing.onHand, ing.unit)})`, target: ing.id, events };
     },
   },
 
@@ -141,17 +163,20 @@ export const inventoryIntents = {
       if (!p.note?.trim()) return ['Say what happened, such as "spoiled" or "spilled".'];
       const ing = await ctx.store.get<Ingredient>('ingredients', p.ingredientId);
       if (!ing) return ['That ingredient does not exist.'];
-      if (p.qty > ing.onHand) return [`Only ${ing.onHand} ${ing.unit} is on hand.`];
+      const bad = unitProblem(ing, p.unit);
+      if (bad) return [bad];
+      if (qtyFor(ing, p.qty, p.unit)! > ing.onHand) return [`Only ${formatQty(ing.onHand, ing.unit)} is on hand.`];
       return [];
     },
     handle: async (p, ctx) => {
       const ing = (await ctx.store.get<Ingredient>('ingredients', p.ingredientId))!;
-      const after = round3(ing.onHand - p.qty);
+      const qty = qtyFor(ing, p.qty, p.unit)!;
+      const after = round3(ing.onHand - qty);
       await ctx.store.put('ingredients', { ...ing, onHand: after });
-      await moveIngredient(ctx, ing, { qty: -p.qty, reason: 'waste', note: p.note!.trim() });
-      const events: Array<{ type: string; payload?: Record<string, unknown> }> = [{ type: 'StockMoved', payload: { ingredientId: ing.id, delta: -p.qty } }];
+      await moveIngredient(ctx, ing, { qty: -qty, reason: 'waste', note: p.note!.trim() });
+      const events: Array<{ type: string; payload?: Record<string, unknown> }> = [{ type: 'StockMoved', payload: { ingredientId: ing.id, delta: -qty } }];
       if (crossedReorder(ing.onHand, after, ing.reorderLevel)) events.push({ type: 'ReorderLevelBreached', payload: { ingredientId: ing.id } });
-      return { summary: `Wrote off ${p.qty} ${ing.unit} of ${ing.name}: ${p.note!.trim()}`, target: ing.id, events };
+      return { summary: `Wrote off ${formatQty(qty, ing.unit)} of ${ing.name}: ${p.note!.trim()}`, target: ing.id, events };
     },
   },
 } satisfies Partial<Registry>;

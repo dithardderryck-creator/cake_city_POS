@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { IntentMap, IntentName } from './intents';
 import type { FeedMap, FeedName } from './feeds';
+import { UNIT_CODES } from './units';
 
 /**
  * Runtime shape of every instruction. TypeScript only checks code we wrote; this checks what
@@ -16,7 +17,7 @@ const lineStatus = z.enum(['draft', 'awaiting_quote', 'new', 'in_production', 'd
 const role = z.enum(['owner', 'cashier', 'baker', 'inventory', 'it']);
 const empty = z.strictObject({});
 const qty = z.number().finite().min(0).max(1_000_000_000);
-const unit = z.enum(['g', 'kg', 'ml', 'l', 'pcs']);
+const unit = z.enum(UNIT_CODES);
 const tags = z.array(z.string().max(60)).max(20);
 const rangeInput = z.strictObject({ id: id.optional(), label: z.string().max(60), min: qty, max: qty });
 const cakeSpec = z.strictObject({
@@ -115,15 +116,17 @@ export const schemas = {
     allergens: z.array(name).max(20).optional(),
     ranges: z.array(rangeInput).max(12).optional(),
     active: z.boolean().optional(),
+    unit: unit.optional(),
   }),
-  'inventory/receive': z.strictObject({ ingredientId: id, qty, note: longText.optional() }),
-  'inventory/count': z.strictObject({ ingredientId: id, counted: qty, note: longText.optional() }),
-  'inventory/write_off': z.strictObject({ ingredientId: id, qty, note: longText.optional() }),
+  'inventory/receive': z.strictObject({ ingredientId: id, qty, unit: unit.optional(), note: longText.optional() }),
+  'inventory/count': z.strictObject({ ingredientId: id, counted: qty, unit: unit.optional(), note: longText.optional() }),
+  'inventory/write_off': z.strictObject({ ingredientId: id, qty, unit: unit.optional(), note: longText.optional() }),
 
   'recipes/save_rule': z.strictObject({
     ruleId: id.optional(),
     ingredientId: id,
     quantity: qty,
+    unit: unit.optional(),
     scaling: z.enum(['per_serving', 'per_layer_gap', 'fixed']),
     flavors: tags.optional(),
     fillings: tags.optional(),
@@ -139,7 +142,7 @@ export const schemas = {
     items: z.array(z.strictObject({ ingredientId: id, rangeId: id })).max(60),
     note: longText.optional(),
   }),
-  'usage/confirm': z.strictObject({ reportId: id, items: z.array(z.strictObject({ ingredientId: id, qty })).max(60) }),
+  'usage/confirm': z.strictObject({ reportId: id, items: z.array(z.strictObject({ ingredientId: id, qty, unit: unit.optional() })).max(60) }),
   'usage/send_back': z.strictObject({ reportId: id, reason: longText }),
 
   'sync/flush': empty,
@@ -170,6 +173,7 @@ export const feedSchemas = {
   recipe_rules: empty,
   usage_form: z.strictObject({ orderId: id, lineId: id }),
   usage_inbox: empty,
+  unit_list: empty,
   audit_view: empty,
   panel_map: empty,
 } as const;

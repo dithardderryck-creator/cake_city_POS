@@ -188,7 +188,8 @@ export interface PhotoData {
   data: string;
 }
 
-export type IngredientUnit = 'g' | 'kg' | 'ml' | 'l' | 'pcs';
+/** Stored quantities are always in the metric base unit: kg, l or pcs (D-62). Other units are converted on the way in. */
+export type IngredientUnit = 'kg' | 'l' | 'pcs';
 
 /** A preset amount the baker taps instead of typing (D-14), such as "Light, 100 to 200 g". */
 export interface IngredientRange {

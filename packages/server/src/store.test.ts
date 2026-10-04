@@ -167,3 +167,65 @@ describe('sqlite specifics', () => {
     db.close();
   });
 });
+
+describe('migration 2: grams and millilitres become kg and l', () => {
+  const putRaw = (db: Database.Database, table: string, doc: { id: string; [k: string]: unknown }) =>
+    db.prepare(`INSERT INTO "${table}" (id, data) VALUES (?, ?)`).run(doc.id, JSON.stringify(doc));
+  const getRaw = (db: Database.Database, table: string, id: string) => JSON.parse((db.prepare(`SELECT data FROM "${table}" WHERE id = ?`).get(id) as { data: string }).data);
+
+  /** A database as version 1 of the schema left it, with stock in grams. */
+  function legacyDb() {
+    const db = new Database(':memory:');
+    for (const t of ['ingredients', 'ingredientMovements', 'recipeRules', 'usageSuggestions', 'usageReports'])
+      db.exec(`CREATE TABLE "${t}" (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL) WITHOUT ROWID`);
+    db.pragma('user_version = 1');
+    putRaw(db, 'ingredients', { id: 'flour', name: 'Flour', unit: 'g', onHand: 4750, reorderLevel: 1000, allergens: [], ranges: [{ id: 'r1', label: 'Light', min: 100, max: 200 }], active: true });
+    putRaw(db, 'ingredients', { id: 'vanilla', name: 'Vanilla', unit: 'ml', onHand: 90, allergens: [], ranges: [{ id: 'r2', label: 'Splash', min: 3, max: 8 }], active: true });
+    putRaw(db, 'ingredients', { id: 'butter', name: 'Butter', unit: 'kg', onHand: 2.5, allergens: [], ranges: [], active: true });
+    putRaw(db, 'ingredients', { id: 'eggs', name: 'Eggs', unit: 'pcs', onHand: 30, allergens: [], ranges: [], active: true });
+    putRaw(db, 'ingredientMovements', { id: 'm1', ingredientId: 'flour', qty: -250, reason: 'usage', shortfall: 50 });
+    putRaw(db, 'ingredientMovements', { id: 'm2', ingredientId: 'butter', qty: 1, reason: 'delivery' });
+    putRaw(db, 'recipeRules', { id: 'rule1', ingredientId: 'flour', quantity: 20, scaling: 'per_serving' });
+    putRaw(db, 'recipeRules', { id: 'rule2', ingredientId: 'eggs', quantity: 0.25, scaling: 'per_serving' });
+    putRaw(db, 'usageSuggestions', { id: 's1', lines: [{ ingredientId: 'flour', name: 'Flour', unit: 'g', qty: 240 }, { ingredientId: 'eggs', name: 'Eggs', unit: 'pcs', qty: 3 }] });
+    putRaw(db, 'usageReports', {
+      id: 'rep1',
+      items: [{ ingredientId: 'vanilla', unit: 'ml', min: 3, max: 8 }],
+      confirmed: [{ ingredientId: 'vanilla', qty: 5 }],
+    });
+    return db;
+  }
+
+  it('divides every gram and millilitre figure by 1000 and relabels the unit, leaving kg, l and pcs alone', () => {
+    const db = legacyDb();
+    expect(migrate(db)).toEqual({ from: 1, to: SCHEMA_VERSION });
+    expect(getRaw(db, 'ingredients', 'flour')).toMatchObject({ unit: 'kg', onHand: 4.75, reorderLevel: 1, ranges: [{ min: 0.1, max: 0.2 }] });
+    expect(getRaw(db, 'ingredients', 'vanilla')).toMatchObject({ unit: 'l', onHand: 0.09, ranges: [{ min: 0.003, max: 0.008 }] });
+    expect(getRaw(db, 'ingredients', 'butter')).toMatchObject({ unit: 'kg', onHand: 2.5 });
+    expect(getRaw(db, 'ingredients', 'eggs')).toMatchObject({ unit: 'pcs', onHand: 30 });
+    expect(getRaw(db, 'ingredientMovements', 'm1')).toMatchObject({ qty: -0.25, shortfall: 0.05 });
+    expect(getRaw(db, 'ingredientMovements', 'm2')).toMatchObject({ qty: 1 });
+    expect(getRaw(db, 'recipeRules', 'rule1').quantity).toBe(0.02);
+    expect(getRaw(db, 'recipeRules', 'rule2').quantity).toBe(0.25);
+    expect(getRaw(db, 'usageSuggestions', 's1').lines).toEqual([
+      expect.objectContaining({ unit: 'kg', qty: 0.24 }),
+      expect.objectContaining({ unit: 'pcs', qty: 3 }),
+    ]);
+    expect(getRaw(db, 'usageReports', 'rep1')).toMatchObject({ items: [{ unit: 'l', min: 0.003, max: 0.008 }], confirmed: [{ qty: 0.005 }] });
+    db.close();
+  });
+
+  it('runs only once, so a second open does not divide again', () => {
+    const db = legacyDb();
+    migrate(db);
+    migrate(db);
+    expect(getRaw(db, 'ingredients', 'flour').onHand).toBe(4.75);
+    db.close();
+  });
+
+  it('is harmless on a brand-new database with no ingredient tables yet', () => {
+    const db = new Database(':memory:');
+    expect(() => migrate(db)).not.toThrow();
+    db.close();
+  });
+});

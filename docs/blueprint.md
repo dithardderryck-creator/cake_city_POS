@@ -535,6 +535,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-59** | **Q-05 decided for now:** the recipe suggestion is **rules-based** (the shop's own recipe lines added up), because it works offline, gives the same answer every time and can be explained. An AI generator can be added later behind the same suggestion step, with these rules as the fallback |
 | **D-60** | **Recipe lines** say how much of an ingredient goes into cakes like this one: per serving, per serving for each gap between layers, or fixed; limited by flavor, filling and dietary tags. The owner and baker manage them. The baker's confirmed usage does not yet adjust them (the feedback loop is parked) |
 | **D-61** | **The usage inbox stands in for the Requests system (BR-13).** Reports waiting for Inventory appear in `usage_inbox` with the same lifecycle (reported, then confirmed or sent back). When Messages is built they should appear in the same inbox |
+| **D-62** | **Metric base units.** Stock is stored in kg, l and pcs. Other units (g, mg, lb, oz, ml, cup, tbsp, dozen...) are accepted on input and converted, and shown in plain text ("250 g"). Existing gram and millilitre data is converted once by schema migration 2 |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
