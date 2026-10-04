@@ -19,6 +19,8 @@ export const INDEXES: Partial<Record<CollectionName, string[]>> = {
   requests: ['at'],
   quotes: ['status', 'orderId'],
   photos: ['attachedTo'],
+  ingredientMovements: ['ingredientId'],
+  usageReports: ['status', 'lineId'],
 };
 
 /**

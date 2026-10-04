@@ -1,7 +1,14 @@
 import type {
   AuditEntry,
   CakeSpec,
+  Ingredient,
+  IngredientMovement,
+  IngredientUnit,
   Quote,
+  RecipeRule,
+  RuleScaling,
+  UsageReport,
+  UsageSuggestion,
   QuoteStatus,
   Combination,
   Order,
@@ -20,6 +27,7 @@ import type {
 } from './domain';
 import { daysBetween, todayLocal } from './circuits/dates';
 import { loadSettings } from './circuits/settings';
+import { DomainError } from './intents';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
@@ -206,7 +214,19 @@ export interface StaffSigninRow {
   role: Role;
 }
 
-export type ScreenId = 'sell' | 'orders' | 'quotes' | 'bake_queue' | 'catalogue' | 'staff' | 'settings' | 'audit' | 'panel_map';
+export type ScreenId =
+  | 'sell'
+  | 'orders'
+  | 'quotes'
+  | 'bake_queue'
+  | 'ingredients'
+  | 'usage_inbox'
+  | 'recipes'
+  | 'catalogue'
+  | 'staff'
+  | 'settings'
+  | 'audit'
+  | 'panel_map';
 export interface NavItem {
   id: ScreenId;
   label: string;
@@ -254,11 +274,105 @@ export interface BakeRow {
   statusTone: Tone;
   actions: LineAction[];
   cake: CakeDetails;
+  usage: { state: 'not_started' | 'suggested' | 'reported' | 'confirmed' | 'sent_back'; canReport: boolean };
 }
 export interface BakeQueueData {
   rows: BakeRow[];
   counts: { late: number; today: number; toStart: number; inProduction: number; ready: number };
   decoratingStage: boolean;
+}
+
+export interface IngredientRow {
+  ingredientId: string;
+  name: string;
+  unit: IngredientUnit;
+  onHand: number;
+  reorderLevel: number | null;
+  /** On hand is at or below the reorder level. */
+  low: boolean;
+  allergens: string[];
+  ranges: { rangeId: string; label: string; min: number; max: number }[];
+  active: boolean;
+  /** Reported by bakers but not yet confirmed by Inventory (BR-12). Stock has not moved yet. */
+  pending: { min: number; max: number; reports: number } | null;
+  /** From confirmed usage over the last 14 days (BR-14). Null when there is not enough history. */
+  daysLeft: number | null;
+  daysLeftLabel: string;
+  can: { edit: boolean };
+}
+
+export interface RecipeRuleRow {
+  ruleId: string;
+  ingredientId: string;
+  ingredientName: string;
+  unit: IngredientUnit;
+  quantity: number;
+  scaling: RuleScaling;
+  scalingLabel: string;
+  flavors: string[];
+  fillings: string[];
+  needsDietary: string[];
+  excludedByDietary: string[];
+  note?: string;
+  /** One plain sentence describing when this line applies. */
+  summary: string;
+}
+
+export interface UsageFormItem {
+  ingredientId: string;
+  name: string;
+  unit: IngredientUnit;
+  /** What the system expects for this cake. Null for ingredients that are not on the suggestion. */
+  suggestedQty: number | null;
+  ranges: { rangeId: string; label: string; min: number; max: number }[];
+  /** The amount that fits the suggestion best, so the baker can tap to accept. */
+  suggestedRangeId: string | null;
+}
+export interface UsageFormData {
+  lineId: string;
+  orderId: string;
+  orderNumber: string;
+  cake: CakeDetails;
+  suggested: UsageFormItem[];
+  /** Every other ingredient the baker could add. */
+  extras: UsageFormItem[];
+  report: { reportId: string; status: 'reported' | 'confirmed' | 'sent_back'; reportedAt: string; sentBackReason?: string } | null;
+  canReport: boolean;
+  blockedReason: string | null;
+}
+
+export interface UsageReportRow {
+  reportId: string;
+  orderId: string;
+  orderNumber: string;
+  lineId: string;
+  cake: CakeDetails;
+  status: 'reported' | 'confirmed' | 'sent_back';
+  statusLabel: string;
+  reportedByName: string;
+  reportedAt: string;
+  note?: string;
+  items: {
+    ingredientId: string;
+    name: string;
+    unit: IngredientUnit;
+    rangeLabel: string;
+    min: number;
+    max: number;
+    extra: boolean;
+    suggestedQty: number | null;
+    onHand: number;
+    confirmedQty?: number;
+  }[];
+  confirmedByName?: string;
+  confirmedAt?: string;
+  sentBackReason?: string;
+}
+export interface UsageInboxData {
+  /** Waiting for Inventory, oldest first. */
+  pending: UsageReportRow[];
+  recent: UsageReportRow[];
+  can: { confirm: boolean };
 }
 
 export interface ShopSettingsData {
@@ -277,6 +391,10 @@ export interface FeedMap {
   quote_inbox: { params: Record<string, never>; data: QuoteInboxData };
   bake_queue: { params: Record<string, never>; data: BakeQueueData };
   shop_settings: { params: Record<string, never>; data: ShopSettingsData };
+  ingredient_list: { params: { includeInactive?: boolean }; data: IngredientRow[] };
+  recipe_rules: { params: Record<string, never>; data: RecipeRuleRow[] };
+  usage_form: { params: { orderId: string; lineId: string }; data: UsageFormData };
+  usage_inbox: { params: Record<string, never>; data: UsageInboxData };
   audit_view: { params: Record<string, never>; data: AuditRow[] };
   panel_map: { params: Record<string, never>; data: PanelMapData };
 }
@@ -350,6 +468,53 @@ const quoteState = (q: Quote, fmt: (n: number) => string): QuoteState => ({
   resolvedAt: q.resolvedAt,
 });
 
+const SCALING_LABEL: Record<RuleScaling, string> = {
+  per_serving: 'per serving',
+  per_layer_gap: 'per serving for each gap between layers',
+  fixed: 'for every cake',
+};
+
+const REPORT_LABEL: Record<UsageReport['status'], string> = { reported: 'Waiting for Inventory', confirmed: 'Confirmed', sent_back: 'Sent back' };
+
+const USAGE_WINDOW_DAYS = 14;
+const MIN_USAGE_RECORDS = 3;
+const MIN_HISTORY_DAYS = 3;
+
+/** Days of stock left from confirmed usage only (BR-14). Honest about having too little history. */
+function daysLeftInfo(onHand: number, usage: IngredientMovement[], now: Date): { days: number | null; label: string } {
+  const used = usage.filter((m) => m.reason === 'usage');
+  if (used.length < MIN_USAGE_RECORDS) return { days: null, label: 'Not enough data yet' };
+  const first = Math.min(...used.map((m) => Date.parse(m.at)));
+  const historyDays = (now.getTime() - first) / 86_400_000;
+  if (historyDays < MIN_HISTORY_DAYS) return { days: null, label: 'Not enough data yet' };
+  const windowDays = Math.min(USAGE_WINDOW_DAYS, historyDays);
+  const since = now.getTime() - windowDays * 86_400_000;
+  const total = used.filter((m) => Date.parse(m.at) >= since).reduce((s, m) => s - m.qty, 0);
+  if (total <= 0) return { days: null, label: 'No recent use' };
+  const days = onHand / (total / windowDays);
+  if (onHand <= 0) return { days: 0, label: 'Out of stock' };
+  return { days, label: days < 1 ? 'Less than a day' : `About ${Math.floor(days)} ${Math.floor(days) === 1 ? 'day' : 'days'}` };
+}
+
+function bestRange(ranges: Ingredient['ranges'], qty: number | null): string | null {
+  if (qty === null || ranges.length === 0) return null;
+  const inside = ranges.find((r) => qty >= r.min && qty <= r.max);
+  if (inside) return inside.id;
+  return [...ranges].sort((a, b) => Math.abs((a.min + a.max) / 2 - qty) - Math.abs((b.min + b.max) / 2 - qty))[0]!.id;
+}
+
+const rangeRows = (i: Ingredient) => i.ranges.map((r) => ({ rangeId: r.id, label: r.label, min: r.min, max: r.max }));
+
+function usageStateFor(lineStatus: string, hasSuggestion: boolean, reports: UsageReport[]): BakeRow['usage'] {
+  const latest = [...reports].sort((a, b) => b.reportedAt.localeCompare(a.reportedAt))[0];
+  const started = lineStatus !== 'new';
+  const open = reports.some((r) => r.status === 'reported');
+  return {
+    state: latest ? latest.status : hasSuggestion ? 'suggested' : 'not_started',
+    canReport: started && !open,
+  };
+}
+
 function dueInfo(deliveryDate: string | undefined, today: string): { label: string; urgency: Urgency } {
   if (!deliveryDate) return { label: 'No date set', urgency: 'undated' };
   const d = daysBetween(today, deliveryDate);
@@ -397,6 +562,9 @@ const NAV: Record<Role, NavItem[]> = {
     { id: 'orders', label: 'Orders' },
     { id: 'quotes', label: 'Quotes' },
     { id: 'bake_queue', label: 'Cakes to bake' },
+    { id: 'usage_inbox', label: 'Usage to confirm' },
+    { id: 'ingredients', label: 'Ingredients' },
+    { id: 'recipes', label: 'Recipes' },
     { id: 'catalogue', label: 'Catalogue' },
     { id: 'staff', label: 'Staff' },
     { id: 'settings', label: 'Settings' },
@@ -410,9 +578,15 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   baker: [
     { id: 'bake_queue', label: 'Cakes to bake' },
+    { id: 'recipes', label: 'Recipes' },
+    { id: 'ingredients', label: 'Ingredients' },
     { id: 'catalogue', label: 'Catalogue' },
   ],
-  inventory: [{ id: 'catalogue', label: 'Catalogue' }],
+  inventory: [
+    { id: 'usage_inbox', label: 'Usage to confirm' },
+    { id: 'ingredients', label: 'Ingredients' },
+    { id: 'catalogue', label: 'Catalogue' },
+  ],
   it: [{ id: 'panel_map', label: 'Panel map' }],
 };
 
@@ -721,6 +895,13 @@ export const feeds: FeedRegistry = {
       const orderIds = [...new Set(lines.map((l) => l.orderId))];
       const orders = orderIds.length ? await store.find<Order>('orders', { where: { id: orderIds } }) : [];
       const today = todayLocal(clock.now());
+      const lineIds = lines.map((l) => l.id);
+      const [suggestions, reports] = lineIds.length
+        ? await Promise.all([
+            store.find<UsageSuggestion>('usageSuggestions', { where: { lineId: lineIds } }),
+            store.find<UsageReport>('usageReports', { where: { lineId: lineIds } }),
+          ])
+        : [[], []];
       const rank: Record<string, number> = { late: 0, today: 1, soon: 2, later: 3, undated: 4 };
       const rows = lines
         .map((l): BakeRow | null => {
@@ -742,6 +923,11 @@ export const feeds: FeedRegistry = {
             statusTone: STATUS_TONE[status],
             actions: nextActions(order, l, session!.role, settings),
             cake: cakeDetails(l.custom.spec),
+            usage: usageStateFor(
+              l.status,
+              suggestions.some((x) => x.lineId === l.id),
+              reports.filter((x) => x.lineId === l.id),
+            ),
           };
         })
         .filter((r): r is BakeRow => r !== null)
@@ -767,6 +953,174 @@ export const feeds: FeedRegistry = {
       decoratingStage: (await loadSettings(store)).decoratingStage,
       can: { edit: session?.role === 'owner' },
     }),
+  },
+
+  ingredient_list: {
+    roles: ['owner', 'inventory', 'baker'],
+    build: async ({ store, session, clock }, params) => {
+      const [ingredients, movements, reports] = await Promise.all([
+        store.list<Ingredient>('ingredients'),
+        store.find<IngredientMovement>('ingredientMovements', { where: { reason: 'usage' } }),
+        store.find<UsageReport>('usageReports', { where: { status: 'reported' } }),
+      ]);
+      const canEdit = session?.role === 'owner' || session?.role === 'inventory';
+      return ingredients
+        .filter((i) => params.includeInactive || i.active)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((i): IngredientRow => {
+          const waiting = reports.flatMap((r) => r.items.filter((x) => x.ingredientId === i.id));
+          const dl = daysLeftInfo(i.onHand, movements.filter((m) => m.ingredientId === i.id), clock.now());
+          return {
+            ingredientId: i.id,
+            name: i.name,
+            unit: i.unit,
+            onHand: i.onHand,
+            reorderLevel: i.reorderLevel ?? null,
+            low: i.reorderLevel !== undefined && i.onHand <= i.reorderLevel,
+            allergens: i.allergens,
+            ranges: rangeRows(i),
+            active: i.active,
+            pending: waiting.length ? { min: waiting.reduce((s, x) => s + x.min, 0), max: waiting.reduce((s, x) => s + x.max, 0), reports: waiting.length } : null,
+            daysLeft: dl.days === null ? null : Math.round(dl.days * 10) / 10,
+            daysLeftLabel: dl.label,
+            can: { edit: canEdit },
+          };
+        });
+    },
+  },
+
+  recipe_rules: {
+    roles: ['owner', 'baker', 'inventory'],
+    build: async ({ store }) => {
+      const [rules, ingredients] = await Promise.all([store.list<RecipeRule>('recipeRules'), store.list<Ingredient>('ingredients')]);
+      return rules
+        .map((r): RecipeRuleRow | null => {
+          const ing = ingredients.find((i) => i.id === r.ingredientId);
+          if (!ing) return null;
+          let subject = r.flavors.length ? `${r.flavors.join(' or ')} cakes` : 'any cake';
+          if (r.fillings.length) subject += ` with ${r.fillings.join(' or ')} filling`;
+          if (r.needsDietary.length) subject += ` that are ${r.needsDietary.join(' and ')}`;
+          if (r.excludedByDietary.length) subject += ` but not ${r.excludedByDietary.join(' or ')}`;
+          return {
+            ruleId: r.id,
+            ingredientId: ing.id,
+            ingredientName: ing.name,
+            unit: ing.unit,
+            quantity: r.quantity,
+            scaling: r.scaling,
+            scalingLabel: SCALING_LABEL[r.scaling],
+            flavors: r.flavors,
+            fillings: r.fillings,
+            needsDietary: r.needsDietary,
+            excludedByDietary: r.excludedByDietary,
+            note: r.note,
+            summary: `${r.quantity} ${ing.unit} of ${ing.name} ${SCALING_LABEL[r.scaling]}, for ${subject}`,
+          };
+        })
+        .filter((r): r is RecipeRuleRow => r !== null)
+        .sort((a, b) => a.ingredientName.localeCompare(b.ingredientName) || a.summary.localeCompare(b.summary));
+    },
+  },
+
+  usage_form: {
+    roles: ['owner', 'baker'],
+    build: async (ctx, params) => {
+      const { store } = ctx;
+      const order = await store.get<Order>('orders', params.orderId);
+      const line = await store.get<OrderLine>('orderLines', params.lineId);
+      if (!order || !line || line.orderId !== order.id || !line.custom) throw new DomainError('invalid', ['That cake is not on the order.']);
+      const [suggestion, ingredients, reports] = await Promise.all([
+        store.get<UsageSuggestion>('usageSuggestions', line.id),
+        store.list<Ingredient>('ingredients'),
+        store.find<UsageReport>('usageReports', { where: { lineId: line.id } }),
+      ]);
+      const active = ingredients.filter((i) => i.active);
+      const suggestedIds = new Set((suggestion?.lines ?? []).map((l) => l.ingredientId));
+      const item = (i: Ingredient, qty: number | null): UsageFormItem => ({
+        ingredientId: i.id,
+        name: i.name,
+        unit: i.unit,
+        suggestedQty: qty,
+        ranges: rangeRows(i),
+        suggestedRangeId: bestRange(i.ranges, qty),
+      });
+      const latest = [...reports].sort((a, b) => b.reportedAt.localeCompare(a.reportedAt))[0];
+      const open = reports.some((r) => r.status === 'reported');
+      const state = usageStateFor(line.status, !!suggestion, reports);
+      return {
+        lineId: line.id,
+        orderId: order.id,
+        orderNumber: order.number,
+        cake: cakeDetails(line.custom.spec),
+        suggested: (suggestion?.lines ?? [])
+          .map((l) => ({ l, ing: active.find((i) => i.id === l.ingredientId) }))
+          .filter((x): x is { l: (typeof x)['l']; ing: Ingredient } => !!x.ing)
+          .map((x) => item(x.ing, x.l.qty)),
+        extras: active.filter((i) => !suggestedIds.has(i.id)).sort((a, b) => a.name.localeCompare(b.name)).map((i) => item(i, null)),
+        report: latest ? { reportId: latest.id, status: latest.status, reportedAt: latest.reportedAt, sentBackReason: latest.sentBackReason } : null,
+        canReport: state.canReport,
+        blockedReason: state.canReport ? null : open ? 'Already waiting for Inventory to confirm.' : 'Start baking this cake first.',
+      };
+    },
+  },
+
+  usage_inbox: {
+    roles: ['owner', 'inventory'],
+    build: async ({ store, session }) => {
+      const [reports, ingredients] = await Promise.all([store.list<UsageReport>('usageReports'), store.list<Ingredient>('ingredients')]);
+      const orderIds = [...new Set(reports.map((r) => r.orderId))];
+      const lineIds = [...new Set(reports.map((r) => r.lineId))];
+      const [orders, lines, suggestions] = reports.length
+        ? await Promise.all([
+            store.find<Order>('orders', { where: { id: orderIds } }),
+            store.find<OrderLine>('orderLines', { where: { id: lineIds } }),
+            store.find<UsageSuggestion>('usageSuggestions', { where: { lineId: lineIds } }),
+          ])
+        : [[], [], []];
+      const toRow = (r: UsageReport): UsageReportRow | null => {
+        const order = orders.find((o) => o.id === r.orderId);
+        const line = lines.find((l) => l.id === r.lineId);
+        if (!order || !line?.custom) return null;
+        const sug = suggestions.find((s) => s.lineId === r.lineId);
+        return {
+          reportId: r.id,
+          orderId: order.id,
+          orderNumber: order.number,
+          lineId: line.id,
+          cake: cakeDetails(line.custom.spec),
+          status: r.status,
+          statusLabel: REPORT_LABEL[r.status],
+          reportedByName: r.reportedByName,
+          reportedAt: r.reportedAt,
+          note: r.note,
+          items: r.items.map((i) => ({
+            ingredientId: i.ingredientId,
+            name: i.name,
+            unit: i.unit,
+            rangeLabel: i.rangeLabel,
+            min: i.min,
+            max: i.max,
+            extra: i.extra,
+            suggestedQty: sug?.lines.find((l) => l.ingredientId === i.ingredientId)?.qty ?? null,
+            onHand: ingredients.find((x) => x.id === i.ingredientId)?.onHand ?? 0,
+            confirmedQty: r.confirmed?.find((c) => c.ingredientId === i.ingredientId)?.qty,
+          })),
+          confirmedByName: r.confirmedByName,
+          confirmedAt: r.confirmedAt,
+          sentBackReason: r.sentBackReason,
+        };
+      };
+      const rows = reports.map((r) => ({ r, row: toRow(r) })).filter((x): x is { r: UsageReport; row: UsageReportRow } => x.row !== null);
+      return {
+        pending: rows.filter((x) => x.r.status === 'reported').sort((a, b) => a.r.reportedAt.localeCompare(b.r.reportedAt)).map((x) => x.row),
+        recent: rows
+          .filter((x) => x.r.status !== 'reported')
+          .sort((a, b) => (b.r.confirmedAt ?? b.r.reportedAt).localeCompare(a.r.confirmedAt ?? a.r.reportedAt))
+          .slice(0, 20)
+          .map((x) => x.row),
+        can: { confirm: session?.role === 'owner' || session?.role === 'inventory' },
+      };
+    },
   },
 
   audit_view: {

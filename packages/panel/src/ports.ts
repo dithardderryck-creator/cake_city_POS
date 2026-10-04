@@ -23,6 +23,11 @@ export const COLLECTIONS = [
   'photos',
   'photoData',
   'settings',
+  'ingredients',
+  'ingredientMovements',
+  'recipeRules',
+  'usageSuggestions',
+  'usageReports',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

@@ -188,6 +188,119 @@ export interface PhotoData {
   data: string;
 }
 
+export type IngredientUnit = 'g' | 'kg' | 'ml' | 'l' | 'pcs';
+
+/** A preset amount the baker taps instead of typing (D-14), such as "Light, 100 to 200 g". */
+export interface IngredientRange {
+  id: Id;
+  label: string;
+  min: number;
+  max: number;
+}
+
+export interface Ingredient {
+  id: Id;
+  name: string;
+  unit: IngredientUnit;
+  onHand: number;
+  reorderLevel?: number;
+  allergens: string[];
+  ranges: IngredientRange[];
+  /** Switched off instead of deleted, like products (BR-10). */
+  active: boolean;
+  createdAt: string;
+}
+
+export interface IngredientMovement {
+  id: Id;
+  ingredientId: Id;
+  /** Positive adds stock, negative removes it. */
+  qty: number;
+  reason: 'opening' | 'delivery' | 'correction' | 'waste' | 'usage';
+  /** For usage that could not come out of stock because there was not enough on hand. */
+  shortfall?: number;
+  reportId?: Id;
+  orderId?: Id;
+  note?: string;
+  by: Id;
+  at: string;
+}
+
+/** How a recipe line grows with the cake. */
+export type RuleScaling =
+  /** quantity x servings */
+  | 'per_serving'
+  /** quantity x servings x (layers - 1): filling and frosting between layers */
+  | 'per_layer_gap'
+  /** the same for every cake */
+  | 'fixed';
+
+/**
+ * One line of the shop's recipe knowledge: "use this much of this ingredient, for cakes like this".
+ * Empty flavor/filling lists mean "any". The generator adds up every line that fits a cake (D-13).
+ */
+export interface RecipeRule {
+  id: Id;
+  ingredientId: Id;
+  quantity: number;
+  scaling: RuleScaling;
+  flavors: string[];
+  fillings: string[];
+  /** Only for cakes that have all of these dietary tags (for example a substitute for eggs). */
+  needsDietary: string[];
+  /** Left out of cakes that have any of these dietary tags (for example eggs in an eggless cake). */
+  excludedByDietary: string[];
+  note?: string;
+}
+
+export interface UsageSuggestionLine {
+  ingredientId: Id;
+  name: string;
+  unit: IngredientUnit;
+  qty: number;
+}
+
+/** What the system thinks a custom cake needs. One per cake line; the id is the line's id. */
+export interface UsageSuggestion {
+  id: Id;
+  orderId: Id;
+  lineId: Id;
+  lines: UsageSuggestionLine[];
+  generatedAt: string;
+  generator: 'rules';
+}
+
+export interface UsageReportItem {
+  ingredientId: Id;
+  name: string;
+  unit: IngredientUnit;
+  rangeId: Id;
+  rangeLabel: string;
+  min: number;
+  max: number;
+  /** Not on the suggestion: the baker added it. */
+  extra: boolean;
+}
+
+export type UsageReportStatus = 'reported' | 'confirmed' | 'sent_back';
+
+export interface UsageReport {
+  id: Id;
+  orderId: Id;
+  lineId: Id;
+  status: UsageReportStatus;
+  items: UsageReportItem[];
+  reportedBy: Id;
+  reportedByName: string;
+  reportedAt: string;
+  note?: string;
+  confirmedBy?: Id;
+  confirmedByName?: string;
+  confirmedAt?: string;
+  confirmed?: Array<{ ingredientId: Id; qty: number }>;
+  sentBackReason?: string;
+}
+
 /** Shop-wide switches the owner controls. One record, id "shop". */
 export interface ShopSettings {
   id: 'shop';

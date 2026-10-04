@@ -16,7 +16,10 @@ import { catalogueIntents } from './circuits/catalogue';
 import { customIntents } from './circuits/custom';
 import { orderIntents } from './circuits/orders';
 import { MAX_PHOTO_BYTES, UNATTACHED_PHOTO_TTL_MS, sniffImage } from './circuits/photos';
+import { inventoryIntents } from './circuits/inventory';
 import { quoteIntents } from './circuits/quotes';
+import { recipeIntents } from './circuits/recipes';
+import { usageIntents } from './circuits/usage';
 import { settingsIntents } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
 import { staffIntents } from './circuits/staff';
@@ -125,6 +128,9 @@ const registry = {
   ...customIntents,
   ...quoteIntents,
   ...settingsIntents,
+  ...inventoryIntents,
+  ...recipeIntents,
+  ...usageIntents,
   ...paymentIntents,
   ...syncIntents,
 } as Registry;

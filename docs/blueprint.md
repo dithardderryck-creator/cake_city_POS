@@ -272,6 +272,9 @@ Unpaid → Partial → Paid. Refunds add Partially refunded and Refunded. The ba
 | **BR-29** | The cashier may remove a custom cake before it is priced and paid. After that, or once baking starts, only the owner may cancel it, and any refund is a separate owner decision (BR-08) |
 | **BR-30** | The owner may change a quoted price only until baking starts, with a reason. The change is audited and warns about money already taken |
 | **BR-31** | Custom cakes use ingredients, not counter stock, so handing one over never changes a catalogue stock count |
+| **BR-32** | A usage report never moves stock. It shows as pending. Stock goes down only when Inventory confirms exact figures (BR-12). Confirming the same report twice does nothing the second time |
+| **BR-33** | Confirmed usage cannot take stock below zero. The shortfall is recorded on the movement and a warning asks for a count |
+| **BR-34** | The ingredient suggestion is made once, when baking starts, from the recipe lines that fit the cake. Later recipe changes do not rewrite it |
 | **BR-27** | Days-of-stock-left and stock alerts consider ingredients and packaging. Finished goods use the counter count |
 
 ---
@@ -440,6 +443,7 @@ Ingredient demand forecast from open orders; suggested bake quantities for count
 | A-10 | Days-of-stock-left uses a 14-day rolling window with a minimum-data threshold | Owner |
 | A-11 | Default alert thresholds and critical flags as listed in §8 | Owner |
 | A-12 | ~~Sync conflicts: append-only for money, stock, messages; last write wins for edits.~~ Superseded by D-45: one server is the only writer, so there are no device-to-device conflicts | n/a |
+| A-13 | The owner and the baker both manage recipe lines; the inventory role manages ingredients, amounts and stock | Owner |
 | A-13 | One shop, one currency, no tax | Owner |
 | A-14 | Every available combination carries a stock count | Owner |
 
@@ -528,6 +532,9 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-56** | **Who moves a custom cake:** the baker starts baking, decorates and marks ready; the cashier hands over or sends it out; the owner can do any step. The Decorating stage is a shop setting the owner turns on (D-11), default off |
 | **D-57** | **Reference photos are stored in the database** (not loose files) so backups and restores always include them. Upload and fetch are plain HTTP calls with sign-in, 5 MB maximum, JPEG/PNG/WebP checked by content. Unattached pictures are deleted after a day |
 | **D-58** | **Custom cake details** use the blueprint set plus `allergyNotes` (what the customer told us, shown to the baker) and a free-text `sizeNote`. Q-04 may still change the set for recipe generation |
+| **D-59** | **Q-05 decided for now:** the recipe suggestion is **rules-based** (the shop's own recipe lines added up), because it works offline, gives the same answer every time and can be explained. An AI generator can be added later behind the same suggestion step, with these rules as the fallback |
+| **D-60** | **Recipe lines** say how much of an ingredient goes into cakes like this one: per serving, per serving for each gap between layers, or fixed; limited by flavor, filling and dietary tags. The owner and baker manage them. The baker's confirmed usage does not yet adjust them (the feedback loop is parked) |
+| **D-61** | **The usage inbox stands in for the Requests system (BR-13).** Reports waiting for Inventory appear in `usage_inbox` with the same lifecycle (reported, then confirmed or sent back). When Messages is built they should appear in the same inbox |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -568,7 +575,9 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Windows and macOS start-up files | Written, **untested** | Never run on those systems |
 | Custom cake lines, owner quotes, reference photos | Built | Details, photos (up to 6), quote request/answer/decline/withdraw/revise, role-based baking steps, owner-switched Decorating stage. Tested over the real server |
 | Baker's queue (`bake_queue`) | Built | Priced cakes by delivery date with urgency. Stages, capacity and the ingredient chain are still to come |
-| Production stages, ingredient usage chain, inventory beyond finished goods | Not built | |
+| Ingredient usage chain (suggest, report, confirm, stock moves) | Built | Rules-based suggestion, preset amounts, pending, shortfalls, send back. Tested over the real server |
+| Ingredients (stock, delivery, count, write-off, amounts, reorder level, days of stock left) | Built | Packaging is not separate yet: add it as an ingredient in `pcs` |
+| Production stages beyond the baker's steps (capacity, calendar, batches) | Not built | |
 | Messages (requests, notes, announcements) and alerts | Not built | |
 | Delivery record | Not built | |
 | Owner reports | Not built | |
@@ -580,7 +589,7 @@ Known bugs and gaps found in review: [known-issues.md](known-issues.md).
 
 ### Next in order
 1. ~~Custom cake orders with owner quotes~~ (built; see the status table).
-2. Production queue and the ingredient usage chain.
-3. Messages and alerts.
+2. ~~Ingredient usage chain~~ (built).
+3. Messages and alerts (stock and quote alerts, WhatsApp/SMS to the owner).
 4. Counter day, delivery record, reports, receipts.
 Each is a new circuit plus its instructions and feeds, then the generated API reference updates itself.

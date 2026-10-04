@@ -327,6 +327,121 @@ Allowed: **owner**
 | --- | --- | --- | --- |
 | `decoratingStage` | boolean | no |  |
 
+### Inventory
+
+#### `inventory/create_ingredient`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `name` | string | yes | max length 120 |
+| `unit` | "g" \| "kg" \| "ml" \| "l" \| "pcs" | yes |  |
+| `reorderLevel` | number | no | min 0, max 1000000000 |
+| `allergens` | string[] | no | max 20 items |
+| `ranges` | { label: string, min: number, max: number }[] | no | max 12 items |
+| `openingStock` | number | no | min 0, max 1000000000 |
+
+#### `inventory/update_ingredient`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `ingredientId` | string | yes | min length 1, max length 64 |
+| `name` | string | no | max length 120 |
+| `reorderLevel` | any | no |  |
+| `allergens` | string[] | no | max 20 items |
+| `ranges` | { id?: string, label: string, min: number, max: number }[] | no | max 12 items |
+| `active` | boolean | no |  |
+
+#### `inventory/receive`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `ingredientId` | string | yes | min length 1, max length 64 |
+| `qty` | number | yes | min 0, max 1000000000 |
+| `note` | string | no | max length 500 |
+
+#### `inventory/count`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `ingredientId` | string | yes | min length 1, max length 64 |
+| `counted` | number | yes | min 0, max 1000000000 |
+| `note` | string | no | max length 500 |
+
+#### `inventory/write_off`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `ingredientId` | string | yes | min length 1, max length 64 |
+| `qty` | number | yes | min 0, max 1000000000 |
+| `note` | string | no | max length 500 |
+
+### Recipes
+
+#### `recipes/save_rule`
+
+Allowed: **owner, baker**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `ruleId` | string | no | min length 1, max length 64 |
+| `ingredientId` | string | yes | min length 1, max length 64 |
+| `quantity` | number | yes | min 0, max 1000000000 |
+| `scaling` | "per_serving" \| "per_layer_gap" \| "fixed" | yes |  |
+| `flavors` | string[] | no | max 20 items |
+| `fillings` | string[] | no | max 20 items |
+| `needsDietary` | string[] | no | max 20 items |
+| `excludedByDietary` | string[] | no | max 20 items |
+| `note` | string | no | max length 500 |
+
+#### `recipes/remove_rule`
+
+Allowed: **owner, baker**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `ruleId` | string | yes | min length 1, max length 64 |
+
+### Usage
+
+#### `usage/report`
+
+Allowed: **owner, baker**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `lineId` | string | yes | min length 1, max length 64 |
+| `items` | { ingredientId: string, rangeId: string }[] | yes | max 60 items |
+| `note` | string | no | max length 500 |
+
+#### `usage/confirm`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `reportId` | string | yes | min length 1, max length 64 |
+| `items` | { ingredientId: string, qty: number }[] | yes | max 60 items |
+
+#### `usage/send_back`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `reportId` | string | yes | min length 1, max length 64 |
+| `reason` | string | yes | max length 500 |
+
 ### Payments
 
 #### `payments/record_payment`
@@ -425,6 +540,35 @@ _No fields. Send an empty object `{}`._
 #### `shop_settings`
 
 Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `ingredient_list`
+
+Allowed: **owner, inventory, baker**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `includeInactive` | boolean | no |  |
+
+#### `recipe_rules`
+
+Allowed: **owner, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `usage_form`
+
+Allowed: **owner, baker**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+| `lineId` | string | yes | min length 1, max length 64 |
+
+#### `usage_inbox`
+
+Allowed: **owner, inventory**
 
 _No fields. Send an empty object `{}`._
 

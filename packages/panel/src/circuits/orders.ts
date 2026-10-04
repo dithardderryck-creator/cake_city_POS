@@ -14,6 +14,7 @@ import { DomainError, type HandlerCtx, type Registry } from '../intents';
 import { isIsoDate, todayLocal } from './dates';
 import { canAdvance, canRemoveLine, moneySummary, deriveOrderStatus, activeLines, isCustom } from './order-logic';
 import { closeOpenQuote } from './quote-util';
+import { ensureSuggestion } from './recipes';
 import { loadSettings } from './settings';
 
 export async function loadOrderBundle(ctx: Pick<HandlerCtx, 'store'>, orderId: string) {
@@ -230,7 +231,10 @@ export const orderIntents = {
         { type: 'StatusChanged', payload: { orderId: p.orderId, lineId: line.id, to: p.to } },
       ];
 
-      if (line.type === 'custom' && p.to === 'in_production') {
+      if (line.type === 'custom' && p.to === 'in_production' && line.custom) {
+        const suggestion = await ensureSuggestion(ctx, p.orderId, line.id, line.custom.spec);
+        events.push({ type: 'UsageSuggested', payload: { lineId: line.id, lines: suggestion.lines.length } });
+        if (suggestion.lines.length === 0) warnings.push('No ingredient suggestion could be made because no recipe lines fit this cake. The baker can still report what was used.');
         const money = moneySummary(bundle.lines, bundle.payments, bundle.refunds);
         if (money.paid <= 0) warnings.push(`Nothing has been paid on order ${bundle.order.number} yet.`);
       }

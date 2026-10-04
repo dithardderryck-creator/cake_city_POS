@@ -47,6 +47,15 @@ Delivery dates are plain calendar dates, and "today", "tomorrow" and "late" in `
 ### O-9. Custom cake details are not final (Q-04)
 The set of cake attributes follows the blueprint plus `allergyNotes` and `sizeNote`. The owner and baker still need to confirm what the recipe generator will need (blueprint Q-04). Changing the set later means a migration for cakes already stored; the stored `spec` is a single object, so adding optional fields is cheap but renaming or removing is not.
 
+### O-10. Recipe suggestions are empty until the shop enters its recipes
+The suggestion can only be as good as the recipe lines. A new shop has none, so the first cakes get a warning and an empty suggestion until the owner or baker adds ingredients and recipe lines. The lines are rough averages: the result is a starting point the baker corrects, and Inventory's confirmed figures are what matter. Confirmed usage does not yet adjust the recipe lines (parked, blueprint "recipe feedback loop").
+
+### O-11. No alerts yet
+`low`, `pending` and the `ReorderLevelBreached` event exist, but nothing turns them into an in-app alert or a WhatsApp/SMS to the owner. That is the Messages and Alerts circuit (BR-23, BR-24), which is not built. Usage reports waiting for Inventory appear in `usage_inbox` rather than in a general request inbox (D-61).
+
+### O-12. Ingredient units are not converted
+An ingredient has one unit (`g`, `kg`, `ml`, `l` or `pcs`). Recipe lines, amounts and stock for an ingredient must use that same unit; the panel does not convert between kilograms and grams.
+
 ## Corrected claims
 
 - `docs/blueprint.md` said the client library was "tested through the reference UI against a real server". It was not. It is now tested directly (F-4), and the build-status table says so, and has a row for the outbox that points at O-5.

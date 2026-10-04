@@ -1,4 +1,4 @@
-import type { CakeSpecInput, Id, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, Session } from './domain';
+import type { CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
 /**
@@ -61,17 +61,54 @@ export interface IntentMap {
   };
   'payments/approve_refund': { orderId: Id; amount: number; reason: string; method: PaymentMethod };
 
+  'inventory/create_ingredient': {
+    name: string;
+    unit: IngredientUnit;
+    reorderLevel?: number;
+    allergens?: string[];
+    ranges?: { label: string; min: number; max: number }[];
+    openingStock?: number;
+  };
+  'inventory/update_ingredient': {
+    ingredientId: Id;
+    name?: string;
+    reorderLevel?: number | null;
+    allergens?: string[];
+    /** Replaces the whole list. Keep an `id` to keep that amount's identity. */
+    ranges?: { id?: Id; label: string; min: number; max: number }[];
+    active?: boolean;
+  };
+  'inventory/receive': { ingredientId: Id; qty: number; note?: string };
+  'inventory/count': { ingredientId: Id; counted: number; note?: string };
+  'inventory/write_off': { ingredientId: Id; qty: number; note?: string };
+
+  'recipes/save_rule': {
+    ruleId?: Id;
+    ingredientId: Id;
+    quantity: number;
+    scaling: RuleScaling;
+    flavors?: string[];
+    fillings?: string[];
+    needsDietary?: string[];
+    excludedByDietary?: string[];
+    note?: string;
+  };
+  'recipes/remove_rule': { ruleId: Id };
+
+  'usage/report': { orderId: Id; lineId: Id; items: { ingredientId: Id; rangeId: Id }[]; note?: string };
+  'usage/confirm': { reportId: Id; items: { ingredientId: Id; qty: number }[] };
+  'usage/send_back': { reportId: Id; reason: string };
+
   'sync/flush': Record<string, never>;
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Payments' | 'Sync';
+export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Payments' | 'Sync';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [
   'Delivery',
   'Production',
-  'Usage',
   'Messages',
   'Alerts',
   'Reports',

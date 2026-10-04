@@ -123,6 +123,18 @@ A custom cake is a line on an order (`kind: "custom"` in the `order_card` feed).
 
 **Changing things later.** `orders/set_delivery` changes the date, pickup or delivery, and address (the result warns when the baker has already started). `quotes/revise` lets the owner change a price until baking starts, with a reason, and warns about money already taken. The cashier can remove a cake until it is priced and paid; after that, or once baking starts, only the owner can (`canRemove` tells you).
 
+### Ingredients and usage
+
+After a custom cake goes into production the system knows what it probably needs, the baker reports what was really used by tapping amounts, Inventory confirms the exact figures, and only then does stock go down.
+
+1. **Set up (Inventory and owner, once).** `inventory/create_ingredient` with a unit (`g`, `kg`, `ml`, `l`, `pcs`), opening stock, a reorder level, and the **preset amounts** the baker will tap, each with a name and a range (for example "Light" 100 to 200 g). Then the owner or baker adds **recipe lines** with `recipes/save_rule`: "20 g of flour per serving", "10 g of cream per serving for each gap between layers", "2 eggs for every cake", optionally limited to certain flavors or fillings, only for cakes with a dietary tag (an egg substitute for eggless), or left out for a tag (no eggs in eggless). The `recipe_rules` feed returns each line with a one-sentence `summary` to show as it is.
+2. **Suggestion.** When `orders/advance_line` moves a custom cake to `in_production`, the panel adds up every recipe line that fits that cake and stores the list. It is plain arithmetic, the same answer every time, and needs no internet. It is never changed afterwards. If no line fits, the result carries a warning and the baker can still report.
+3. **Baker reports.** The `usage_form` feed (`orderId`, `lineId`) lists the suggested ingredients, each with its preset amounts and `suggestedRangeId` (the one that fits, so the baker can just accept it), plus `extras`, every other ingredient the baker could add. `usage/report` sends the ticked ingredients, one chosen amount each. **Stock does not move.** The ingredient shows `pending` in `ingredient_list`. `bake_queue` rows carry `usage.state` and `usage.canReport`.
+4. **Inventory confirms.** The `usage_inbox` feed is Inventory's list of reports waiting, with the suggestion and what is on hand beside each item. `usage/confirm` takes the exact quantity for every ingredient in the report (0 if none was used) and takes it off stock. The result warns when a figure is outside the amount the baker chose. If there is not enough on hand, stock stops at zero, the shortfall is recorded, and a warning says to do a count. `usage/send_back` returns a report with a reason so the baker can report again.
+5. **Stock jobs.** `inventory/receive` (a delivery), `inventory/count` (set to what was counted), `inventory/write_off` (spoiled or spilled, with a note), `inventory/update_ingredient` (rename, reorder level, amounts, switch off). Every change is recorded and audited.
+
+**Days of stock left** (`daysLeft` and `daysLeftLabel` in `ingredient_list`) use confirmed usage only, over the last 14 days. With fewer than 3 confirmed uses, or under 3 days of history, the label says "Not enough data yet" instead of guessing. `low` is true when on hand is at or below the reorder level.
+
 ### Pictures
 
 Reference photos are binary, so they use two plain HTTP calls (the client library wraps both), not an instruction:

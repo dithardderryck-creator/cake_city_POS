@@ -15,6 +15,10 @@ const method = z.enum(['cash', 'card', 'bank_transfer', 'mobile_money']);
 const lineStatus = z.enum(['draft', 'awaiting_quote', 'new', 'in_production', 'decorating', 'ready', 'out_for_delivery', 'completed', 'cancelled']);
 const role = z.enum(['owner', 'cashier', 'baker', 'inventory', 'it']);
 const empty = z.strictObject({});
+const qty = z.number().finite().min(0).max(1_000_000_000);
+const unit = z.enum(['g', 'kg', 'ml', 'l', 'pcs']);
+const tags = z.array(z.string().max(60)).max(20);
+const rangeInput = z.strictObject({ id: id.optional(), label: z.string().max(60), min: qty, max: qty });
 const cakeSpec = z.strictObject({
   servings: z.number().int().min(1).max(500),
   sizeNote: z.string().max(80).optional(),
@@ -96,6 +100,48 @@ export const schemas = {
   }),
   'payments/approve_refund': z.strictObject({ orderId: id, amount: money, reason: longText, method }),
 
+  'inventory/create_ingredient': z.strictObject({
+    name,
+    unit,
+    reorderLevel: qty.optional(),
+    allergens: z.array(name).max(20).optional(),
+    ranges: z.array(rangeInput.omit({ id: true })).max(12).optional(),
+    openingStock: qty.optional(),
+  }),
+  'inventory/update_ingredient': z.strictObject({
+    ingredientId: id,
+    name: name.optional(),
+    reorderLevel: qty.nullable().optional(),
+    allergens: z.array(name).max(20).optional(),
+    ranges: z.array(rangeInput).max(12).optional(),
+    active: z.boolean().optional(),
+  }),
+  'inventory/receive': z.strictObject({ ingredientId: id, qty, note: longText.optional() }),
+  'inventory/count': z.strictObject({ ingredientId: id, counted: qty, note: longText.optional() }),
+  'inventory/write_off': z.strictObject({ ingredientId: id, qty, note: longText.optional() }),
+
+  'recipes/save_rule': z.strictObject({
+    ruleId: id.optional(),
+    ingredientId: id,
+    quantity: qty,
+    scaling: z.enum(['per_serving', 'per_layer_gap', 'fixed']),
+    flavors: tags.optional(),
+    fillings: tags.optional(),
+    needsDietary: tags.optional(),
+    excludedByDietary: tags.optional(),
+    note: longText.optional(),
+  }),
+  'recipes/remove_rule': z.strictObject({ ruleId: id }),
+
+  'usage/report': z.strictObject({
+    orderId: id,
+    lineId: id,
+    items: z.array(z.strictObject({ ingredientId: id, rangeId: id })).max(60),
+    note: longText.optional(),
+  }),
+  'usage/confirm': z.strictObject({ reportId: id, items: z.array(z.strictObject({ ingredientId: id, qty })).max(60) }),
+  'usage/send_back': z.strictObject({ reportId: id, reason: longText }),
+
   'sync/flush': empty,
 } as const;
 
@@ -120,6 +166,10 @@ export const feedSchemas = {
   quote_inbox: empty,
   bake_queue: empty,
   shop_settings: empty,
+  ingredient_list: z.strictObject({ includeInactive: z.boolean().optional() }),
+  recipe_rules: empty,
+  usage_form: z.strictObject({ orderId: id, lineId: id }),
+  usage_inbox: empty,
   audit_view: empty,
   panel_map: empty,
 } as const;

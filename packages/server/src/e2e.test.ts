@@ -645,3 +645,61 @@ describe('custom cakes through the real server', () => {
     expect(missing.status).toBe(404);
   });
 });
+
+/* ---------- ingredients and usage over the real network ---------- */
+
+describe('ingredient usage through the real server', () => {
+  const soon = () => {
+    const d = new Date(Date.now() + 4 * 86_400_000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  it('suggests, lets the baker report, lets Inventory confirm, and only then lowers stock, live on every screen', async () => {
+    const { server } = await boot();
+    const { client: inventory } = await login(server, 'inventory');
+    const { client: baker } = await login(server, 'baker');
+    const { client: cashier } = await login(server, 'cashier');
+    const { client: owner } = await login(server, 'owner');
+
+    const made = await inventory.dispatch('inventory/create_ingredient', {
+      name: 'Flour',
+      unit: 'g',
+      openingStock: 2000,
+      ranges: [{ label: 'Light', min: 100, max: 200 }, { label: 'Medium', min: 200, max: 400 }],
+    });
+    const ingredientId = ((made.ok ? made.data : {}) as { ingredientId: string }).ingredientId;
+    expect((await baker.dispatch('recipes/save_rule', { ingredientId, quantity: 25, scaling: 'per_serving' })).ok).toBe(true);
+
+    const o = await cashier.dispatch('orders/create_order', { source: 'phone', fulfilment: 'pickup', deliveryDate: soon() });
+    const orderId = ((o.ok ? o.data : {}) as { orderId: string }).orderId;
+    const l = await cashier.dispatch('orders/add_custom_line', { orderId, spec: { servings: 10, flavor: 'Vanilla' } });
+    const lineId = ((l.ok ? l.data : {}) as { lineId: string }).lineId;
+    const q = await cashier.dispatch('quotes/request', { orderId, lineId });
+    const quoteId = ((q.ok ? q.data : {}) as { quoteId: string }).quoteId;
+    expect((await owner.dispatch('quotes/provide', { quoteId, price: 80 })).ok).toBe(true);
+
+    let pending = -1;
+    inventory.subscribe('usage_inbox', {}, (r) => r.ok && (pending = r.data.pending.length));
+    await waitFor(() => pending === 0);
+
+    expect((await baker.dispatch('orders/advance_line', { orderId, lineId, to: 'in_production' })).ok).toBe(true);
+    const form = await baker.feed('usage_form', { orderId, lineId });
+    expect(form.ok && form.data.suggested[0]).toMatchObject({ name: 'Flour', suggestedQty: 250 });
+    const rangeId = form.ok ? form.data.suggested[0]!.suggestedRangeId! : '';
+
+    expect((await baker.dispatch('usage/report', { orderId, lineId, items: [{ ingredientId, rangeId }] })).ok).toBe(true);
+    await waitFor(() => pending === 1);
+    const stock = async () => {
+      const r = await inventory.feed('ingredient_list', {});
+      return r.ok ? r.data[0]! : undefined;
+    };
+    expect(await stock()).toMatchObject({ onHand: 2000, pending: { min: 200, max: 400, reports: 1 } });
+
+    const inbox = await inventory.feed('usage_inbox', {});
+    const reportId = inbox.ok ? inbox.data.pending[0]!.reportId : '';
+    expect((await baker.dispatch('usage/confirm', { reportId, items: [{ ingredientId, qty: 250 }] })).ok).toBe(false);
+    expect((await inventory.dispatch('usage/confirm', { reportId, items: [{ ingredientId, qty: 250 }] })).ok).toBe(true);
+    await waitFor(() => pending === 0);
+    expect(await stock()).toMatchObject({ onHand: 1750, pending: null });
+  });
+});
