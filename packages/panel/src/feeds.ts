@@ -1,4 +1,6 @@
 import type {
+  Alert,
+  AlertKind,
   AuditEntry,
   CakeSpec,
   Ingredient,
@@ -29,6 +31,8 @@ import { daysBetween, todayLocal } from './circuits/dates';
 import { loadSettings } from './circuits/settings';
 import { DomainError } from './intents';
 import { BASE_UNIT_FOR, formatQty, unitTable } from './units';
+import { ALERT_KINDS, ALERT_KIND_LABEL, canSeeAlert, loadAlertSettings } from './circuits/alerts';
+import { buildForecasts, type ForecastRow } from './forecast';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
@@ -222,6 +226,8 @@ export type ScreenId =
   | 'bake_queue'
   | 'ingredients'
   | 'usage_inbox'
+  | 'alerts'
+  | 'forecast'
   | 'recipes'
   | 'catalogue'
   | 'staff'
@@ -231,6 +237,8 @@ export type ScreenId =
 export interface NavItem {
   id: ScreenId;
   label: string;
+  /** A number to show on the menu item, such as alerts nobody has seen yet. Absent when there is nothing to show. */
+  badge?: number;
 }
 
 export interface QuoteRow {
@@ -387,6 +395,55 @@ export interface UsageReportRow {
   confirmedAt?: string;
   sentBackReason?: string;
 }
+export interface AlertRow {
+  alertId: string;
+  kind: AlertKind;
+  kindLabel: string;
+  severity: 'warning' | 'critical';
+  title: string;
+  body: string;
+  /** The screen to open and the record on it. */
+  screen: string;
+  targetId?: string;
+  createdAt: string;
+  /** You have already seen it. */
+  seen: boolean;
+  acknowledgedByName: string | null;
+  acknowledgedAt?: string;
+  snoozedUntil?: string;
+  resolvedAt?: string;
+  /** Who it was sent to. */
+  to: Role[];
+  can: { acknowledge: boolean; snooze: boolean };
+}
+export interface AlertInboxData {
+  /** Critical first, then newest. Leaves out what you have snoozed. */
+  open: AlertRow[];
+  snoozed: AlertRow[];
+  /** Recently cleared. */
+  recent: AlertRow[];
+  unseen: number;
+  critical: number;
+}
+export interface AlertSettingsData {
+  stockoutDays: number;
+  reorderDays: number;
+  usageWaitHours: number;
+  quoteWaitHours: number;
+  dueSoonDays: number;
+  countDifference: number;
+  kinds: { kind: AlertKind; label: string; critical: boolean }[];
+  can: { edit: boolean };
+}
+export interface StockForecastData {
+  /** Most urgent first. Each row carries its own stock line (`series`): real up to today, projected after. */
+  rows: ForecastRow[];
+  generatedAt: string;
+  horizonDays: number;
+  /** In plain words, so the screen can show how the lines are worked out. */
+  method: string;
+}
+
 export interface UnitListData {
   /** What stock is stored in: kg for weight, l for liquids, pcs for things you count. */
   baseUnits: { code: 'kg' | 'l' | 'pcs'; kind: 'mass' | 'volume' | 'count'; label: string }[];
@@ -422,6 +479,9 @@ export interface FeedMap {
   usage_form: { params: { orderId: string; lineId: string }; data: UsageFormData };
   usage_inbox: { params: Record<string, never>; data: UsageInboxData };
   unit_list: { params: Record<string, never>; data: UnitListData };
+  alert_inbox: { params: Record<string, never>; data: AlertInboxData };
+  alert_settings: { params: Record<string, never>; data: AlertSettingsData };
+  stock_forecast: { params: { ingredientId?: string; horizonDays?: number }; data: StockForecastData };
   audit_view: { params: Record<string, never>; data: AuditRow[] };
   panel_map: { params: Record<string, never>; data: PanelMapData };
 }
@@ -590,8 +650,10 @@ const NAV: Record<Role, NavItem[]> = {
     { id: 'orders', label: 'Orders' },
     { id: 'quotes', label: 'Quotes' },
     { id: 'bake_queue', label: 'Cakes to bake' },
+    { id: 'alerts', label: 'Alerts' },
     { id: 'usage_inbox', label: 'Usage to confirm' },
     { id: 'ingredients', label: 'Ingredients' },
+    { id: 'forecast', label: 'Stock forecast' },
     { id: 'recipes', label: 'Recipes' },
     { id: 'catalogue', label: 'Catalogue' },
     { id: 'staff', label: 'Staff' },
@@ -602,17 +664,22 @@ const NAV: Record<Role, NavItem[]> = {
     { id: 'sell', label: 'Sell' },
     { id: 'orders', label: 'Orders' },
     { id: 'quotes', label: 'Quotes' },
+    { id: 'alerts', label: 'Alerts' },
     { id: 'catalogue', label: 'Catalogue' },
   ],
   baker: [
     { id: 'bake_queue', label: 'Cakes to bake' },
+    { id: 'alerts', label: 'Alerts' },
     { id: 'recipes', label: 'Recipes' },
     { id: 'ingredients', label: 'Ingredients' },
+    { id: 'forecast', label: 'Stock forecast' },
     { id: 'catalogue', label: 'Catalogue' },
   ],
   inventory: [
     { id: 'usage_inbox', label: 'Usage to confirm' },
+    { id: 'alerts', label: 'Alerts' },
     { id: 'ingredients', label: 'Ingredients' },
+    { id: 'forecast', label: 'Stock forecast' },
     { id: 'catalogue', label: 'Catalogue' },
   ],
   it: [{ id: 'panel_map', label: 'Panel map' }],
@@ -626,7 +693,15 @@ export const feeds: FeedRegistry = {
 
   navigation: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
-    build: async ({ session }) => NAV[session!.role],
+    build: async ({ store, session, clock }) => {
+      const items = NAV[session!.role];
+      if (!items.some((i) => i.id === 'alerts')) return items;
+      const nowIso = clock.now().toISOString();
+      const unseen = (await store.find<Alert>('alerts', { where: { status: 'open' } })).filter(
+        (a) => canSeeAlert(a, session!.role) && !a.seen[session!.userId] && !((a.snoozed[session!.userId] ?? '') > nowIso),
+      ).length;
+      return items.map((i) => (i.id === 'alerts' && unseen > 0 ? { ...i, badge: unseen } : i));
+    },
   },
 
   staff_signin: {
@@ -1092,6 +1167,81 @@ export const feeds: FeedRegistry = {
         report: latest ? { reportId: latest.id, status: latest.status, reportedAt: latest.reportedAt, sentBackReason: latest.sentBackReason } : null,
         canReport: state.canReport,
         blockedReason: state.canReport ? null : open ? 'Already waiting for Inventory to confirm.' : 'Start baking this cake first.',
+      };
+    },
+  },
+
+  alert_inbox: {
+    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    build: async ({ store, session, clock }) => {
+      const me = session!;
+      const nowIso = clock.now().toISOString();
+      const mine = (await store.list<Alert>('alerts')).filter((a) => canSeeAlert(a, me.role));
+      const row = (a: Alert): AlertRow => ({
+        alertId: a.id,
+        kind: a.kind,
+        kindLabel: ALERT_KIND_LABEL[a.kind],
+        severity: a.severity,
+        title: a.title,
+        body: a.body,
+        screen: a.screen,
+        targetId: a.targetId,
+        createdAt: a.createdAt,
+        seen: !!a.seen[me.userId],
+        acknowledgedByName: a.acknowledgedBy?.name ?? null,
+        acknowledgedAt: a.acknowledgedBy?.at,
+        snoozedUntil: a.snoozed[me.userId] && a.snoozed[me.userId]! > nowIso ? a.snoozed[me.userId] : undefined,
+        resolvedAt: a.resolvedAt,
+        to: a.to,
+        can: { acknowledge: a.status === 'open' && !a.acknowledgedBy, snooze: a.status === 'open' },
+      });
+      const open = mine.filter((a) => a.status === 'open').map(row);
+      const rank = (r: AlertRow) => (r.severity === 'critical' ? 0 : 1);
+      const live = open.filter((r) => !r.snoozedUntil).sort((a, b) => rank(a) - rank(b) || b.createdAt.localeCompare(a.createdAt));
+      return {
+        open: live,
+        snoozed: open.filter((r) => r.snoozedUntil),
+        recent: mine
+          .filter((a) => a.status === 'resolved')
+          .sort((a, b) => (b.resolvedAt ?? '').localeCompare(a.resolvedAt ?? ''))
+          .slice(0, 20)
+          .map(row),
+        unseen: live.filter((r) => !r.seen).length,
+        critical: live.filter((r) => r.severity === 'critical').length,
+      };
+    },
+  },
+
+  alert_settings: {
+    roles: ['owner'],
+    build: async ({ store }) => {
+      const s = await loadAlertSettings(store);
+      return {
+        stockoutDays: s.stockoutDays,
+        reorderDays: s.reorderDays,
+        usageWaitHours: s.usageWaitHours,
+        quoteWaitHours: s.quoteWaitHours,
+        dueSoonDays: s.dueSoonDays,
+        countDifference: s.countDifference,
+        kinds: ALERT_KINDS.map((kind) => ({ kind, label: ALERT_KIND_LABEL[kind], critical: s.critical[kind] })),
+        can: { edit: true },
+      };
+    },
+  },
+
+  stock_forecast: {
+    roles: ['owner', 'baker', 'inventory'],
+    build: async ({ store, clock }, params) => {
+      const s = await loadAlertSettings(store);
+      const horizonDays = params.horizonDays ?? 14;
+      let rows = await buildForecasts(store, clock.now(), { horizonDays, stockoutDays: s.stockoutDays, reorderDays: s.reorderDays });
+      if (params.ingredientId) rows = rows.filter((r) => r.ingredientId === params.ingredientId);
+      return {
+        rows,
+        generatedAt: clock.now().toISOString(),
+        horizonDays,
+        method:
+          'The next few days follow the cakes already booked, using the recipe suggestions corrected by what the chefs actually used. Further out it moves toward the kitchen\'s usual daily use. It never goes below what is booked.',
       };
     },
   },

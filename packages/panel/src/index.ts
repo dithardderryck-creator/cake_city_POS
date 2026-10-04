@@ -4,6 +4,8 @@ export { createPanel, INTENT_NAMES, describeIntents, describeFeeds } from './ker
 export { renderApiReference } from './api-reference';
 export type { Panel, PanelOptions, FeedResult, DispatchOptions, PhotoUploadResult, PhotoReadResult } from './kernel';
 export * from './units';
+export * from './forecast';
+export { ALERT_KINDS, ALERT_KIND_LABEL, DEFAULT_ALERT_SETTINGS } from './circuits/alerts';
 export { MAX_PHOTO_BYTES, sniffImage } from './circuits/photos';
 export { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 export type * from './feeds';

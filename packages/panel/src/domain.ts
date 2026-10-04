@@ -302,6 +302,58 @@ export interface UsageReport {
   sentBackReason?: string;
 }
 
+/* ---------- Alerts (BR-23, BR-24) ---------- */
+
+export type AlertKind = 'low_stock' | 'stockout' | 'usage_waiting' | 'order_not_started' | 'quote_waiting' | 'overdue_delivery' | 'count_difference';
+export type AlertSeverity = 'warning' | 'critical';
+
+/**
+ * Something that needs a person. Raised by the system when a condition becomes true and resolved by the system when
+ * it stops being true. One open alert per `dedupeKey` (BR-23). People can see, acknowledge and snooze it.
+ */
+export interface Alert {
+  id: Id;
+  dedupeKey: string;
+  kind: AlertKind;
+  severity: AlertSeverity;
+  title: string;
+  body: string;
+  /** Who it is for. Critical alerts always include the owner (BR-24). */
+  to: Role[];
+  /** The screen to open and the record on it. */
+  screen: string;
+  targetId?: string;
+  status: 'open' | 'resolved';
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+  resolvedBy?: 'system' | 'acknowledged';
+  /** Per person: when they first saw it. */
+  seen: Record<Id, string>;
+  acknowledgedBy?: { userId: Id; name: string; at: string };
+  /** Per person: hidden from their list until then. */
+  snoozed: Record<Id, string>;
+}
+
+/** The owner's thresholds and which alerts are critical (A-11). One record, id "alerts". */
+export interface AlertSettings {
+  id: 'alerts';
+  /** Stock expected to run out within this many days raises "stockout". */
+  stockoutDays: number;
+  /** Stock expected to reach its reorder level within this many days raises "low stock". */
+  reorderDays: number;
+  /** Usage waiting for Inventory longer than this many hours. Twice as long also alerts the owner. */
+  usageWaitHours: number;
+  /** A price request waiting for the owner longer than this many hours. */
+  quoteWaitHours: number;
+  /** A cake not started this many days before its date (or later) raises an alert. */
+  dueSoonDays: number;
+  /** A count differing by this many items or more at hand-over. */
+  countDifference: number;
+  /** Critical alerts also go to the owner by SMS/WhatsApp. */
+  critical: Record<AlertKind, boolean>;
+}
+
 /** Shop-wide switches the owner controls. One record, id "shop". */
 export interface ShopSettings {
   id: 'shop';
@@ -364,7 +416,7 @@ export interface AuditEntry {
 
 export interface OutboxItem {
   id: Id;
-  kind: 'sync' | 'whatsapp' | 'sms' | 'print' | 'recipe';
+  kind: 'sync' | 'whatsapp' | 'sms' | 'print' | 'recipe' | 'notify';
   payload: Record<string, unknown>;
   createdAt: string;
   attempts: number;

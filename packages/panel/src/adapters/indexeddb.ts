@@ -10,7 +10,7 @@ export function createIndexedDbStore(dbName = 'cake-pos'): Store {
 
   const open = () =>
     (dbPromise ??= new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open(dbName, 4);
+      const req = indexedDB.open(dbName, 5);
       req.onupgradeneeded = () => {
         for (const c of COLLECTIONS) {
           if (!req.result.objectStoreNames.contains(c)) req.result.createObjectStore(c, { keyPath: 'id' });

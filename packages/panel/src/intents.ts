@@ -1,4 +1,5 @@
 import type { UnitCode } from './units';
+import type { AlertKind } from './domain';
 import type { CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
@@ -109,18 +110,32 @@ export interface IntentMap {
   'usage/confirm': { reportId: Id; items: { ingredientId: Id; qty: number; unit?: UnitCode }[] };
   'usage/send_back': { reportId: Id; reason: string };
 
+  'alerts/mark_seen': { alertIds: Id[] };
+  /** "I'm on it." Silences the alert for everyone's notifications; it stays open until the problem clears. */
+  'alerts/acknowledge': { alertId: Id };
+  /** Hides the alert from your own list for 1 to 72 hours. */
+  'alerts/snooze': { alertId: Id; hours: number };
+  'alerts/configure': {
+    stockoutDays?: number;
+    reorderDays?: number;
+    usageWaitHours?: number;
+    quoteWaitHours?: number;
+    dueSoonDays?: number;
+    countDifference?: number;
+    critical?: Partial<Record<AlertKind, boolean>>;
+  };
+
   'sync/flush': Record<string, never>;
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Payments' | 'Sync';
+export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Payments' | 'Sync';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [
   'Delivery',
   'Production',
   'Messages',
-  'Alerts',
   'Reports',
   'Comms',
 ] as const;

@@ -28,6 +28,7 @@ export const COLLECTIONS = [
   'recipeRules',
   'usageSuggestions',
   'usageReports',
+  'alerts',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

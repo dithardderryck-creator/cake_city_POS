@@ -447,6 +447,47 @@ Allowed: **owner, inventory**
 | `reportId` | string | yes | min length 1, max length 64 |
 | `reason` | string | yes | max length 500 |
 
+### Alerts
+
+#### `alerts/mark_seen`
+
+Allowed: **owner, cashier, baker, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `alertIds` | string[] | yes | max 100 items |
+
+#### `alerts/acknowledge`
+
+Allowed: **owner, cashier, baker, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `alertId` | string | yes | min length 1, max length 64 |
+
+#### `alerts/snooze`
+
+Allowed: **owner, cashier, baker, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `alertId` | string | yes | min length 1, max length 64 |
+| `hours` | integer | yes | min 1, max 72 |
+
+#### `alerts/configure`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `stockoutDays` | integer | no | min 0, max 30 |
+| `reorderDays` | integer | no | min 0, max 30 |
+| `usageWaitHours` | integer | no | min 1, max 72 |
+| `quoteWaitHours` | integer | no | min 1, max 72 |
+| `dueSoonDays` | integer | no | min 0, max 14 |
+| `countDifference` | integer | no | min 1, max 1000 |
+| `critical` | object | no |  |
+
 ### Payments
 
 #### `payments/record_payment`
@@ -570,6 +611,27 @@ Allowed: **owner, baker**
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
 | `lineId` | string | yes | min length 1, max length 64 |
+
+#### `alert_inbox`
+
+Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `alert_settings`
+
+Allowed: **owner**
+
+_No fields. Send an empty object `{}`._
+
+#### `stock_forecast`
+
+Allowed: **owner, baker, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `ingredientId` | string | no | min length 1, max length 64 |
+| `horizonDays` | integer | no | min 1, max 30 |
 
 #### `unit_list`
 

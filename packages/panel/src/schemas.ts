@@ -145,6 +145,29 @@ export const schemas = {
   'usage/confirm': z.strictObject({ reportId: id, items: z.array(z.strictObject({ ingredientId: id, qty, unit: unit.optional() })).max(60) }),
   'usage/send_back': z.strictObject({ reportId: id, reason: longText }),
 
+  'alerts/mark_seen': z.strictObject({ alertIds: z.array(id).min(1).max(100) }),
+  'alerts/acknowledge': z.strictObject({ alertId: id }),
+  'alerts/snooze': z.strictObject({ alertId: id, hours: z.number().int().min(1).max(72) }),
+  'alerts/configure': z.strictObject({
+    stockoutDays: z.number().int().min(0).max(30).optional(),
+    reorderDays: z.number().int().min(0).max(30).optional(),
+    usageWaitHours: z.number().int().min(1).max(72).optional(),
+    quoteWaitHours: z.number().int().min(1).max(72).optional(),
+    dueSoonDays: z.number().int().min(0).max(14).optional(),
+    countDifference: z.number().int().min(1).max(1000).optional(),
+    critical: z
+      .strictObject({
+        low_stock: z.boolean().optional(),
+        stockout: z.boolean().optional(),
+        usage_waiting: z.boolean().optional(),
+        order_not_started: z.boolean().optional(),
+        quote_waiting: z.boolean().optional(),
+        overdue_delivery: z.boolean().optional(),
+        count_difference: z.boolean().optional(),
+      })
+      .optional(),
+  }),
+
   'sync/flush': empty,
 } as const;
 
@@ -174,6 +197,9 @@ export const feedSchemas = {
   usage_form: z.strictObject({ orderId: id, lineId: id }),
   usage_inbox: empty,
   unit_list: empty,
+  alert_inbox: empty,
+  alert_settings: empty,
+  stock_forecast: z.strictObject({ ingredientId: id.optional(), horizonDays: z.number().int().min(1).max(30).optional() }),
   audit_view: empty,
   panel_map: empty,
 } as const;

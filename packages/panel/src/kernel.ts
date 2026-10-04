@@ -1,4 +1,4 @@
-import type { AuditEntry, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
+import type { Alert, AuditEntry, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
 import { feeds, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } from './feeds';
 import {
   DomainError,
@@ -20,6 +20,7 @@ import { inventoryIntents } from './circuits/inventory';
 import { quoteIntents } from './circuits/quotes';
 import { recipeIntents } from './circuits/recipes';
 import { usageIntents } from './circuits/usage';
+import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
 import { staffIntents } from './circuits/staff';
@@ -100,7 +101,12 @@ export interface Panel {
   /** Read a stored picture. */
   readPhoto(photoId: string, token?: string): Promise<PhotoReadResult>;
   /** Housekeeping: drop expired sessions, old request ids and unused pictures. Safe to call any time. */
-  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number; photosPruned: number }>;
+  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number; photosPruned: number; alertsPruned: number }>;
+  /**
+   * Checks every alert condition against the data now and raises or clears alerts. Also runs after changes to orders, stock
+   * and usage, but time passing alone (a cake becoming late) needs this called regularly. The server calls it every minute.
+   */
+  tick(): Promise<{ raised: number; resolved: number }>;
   /** Run something while no instruction or feed is running. Used for consistent backups. */
   exclusive<T>(fn: () => Promise<T>): Promise<T>;
 }
@@ -131,6 +137,7 @@ const registry = {
   ...inventoryIntents,
   ...recipeIntents,
   ...usageIntents,
+  ...alertIntents,
   ...paymentIntents,
   ...syncIntents,
 } as Registry;
@@ -153,6 +160,9 @@ export function describeFeeds() {
 const defaultMoney = (n: number) => new Intl.NumberFormat('en', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
 
 const HOUR = 3_600_000;
+
+/** Changes in these circuits can start or clear an alert, so alerts are re-checked straight after them. */
+const REACTING_CIRCUITS = new Set<CircuitName>(['Orders', 'Quotes', 'Inventory', 'Usage', 'Stock', 'Recipes']);
 const TOUCH_EVERY_MS = 60_000;
 
 export function createPanel(options: PanelOptions = {}): Panel {
@@ -353,9 +363,19 @@ export function createPanel(options: PanelOptions = {}): Panel {
 
         await writeAudit({ ...who, intent: type, target: res.target, summary: res.summary, outcome: 'ok' });
         if (!res.skipSync) await enqueueSync(type, res.target);
+        const events = [...(res.events ?? [])];
+        // Alerts follow the data. If working them out ever fails, the sale or the stock change still goes through,
+        // and the next check (which is a full re-read) puts the alerts right.
+        if (REACTING_CIRCUITS.has(def.circuit) || type === 'alerts/configure') {
+          try {
+            events.push(...alertEvents(await reconcileAlerts({ store, ids, clock })));
+          } catch (err) {
+            options.onError?.(err, { intent: `${type} (alerts)` });
+          }
+        }
         const result: DispatchResult = { ok: true, data: res.data, warnings: res.warnings ?? [], summary: res.summary };
         if (requestKey) await store.put<RequestRecord>('requests', { id: requestKey, at: now(), result });
-        return { result, events: res.events ?? [], stat: 'handled', actorId: who.actorId, changed: true };
+        return { result, events, stat: 'handled', actorId: who.actorId, changed: true };
       });
 
       bump(stat, outcome.stat === 'handled' ? 'handled' : outcome.stat);
@@ -477,6 +497,21 @@ export function createPanel(options: PanelOptions = {}): Panel {
       return () => eventListeners.delete(l);
     },
     exclusive: (fn) => serial(fn),
+    tick: () =>
+      serial(async () => {
+        try {
+          const r = await store.transaction(() => reconcileAlerts({ store, ids, clock }));
+          for (const e of alertEvents(r)) {
+            const event: PanelEvent = { type: e.type, at: now(), payload: e.payload ?? {} };
+            for (const l of eventListeners) l(event);
+          }
+          if (r.changed) scheduleRefresh();
+          return { raised: r.raised.length, resolved: r.resolved.length };
+        } catch (err) {
+          options.onError?.(err, { intent: 'alerts/tick' });
+          return { raised: 0, resolved: 0 };
+        }
+      }),
     maintain: () =>
       serial(() =>
         store.transaction(async () => {
@@ -503,7 +538,14 @@ export function createPanel(options: PanelOptions = {}): Panel {
               photosPruned++;
             }
           }
-          return { sessionsPruned, requestsPruned, photosPruned };
+          let alertsPruned = 0;
+          for (const a of await store.find<Alert>('alerts', { where: { status: 'resolved' } })) {
+            if (a.resolvedAt && nowMs - Date.parse(a.resolvedAt) > RESOLVED_ALERT_TTL_MS) {
+              await store.delete('alerts', a.id);
+              alertsPruned++;
+            }
+          }
+          return { sessionsPruned, requestsPruned, photosPruned, alertsPruned };
         }),
       ),
   };

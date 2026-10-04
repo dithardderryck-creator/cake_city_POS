@@ -91,11 +91,20 @@ export async function startServer({ config, log, hasher }: StartOptions): Promis
     const maintain = () =>
       panel
         .maintain()
-        .then((r) => (r.sessionsPruned || r.requestsPruned || r.photosPruned) && log.info('Housekeeping', r))
+        .then((r) => (r.sessionsPruned || r.requestsPruned || r.photosPruned || r.alertsPruned) && log.info('Housekeeping', r))
         .catch((err) => log.error('Housekeeping failed', errorFields(err)));
     void maintain();
     const timer = setInterval(maintain, 3_600_000);
     timer.unref();
+    // Alerts depend on the clock too (a cake becomes late, a report waits too long), so they are re-checked every minute.
+    const tick = () =>
+      panel
+        .tick()
+        .then((r) => (r.raised || r.resolved) && log.info('Alerts checked', r))
+        .catch((err) => log.error('Alert check failed', errorFields(err)));
+    void tick();
+    const alertTimer = setInterval(tick, 60_000);
+    alertTimer.unref();
 
     const addresses = lanAddresses();
     log.info('Server started', { port, host: config.host, dataDir: config.dataDir, version: VERSION });
@@ -111,6 +120,7 @@ export async function startServer({ config, log, hasher }: StartOptions): Promis
       close: () =>
         (closing ??= (async () => {
           clearInterval(timer);
+          clearInterval(alertTimer);
           backup.stop();
           await http.close(); // stop taking new requests
           await panel.exclusive(async () => undefined); // let anything already running finish

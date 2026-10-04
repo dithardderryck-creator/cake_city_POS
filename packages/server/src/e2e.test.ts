@@ -702,4 +702,36 @@ describe('ingredient usage through the real server', () => {
     await waitFor(() => pending === 0);
     expect(await stock()).toMatchObject({ onHand: 1.75, pending: null });
   });
+
+  it('raises an alert on every inventory screen live when stock runs low, and clears it when restocked', async () => {
+    const { server } = await boot();
+    const { client: inventory } = await login(server, 'inventory');
+    const { client: owner } = await login(server, 'owner');
+    const { client: cashier } = await login(server, 'cashier');
+
+    const made = await inventory.dispatch('inventory/create_ingredient', { name: 'Butter', unit: 'kg', openingStock: 5, reorderLevel: 1 });
+    const ingredientId = ((made.ok ? made.data : {}) as { ingredientId: string }).ingredientId;
+
+    let invTitles: string[] = [];
+    let ownerCritical = -1;
+    let cashierTitles: string[] | 'denied' = [];
+    inventory.subscribe('alert_inbox', {}, (r) => r.ok && (invTitles = r.data.open.map((a) => a.title)));
+    owner.subscribe('alert_inbox', {}, (r) => r.ok && (ownerCritical = r.data.critical));
+    cashier.subscribe('alert_inbox', {}, (r) => r.ok && (cashierTitles = r.data.open.map((a) => a.title)));
+    await waitFor(() => ownerCritical === 0);
+
+    expect((await inventory.dispatch('inventory/count', { ingredientId, counted: 0 })).ok).toBe(true);
+    await waitFor(() => invTitles.length === 1);
+    expect(invTitles).toEqual(['Butter is out of stock']);
+    await waitFor(() => ownerCritical === 1); // out of stock is critical, so the owner has it too
+    expect(cashierTitles).toEqual([]);
+
+    // The forecast screen data arrives over the same wire.
+    const f = await inventory.feed('stock_forecast', { ingredientId });
+    expect(f.ok && f.data.rows[0]).toMatchObject({ status: 'out', onHandText: '0 kg' });
+
+    expect((await inventory.dispatch('inventory/receive', { ingredientId, qty: 3000, unit: 'g' })).ok).toBe(true);
+    await waitFor(() => invTitles.length === 0);
+    await waitFor(() => ownerCritical === 0);
+  });
 });
