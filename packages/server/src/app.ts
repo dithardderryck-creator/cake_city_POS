@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
+import { createMessenger } from './messaging';
+import { createPushTerminal, loadOrCreateVapid } from './push';
 import { createPanel, type Panel, type PinHasher, type Terminals } from '@cake-pos/panel';
 import { createBackupService, createFolderUploader, type BackupService } from './backup';
 import type { ServerConfig } from './config';
@@ -71,6 +73,15 @@ export async function startServer({ config, log, hasher }: StartOptions): Promis
     });
     terminals.backup = backup;
 
+    // Texts and phone notifications. Each is optional; the panel says plainly when one is not set up.
+    const messenger = createMessenger(config.messaging);
+    if (messenger) terminals.messages = messenger;
+    if (config.pushContact) terminals.push = createPushTerminal({ keys: await loadOrCreateVapid(db), contact: config.pushContact });
+    const describeMessaging = () => {
+      const ch = messenger?.channels() ?? [];
+      return [ch.includes('sms') ? `SMS (${config.messaging.sms?.kind})` : null, ch.includes('whatsapp') ? `WhatsApp (${config.messaging.whatsapp?.kind})` : null, terminals.push ? 'phone notifications' : null].filter(Boolean).join(', ') || 'none set up';
+    };
+
     const http = createHttpServer({ panel, log, config, version: VERSION });
     const scheme = config.tls ? 'https' : 'http';
     terminals.system = {
@@ -83,6 +94,7 @@ export async function startServer({ config, log, hasher }: StartOptions): Promis
         { label: 'Live connections', value: String(http.clientCount()) },
         { label: 'Addresses', value: lanAddresses().join(', ') || 'none found' },
         { label: 'Data folder', value: config.dataDir },
+        { label: 'Alerts reach people by', value: `in-app, ${describeMessaging()}` },
       ],
     };
 
@@ -105,6 +117,14 @@ export async function startServer({ config, log, hasher }: StartOptions): Promis
     void tick();
     const alertTimer = setInterval(tick, 60_000);
     alertTimer.unref();
+    // Notifications go out every few seconds. A provider that is slow or down never holds up the shop (see panel.deliver).
+    const deliver = () =>
+      panel
+        .deliver()
+        .then((r) => (r.sent || r.failed || r.retrying) && log.info('Notifications', r))
+        .catch((err) => log.error('Sending notifications failed', errorFields(err)));
+    const deliverTimer = setInterval(deliver, 10_000);
+    deliverTimer.unref();
 
     const addresses = lanAddresses();
     log.info('Server started', { port, host: config.host, dataDir: config.dataDir, version: VERSION });
@@ -121,6 +141,7 @@ export async function startServer({ config, log, hasher }: StartOptions): Promis
         (closing ??= (async () => {
           clearInterval(timer);
           clearInterval(alertTimer);
+          clearInterval(deliverTimer);
           backup.stop();
           await http.close(); // stop taking new requests
           await panel.exclusive(async () => undefined); // let anything already running finish

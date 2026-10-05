@@ -29,6 +29,7 @@ export const COLLECTIONS = [
   'usageSuggestions',
   'usageReports',
   'alerts',
+  'pushSubscriptions',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
@@ -98,7 +99,37 @@ export interface SystemTerminal {
   info(): Promise<Array<{ label: string; value: string }>>;
 }
 
+/** What a terminal says after trying to send. `retry` says whether trying again later could help. */
+export type SendResult = { ok: true; id?: string } | { ok: false; retry: boolean; error: string; gone?: boolean };
+
+/** Terminal: SMS and WhatsApp through a provider. Must give up after its own timeout. */
+export interface MessageTerminal {
+  /** Which channels this provider can send. */
+  channels(): Array<'sms' | 'whatsapp'>;
+  send(message: { channel: 'sms' | 'whatsapp'; to: string; text: string }): Promise<SendResult>;
+}
+
+export interface PushPayload {
+  title: string;
+  body: string;
+  /** Replaces an earlier notification with the same tag instead of piling up. */
+  tag: string;
+  severity: 'warning' | 'critical' | 'test';
+  /** The screen to open when it is tapped. */
+  screen: string;
+  alertId?: string;
+}
+
+/** Terminal: Web Push to phones and browsers that subscribed. Must give up after its own timeout. */
+export interface PushTerminal {
+  /** The public key a browser needs to subscribe. */
+  publicKey: string;
+  send(subscription: { endpoint: string; p256dh: string; auth: string }, payload: PushPayload): Promise<SendResult>;
+}
+
 export interface Terminals {
+  messages?: MessageTerminal;
+  push?: PushTerminal;
   sync?: SyncTerminal;
   backup?: BackupTerminal;
   system?: SystemTerminal;

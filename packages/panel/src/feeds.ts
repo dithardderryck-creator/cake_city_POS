@@ -3,6 +3,9 @@ import type {
   AlertKind,
   AuditEntry,
   CakeSpec,
+  DeliveryChannel,
+  MessageLevel,
+  NotifyPayload,
   Ingredient,
   IngredientMovement,
   IngredientUnit,
@@ -25,6 +28,7 @@ import type {
   Refund,
   Role,
   Session,
+  PushSubscriptionRecord,
   Staff,
 } from './domain';
 import { daysBetween, todayLocal } from './circuits/dates';
@@ -194,6 +198,8 @@ export interface StaffListRow {
   role: Role;
   active: boolean;
   locked: boolean;
+  /** Where alerts reach this person outside the app. */
+  contact: { phone: string | null; sms: MessageLevel; whatsapp: MessageLevel };
 }
 
 export interface PanelMapData {
@@ -425,6 +431,30 @@ export interface AlertInboxData {
   unseen: number;
   critical: number;
 }
+export interface NotificationSetupData {
+  me: { userId: string; name: string; phone: string | null; sms: MessageLevel; whatsapp: MessageLevel };
+  /** What this server can send. A channel that is off here cannot be chosen by anyone. */
+  channels: { push: boolean; sms: boolean; whatsapp: boolean };
+  push: {
+    /** What the browser needs to subscribe. Null when push is not set up on the server. */
+    publicKey: string | null;
+    /** The addresses of this person's subscribed devices, so a browser can tell whether it is one of them. */
+    endpoints: string[];
+  };
+  /** Plain-language reminders about things that stop messages arriving. */
+  notes: string[];
+}
+export interface NotificationLogRow {
+  itemId: string;
+  at: string;
+  /** The alert title, or "Test message". */
+  title: string;
+  kind: 'alert' | 'test';
+  severity: 'warning' | 'critical' | 'test';
+  status: 'pending' | 'sent' | 'failed';
+  note?: string;
+  deliveries: { who: string; channel: DeliveryChannel; status: 'pending' | 'sent' | 'failed' | 'skipped'; attempts: number; error?: string; nextAt?: string }[];
+}
 export interface AlertSettingsData {
   stockoutDays: number;
   reorderDays: number;
@@ -480,6 +510,8 @@ export interface FeedMap {
   usage_inbox: { params: Record<string, never>; data: UsageInboxData };
   unit_list: { params: Record<string, never>; data: UnitListData };
   alert_inbox: { params: Record<string, never>; data: AlertInboxData };
+  notification_setup: { params: Record<string, never>; data: NotificationSetupData };
+  notification_log: { params: Record<string, never>; data: NotificationLogRow[] };
   alert_settings: { params: Record<string, never>; data: AlertSettingsData };
   stock_forecast: { params: { ingredientId?: string; horizonDays?: number }; data: StockForecastData };
   audit_view: { params: Record<string, never>; data: AuditRow[] };
@@ -721,7 +753,14 @@ export const feeds: FeedRegistry = {
       const locked = new Set(states.filter((s) => s.lockedUntil && Date.parse(s.lockedUntil) > nowMs).map((s) => s.id));
       return staff
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map((s) => ({ id: s.id, name: s.name, role: s.role, active: s.active, locked: locked.has(s.id) }));
+        .map((s) => ({
+          id: s.id,
+          name: s.name,
+          role: s.role,
+          active: s.active,
+          locked: locked.has(s.id),
+          contact: { phone: s.contact?.phone ?? null, sms: s.contact?.sms ?? 'off', whatsapp: s.contact?.whatsapp ?? 'off' },
+        }));
     },
   },
 
@@ -1209,6 +1248,52 @@ export const feeds: FeedRegistry = {
         unseen: live.filter((r) => !r.seen).length,
         critical: live.filter((r) => r.severity === 'critical').length,
       };
+    },
+  },
+
+  notification_setup: {
+    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    build: async ({ store, session, terminals }) => {
+      const me = (await store.get<Staff>('staff', session!.userId))!;
+      const subs = (await store.list<PushSubscriptionRecord>('pushSubscriptions')).filter((s) => s.userId === me.id);
+      const provided = new Set(terminals.messages?.channels() ?? []);
+      const notes: string[] = [];
+      if (!terminals.push) notes.push('Phone notifications are not set up on the server yet. Ask IT.');
+      if (!provided.has('sms') && !provided.has('whatsapp')) notes.push('Text messages are not set up on the server yet. Ask IT.');
+      if (me.contact?.phone && me.contact.sms !== 'off' && me.contact.whatsapp !== 'off') notes.push('You have both SMS and WhatsApp on, so you will get each alert twice.');
+      if (terminals.push && subs.length === 0) notes.push('No phone or browser of yours is subscribed yet. Turn on notifications on the device you carry.');
+      return {
+        me: { userId: me.id, name: me.name, phone: me.contact?.phone ?? null, sms: me.contact?.sms ?? 'off', whatsapp: me.contact?.whatsapp ?? 'off' },
+        channels: { push: !!terminals.push, sms: provided.has('sms'), whatsapp: provided.has('whatsapp') },
+        push: { publicKey: terminals.push?.publicKey ?? null, endpoints: subs.map((s) => s.endpoint) },
+        notes,
+      };
+    },
+  },
+
+  notification_log: {
+    roles: ['owner', 'it'],
+    build: async ({ store }) => {
+      const items = (await store.find<OutboxItem>('outbox', { where: { status: ['pending', 'sent', 'failed'] } }))
+        .filter((o) => o.kind === 'notify')
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 50);
+      const alertIds = items.map((i) => (i.payload as unknown as NotifyPayload).alertId).filter((x): x is string => !!x);
+      const alerts = alertIds.length ? await store.find<Alert>('alerts', { where: { id: alertIds } }) : [];
+      return items.map((o): NotificationLogRow => {
+        const p = o.payload as unknown as NotifyPayload;
+        const alert = alerts.find((a) => a.id === p.alertId);
+        return {
+          itemId: o.id,
+          at: o.createdAt,
+          title: alert?.title ?? (p.test ? 'Test message' : 'An alert that has since been removed'),
+          kind: p.test ? 'test' : 'alert',
+          severity: alert?.severity ?? 'test',
+          status: o.status as 'pending' | 'sent' | 'failed',
+          note: p.note,
+          deliveries: (p.deliveries ?? []).map((d) => ({ who: d.userName, channel: d.channel, status: d.status, attempts: d.attempts, error: d.lastError, nextAt: d.nextAt })),
+        };
+      });
     },
   },
 

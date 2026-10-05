@@ -55,6 +55,14 @@ Set these as environment variables before starting. All are optional.
 | `TLS_CERT`, `TLS_KEY` | none | Paths to a certificate and key, to serve HTTPS. Set both or neither |
 | `DEVICE_PREFIX` | S | 1 to 3 letters at the start of order numbers (S-0001) |
 | `LOG_LEVEL` | info | debug, info, warn or error |
+| `SMS_PROVIDER` | none | `twilio`, `africastalking` or `webhook`. Needs the matching settings below |
+| `WHATSAPP_PROVIDER` | none | `twilio` or `webhook` |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | none | Twilio login (SMS and WhatsApp) |
+| `TWILIO_SMS_FROM` or `TWILIO_MESSAGING_SERVICE_SID` | none | The number or sender name SMS comes from |
+| `TWILIO_WHATSAPP_FROM` | none | Like `whatsapp:+14155238886` |
+| `AT_USERNAME`, `AT_API_KEY`, `AT_SENDER_ID`, `AT_SANDBOX` | none | Africa's Talking (`AT_SANDBOX=1` for testing) |
+| `MESSAGE_WEBHOOK_URL`, `MESSAGE_WEBHOOK_TOKEN` | none | Any other service: the server posts each message there |
+| `PUSH_CONTACT` | none | An email address for phone push (required by the phone makers' services). Push is off until it is set |
 
 Default data folder: Windows `%APPDATA%\CakePOS`, macOS `~/Library/Application Support/CakePOS`, Linux `~/.local/share/cakepos`. A wrong setting stops the server with a message saying exactly which one.
 
@@ -66,6 +74,15 @@ The server stops itself cleanly if it hits something unexpected, and relies on t
 - **Windows:** edit `deploy/windows/start-server.cmd` (paths and settings), then run `deploy/windows/install-task.ps1` once in PowerShell **as Administrator**. It creates a task that starts at boot and restarts every minute if it stops.
 
 Test it: restart the computer and check the address works without anyone touching it.
+
+## Alerts to phones, WhatsApp and SMS
+
+Alerts always appear in the app. To also reach people when the app is closed:
+
+1. **Phone push (no extra cost).** Set `PUSH_CONTACT` to an email address and restart. The server makes its own keys the first time and keeps them in the database (so restoring a backup keeps phones registered). Each person then opens the app on their phone and presses the button to turn on phone notifications. **This needs HTTPS** (see below); over plain `http://` on the shop wifi the phone will refuse. On iPhone, first use Share, then Add to Home Screen. A closed phone plays its own notification sound; the siren only plays while the app is open.
+2. **SMS or WhatsApp.** Pick a provider, create an account, and set the settings in the table above. Without them the app says "SMS is not set up on this server" rather than failing silently. WhatsApp business messaging through Twilio needs a WhatsApp sender approved by Meta, and messages sent outside a 24-hour customer window must use an approved template; plan for that. SMS through Africa's Talking: the response codes were written from its public documentation and have not been tried against a live account, so send a test first.
+3. **Each person's phone number** is saved by them (or the owner) in the app with `staff/set_contact`. Use international format, for example `+254712345678`.
+4. **Check it.** Each person can send themselves a test; the owner and IT can read the delivery log (what was sent, what failed and why).
 
 ## Backups
 

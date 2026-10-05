@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import type { MessagingConfig } from './messaging';
 
 export interface ServerConfig {
   port: number;
@@ -20,6 +21,10 @@ export interface ServerConfig {
   backupMinute: number;
   backupKeep: number;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
+  /** Which provider sends SMS and WhatsApp. Both null means texts are off. */
+  messaging: MessagingConfig;
+  /** An email address (or https address) that phone makers' push services can reach if our messages misbehave. Null turns phone notifications off. */
+  pushContact: string | null;
 }
 
 export class ConfigError extends Error {}
@@ -74,5 +79,61 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     backupMinute: Number(match[2]),
     backupKeep: int(env, 'BACKUP_KEEP', 30, 1, 3650),
     logLevel: level,
+    messaging: loadMessaging(env),
+    pushContact: loadPushContact(env),
   };
+}
+
+const need = (env: NodeJS.ProcessEnv, key: string, why: string): string => {
+  const v = env[key]?.trim();
+  if (!v) throw new ConfigError(`${key} is needed for ${why}.`);
+  return v;
+};
+const oneOf = (env: NodeJS.ProcessEnv, key: string, allowed: string[]): string => {
+  const v = (env[key] ?? 'none').trim().toLowerCase() || 'none';
+  if (!['none', ...allowed].includes(v)) throw new ConfigError(`${key} must be one of: none, ${allowed.join(', ')}. Got "${v}".`);
+  return v;
+};
+
+function loadMessaging(env: NodeJS.ProcessEnv): MessagingConfig {
+  const sms = oneOf(env, 'SMS_PROVIDER', ['twilio', 'africastalking', 'webhook']);
+  const wa = oneOf(env, 'WHATSAPP_PROVIDER', ['twilio', 'webhook']);
+  const out: MessagingConfig = { sms: null, whatsapp: null };
+  if (sms === 'twilio') {
+    const from = env.TWILIO_SMS_FROM?.trim();
+    const service = env.TWILIO_MESSAGING_SERVICE_SID?.trim();
+    if (!from && !service) throw new ConfigError('Set TWILIO_SMS_FROM (a number or sender name) or TWILIO_MESSAGING_SERVICE_SID for SMS through Twilio.');
+    out.sms = { kind: 'twilio', accountSid: need(env, 'TWILIO_ACCOUNT_SID', 'Twilio'), authToken: need(env, 'TWILIO_AUTH_TOKEN', 'Twilio'), from, messagingServiceSid: service };
+  } else if (sms === 'africastalking') {
+    out.sms = { kind: 'africastalking', username: need(env, 'AT_USERNAME', "Africa's Talking"), apiKey: need(env, 'AT_API_KEY', "Africa's Talking"), senderId: env.AT_SENDER_ID?.trim() || undefined, sandbox: env.AT_SANDBOX === '1' };
+  } else if (sms === 'webhook') {
+    out.sms = { kind: 'webhook', url: webhookUrl(env), token: env.MESSAGE_WEBHOOK_TOKEN?.trim() || undefined };
+  }
+  if (wa === 'twilio') {
+    const from = need(env, 'TWILIO_WHATSAPP_FROM', 'WhatsApp through Twilio');
+    if (!from.startsWith('whatsapp:')) throw new ConfigError('TWILIO_WHATSAPP_FROM must look like whatsapp:+14155238886.');
+    out.whatsapp = { kind: 'twilio', accountSid: need(env, 'TWILIO_ACCOUNT_SID', 'Twilio'), authToken: need(env, 'TWILIO_AUTH_TOKEN', 'Twilio'), from };
+  } else if (wa === 'webhook') {
+    out.whatsapp = { kind: 'webhook', url: webhookUrl(env), token: env.MESSAGE_WEBHOOK_TOKEN?.trim() || undefined };
+  }
+  return out;
+}
+
+function webhookUrl(env: NodeJS.ProcessEnv): string {
+  const url = need(env, 'MESSAGE_WEBHOOK_URL', 'the message webhook');
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error();
+  } catch {
+    throw new ConfigError('MESSAGE_WEBHOOK_URL must be a web address starting with https:// (or http:// for a service on this network).');
+  }
+  return url;
+}
+
+function loadPushContact(env: NodeJS.ProcessEnv): string | null {
+  const v = env.PUSH_CONTACT?.trim();
+  if (!v) return null;
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return `mailto:${v}`;
+  if (/^https:\/\//.test(v)) return v;
+  throw new ConfigError('PUSH_CONTACT must be an email address like shop@example.com (or an https:// address).');
 }

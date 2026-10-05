@@ -1,5 +1,5 @@
 import type { UnitCode } from './units';
-import type { AlertKind } from './domain';
+import type { AlertKind, MessageLevel } from './domain';
 import type { CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
@@ -125,11 +125,19 @@ export interface IntentMap {
     critical?: Partial<Record<AlertKind, boolean>>;
   };
 
+  /** Change where alerts reach a person. The owner can change anyone; everyone else only themselves. `phone: null` removes it. */
+  'staff/set_contact': { userId: Id; phone?: string | null; sms?: MessageLevel; whatsapp?: MessageLevel };
+  /** Register this phone or browser for notifications (the values come from the browser's push subscription). */
+  'push/subscribe': { endpoint: string; p256dh: string; auth: string; userAgent?: string };
+  'push/unsubscribe': { endpoint: string };
+  /** Send yourself a test on every channel you have set up. Once a minute at most. */
+  'notify/send_test': Record<string, never>;
+
   'sync/flush': Record<string, never>;
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Payments' | 'Sync';
+export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Sync';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [

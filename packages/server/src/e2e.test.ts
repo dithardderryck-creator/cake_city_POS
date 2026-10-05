@@ -734,4 +734,61 @@ describe('ingredient usage through the real server', () => {
     await waitFor(() => invTitles.length === 0);
     await waitFor(() => ownerCritical === 0);
   });
+
+  it('really sends a critical alert as a text through the shop’s message service, and nobody else gets it', async () => {
+    const received: Array<{ auth?: string; body: { channel: string; to: string; text: string } }> = [];
+    const hook = http.createServer((req, res) => {
+      let data = '';
+      req.on('data', (c) => (data += c));
+      req.on('end', () => {
+        received.push({ auth: req.headers.authorization, body: JSON.parse(data) });
+        res.writeHead(204).end();
+      });
+    });
+    await new Promise<void>((r) => hook.listen(0, '127.0.0.1', r));
+    cleanups.push(() => new Promise<void>((r) => hook.close(() => r())));
+    const url = `http://127.0.0.1:${(hook.address() as { port: number }).port}/send`;
+
+    const { server } = await boot({ env: { SMS_PROVIDER: 'webhook', MESSAGE_WEBHOOK_URL: url, MESSAGE_WEBHOOK_TOKEN: 'bridge-secret', PUSH_CONTACT: 'owner@cakes.example' } });
+    const { client: owner } = await login(server, 'owner');
+    const { client: inventory } = await login(server, 'inventory');
+    const ownerId = ((await owner.feed('me', {})) as { ok: true; data: { userId: string } }).data.userId;
+
+    const setup = await owner.feed('notification_setup', {});
+    expect(setup.ok && setup.data.channels).toEqual({ push: true, sms: true, whatsapp: false });
+    expect(setup.ok && setup.data.push.publicKey).toMatch(/^[A-Za-z0-9_-]{80,}$/);
+    expect((await owner.dispatch('staff/set_contact', { userId: ownerId, phone: '+255 712 345 678' })).ok).toBe(true);
+
+    const made = await inventory.dispatch('inventory/create_ingredient', { name: 'Butter', unit: 'kg', openingStock: 5, reorderLevel: 1 });
+    const ingredientId = ((made.ok ? made.data : {}) as { ingredientId: string }).ingredientId;
+    expect((await inventory.dispatch('inventory/count', { ingredientId, counted: 0 })).ok).toBe(true);
+
+    expect(await server.panel.deliver()).toMatchObject({ sent: 1, failed: 0 });
+    expect(received).toHaveLength(1);
+    expect(received[0]!.auth).toBe('Bearer bridge-secret');
+    expect(received[0]!.body).toMatchObject({ channel: 'sms', to: '+255712345678' });
+    expect(received[0]!.body.text).toMatch(/^Cake POS: Butter is out of stock\./);
+    expect(await server.panel.deliver()).toEqual({ sent: 0, failed: 0, retrying: 0 });
+    expect(received).toHaveLength(1);
+
+    const log = await owner.feed('notification_log', {});
+    expect(log.ok && log.data[0]).toMatchObject({ title: 'Butter is out of stock', status: 'sent', deliveries: [{ channel: 'sms', status: 'sent' }] });
+    // The phone number never reaches the log file.
+    const logs = fs.readdirSync(path.join(path.dirname(server.store.file), 'logs')).map((f) => fs.readFileSync(path.join(path.dirname(server.store.file), 'logs', f), 'utf8')).join('\n');
+    expect(logs).not.toContain('712345678');
+    expect(logs).not.toContain('bridge-secret');
+  });
+
+  it('keeps the phone-notification keys across a restart, so phones that subscribed keep working', async () => {
+    const dataDir = tmpDir();
+    const env = { PUSH_CONTACT: 'owner@cakes.example' };
+    const key = async () => {
+      const { server } = await boot({ dataDir, env, seed: false });
+      return (await server.store.get<{ id: string; publicKey: string }>('settings', 'vapid'))!.publicKey;
+    };
+    const first = await key();
+    await cleanups.pop()!(); // stop the first server
+    const second = await key();
+    expect(second).toBe(first);
+  });
 });

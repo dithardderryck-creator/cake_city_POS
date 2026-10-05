@@ -2,7 +2,7 @@
 
 Findings from a review of the repo, each re-checked against the code. **FIXED** items have tests that fail if the fix is removed. **OPEN** items are left for the owner of the UI/tooling to fix; each says where and what the fix is.
 
-Last updated after the review of the Phase 2a work.
+Last updated after the alerts, forecast, metric-units and phone-notification work.
 
 ## Fixed
 
@@ -30,8 +30,8 @@ Related gap in the hooks: `useSession` reports `signedOut` when the server canno
 ### O-4. "Offline, saving here" chip uses `navigator.onLine`
 `apps/web/src/App.tsx` shows the chip from `useOnline()` (`navigator.onLine`) in `lib/panel.tsx`. Under D-54 the app is offline when it cannot reach the shop server, which `navigator.onLine` does not tell it (wifi can be up with the server down). In server mode the chip should follow the client's connection state; the "saving here" wording is only true in standalone mode.
 
-### O-5. The outbox grows forever
-Every successful instruction writes a `sync` row to the `outbox` table (`enqueueSync` in `packages/panel/src/kernel.ts`). Nothing reads or prunes these rows, and with one server as the only writer (D-45) there is nothing to sync to. Suggested fix: stop writing `sync` rows; remove `sync/flush`, `SyncTerminal` and the panel-map/UI parts that show a sync backlog; keep the outbox only for real future jobs (WhatsApp/SMS, print), and have `maintain()` prune finished rows. Until then the table grows by one row per action.
+### O-5. The `sync` outbox rows grow forever
+Every successful instruction still writes a `sync` row to the `outbox` table (`enqueueSync` in `packages/panel/src/kernel.ts`). Nothing reads or prunes these rows. The *notification* rows (messages to phones, SMS, WhatsApp) are consumed, retried and pruned by `maintain()`, so the table is no longer a dead end, but `sync` rows still add up, one per action. They are meant to feed the online copy of the data (not built yet); until then, or if that is dropped, stop writing them.
 
 ### O-6. No CI and no lint
 The only checks are `npm test`, `npm run typecheck` and the generated-docs staleness test, all run by hand. Suggested:
@@ -50,11 +50,26 @@ The set of cake attributes follows the blueprint plus `allergyNotes` and `sizeNo
 ### O-10. Recipe suggestions are empty until the shop enters its recipes
 The suggestion can only be as good as the recipe lines. A new shop has none, so the first cakes get a warning and an empty suggestion until the owner or baker adds ingredients and recipe lines. The lines are rough averages: the result is a starting point the baker corrects, and Inventory's confirmed figures are what matter. Confirmed usage does not yet adjust the recipe lines (parked, blueprint "recipe feedback loop").
 
-### O-11. No alerts yet
-`low`, `pending` and the `ReorderLevelBreached` event exist, but nothing turns them into an in-app alert or a WhatsApp/SMS to the owner. That is the Messages and Alerts circuit (BR-23, BR-24), which is not built. Usage reports waiting for Inventory appear in `usage_inbox` rather than in a general request inbox (D-61).
+### O-11. Alerts: what is not covered
+Alerts, the stock forecast and delivery to phones, SMS and WhatsApp are built. Not covered: general requests, notes and announcements between staff (the Messages circuit, BR-15 to BR-17); alerts for things that have no data yet (closing review, counter day). Usage reports waiting for Inventory appear in `usage_inbox` and raise `usage_waiting` alerts (D-61).
 
-### O-12. Ingredient units are not converted
-An ingredient has one unit (`g`, `kg`, `ml`, `l` or `pcs`). Recipe lines, amounts and stock for an ingredient must use that same unit; the panel does not convert between kilograms and grams.
+### O-12. (closed) Ingredient units are now converted
+Stock is stored in metric base units and other units are converted on input (D-62), so this no longer applies.
+
+### O-13. Phone push needs HTTPS
+Browsers only register service workers and push subscriptions on HTTPS (or `localhost`). On `http://192.168...` the in-app sound, vibration and system notification work while the app is open, but nothing arrives when it is closed. Fix: serve the app over HTTPS (runbook, "HTTPS"); open question Q-11 is how to do that on a shop network without certificate warnings.
+
+### O-14. A closed phone plays its own sound
+A web page cannot choose the sound of a notification that arrives while the app is closed; the phone uses its notification sound (set by the person in the phone's settings; Android lets them raise the channel's importance). The loud repeating siren plays only while the app is open. iPhone additionally needs the app added to the Home Screen before it can receive push at all.
+
+### O-15. Africa's Talking responses not verified live
+The Africa's Talking SMS integration was written from its public documentation and tested against a stand-in server. Its per-recipient status codes (which mean "accepted" and which mean "rejected for good") should be checked with a sandbox send before relying on it. Twilio and the webhook route were tested the same way, not against live accounts.
+
+### O-16. WhatsApp templates and the 24-hour window
+Business WhatsApp (through Twilio) only allows free-form messages within 24 hours of the person last writing to the shop. Alerts sent outside that window need a pre-approved template, which this server does not send yet. SMS and phone push have no such limit.
+
+### O-17. Forecast confidence starts low
+The forecast learns from confirmed usage. In the first days it has no usual rate and no calibration, so it uses the recipe suggestions alone and labels itself `low` confidence. Alerts from it are most useful after a week or two of confirmed usage.
 
 ## Corrected claims
 

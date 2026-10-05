@@ -20,6 +20,7 @@ import { inventoryIntents } from './circuits/inventory';
 import { quoteIntents } from './circuits/quotes';
 import { recipeIntents } from './circuits/recipes';
 import { usageIntents } from './circuits/usage';
+import { NOTIFY_ITEM_TTL_MS, notifyIntents, planDue, recordResults } from './circuits/notify';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
@@ -40,6 +41,7 @@ import {
   type Ids,
   type PinHasher,
   type Secrets,
+  type SendResult,
   type Store,
   type Terminals,
 } from './ports';
@@ -101,7 +103,13 @@ export interface Panel {
   /** Read a stored picture. */
   readPhoto(photoId: string, token?: string): Promise<PhotoReadResult>;
   /** Housekeeping: drop expired sessions, old request ids and unused pictures. Safe to call any time. */
-  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number; photosPruned: number; alertsPruned: number }>;
+  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number; photosPruned: number; alertsPruned: number; notificationsPruned: number }>;
+  /**
+   * Sends the notifications that are due: push to phones, SMS and WhatsApp through the provider. Failed ones are tried again
+   * later with growing waits. The network is never touched while shop work is waiting, so a slow provider cannot slow a sale.
+   * The server calls this every few seconds. Safe to call at any time, even twice at once.
+   */
+  deliver(): Promise<{ sent: number; failed: number; retrying: number }>;
   /**
    * Checks every alert condition against the data now and raises or clears alerts. Also runs after changes to orders, stock
    * and usage, but time passing alone (a cake becoming late) needs this called regularly. The server calls it every minute.
@@ -138,6 +146,7 @@ const registry = {
   ...recipeIntents,
   ...usageIntents,
   ...alertIntents,
+  ...notifyIntents,
   ...paymentIntents,
   ...syncIntents,
 } as Registry;
@@ -201,6 +210,31 @@ export function createPanel(options: PanelOptions = {}): Panel {
     const run = tail.then(fn);
     tail = run.catch(() => undefined);
     return run;
+  }
+
+  let delivering = false;
+  const SEND_TIMEOUT_MS = 25_000;
+  /** Sends one message through its terminal. Never throws and never hangs: a provider that misbehaves is a retry. */
+  async function sendOne(a: Parameters<typeof recordResults>[1][number]['attempt']): Promise<SendResult> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<SendResult>((resolve) => {
+      timer = setTimeout(() => resolve({ ok: false, retry: true, error: 'The provider did not answer in time.' }), SEND_TIMEOUT_MS);
+    });
+    try {
+      const run: Promise<SendResult> =
+        a.channel === 'push'
+          ? terminals.push
+            ? terminals.push.send({ endpoint: a.subscription!.endpoint, p256dh: a.subscription!.p256dh, auth: a.subscription!.auth }, a.push)
+            : Promise.resolve({ ok: false, retry: false, error: 'Push is not set up on this server.' })
+          : terminals.messages
+            ? terminals.messages.send({ channel: a.channel, to: a.to, text: a.text })
+            : Promise.resolve({ ok: false, retry: false, error: 'No message provider is set up on this server.' });
+      return await Promise.race([run, timeout]);
+    } catch (err) {
+      return { ok: false, retry: true, error: err instanceof Error ? err.message.slice(0, 200) : 'The provider failed.' };
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   let refreshQueued = false;
@@ -497,6 +531,28 @@ export function createPanel(options: PanelOptions = {}): Panel {
       return () => eventListeners.delete(l);
     },
     exclusive: (fn) => serial(fn),
+    deliver: async () => {
+      if (delivering) return { sent: 0, failed: 0, retrying: 0 };
+      delivering = true;
+      try {
+        const env = { store, ids, clock, terminals };
+        const attempts = await serial(() => store.transaction(() => planDue(env)));
+        if (attempts.length === 0) return { sent: 0, failed: 0, retrying: 0 };
+        // Network work happens outside the queue. A slow provider never holds up a sale.
+        const results: Array<{ attempt: (typeof attempts)[number]; result: SendResult }> = [];
+        for (let i = 0; i < attempts.length; i += 8) {
+          results.push(...(await Promise.all(attempts.slice(i, i + 8).map(async (attempt) => ({ attempt, result: await sendOne(attempt) })))));
+        }
+        const tally = await serial(() => store.transaction(() => recordResults(env, results)));
+        scheduleRefresh();
+        return tally;
+      } catch (err) {
+        options.onError?.(err, { intent: 'notify/deliver' });
+        return { sent: 0, failed: 0, retrying: 0 };
+      } finally {
+        delivering = false;
+      }
+    },
     tick: () =>
       serial(async () => {
         try {
@@ -545,7 +601,14 @@ export function createPanel(options: PanelOptions = {}): Panel {
               alertsPruned++;
             }
           }
-          return { sessionsPruned, requestsPruned, photosPruned, alertsPruned };
+          let notificationsPruned = 0;
+          for (const o of await store.find<OutboxItem>('outbox', { where: { status: ['sent', 'failed'] } })) {
+            if (o.kind === 'notify' && nowMs - Date.parse(o.createdAt) > NOTIFY_ITEM_TTL_MS) {
+              await store.delete('outbox', o.id);
+              notificationsPruned++;
+            }
+          }
+          return { sessionsPruned, requestsPruned, photosPruned, alertsPruned, notificationsPruned };
         }),
       ),
   };

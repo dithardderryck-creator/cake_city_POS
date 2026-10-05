@@ -28,12 +28,64 @@ export interface Session {
   role: Role;
 }
 
+/** How much a person wants by text message: nothing, only critical alerts, or every alert for them. */
+export type MessageLevel = 'off' | 'critical' | 'all';
+
+export interface StaffContact {
+  /** International format, such as +255712345678. */
+  phone?: string;
+  sms: MessageLevel;
+  whatsapp: MessageLevel;
+}
+
 export interface Staff {
   id: Id;
   name: string;
   role: Role;
   pinHash: string;
   active: boolean;
+  /** Where alerts reach this person outside the app. Absent until set. */
+  contact?: StaffContact;
+}
+
+/** A phone or browser that has agreed to receive notifications from this shop. Only that person's own devices. */
+export interface PushSubscriptionRecord {
+  /** Hash of the endpoint, so the same device is never stored twice. */
+  id: Id;
+  userId: Id;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+export type DeliveryChannel = 'push' | 'sms' | 'whatsapp';
+
+/** One message to one person on one channel, with its own retries. Lives inside a notify outbox item. */
+export interface Delivery {
+  id: Id;
+  userId: Id;
+  userName: string;
+  channel: DeliveryChannel;
+  /** The phone number, or the subscription id for push. */
+  target: string;
+  status: 'pending' | 'sent' | 'failed' | 'skipped';
+  attempts: number;
+  /** Earliest time for the next try. */
+  nextAt?: string;
+  /** Set while a send is under way, so two runs never send the same message at once. */
+  inFlightAt?: string;
+  lastError?: string;
+  doneAt?: string;
+}
+
+export interface NotifyPayload {
+  alertId?: Id;
+  /** A test message to one person (nobody is woken for it but them). */
+  test?: { userId: Id };
+  deliveries?: Delivery[];
+  note?: string;
 }
 
 export interface OptionGroup {

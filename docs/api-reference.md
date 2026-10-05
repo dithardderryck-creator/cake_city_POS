@@ -488,6 +488,44 @@ Allowed: **owner**
 | `countDifference` | integer | no | min 1, max 1000 |
 | `critical` | object | no |  |
 
+### Notify
+
+#### `staff/set_contact`
+
+Allowed: **owner, cashier, baker, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `userId` | string | yes | min length 1, max length 64 |
+| `phone` | any | no |  |
+| `sms` | "off" \| "critical" \| "all" | no |  |
+| `whatsapp` | "off" \| "critical" \| "all" | no |  |
+
+#### `push/subscribe`
+
+Allowed: **owner, cashier, baker, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `endpoint` | string | yes | max length 1000 |
+| `p256dh` | string | yes | min length 1, max length 200 |
+| `auth` | string | yes | min length 1, max length 100 |
+| `userAgent` | string | no | max length 300 |
+
+#### `push/unsubscribe`
+
+Allowed: **owner, cashier, baker, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `endpoint` | string | yes | max length 1000 |
+
+#### `notify/send_test`
+
+Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
 ### Payments
 
 #### `payments/record_payment`
@@ -615,6 +653,18 @@ Allowed: **owner, baker**
 #### `alert_inbox`
 
 Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `notification_setup`
+
+Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `notification_log`
+
+Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 

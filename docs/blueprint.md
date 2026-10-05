@@ -276,6 +276,9 @@ Unpaid → Partial → Paid. Refunds add Partially refunded and Refunded. The ba
 | **BR-33** | Confirmed usage cannot take stock below zero. The shortfall is recorded on the movement and a warning asks for a count |
 | **BR-34** | The ingredient suggestion is made once, when baking starts, from the recipe lines that fit the cake. Later recipe changes do not rewrite it |
 | **BR-27** | Days-of-stock-left and stock alerts consider ingredients and packaging. Finished goods use the counter count |
+| **BR-35** | Alerts are raised and cleared by the system from the data, never by a screen. An alert that is acknowledged or cleared before its message is sent is not sent |
+| **BR-36** | Every new alert is sent once per person per channel they chose. A failed send is retried after 1, 2, 5, 15, 60 and 180 minutes, then marked failed and visible in the log. Sending never happens inside a database transaction and never delays an instruction |
+| **BR-37** | An ingredient's stock is kept in one base unit (kg, l or pcs). Any other unit is converted when typed and never stored |
 
 ---
 
@@ -536,6 +539,10 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-60** | **Recipe lines** say how much of an ingredient goes into cakes like this one: per serving, per serving for each gap between layers, or fixed; limited by flavor, filling and dietary tags. The owner and baker manage them. The baker's confirmed usage does not yet adjust them (the feedback loop is parked) |
 | **D-61** | **The usage inbox stands in for the Requests system (BR-13).** Reports waiting for Inventory appear in `usage_inbox` with the same lifecycle (reported, then confirmed or sent back). When Messages is built they should appear in the same inbox |
 | **D-62** | **Metric base units.** Stock is stored in kg, l and pcs. Other units (g, mg, lb, oz, ml, cup, tbsp, dozen...) are accepted on input and converted, and shown in plain text ("250 g"). Existing gram and millilitre data is converted once by schema migration 2 |
+| **D-63** | **Stock forecast.** One stock line per ingredient from two inputs: the recipe suggestions for booked cakes (corrected by how real confirmed usage has compared with past suggestions) and the kitchen's usual daily use. Near days follow the bookings, later days drift to the usual rate, and the line never goes below what is booked. It says so when there is too little history. Plain arithmetic, no internet |
+| **D-64** | **Alerts are stored, de-duplicated, routed by role and cleared by the system.** Thresholds and which kinds are critical are the owner's to set. Critical alerts also reach the owner. People can mark seen, acknowledge ("I'm on it") or snooze |
+| **D-65** | **Delivery in three steps:** decide who to tell (inside the transaction, with the alert), send (outside the queue, with timeouts), record the result. Channels: in-app, phone push, SMS, WhatsApp. SMS and WhatsApp go through a provider the shop chooses (Twilio, Africa's Talking, or any service with a webhook). Phone push is built in and free |
+| **D-66** | **The phone alarm lives in the client library**, not the screens: a sound and vibration for new alerts, a repeating siren for unseen critical ones, a system notification, and a service worker for push when the app is closed. Sound needs one tap to unlock; closed-app sound is the phone's own. Push needs HTTPS |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -547,6 +554,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | 0.1 | 29 Sep 2026 | Baseline: consolidated the locked graph, architecture, assumptions, and open questions |
 | 0.2 | 29 Sep 2026 | First slice built as a repo. Added D-41 to D-44 and section 18 (build status). No changes to rules |
 | 0.3 | 2 Oct 2026 | Phase 2a: shop server. Added D-45 to D-54 and Q-10 to Q-13. D-36 and A-12 superseded. Sections 9, 12 and 18 rewritten. Business rules unchanged |
+| 0.4 | 5 Oct 2026 | Metric base units (D-62), stock forecast (D-63), alerts (D-64), delivery to phones/SMS/WhatsApp (D-65), phone alarm (D-66); BR-35 to BR-37 |
 
 ---
 
@@ -579,7 +587,12 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Ingredient usage chain (suggest, report, confirm, stock moves) | Built | Rules-based suggestion, preset amounts, pending, shortfalls, send back. Tested over the real server |
 | Ingredients (stock, delivery, count, write-off, amounts, reorder level, days of stock left) | Built | Packaging is not separate yet: add it as an ingredient in `pcs` |
 | Production stages beyond the baker's steps (capacity, calendar, batches) | Not built | |
-| Messages (requests, notes, announcements) and alerts | Not built | |
+| Alerts (7 kinds, thresholds, critical, seen/acknowledge/snooze) | Built | Raised and cleared by the system. Tested over the real server |
+| Stock forecast (bookings + real usage, one line per ingredient) | Built | Low confidence until a few days of confirmed usage |
+| Metric units and conversions | Built | Existing data converted once by migration 2 |
+| Delivery of alerts: phone push, SMS, WhatsApp, with retries and a log | Built | Tested against stand-in provider servers, not live accounts (O-15, O-16). Push needs HTTPS (O-13) |
+| Phone alarm (sound, vibration, repeat, notification, service worker) | Built (client library) | The UI only has to mount it. Not yet tried on a real phone |
+| Messages (requests, notes, announcements) | Not built | |
 | Delivery record | Not built | |
 | Owner reports | Not built | |
 | Receipts (print, WhatsApp/SMS) | Not built | |
@@ -591,6 +604,6 @@ Known bugs and gaps found in review: [known-issues.md](known-issues.md).
 ### Next in order
 1. ~~Custom cake orders with owner quotes~~ (built; see the status table).
 2. ~~Ingredient usage chain~~ (built).
-3. Messages and alerts (stock and quote alerts, WhatsApp/SMS to the owner).
+3. ~~Alerts, forecast and phone/SMS/WhatsApp delivery~~ (built). Messages (requests, notes, announcements) are still to come.
 4. Counter day, delivery record, reports, receipts.
 Each is a new circuit plus its instructions and feeds, then the generated API reference updates itself.

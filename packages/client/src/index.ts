@@ -436,3 +436,5 @@ export function createClient(options: ClientOptions = {}): Client {
     },
   };
 }
+
+export * from './alerts';

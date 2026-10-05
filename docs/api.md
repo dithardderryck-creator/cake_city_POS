@@ -165,6 +165,68 @@ const shown = await client.photo(photoId);
 if (shown.ok) img.src = URL.createObjectURL(shown.blob);
 ```
 
+## Alerts, forecast and phone notifications
+
+### Alerts
+
+The panel watches stock, usage reports, quotes and deliveries and raises an **alert** when something needs a person. Nothing is raised by the UI. Alerts are de-duplicated (one open alert per condition), clear themselves when the problem is fixed, and are routed by role. A **critical** alert also goes to the owner, whoever it was first aimed at.
+
+| Kind | Raised when | Goes to |
+| --- | --- | --- |
+| `stockout` | An ingredient is out, or the forecast says it runs out within `stockoutDays` (default 3) | Inventory, owner |
+| `low_stock` | The forecast says an ingredient hits its reorder level or runs out within `reorderDays` (7) | Inventory |
+| `usage_waiting` | A baker's usage report has waited `usageWaitHours` (4); the owner is told too after twice that | Inventory (then owner) |
+| `quote_waiting` | A quote request has waited `quoteWaitHours` (2) | Owner |
+| `order_not_started` | A custom cake is due within `dueSoonDays` (2) and baking has not started | Baker, owner |
+| `overdue_delivery` | An order's delivery date has passed and items are not handed over | Cashier, owner |
+| `count_difference` | A recent stock count was off by `countDifference` (3) or more | Owner |
+
+Out of the box, `stockout` and `count_difference` are critical; the owner can change that with `alerts/configure`.
+
+- **Feeds.** `alert_inbox` (everyone with a role; `open`, `snoozed`, `recent`, `unseen`, `critical`; updates live) and `alert_settings` (owner).
+- **Instructions.** `alerts/mark_seen` (stops the alarm on that phone and every other), `alerts/acknowledge` ("I'm on it": silences notifications for everyone, the alert stays open until the problem clears), `alerts/snooze` (hides it from your list for 1 to 72 hours), `alerts/configure` (owner: thresholds and which kinds are critical).
+- **Timing.** The server checks every minute, and the panel also re-checks straight after orders, quotes, inventory, usage, stock and recipe instructions.
+
+### Stock forecast
+
+The `stock_forecast` feed (owner, baker, Inventory) gives one line per ingredient: real stock up to today, projected stock after. It is worked out from **two inputs** and shown as **one** line:
+
+1. **The recipe suggestions** for cakes already booked (what the cakes due in the coming days should need).
+2. **What the chefs actually used**, from confirmed usage reports, as a daily rate. The booked cakes are scaled by a **calibration** (confirmed use divided by suggested use on past cakes), so a recipe that is always too generous or too tight corrects itself.
+
+The next few days follow the bookings. Further out, bookings are thin because customers have not ordered yet, so the line drifts toward the usual rate; it never goes below what is already booked. Each row has `status`, `daysUntilOut` / `outDate`, `daysUntilReorder` / `reorderDate`, `shortfallInHorizon`, `usualPerDay`, `next7Days`, `calibration` (`factor`, `samples`, `applied`), a one-sentence `text`, `confidence` (`high` when both the usual rate and bookings exist, `medium` for one, `low` for neither) and `series` for the graph. With fewer than 3 confirmed uses or 3 days of history it says so instead of guessing. `method` is a plain-words description to show under the graph. Parameters: `ingredientId` for one ingredient, `horizonDays` (default 14).
+
+### Notifications: phone sound, WhatsApp and SMS
+
+Each new alert is turned into a message to each person it concerns, on the channels they chose. This happens outside the instruction queue, so a slow provider never delays a sale.
+
+- **Setup feed.** `notification_setup` returns the person's settings, which channels the server can use (`channels`), the key a browser needs (`push.publicKey`), which of the person's devices are registered, and `notes` (plain reminders such as "no phone number saved").
+- **Instructions.** `staff/set_contact` (phone number; `sms` and `whatsapp` each `off`, `critical` or `all`; owner can change anyone, others only themselves), `push/subscribe` and `push/unsubscribe` (a phone or browser), `notify/send_test` (once a minute).
+- **Log.** `notification_log` (owner, IT) lists recent messages with the outcome of each delivery (`sent`, `failed`, `skipped`, `pending`) and the last error.
+- **Retries.** A failed delivery is retried after 1, 2, 5, 15, 60 and 180 minutes, then marked failed. An alert that was cleared or acknowledged before the message went out is skipped. A phone that has uninstalled the app (the push service says it is gone) is removed.
+- **Providers (server settings, see the runbook).** SMS through Twilio, Africa's Talking or a webhook; WhatsApp through Twilio or a webhook; phone push built in.
+
+### The alarm on a phone or tablet
+
+`@cake-pos/client` provides the part that makes noise, so your UI only has to mount it:
+
+```ts
+import { createAlertWatcher, browserAlarm, enablePhoneNotifications } from '@cake-pos/client';
+
+const alarm = browserAlarm();
+const watcher = createAlertWatcher({ client, effects: alarm });
+// On any tap (sign-in button, "Turn on alarm sound"): browsers keep pages silent until then.
+await alarm.unlock();
+// Once per phone, from a button: asks permission and registers it with the shop.
+const r = await enablePhoneNotifications(client);
+watcher.subscribe((state) => render(state)); // state.open, state.unseen, state.ringing, state.muted
+await watcher.markAllSeen(); // "Stop"
+```
+
+- **While the app is open:** a new alert plays a short sound and vibrates; a **critical** one plays a siren, vibrates and **repeats every 30 seconds** (up to 10 times) until someone sees it, takes it, or the problem clears. It also shows a system notification.
+- **While the app is closed:** the shop server sends a Web Push. The phone shows it with **its own notification sound**; a web page cannot choose a louder one when it is closed. Copy `packages/client/service-worker/alert-sw.js` to the root of the web app so it is served as `/alert-sw.js`.
+- **Requirements.** Browsers only allow service workers and push on **HTTPS** (or `localhost`). Over plain `http://192.168...` the in-app sound and vibration work but closed-app push does not. See the runbook for HTTPS. On iPhone the app must be added to the Home Screen first.
+
 ## Things that will bite you on a shop network
 
 - **Plain `http://` addresses are "insecure" to browsers.** On `http://192.168.x.x` a browser disables `crypto.subtle`, `crypto.randomUUID()` and **service workers** (so no installable-app offline shell). The client library avoids the first two. For the third, run the server with HTTPS (see the runbook), or accept that each device loads the app from the server when it opens (fine, because nothing works without the server anyway).

@@ -168,6 +168,16 @@ export const schemas = {
       .optional(),
   }),
 
+  'staff/set_contact': z.strictObject({
+    userId: id,
+    phone: z.string().max(40).nullable().optional(),
+    sms: z.enum(['off', 'critical', 'all']).optional(),
+    whatsapp: z.enum(['off', 'critical', 'all']).optional(),
+  }),
+  'push/subscribe': z.strictObject({ endpoint: z.string().url().max(1000), p256dh: z.string().min(1).max(200), auth: z.string().min(1).max(100), userAgent: z.string().max(300).optional() }),
+  'push/unsubscribe': z.strictObject({ endpoint: z.string().max(1000) }),
+  'notify/send_test': empty,
+
   'sync/flush': empty,
 } as const;
 
@@ -198,6 +208,8 @@ export const feedSchemas = {
   usage_inbox: empty,
   unit_list: empty,
   alert_inbox: empty,
+  notification_setup: empty,
+  notification_log: empty,
   alert_settings: empty,
   stock_forecast: z.strictObject({ ingredientId: id.optional(), horizonDays: z.number().int().min(1).max(30).optional() }),
   audit_view: empty,
