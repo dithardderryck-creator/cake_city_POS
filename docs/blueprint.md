@@ -463,13 +463,18 @@ Ingredient demand forecast from open orders; suggested bake quantities for count
 | Q-04 | What exact attributes does a custom cake need for recipe generation? | Before the usage chain | Owner, Baker |
 | Q-05 | How is the recipe generated (rules, an AI model, or a mix), and what is the offline fallback quality bar? | Before the usage chain | Owner, IT |
 | Q-06 | What is the receipt layout, and which printer hardware will be used? | Before printing | Owner, IT |
-| Q-07 | Which WhatsApp/SMS service will send messages? | Before comms | IT |
+| Q-07 | Which WhatsApp/SMS service will send messages? Twilio, Africa's Talking, or a webhook to another service are built. WhatsApp needs a Meta-approved sender and approved templates outside the 24-hour window | Before go-live (alerts reach phones in the app without it) | IT |
 | Q-08 | What are the data backup and export needs? | Non-blocking | Owner, IT |
 | Q-09 | Language(s) for the interface | Non-blocking | Owner |
 | Q-10 | Should backups go to a cloud service directly (a storage API such as S3) as well as to a synced folder? Folder sync is built; direct upload is not | Non-blocking | Owner, IT |
 | Q-11 | Will devices need HTTPS (for the installable-app and offline-shell features)? Needs a locally trusted certificate on each device | Before the UI is finalised | Owner, IT |
 | Q-12 | Is a standby computer ready to take over if the server computer fails, and who restores to it? | Before go-live | Owner, IT |
 | Q-13 | What is the agreed paper procedure at the counter while the server is unreachable, and how are those orders entered afterwards? | Before go-live | Owner |
+| Q-14 | Which Google account will own the shop's Drive files (backups and archive sheets)? Then run `google-auth` and publish the Google app so the sign-in does not expire (runbook, "Online copy") | Before go-live | Owner |
+| Q-15 | Which folder on the shop computer (or office drive) should archived spreadsheets be kept in (`ARCHIVE_DIR`)? Default is a folder inside the data folder | Before go-live | Owner, IT |
+| Q-16 | Is the "shop computer is the main copy, Google Drive holds copies" design (D-67) enough, or is a live online database that every device uses wanted? The second makes every sale depend on the internet and is a bigger change | Before go-live | Owner |
+| Q-17 | Alert thresholds and who gets which alert: stock-out within 3 days, low stock within 7, usage report waiting 4 hours, price request waiting 2 hours, cake due within 2 days, count off by 3. Which alerts are critical (also text the owner)? Defaults are in place | Non-blocking (defaults work; owner can change them in the app) | Owner |
+| Q-18 | How often should the online copy run: nightly only (default) or every few hours (`BACKUP_EVERY_HOURS`)? And when is the database "full" for archiving (default 500 MB) and how old must an order be (default 90 days)? | Non-blocking | Owner, IT |
 
 ---
 
