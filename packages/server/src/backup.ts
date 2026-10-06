@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { systemClock, type BackupStatus, type BackupTerminal, type Clock } from '@cake-pos/panel';
+import type { DriveClient } from './google-drive';
 import { errorFields, type Logger } from './log';
 import type { SqliteStore } from './sqlite-store';
 
@@ -31,6 +32,25 @@ export function createFolderUploader(dir: string, label = 'Cloud folder'): Backu
     prune: async (keep) => {
       const files = (await fs.promises.readdir(dir)).filter((f) => BACKUP_FILE.test(f)).sort();
       for (const f of files.slice(0, Math.max(0, files.length - keep))) await fs.promises.unlink(path.join(dir, f));
+    },
+  };
+}
+
+/**
+ * Uploads snapshots to the shop's Google Drive, in a "Backups" folder. A failed upload (no internet, Drive busy) is
+ * simply retried by the backup service every ten minutes until it works.
+ */
+export function createDriveUploader(client: DriveClient, folderName: string, keep: number): BackupUploader {
+  return {
+    name: 'Google Drive',
+    upload: async (file) => {
+      const folder = await client.ensureFolder([folderName, 'Backups']);
+      await client.upload({ name: path.basename(file), parentId: folder, source: { path: file }, mimeType: 'application/octet-stream' });
+    },
+    prune: async () => {
+      const folder = await client.ensureFolder([folderName, 'Backups']);
+      const files = (await client.list(folder)).filter((f) => BACKUP_FILE.test(f.name)).sort((a, b) => a.name.localeCompare(b.name));
+      for (const f of files.slice(0, Math.max(0, files.length - keep))) await client.remove(f.id);
     },
   };
 }
@@ -89,6 +109,8 @@ export interface BackupOptions {
   uploaders: BackupUploader[];
   hour: number;
   minute: number;
+  /** Also take a backup this often (in hours), so the online copy is never more than this far behind. 0 means nightly only. */
+  everyHours?: number;
   log: Logger;
   clock?: Clock;
 }
@@ -206,7 +228,10 @@ export function createBackupService(o: BackupOptions): BackupService {
     const now = clock.now();
     const due = new Date(now.getFullYear(), now.getMonth(), now.getDate(), o.hour, o.minute);
     const state = load();
-    if (now < due || state.lastAttemptDay === dayKey(now)) return false;
+    const nightlyDue = now >= due && state.lastAttemptDay !== dayKey(now);
+    const everyMs = (o.everyHours ?? 0) * 3_600_000;
+    const intervalDue = everyMs > 0 && (!state.lastOkAt || now.getTime() - Date.parse(state.lastOkAt) >= everyMs);
+    if (!nightlyDue && !intervalDue) return false;
     // After a failure, wait half an hour before trying again instead of retrying every tick.
     const failedAt = memFailAt ?? (state.lastFailAt ? Date.parse(state.lastFailAt) : null);
     if (failedAt !== null && now.getTime() - failedAt < 30 * 60_000) return false;

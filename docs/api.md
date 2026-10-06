@@ -227,6 +227,10 @@ await watcher.markAllSeen(); // "Stop"
 - **While the app is closed:** the shop server sends a Web Push. The phone shows it with **its own notification sound**; a web page cannot choose a louder one when it is closed. Copy `packages/client/service-worker/alert-sw.js` to the root of the web app so it is served as `/alert-sw.js`.
 - **Requirements.** Browsers only allow service workers and push on **HTTPS** (or `localhost`). Over plain `http://192.168...` the in-app sound and vibration work but closed-app push does not. See the runbook for HTTPS. On iPhone the app must be added to the Home Screen first.
 
+### Archived orders
+
+Old finished orders are moved out of the database into spreadsheets (see the runbook). After that they are **not in any feed** and instructions on them answer "That order no longer exists". The panel map (IT role) shows Google Drive status and archive progress. Order numbers are never reused. Nothing in the API changes: your UI does not need to know about archiving.
+
 ## Things that will bite you on a shop network
 
 - **Plain `http://` addresses are "insecure" to browsers.** On `http://192.168.x.x` a browser disables `crypto.subtle`, `crypto.randomUUID()` and **service workers** (so no installable-app offline shell). The client library avoids the first two. For the third, run the server with HTTPS (see the runbook), or accept that each device loads the app from the server when it opens (fine, because nothing works without the server anyway).

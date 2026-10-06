@@ -20,6 +20,15 @@ export interface ServerConfig {
   backupHour: number;
   backupMinute: number;
   backupKeep: number;
+  /** Also back up this often, in hours, so the online copy is never far behind. 0 means nightly only. */
+  backupEveryHours: number;
+  /** How many backups to keep in Google Drive. */
+  cloudBackupKeep: number;
+  /** Where the connected Google sign-in is kept. The file only exists once `google-auth` has been run. */
+  driveFile: string;
+  /** Where archived spreadsheets are kept on this computer. */
+  archiveDir: string;
+  archive: { whenFullMb: number; minAgeDays: number; activityDays: number };
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   /** Which provider sends SMS and WhatsApp. Both null means texts are off. */
   messaging: MessagingConfig;
@@ -78,6 +87,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     backupHour: Number(match[1]),
     backupMinute: Number(match[2]),
     backupKeep: int(env, 'BACKUP_KEEP', 30, 1, 3650),
+    backupEveryHours: int(env, 'BACKUP_EVERY_HOURS', 0, 0, 24),
+    cloudBackupKeep: int(env, 'CLOUD_BACKUP_KEEP', 60, 1, 3650),
+    driveFile: path.join(dataDir, 'google-drive.json'),
+    archiveDir: path.resolve(env.ARCHIVE_DIR || path.join(dataDir, 'archive')),
+    archive: {
+      whenFullMb: int(env, 'ARCHIVE_WHEN_FULL_MB', 500, 1, 1_000_000),
+      minAgeDays: int(env, 'ARCHIVE_MIN_AGE_DAYS', 90, 1, 3650),
+      activityDays: int(env, 'ARCHIVE_ACTIVITY_DAYS', 365, 30, 3650),
+    },
     logLevel: level,
     messaging: loadMessaging(env),
     pushContact: loadPushContact(env),

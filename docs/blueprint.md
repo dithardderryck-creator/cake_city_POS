@@ -279,6 +279,7 @@ Unpaid → Partial → Paid. Refunds add Partially refunded and Refunded. The ba
 | **BR-35** | Alerts are raised and cleared by the system from the data, never by a screen. An alert that is acknowledged or cleared before its message is sent is not sent |
 | **BR-36** | Every new alert is sent once per person per channel they chose. A failed send is retried after 1, 2, 5, 15, 60 and 180 minutes, then marked failed and visible in the log. Sending never happens inside a database transaction and never delays an instruction |
 | **BR-37** | An ingredient's stock is kept in one base unit (kg, l or pcs). Any other unit is converted when typed and never stored |
+| **BR-38** | Nothing is removed from the database by archiving until the spreadsheet has been written and read back, uploaded (when Google Drive is connected), and a fresh verified backup exists. Open, unpaid, or still-waiting orders are never archived |
 
 ---
 
@@ -543,6 +544,8 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-64** | **Alerts are stored, de-duplicated, routed by role and cleared by the system.** Thresholds and which kinds are critical are the owner's to set. Critical alerts also reach the owner. People can mark seen, acknowledge ("I'm on it") or snooze |
 | **D-65** | **Delivery in three steps:** decide who to tell (inside the transaction, with the alert), send (outside the queue, with timeouts), record the result. Channels: in-app, phone push, SMS, WhatsApp. SMS and WhatsApp go through a provider the shop chooses (Twilio, Africa's Talking, or any service with a webhook). Phone push is built in and free |
 | **D-66** | **The phone alarm lives in the client library**, not the screens: a sound and vibration for new alerts, a repeating siren for unseen critical ones, a system notification, and a service worker for push when the app is closed. Sound needs one tap to unlock; closed-app sound is the phone's own. Push needs HTTPS |
+| **D-67** | **Online copy = the shop computer stays primary, Google Drive holds copies.** The shop works with no internet and every sale is saved locally first. Whenever wifi is up the server uploads database backups (nightly, or every few hours) and archives to the shop's Google Drive, retrying until it works. A live cloud database that all devices use is not built (it would make every sale depend on the internet) |
+| **D-68** | **Archiving.** When the data in the database reaches a limit (default 500 MB), old finished orders (and old activity-log entries) move into spreadsheets: an .xlsx in a folder the owner chooses (`ARCHIVE_DIR`) and a Google Sheet in Drive. Safety order is in BR-38. Archived orders leave the app; the spreadsheet is the record |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -555,6 +558,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | 0.2 | 29 Sep 2026 | First slice built as a repo. Added D-41 to D-44 and section 18 (build status). No changes to rules |
 | 0.3 | 2 Oct 2026 | Phase 2a: shop server. Added D-45 to D-54 and Q-10 to Q-13. D-36 and A-12 superseded. Sections 9, 12 and 18 rewritten. Business rules unchanged |
 | 0.4 | 5 Oct 2026 | Metric base units (D-62), stock forecast (D-63), alerts (D-64), delivery to phones/SMS/WhatsApp (D-65), phone alarm (D-66); BR-35 to BR-37 |
+| 0.5 | 6 Oct 2026 | Online copy in Google Drive (D-67), archiving to spreadsheets (D-68), BR-38 |
 
 ---
 
@@ -597,7 +601,10 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Owner reports | Not built | |
 | Receipts (print, WhatsApp/SMS) | Not built | |
 | Counter day (batches, daily count, closing review) | Not built | |
-| Cloud sync of live data, real recipe generation | Not built | Not needed by the shop-server design |
+| Online copy: backups to Google Drive (nightly or every few hours), retried when offline | Built | Tested against a stand-in for Google, not a real account (O-18) |
+| Archiving old finished orders and activity to .xlsx and Google Sheets | Built | Safety order BR-38. Local folder is configurable. `google-auth`, `archive` in the admin tool |
+| Live cloud database used by every device | Not built | The shop computer stays primary (D-67, O-19) |
+| Real recipe generation from the internet | Dropped | The owner chose not to download recipes |
 
 Known bugs and gaps found in review: [known-issues.md](known-issues.md).
 

@@ -62,6 +62,12 @@ Set these as environment variables before starting. All are optional.
 | `TWILIO_WHATSAPP_FROM` | none | Like `whatsapp:+14155238886` |
 | `AT_USERNAME`, `AT_API_KEY`, `AT_SENDER_ID`, `AT_SANDBOX` | none | Africa's Talking (`AT_SANDBOX=1` for testing) |
 | `MESSAGE_WEBHOOK_URL`, `MESSAGE_WEBHOOK_TOKEN` | none | Any other service: the server posts each message there |
+| `BACKUP_EVERY_HOURS` | 0 | Also back up (and upload to Google Drive) this often, 1 to 24. 0 means nightly only |
+| `CLOUD_BACKUP_KEEP` | 60 | How many backups to keep in Google Drive |
+| `ARCHIVE_DIR` | `DATA_DIR/archive` | Where archived spreadsheets are kept on this computer. Point it at any folder, for example one on an external drive or a shared office folder |
+| `ARCHIVE_WHEN_FULL_MB` | 500 | The database counts as "full" when the data in it reaches this size |
+| `ARCHIVE_MIN_AGE_DAYS` | 90 | Only orders this many days past their delivery date are archived |
+| `ARCHIVE_ACTIVITY_DAYS` | 365 | Activity-log entries older than this are archived too |
 | `PUSH_CONTACT` | none | An email address for phone push (required by the phone makers' services). Push is off until it is set |
 
 Default data folder: Windows `%APPDATA%\CakePOS`, macOS `~/Library/Application Support/CakePOS`, Linux `~/.local/share/cakepos`. A wrong setting stops the server with a message saying exactly which one.
@@ -84,6 +90,56 @@ Alerts always appear in the app. To also reach people when the app is closed:
 3. **Each person's phone number** is saved by them (or the owner) in the app with `staff/set_contact`. Use international format, for example `+254712345678`.
 4. **Check it.** Each person can send themselves a test; the owner and IT can read the delivery log (what was sent, what failed and why).
 
+## Online copy: Google Drive
+
+The shop computer stays the main copy of the data (it keeps working with no internet, and every sale is saved on it first). **Google Drive adds an online copy**: whenever the wifi is up, the server uploads each database backup to your Drive, and when the database gets full it moves old orders into Google Sheets there. If the internet is down, uploads wait and are retried every 10 minutes.
+
+**What goes where** (all inside one Drive folder, "Cake POS" by default):
+
+| Folder | Contents |
+| --- | --- |
+| `Backups` | Complete copies of the database, newest `CLOUD_BACKUP_KEEP` kept. Restoring one rebuilds the whole shop (see Restoring) |
+| `Archive` | Google Sheets of old finished orders and old activity-log entries |
+
+The server can only see files it created itself (the `drive.file` permission), never the rest of your Drive.
+
+**One-time setup (about 15 minutes, needs a Google account and a phone):**
+
+1. Open the Google Cloud Console (`console.cloud.google.com`) signed in as the Google account that should own the shop's files. Create a project, for example "Cake POS".
+2. Enable the **Google Drive API** for that project.
+3. Set up the **OAuth consent screen**: user type External, an app name, your email. Add the scope `.../auth/drive.file`. **Then publish the app to "In production".** While it is left in "Testing", Google ends the sign-in after 7 days and uploads would start failing. The `drive.file` permission is the narrow one, so Google does not require a review for it.
+4. Create credentials: **OAuth client ID**, application type **TVs and Limited Input devices**. Copy the client ID and client secret.
+5. On the shop computer, in the project folder: `npm run admin -- google-auth`. Paste the client ID and secret when asked. It shows a short code and a web address. Open the address on your phone, enter the code, sign in and press Allow. The tool then creates the folders and saves the sign-in in the data folder (`google-drive.json`, readable only by the server's user).
+6. Restart the server. The Panel map now lists Google Drive as connected.
+
+Check it any time with `npm run admin -- drive-check`. If the Google password is changed, or access is removed in the Google account's security page, run `google-auth` again. (These steps follow Google's documented flow; the screens change from time to time, and I could not try them against a real Google account, so do a backup and look for it in Drive before relying on it.)
+
+> **Drive holds customer names, phone numbers and sales.** Use two-step sign-in on that Google account.
+
+**Frequent copies:** set `BACKUP_EVERY_HOURS=3` to have the online copy never more than about 3 hours behind (a backup takes a second or two for a normal shop). The database file is uploaded whole each time, so a very large database uses more data; archiving keeps it small.
+
+## Archiving old orders
+
+When the data in the database reaches `ARCHIVE_WHEN_FULL_MB`, the server (checking hourly) moves **finished orders** out into a spreadsheet:
+
+- An order is finished when every item is handed over (or the order is cancelled), the money is settled (no balance, nothing waiting to be refunded), no price request or usage report is waiting, and its delivery date is more than `ARCHIVE_MIN_AGE_DAYS` ago. Anything else stays.
+- Each spreadsheet (up to 1000 orders) has sheets for Summary, Orders, Items, Payments, Refunds, Quotes and Ingredient use. It is saved as `.xlsx` in `ARCHIVE_DIR` and, when Drive is connected, as a Google Sheet in `Cake POS / Archive`. Reference photos are saved on the shop computer in a folder next to the spreadsheet (they are not uploaded to Drive).
+- **Safety order:** the file is written and read back, then uploaded, then a fresh backup is taken, and only then are the orders removed. If any step fails (Drive unreachable, disk full) **nothing is removed** and the server tries again at the next hourly check. The Panel map shows the last problem.
+- The activity log is archived the same way (entries older than `ARCHIVE_ACTIVITY_DAYS`) once orders alone did not make enough room.
+- Order numbers keep counting up; archived orders are never renumbered or reused.
+- The database file does not get smaller on disk after archiving (SQLite reuses the freed space). That is fine; "full" is measured by the data inside, not the file size.
+
+By hand (stop the server first):
+
+```bash
+npm run admin -- archive-status                 # size, what has been archived, Drive connected or not
+npm run admin -- archive --dry-run              # what it would move; changes nothing
+npm run admin -- archive --now                  # move everything old and finished, even if not "full"
+npm run admin -- archive --now --older-than-days 30
+```
+
+Archived orders are gone from the app's screens. To look one up, open the spreadsheet.
+
 ## Backups
 
 Every night at `BACKUP_TIME` the server:
@@ -91,7 +147,7 @@ Every night at `BACKUP_TIME` the server:
 1. Takes a snapshot of the database at a moment when nothing is half-saved.
 2. **Checks the snapshot** (it must open and pass an integrity check). A snapshot that fails is thrown away and reported.
 3. Keeps it in `BACKUP_DIR` as one file, `cakepos-YYYYMMDD-HHMMSS.sqlite` (the time is UTC).
-4. If `CLOUD_BACKUP_DIR` is set, copies it there. If that fails (no internet, folder missing), the local copy is kept and the copy is **retried every 10 minutes** until it works.
+4. If `CLOUD_BACKUP_DIR` is set, copies it there, and if Google Drive is connected, uploads it there too. If that fails (no internet, folder missing), the local copy is kept and the copy is **retried every 10 minutes** until it works.
 
 If a night's backup fails, it retries after 30 minutes. IT sees "last backup failed" on the Panel map with the reason.
 

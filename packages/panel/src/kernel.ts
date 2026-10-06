@@ -103,7 +103,7 @@ export interface Panel {
   /** Read a stored picture. */
   readPhoto(photoId: string, token?: string): Promise<PhotoReadResult>;
   /** Housekeeping: drop expired sessions, old request ids and unused pictures. Safe to call any time. */
-  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number; photosPruned: number; alertsPruned: number; notificationsPruned: number }>;
+  maintain(): Promise<{ sessionsPruned: number; requestsPruned: number; photosPruned: number; alertsPruned: number; notificationsPruned: number; syncPruned: number }>;
   /**
    * Sends the notifications that are due: push to phones, SMS and WhatsApp through the provider. Failed ones are tried again
    * later with growing waits. The network is never touched while shop work is waiting, so a slow provider cannot slow a sale.
@@ -173,6 +173,7 @@ const HOUR = 3_600_000;
 /** Changes in these circuits can start or clear an alert, so alerts are re-checked straight after them. */
 const REACTING_CIRCUITS = new Set<CircuitName>(['Orders', 'Quotes', 'Inventory', 'Usage', 'Stock', 'Recipes']);
 const TOUCH_EVERY_MS = 60_000;
+const SYNC_ITEM_TTL_MS = 7 * 24 * 3_600_000;
 
 export function createPanel(options: PanelOptions = {}): Panel {
   const store = options.store ?? createMemoryStore();
@@ -608,7 +609,14 @@ export function createPanel(options: PanelOptions = {}): Panel {
               notificationsPruned++;
             }
           }
-          return { sessionsPruned, requestsPruned, photosPruned, alertsPruned, notificationsPruned };
+          // Nothing reads `sync` rows (the online copy works from backups), so they are only kept for a week, for diagnosis.
+          let syncPruned = 0;
+          for (const o of await store.find<OutboxItem>('outbox', { where: { kind: 'sync' }, orderBy: { field: 'createdAt' }, limit: 5000 })) {
+            if (nowMs - Date.parse(o.createdAt) <= SYNC_ITEM_TTL_MS) break;
+            await store.delete('outbox', o.id);
+            syncPruned++;
+          }
+          return { sessionsPruned, requestsPruned, photosPruned, alertsPruned, notificationsPruned, syncPruned };
         }),
       ),
   };

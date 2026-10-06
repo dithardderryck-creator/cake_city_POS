@@ -30,8 +30,8 @@ Related gap in the hooks: `useSession` reports `signedOut` when the server canno
 ### O-4. "Offline, saving here" chip uses `navigator.onLine`
 `apps/web/src/App.tsx` shows the chip from `useOnline()` (`navigator.onLine`) in `lib/panel.tsx`. Under D-54 the app is offline when it cannot reach the shop server, which `navigator.onLine` does not tell it (wifi can be up with the server down). In server mode the chip should follow the client's connection state; the "saving here" wording is only true in standalone mode.
 
-### O-5. The `sync` outbox rows grow forever
-Every successful instruction still writes a `sync` row to the `outbox` table (`enqueueSync` in `packages/panel/src/kernel.ts`). Nothing reads or prunes these rows. The *notification* rows (messages to phones, SMS, WhatsApp) are consumed, retried and pruned by `maintain()`, so the table is no longer a dead end, but `sync` rows still add up, one per action. They are meant to feed the online copy of the data (not built yet); until then, or if that is dropped, stop writing them.
+### O-5. (closed) The `sync` outbox rows
+Every instruction still writes a small `sync` row, but nothing reads them (the online copy works from backups, D-67), so housekeeping now deletes them after 7 days. The table no longer grows without limit. The `sync/flush` instruction and `SyncTerminal` remain in the code unused; removing them is a tidy-up for later.
 
 ### O-6. No CI and no lint
 The only checks are `npm test`, `npm run typecheck` and the generated-docs staleness test, all run by hand. Suggested:
@@ -70,6 +70,21 @@ Business WhatsApp (through Twilio) only allows free-form messages within 24 hour
 
 ### O-17. Forecast confidence starts low
 The forecast learns from confirmed usage. In the first days it has no usual rate and no calibration, so it uses the recipe suggestions alone and labels itself `low` confidence. Alerts from it are most useful after a week or two of confirmed usage.
+
+### O-18. The Google Drive connection is untested against Google
+The Drive code (sign-in with a code on a phone, folder creation, uploads, conversion to Google Sheets) was written from Google's documented interface and tested against a stand-in server that behaves the same way. It has not been run against a real Google account. Do a first backup and a first `archive --dry-run` and `archive --now --older-than-days 0` on a test copy and look in Drive before relying on it. In particular check that the uploaded `.xlsx` becomes a Google Sheet, and that the app stays "In production" in the Google console (otherwise Google ends the sign-in after 7 days).
+
+### O-19. The shop computer is still the main copy
+The data is not "hosted" online: the shop computer is the live database and Google Drive holds copies (backups and archives). If the shop computer is lost, the newest copy in Drive (at most `BACKUP_EVERY_HOURS` old, or a day with the default) is what you restore from; sales after it are lost. A live database that every device talks to over the internet (so that the shop computer could be replaced without restoring) is a different design and is not built; see blueprint D-67.
+
+### O-20. Archived orders cannot be brought back into the app
+Archiving is one-way. The spreadsheet is a readable record, not a restore point. To get an order back you would restore a backup taken before it was archived (the server takes one right before each archive run). Refunds, receipts and reports on an archived order are no longer possible from the app.
+
+### O-21. What archiving leaves in place
+Stock movements, ingredient movements, and the recipes are not archived (they are small and the forecast reads them). Staff accounts, products and settings are never archived. Archived cakes no longer count toward the forecast's learning about how the chefs' real use compares with the recipe suggestions, which only matters when orders from the last several weeks have all been archived.
+
+### O-22. Archiving needs room to work
+Writing the spreadsheet, the extra backup and the Drive upload all happen before anything is removed, so a disk that is already completely full cannot be helped by archiving: the run fails safely and says so. Keep some free space (at least the size of the database).
 
 ## Corrected claims
 

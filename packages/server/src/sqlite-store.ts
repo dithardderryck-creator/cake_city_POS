@@ -15,13 +15,14 @@ export const INDEXES: Partial<Record<CollectionName, string[]>> = {
   combinations: ['productId'],
   optionValues: ['groupId'],
   audit: ['at'],
-  outbox: ['status', 'createdAt'],
+  outbox: ['status', 'createdAt', 'kind'],
   sessions: ['userId'],
   requests: ['at'],
   quotes: ['status', 'orderId'],
-  photos: ['attachedTo'],
+  photos: ['attachedTo', 'orderId'],
   ingredientMovements: ['ingredientId', 'at'],
-  usageReports: ['status', 'lineId'],
+  usageReports: ['status', 'lineId', 'orderId'],
+  usageSuggestions: ['orderId'],
   alerts: ['status', 'dedupeKey'],
 };
 
@@ -76,6 +77,8 @@ export interface SqliteStore extends Store {
   backupTo(dest: string): Promise<void>;
   integrityCheck(): string;
   sizeBytes(): number;
+  /** Bytes of real data: pages in use, not counting space freed by deleted rows (the file itself does not shrink). */
+  usedBytes(): number;
   close(): void;
 }
 
@@ -164,6 +167,10 @@ export function openSqliteStore(file: string): SqliteStore {
     },
     integrityCheck: () => (db.pragma('integrity_check', { simple: true }) as string) ?? 'unknown',
     sizeBytes: () => (file === ':memory:' ? 0 : fs.statSync(file).size),
+    usedBytes: () => {
+      const n = (pragma: string) => Number(db.pragma(pragma, { simple: true }));
+      return (n('page_count') - n('freelist_count')) * n('page_size');
+    },
     close() {
       try {
         db.pragma('wal_checkpoint(TRUNCATE)');
