@@ -1,5 +1,5 @@
 import type { UnitCode } from './units';
-import type { AlertKind, MessageLevel } from './domain';
+import type { AlertKind, MessageLevel, REQUEST_CATEGORIES } from './domain';
 import type { CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
@@ -122,6 +122,8 @@ export interface IntentMap {
     quoteWaitHours?: number;
     dueSoonDays?: number;
     countDifference?: number;
+    urgentRequestMinutes?: number;
+    requestWaitHours?: number;
     critical?: Partial<Record<AlertKind, boolean>>;
   };
 
@@ -133,17 +135,46 @@ export interface IntentMap {
   /** Send yourself a test on every channel you have set up. Once a minute at most. */
   'notify/send_test': Record<string, never>;
 
+  /**
+   * Message a role (anyone with it may act) or one person. Give `choices` (2 to 4) to ask a question instead:
+   * the answer closes it. `urgent` puts it at the top and escalates to the owner sooner if nobody takes it.
+   */
+  'requests/send': {
+    toRole?: Role;
+    toUserId?: Id;
+    category: (typeof REQUEST_CATEGORIES)[number];
+    tag?: string;
+    title: string;
+    body?: string;
+    urgent?: boolean;
+    link?: string;
+    orderId?: Id;
+    choices?: string[];
+  };
+  /** Records that you have read a request addressed to you. Safe to send more than once. */
+  'requests/mark_seen': { requestId: Id };
+  /** "I'll take it." Shows who owns the request. */
+  'requests/acknowledge': { requestId: Id };
+  'requests/done': { requestId: Id; note?: string };
+  /** Answer a question (a request with choices). Closes it. */
+  'requests/decide': { requestId: Id; choice: string; note?: string };
+  /** The sender agrees it is fixed. Closes it. */
+  'requests/confirm': { requestId: Id };
+  /** The sender says it is not fixed. Back to Acknowledged. */
+  'requests/reopen': { requestId: Id; reason?: string };
+  /** The sender takes it back before anyone has taken it. */
+  'requests/withdraw': { requestId: Id };
+
   'sync/flush': Record<string, never>;
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Sync';
+export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [
   'Delivery',
   'Production',
-  'Messages',
   'Reports',
   'Comms',
 ] as const;

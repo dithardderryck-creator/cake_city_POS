@@ -30,12 +30,15 @@ import type {
   Session,
   PushSubscriptionRecord,
   Staff,
+  StaffRequest,
 } from './domain';
+import { REQUEST_CATEGORIES } from './domain';
 import { daysBetween, todayLocal } from './circuits/dates';
 import { loadSettings } from './circuits/settings';
 import { DomainError } from './intents';
 import { BASE_UNIT_FOR, formatQty, unitTable } from './units';
 import { ALERT_KINDS, ALERT_KIND_LABEL, canSeeAlert, loadAlertSettings } from './circuits/alerts';
+import { ROLE_LABEL, canSeeRequest, isFinal, isTarget, needsPerson, requestActions, type RequestAction } from './circuits/requests';
 import { buildForecasts, type ForecastRow } from './forecast';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
@@ -239,12 +242,57 @@ export type ScreenId =
   | 'staff'
   | 'settings'
   | 'audit'
+  | 'requests'
   | 'panel_map';
 export interface NavItem {
   id: ScreenId;
   label: string;
   /** A number to show on the menu item, such as alerts nobody has seen yet. Absent when there is nothing to show. */
   badge?: number;
+}
+
+export interface RequestRow {
+  requestId: string;
+  title: string;
+  body?: string;
+  category: string;
+  urgent: boolean;
+  link?: string;
+  orderId?: string;
+  from: { userId: string; name: string; role: Role };
+  to: { label: string; role: Role; userId?: string };
+  status: StaffRequest['status'];
+  statusLabel: string;
+  /** The step labels for the progress bar, and which one this request is on. */
+  steps: string[];
+  step: number;
+  seenBy: string[];
+  takenByName: string | null;
+  choices?: string[];
+  outcome?: string;
+  createdAt: string;
+  updatedAt: string;
+  /** When an unanswered request will be sent up to the owner. Absent once someone has taken it, or if it is for the owner. */
+  escalatesAt?: string;
+  escalated: boolean;
+  /** The person asking is you. */
+  mine: boolean;
+  /** It is addressed to you (directly or through your role). */
+  forMe: boolean;
+  /** Waiting for you to do something. */
+  needsYou: boolean;
+  actions: RequestAction[];
+  final: boolean;
+  timeline: { at: string; text: string }[];
+}
+export interface RequestInboxData {
+  /** Open ones first (urgent, then newest), then the most recently closed. */
+  rows: RequestRow[];
+  counts: { needsYou: number; open: number };
+  /** Who can be asked, for the "new request" form. */
+  targets: { roles: { role: Role; label: string }[]; people: { userId: string; name: string; role: Role }[] };
+  categories: string[];
+  can: { send: boolean };
 }
 
 export interface QuoteRow {
@@ -462,6 +510,8 @@ export interface AlertSettingsData {
   quoteWaitHours: number;
   dueSoonDays: number;
   countDifference: number;
+  urgentRequestMinutes: number;
+  requestWaitHours: number;
   kinds: { kind: AlertKind; label: string; critical: boolean }[];
   can: { edit: boolean };
 }
@@ -510,6 +560,7 @@ export interface FeedMap {
   usage_inbox: { params: Record<string, never>; data: UsageInboxData };
   unit_list: { params: Record<string, never>; data: UnitListData };
   alert_inbox: { params: Record<string, never>; data: AlertInboxData };
+  request_inbox: { params: Record<string, never>; data: RequestInboxData };
   notification_setup: { params: Record<string, never>; data: NotificationSetupData };
   notification_log: { params: Record<string, never>; data: NotificationLogRow[] };
   alert_settings: { params: Record<string, never>; data: AlertSettingsData };
@@ -683,6 +734,7 @@ const NAV: Record<Role, NavItem[]> = {
     { id: 'quotes', label: 'Quotes' },
     { id: 'bake_queue', label: 'Cakes to bake' },
     { id: 'alerts', label: 'Alerts' },
+    { id: 'requests', label: 'Requests' },
     { id: 'usage_inbox', label: 'Usage to confirm' },
     { id: 'ingredients', label: 'Ingredients' },
     { id: 'forecast', label: 'Stock forecast' },
@@ -697,11 +749,13 @@ const NAV: Record<Role, NavItem[]> = {
     { id: 'orders', label: 'Orders' },
     { id: 'quotes', label: 'Quotes' },
     { id: 'alerts', label: 'Alerts' },
+    { id: 'requests', label: 'Requests' },
     { id: 'catalogue', label: 'Catalogue' },
   ],
   baker: [
     { id: 'bake_queue', label: 'Cakes to bake' },
     { id: 'alerts', label: 'Alerts' },
+    { id: 'requests', label: 'Requests' },
     { id: 'recipes', label: 'Recipes' },
     { id: 'ingredients', label: 'Ingredients' },
     { id: 'forecast', label: 'Stock forecast' },
@@ -710,11 +764,15 @@ const NAV: Record<Role, NavItem[]> = {
   inventory: [
     { id: 'usage_inbox', label: 'Usage to confirm' },
     { id: 'alerts', label: 'Alerts' },
+    { id: 'requests', label: 'Requests' },
     { id: 'ingredients', label: 'Ingredients' },
     { id: 'forecast', label: 'Stock forecast' },
     { id: 'catalogue', label: 'Catalogue' },
   ],
-  it: [{ id: 'panel_map', label: 'Panel map' }],
+  it: [
+    { id: 'requests', label: 'Requests' },
+    { id: 'panel_map', label: 'Panel map' },
+  ],
 };
 
 export const feeds: FeedRegistry = {
@@ -727,12 +785,14 @@ export const feeds: FeedRegistry = {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ store, session, clock }) => {
       const items = NAV[session!.role];
-      if (!items.some((i) => i.id === 'alerts')) return items;
       const nowIso = clock.now().toISOString();
-      const unseen = (await store.find<Alert>('alerts', { where: { status: 'open' } })).filter(
-        (a) => canSeeAlert(a, session!.role) && !a.seen[session!.userId] && !((a.snoozed[session!.userId] ?? '') > nowIso),
-      ).length;
-      return items.map((i) => (i.id === 'alerts' && unseen > 0 ? { ...i, badge: unseen } : i));
+      const unseen = items.some((i) => i.id === 'alerts')
+        ? (await store.find<Alert>('alerts', { where: { status: 'open' } })).filter(
+            (a) => canSeeAlert(a, session!.role) && !a.seen[session!.userId] && !((a.snoozed[session!.userId] ?? '') > nowIso),
+          ).length
+        : 0;
+      const waiting = (await store.find<StaffRequest>('staffRequests', { where: { status: ['sent', 'seen', 'acknowledged', 'done'] } })).filter((r) => needsPerson(r, session!)).length;
+      return items.map((i) => (i.id === 'alerts' && unseen > 0 ? { ...i, badge: unseen } : i.id === 'requests' && waiting > 0 ? { ...i, badge: waiting } : i));
     },
   },
 
@@ -1251,6 +1311,69 @@ export const feeds: FeedRegistry = {
     },
   },
 
+  request_inbox: {
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
+    build: async ({ store, session, clock }) => {
+      const me = session!;
+      const settings = await loadAlertSettings(store);
+      const nowIso = clock.now().toISOString();
+      const all = (await store.list<StaffRequest>('staffRequests')).filter((r) => canSeeRequest(r, me));
+      const row = (r: StaffRequest): RequestRow => {
+        const question = !!r.choices;
+        const steps = question ? ['Sent', 'Seen', 'Answered'] : ['Sent', 'Seen', 'Acknowledged', 'Done', 'Confirmed'];
+        const index = { sent: 0, seen: 1, acknowledged: 2, done: 3, confirmed: question ? 2 : 4, withdrawn: 0 }[r.status];
+        const waitMs = (r.urgent ? settings.urgentRequestMinutes * 60_000 : 2 * settings.requestWaitHours * 3_600_000) + 0;
+        const unanswered = ['sent', 'seen'].includes(r.status) && r.audience !== 'owner';
+        const at = new Date(Date.parse(r.createdAt) + waitMs).toISOString();
+        const actions = requestActions(r, me);
+        return {
+          requestId: r.id,
+          title: r.title,
+          body: r.body,
+          category: r.category === 'Other' && r.tag ? r.tag : r.category,
+          urgent: r.urgent,
+          link: r.link,
+          orderId: r.orderId,
+          from: { userId: r.fromId, name: r.fromName, role: r.fromRole },
+          to: { label: r.toName ?? ROLE_LABEL[r.audience], role: r.audience, userId: r.toUserId },
+          status: r.status,
+          statusLabel: { sent: 'Sent', seen: 'Seen', acknowledged: 'Taken', done: 'Done, waiting for the sender', confirmed: question ? `Answered: ${r.outcome}` : 'Closed', withdrawn: 'Withdrawn' }[r.status],
+          steps,
+          step: index,
+          seenBy: Object.values(r.seenBy).map((s) => s.name),
+          takenByName: r.takenBy?.name ?? null,
+          choices: r.choices,
+          outcome: r.outcome,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+          escalatesAt: unanswered ? at : undefined,
+          escalated: unanswered && at <= nowIso,
+          mine: r.fromId === me.userId,
+          forMe: isTarget(r, me),
+          needsYou: needsPerson(r, me),
+          actions,
+          final: isFinal(r),
+          timeline: r.timeline,
+        };
+      };
+      const open = all.filter((r) => !isFinal(r)).map(row).sort((a, b) => Number(b.urgent) - Number(a.urgent) || b.createdAt.localeCompare(a.createdAt));
+      const closed = all
+        .filter(isFinal)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .slice(0, 40)
+        .map(row);
+      const staff = (await store.list<Staff>('staff')).filter((s) => s.active && s.id !== me.userId).sort((a, b) => a.name.localeCompare(b.name));
+      const roles = (Object.keys(ROLE_LABEL) as Role[]).filter((r) => r !== me.role && staff.some((s) => s.role === r));
+      return {
+        rows: [...open, ...closed],
+        counts: { needsYou: open.filter((r) => r.needsYou).length, open: open.length },
+        targets: { roles: roles.map((r) => ({ role: r, label: ROLE_LABEL[r] })), people: staff.map((s) => ({ userId: s.id, name: s.name, role: s.role })) },
+        categories: [...REQUEST_CATEGORIES],
+        can: { send: true },
+      };
+    },
+  },
+
   notification_setup: {
     roles: ['owner', 'cashier', 'baker', 'inventory'],
     build: async ({ store, session, terminals }) => {
@@ -1308,6 +1431,8 @@ export const feeds: FeedRegistry = {
         quoteWaitHours: s.quoteWaitHours,
         dueSoonDays: s.dueSoonDays,
         countDifference: s.countDifference,
+        urgentRequestMinutes: s.urgentRequestMinutes,
+        requestWaitHours: s.requestWaitHours,
         kinds: ALERT_KINDS.map((kind) => ({ kind, label: ALERT_KIND_LABEL[kind], critical: s.critical[kind] })),
         can: { edit: true },
       };

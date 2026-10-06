@@ -551,6 +551,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-66** | **The phone alarm lives in the client library**, not the screens: a sound and vibration for new alerts, a repeating siren for unseen critical ones, a system notification, and a service worker for push when the app is closed. Sound needs one tap to unlock; closed-app sound is the phone's own. Push needs HTTPS |
 | **D-67** | **Online copy = the shop computer stays primary, Google Drive holds copies.** The shop works with no internet and every sale is saved locally first. Whenever wifi is up the server uploads database backups (nightly, or every few hours) and archives to the shop's Google Drive, retrying until it works. A live cloud database that all devices use is not built (it would make every sale depend on the internet) |
 | **D-68** | **Archiving.** When the data in the database reaches a limit (default 500 MB), old finished orders (and old activity-log entries) move into spreadsheets: an .xlsx in a folder the owner chooses (`ARCHIVE_DIR`) and a Google Sheet in Drive. Safety order is in BR-38. Archived orders leave the app; the spreadsheet is the record |
+| **D-69** | **Staff requests follow the new screens' lifecycle:** Sent, Seen, Acknowledged, Done, Confirmed (the sender confirms; they can reopen). This replaces "Resolved only by the sender or owner" in 5.4. A request may carry answers to choose from (a question), and the answer closes it. The owner sees every request. Escalation uses the alert engine: urgent requests alert the people they are for at once and the owner (critical) after 15 minutes; ordinary ones after 4 hours, owner after 8. Both timings are owner settings |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -564,6 +565,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | 0.3 | 2 Oct 2026 | Phase 2a: shop server. Added D-45 to D-54 and Q-10 to Q-13. D-36 and A-12 superseded. Sections 9, 12 and 18 rewritten. Business rules unchanged |
 | 0.4 | 5 Oct 2026 | Metric base units (D-62), stock forecast (D-63), alerts (D-64), delivery to phones/SMS/WhatsApp (D-65), phone alarm (D-66); BR-35 to BR-37 |
 | 0.5 | 6 Oct 2026 | Online copy in Google Drive (D-67), archiving to spreadsheets (D-68), BR-38 |
+| 0.6 | 6 Oct 2026 | New UI from the four mockups (docs/ui-integration.md); staff requests circuit (D-69) |
 
 ---
 
@@ -601,7 +603,8 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Metric units and conversions | Built | Existing data converted once by migration 2 |
 | Delivery of alerts: phone push, SMS, WhatsApp, with retries and a log | Built | Tested against stand-in provider servers, not live accounts (O-15, O-16). Push needs HTTPS (O-13) |
 | Phone alarm (sound, vibration, repeat, notification, service worker) | Built (client library) | The UI only has to mount it. Not yet tried on a real phone |
-| Messages (requests, notes, announcements) | Not built | |
+| Messages: staff requests (send, seen, take, done, confirm, questions with answers, escalation) | Built | D-69. Announcements and order notes are not built yet |
+| Messages: announcements | Not built | |
 | Delivery record | Not built | |
 | Owner reports | Not built | |
 | Receipts (print, WhatsApp/SMS) | Not built | |

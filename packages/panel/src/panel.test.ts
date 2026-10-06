@@ -116,8 +116,8 @@ describe('breakers (BR-21, BR-22)', () => {
       if (!r.ok) throw new Error('nav failed');
       return r.data.map((n) => n.id);
     };
-    expect(await ids(it)).toEqual(['panel_map']);
-    expect(await ids(cashier)).toEqual(['sell', 'orders', 'quotes', 'alerts', 'catalogue']);
+    expect(await ids(it)).toEqual(['requests', 'panel_map']);
+    expect(await ids(cashier)).toEqual(['sell', 'orders', 'quotes', 'alerts', 'requests', 'catalogue']);
     expect(await ids(owner)).toContain('audit');
     const g = await panel.feed('catalogue_grid', {}, cashier);
     if (!g.ok) throw new Error('grid failed');

@@ -21,6 +21,7 @@ import { quoteIntents } from './circuits/quotes';
 import { recipeIntents } from './circuits/recipes';
 import { usageIntents } from './circuits/usage';
 import { NOTIFY_ITEM_TTL_MS, notifyIntents, planDue, recordResults } from './circuits/notify';
+import { requestIntents } from './circuits/requests';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
@@ -146,6 +147,7 @@ const registry = {
   ...recipeIntents,
   ...usageIntents,
   ...alertIntents,
+  ...requestIntents,
   ...notifyIntents,
   ...paymentIntents,
   ...syncIntents,
@@ -171,7 +173,7 @@ const defaultMoney = (n: number) => new Intl.NumberFormat('en', { minimumFractio
 const HOUR = 3_600_000;
 
 /** Changes in these circuits can start or clear an alert, so alerts are re-checked straight after them. */
-const REACTING_CIRCUITS = new Set<CircuitName>(['Orders', 'Quotes', 'Inventory', 'Usage', 'Stock', 'Recipes']);
+const REACTING_CIRCUITS = new Set<CircuitName>(['Orders', 'Quotes', 'Inventory', 'Usage', 'Stock', 'Recipes', 'Messages']);
 const TOUCH_EVERY_MS = 60_000;
 const SYNC_ITEM_TTL_MS = 7 * 24 * 3_600_000;
 

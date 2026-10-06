@@ -180,12 +180,24 @@ The panel watches stock, usage reports, quotes and deliveries and raises an **al
 | `order_not_started` | A custom cake is due within `dueSoonDays` (2) and baking has not started | Baker, owner |
 | `overdue_delivery` | An order's delivery date has passed and items are not handed over | Cashier, owner |
 | `count_difference` | A recent stock count was off by `countDifference` (3) or more | Owner |
+| `request_waiting` | A staff request nobody has taken: an urgent one alerts the people it is for at once and the owner after `urgentRequestMinutes` (15, critical); an ordinary one alerts them after `requestWaitHours` (4) and the owner after twice that | The people it is for, then owner |
 
 Out of the box, `stockout` and `count_difference` are critical; the owner can change that with `alerts/configure`.
 
 - **Feeds.** `alert_inbox` (everyone with a role; `open`, `snoozed`, `recent`, `unseen`, `critical`; updates live) and `alert_settings` (owner).
 - **Instructions.** `alerts/mark_seen` (stops the alarm on that phone and every other), `alerts/acknowledge` ("I'm on it": silences notifications for everyone, the alert stays open until the problem clears), `alerts/snooze` (hides it from your list for 1 to 72 hours), `alerts/configure` (owner: thresholds and which kinds are critical).
 - **Timing.** The server checks every minute, and the panel also re-checks straight after orders, quotes, inventory, usage, stock and recipe instructions.
+
+### Staff requests
+
+A message from one member of staff to a role (anyone with that role may act) or to one person. The owner sees every request. Everyone else sees what they sent and what is for them.
+
+**Lifecycle:** Sent, Seen, Acknowledged ("I'll take it", shows who owns it), Done, Confirmed (the sender agrees). The sender can *reopen* a request that was marked done, and *withdraw* one nobody has taken yet. A request sent with `choices` (2 to 4 answers) is a question: the answer closes it and the sender sees it (used for approvals such as "Approve restock" or "Approve refund").
+
+- **Feed.** `request_inbox` (every role including IT; updates live). Each row has everything a screen needs: `steps` and `step` for the progress bar, `seenBy`, `takenByName`, `needsYou`, `mine`, `forMe`, `escalatesAt` / `escalated`, `timeline`, and `actions`, the list of things this person may do right now (`acknowledge`, `done`, `decide`, `confirm`, `reopen`, `withdraw`). Show only those buttons. The feed also gives `targets` (who can be asked) and `categories` for the "new request" form, and `counts.needsYou` for a badge. The `navigation` feed's "Requests" item carries the same number as `badge`.
+- **Instructions.** `requests/send` (`toRole` or `toUserId`, `category`, `title`, optional `body`, `urgent`, `link`, `orderId`, `choices`), `requests/mark_seen` (send when the person opens a request addressed to them; safe to repeat; the sender and the owner looking in do not count), `requests/acknowledge`, `requests/done`, `requests/decide` (`choice`), `requests/confirm`, `requests/reopen`, `requests/withdraw`.
+- **Escalation.** Handled by the alert engine (`request_waiting`, above). An urgent request nobody has taken is escalated to the owner as a critical alert after `urgentRequestMinutes`. The feed's `escalatesAt` says when, so a screen can show "Escalates to you at 14:30" without any logic.
+- **Limits.** 50 open requests per person. Requests to the IT role show in the IT inbox but do not raise phone alerts.
 
 ### Stock forecast
 

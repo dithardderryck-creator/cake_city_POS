@@ -1,11 +1,11 @@
-import type { Alert, AlertKind, AlertSettings, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, UsageReport, Combination } from '../domain';
+import type { Alert, AlertKind, AlertSettings, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
 import type { Registry } from '../intents';
 import { DomainError } from '../intents';
 import type { Clock, Ids, Store } from '../ports';
 import { buildForecasts } from '../forecast';
 import { daysBetween, todayLocal } from './dates';
 
-export const ALERT_KINDS: AlertKind[] = ['low_stock', 'stockout', 'usage_waiting', 'order_not_started', 'quote_waiting', 'overdue_delivery', 'count_difference'];
+export const ALERT_KINDS: AlertKind[] = ['low_stock', 'stockout', 'usage_waiting', 'order_not_started', 'quote_waiting', 'overdue_delivery', 'count_difference', 'request_waiting'];
 
 export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   low_stock: 'Low stock',
@@ -15,6 +15,7 @@ export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   quote_waiting: 'Price needed',
   overdue_delivery: 'Overdue order',
   count_difference: 'Count difference',
+  request_waiting: 'Request waiting',
 };
 
 /** Defaults proposed in blueprint section 8 (A-11). The owner can change every one. */
@@ -26,7 +27,9 @@ export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
   quoteWaitHours: 2,
   dueSoonDays: 2,
   countDifference: 3,
-  critical: { low_stock: false, stockout: true, usage_waiting: false, order_not_started: false, quote_waiting: false, overdue_delivery: false, count_difference: true },
+  urgentRequestMinutes: 15,
+  requestWaitHours: 4,
+  critical: { low_stock: false, stockout: true, usage_waiting: false, order_not_started: false, quote_waiting: false, overdue_delivery: false, count_difference: true, request_waiting: false },
 };
 
 export async function loadAlertSettings(store: Pick<Store, 'get'>): Promise<AlertSettings> {
@@ -48,6 +51,8 @@ export interface DesiredAlert {
   to: Role[];
   screen: string;
   targetId?: string;
+  /** Force this alert to be critical whatever the owner's settings say (an urgent request nobody took). */
+  critical?: boolean;
 }
 
 const ACTIVE_LINE: OrderLine['status'][] = ['new', 'in_production', 'decorating', 'ready', 'out_for_delivery'];
@@ -164,6 +169,28 @@ export async function desiredAlerts(store: Store, now: Date, s: AlertSettings): 
       });
     }
   }
+
+  // Staff requests nobody has taken. Urgent ones alert the people they are for at once and the owner after a short wait.
+  const waiting = await store.find<StaffRequest>('staffRequests', { where: { status: ['sent', 'seen'] } });
+  for (const r of waiting) {
+    const mins = Math.floor((nowMs - Date.parse(r.createdAt)) / 60_000);
+    const ownerAfter = r.urgent ? s.urgentRequestMinutes : 2 * s.requestWaitHours * 60;
+    const targetAfter = r.urgent ? 0 : s.requestWaitHours * 60;
+    const age = mins < 60 ? plural(mins, 'minute', 'minutes') : plural(Math.floor(mins / 60), 'hour', 'hours');
+    const base = { kind: 'request_waiting' as const, screen: 'requests', targetId: r.id };
+    const body = `${r.fromName} asked ${age} ago${r.link ? ` (${r.link})` : ''}. Nobody has taken it yet.`;
+    if (r.audience !== 'owner' && r.audience !== 'it' && mins >= targetAfter)
+      out.push({ ...base, dedupeKey: `request_waiting:${r.id}`, title: `${r.urgent ? 'Urgent: ' : ''}${r.title}`, body, to: [r.audience] });
+    if (r.audience === 'owner' ? mins >= targetAfter : mins >= ownerAfter)
+      out.push({
+        ...base,
+        dedupeKey: `request_waiting_owner:${r.id}`,
+        title: r.audience === 'owner' ? `${r.urgent ? 'Urgent: ' : ''}${r.title}` : `Nobody has taken: ${r.title}`,
+        body,
+        to: ['owner'],
+        critical: r.urgent ? true : undefined,
+      });
+  }
   return out;
 }
 
@@ -199,7 +226,7 @@ export async function reconcileAlerts(env: AlertEnv): Promise<ReconcileResult> {
 
   for (const d of desired) {
     wanted.add(d.dedupeKey);
-    const critical = settings.critical[d.kind];
+    const critical = !!d.critical || settings.critical[d.kind];
     const to = [...new Set<Role>(critical ? [...d.to, 'owner'] : d.to)];
     const severity = critical ? 'critical' : 'warning';
     const existing = open.find((a) => a.dedupeKey === d.dedupeKey);
@@ -319,6 +346,8 @@ export const alertIntents = {
       whole(p.quoteWaitHours, 'Hours a price request may wait', 1, 72);
       whole(p.dueSoonDays, 'Days before a cake is due', 0, 14);
       whole(p.countDifference, 'Count difference', 1, 1000);
+      whole(p.urgentRequestMinutes, 'Minutes before an urgent request is escalated', 1, 240);
+      whole(p.requestWaitHours, 'Hours a request may wait', 1, 72);
       if (Object.values(p).every((v) => v === undefined)) errors.push('Choose a setting to change.');
       for (const k of Object.keys(p.critical ?? {})) if (!ALERT_KINDS.includes(k as AlertKind)) errors.push(`"${k}" is not an alert type.`);
       return errors;
@@ -333,6 +362,8 @@ export const alertIntents = {
         quoteWaitHours: p.quoteWaitHours ?? cur.quoteWaitHours,
         dueSoonDays: p.dueSoonDays ?? cur.dueSoonDays,
         countDifference: p.countDifference ?? cur.countDifference,
+        urgentRequestMinutes: p.urgentRequestMinutes ?? cur.urgentRequestMinutes,
+        requestWaitHours: p.requestWaitHours ?? cur.requestWaitHours,
         critical: { ...cur.critical, ...(p.critical ?? {}) },
       };
       await ctx.store.put('settings', next);

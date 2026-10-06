@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { IntentMap, IntentName } from './intents';
 import type { FeedMap, FeedName } from './feeds';
 import { UNIT_CODES } from './units';
+import { REQUEST_CATEGORIES } from './domain';
 
 /**
  * Runtime shape of every instruction. TypeScript only checks code we wrote; this checks what
@@ -155,6 +156,8 @@ export const schemas = {
     quoteWaitHours: z.number().int().min(1).max(72).optional(),
     dueSoonDays: z.number().int().min(0).max(14).optional(),
     countDifference: z.number().int().min(1).max(1000).optional(),
+    urgentRequestMinutes: z.number().int().min(1).max(240).optional(),
+    requestWaitHours: z.number().int().min(1).max(72).optional(),
     critical: z
       .strictObject({
         low_stock: z.boolean().optional(),
@@ -164,9 +167,30 @@ export const schemas = {
         quote_waiting: z.boolean().optional(),
         overdue_delivery: z.boolean().optional(),
         count_difference: z.boolean().optional(),
+        request_waiting: z.boolean().optional(),
       })
       .optional(),
   }),
+
+  'requests/send': z.strictObject({
+    toRole: role.optional(),
+    toUserId: id.optional(),
+    category: z.enum(REQUEST_CATEGORIES),
+    tag: z.string().max(24).optional(),
+    title: z.string().max(80),
+    body: z.string().max(500).optional(),
+    urgent: z.boolean().optional(),
+    link: z.string().max(120).optional(),
+    orderId: id.optional(),
+    choices: z.array(z.string().max(30)).min(2).max(4).optional(),
+  }),
+  'requests/mark_seen': z.strictObject({ requestId: id }),
+  'requests/acknowledge': z.strictObject({ requestId: id }),
+  'requests/done': z.strictObject({ requestId: id, note: z.string().max(300).optional() }),
+  'requests/decide': z.strictObject({ requestId: id, choice: z.string().min(1).max(30), note: z.string().max(300).optional() }),
+  'requests/confirm': z.strictObject({ requestId: id }),
+  'requests/reopen': z.strictObject({ requestId: id, reason: z.string().max(300).optional() }),
+  'requests/withdraw': z.strictObject({ requestId: id }),
 
   'staff/set_contact': z.strictObject({
     userId: id,
@@ -208,6 +232,7 @@ export const feedSchemas = {
   usage_inbox: empty,
   unit_list: empty,
   alert_inbox: empty,
+  request_inbox: empty,
   notification_setup: empty,
   notification_log: empty,
   alert_settings: empty,

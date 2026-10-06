@@ -486,7 +486,88 @@ Allowed: **owner**
 | `quoteWaitHours` | integer | no | min 1, max 72 |
 | `dueSoonDays` | integer | no | min 0, max 14 |
 | `countDifference` | integer | no | min 1, max 1000 |
+| `urgentRequestMinutes` | integer | no | min 1, max 240 |
+| `requestWaitHours` | integer | no | min 1, max 72 |
 | `critical` | object | no |  |
+
+### Messages
+
+#### `requests/send`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `toRole` | "owner" \| "cashier" \| "baker" \| "inventory" \| "it" | no |  |
+| `toUserId` | string | no | min length 1, max length 64 |
+| `category` | "Maintenance" \| "System error" \| "Stock and supplies" \| "Order issue" \| "Money" \| "Approval" \| "Staffing" \| "Safety and hygiene" \| "Other" | yes |  |
+| `tag` | string | no | max length 24 |
+| `title` | string | yes | max length 80 |
+| `body` | string | no | max length 500 |
+| `urgent` | boolean | no |  |
+| `link` | string | no | max length 120 |
+| `orderId` | string | no | min length 1, max length 64 |
+| `choices` | string[] | no | max 4 items |
+
+#### `requests/mark_seen`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `requestId` | string | yes | min length 1, max length 64 |
+
+#### `requests/acknowledge`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `requestId` | string | yes | min length 1, max length 64 |
+
+#### `requests/done`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `requestId` | string | yes | min length 1, max length 64 |
+| `note` | string | no | max length 300 |
+
+#### `requests/decide`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `requestId` | string | yes | min length 1, max length 64 |
+| `choice` | string | yes | min length 1, max length 30 |
+| `note` | string | no | max length 300 |
+
+#### `requests/confirm`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `requestId` | string | yes | min length 1, max length 64 |
+
+#### `requests/reopen`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `requestId` | string | yes | min length 1, max length 64 |
+| `reason` | string | no | max length 300 |
+
+#### `requests/withdraw`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `requestId` | string | yes | min length 1, max length 64 |
 
 ### Notify
 
@@ -653,6 +734,12 @@ Allowed: **owner, baker**
 #### `alert_inbox`
 
 Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `request_inbox`
+
+Allowed: **owner, cashier, baker, inventory, it**
 
 _No fields. Send an empty object `{}`._
 

@@ -356,7 +356,7 @@ export interface UsageReport {
 
 /* ---------- Alerts (BR-23, BR-24) ---------- */
 
-export type AlertKind = 'low_stock' | 'stockout' | 'usage_waiting' | 'order_not_started' | 'quote_waiting' | 'overdue_delivery' | 'count_difference';
+export type AlertKind = 'low_stock' | 'stockout' | 'usage_waiting' | 'order_not_started' | 'quote_waiting' | 'overdue_delivery' | 'count_difference' | 'request_waiting';
 export type AlertSeverity = 'warning' | 'critical';
 
 /**
@@ -402,8 +402,50 @@ export interface AlertSettings {
   dueSoonDays: number;
   /** A count differing by this many items or more at hand-over. */
   countDifference: number;
+  /** An urgent staff request nobody has taken after this many minutes is escalated to the owner. */
+  urgentRequestMinutes: number;
+  /** An ordinary staff request nobody has taken after this many hours alerts the people it is for; twice as long also alerts the owner. */
+  requestWaitHours: number;
   /** Critical alerts also go to the owner by SMS/WhatsApp. */
   critical: Record<AlertKind, boolean>;
+}
+
+export type RequestStatus = 'sent' | 'seen' | 'acknowledged' | 'done' | 'confirmed' | 'withdrawn';
+export const REQUEST_CATEGORIES = ['Maintenance', 'System error', 'Stock and supplies', 'Order issue', 'Money', 'Approval', 'Staffing', 'Safety and hygiene', 'Other'] as const;
+
+/**
+ * A message from one member of staff to a role or a person, with a lifecycle: Sent, Seen, Acknowledged (someone takes it),
+ * Done (they say it is dealt with), Confirmed (the sender agrees). A request with `choices` is a question: the answer closes it.
+ */
+export interface StaffRequest {
+  id: Id;
+  category: (typeof REQUEST_CATEGORIES)[number];
+  /** For category "Other": a short word the sender chose. */
+  tag?: string;
+  urgent: boolean;
+  title: string;
+  body?: string;
+  /** Plain words about what this is about, for example "Order A-0076". */
+  link?: string;
+  orderId?: Id;
+  fromId: Id;
+  fromName: string;
+  fromRole: Role;
+  /** Exactly one of these is set. A role means anyone with that role may act. */
+  toRole?: Role;
+  toUserId?: Id;
+  toName?: string;
+  /** The role the request is for (for a person, their role). Used for alerts. */
+  audience: Role;
+  /** Answers the person it is for may choose from. Choosing one closes the request. */
+  choices?: string[];
+  outcome?: string;
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  seenBy: Record<Id, { name: string; at: string }>;
+  takenBy?: { userId: Id; name: string; at: string };
+  timeline: { at: string; text: string }[];
 }
 
 /** Shop-wide switches the owner controls. One record, id "shop". */

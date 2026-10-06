@@ -403,8 +403,8 @@ describe('managing ingredients', () => {
       const r = await panel.feed('navigation', {}, sid[role]);
       return r.ok ? r.data.map((n) => n.id) : [];
     };
-    expect(await nav('baker')).toEqual(['bake_queue', 'alerts', 'recipes', 'ingredients', 'forecast', 'catalogue']);
-    expect(await nav('inventory')).toEqual(['usage_inbox', 'alerts', 'ingredients', 'forecast', 'catalogue']);
+    expect(await nav('baker')).toEqual(['bake_queue', 'alerts', 'requests', 'recipes', 'ingredients', 'forecast', 'catalogue']);
+    expect(await nav('inventory')).toEqual(['usage_inbox', 'alerts', 'requests', 'ingredients', 'forecast', 'catalogue']);
     expect(await nav('owner')).toEqual(expect.arrayContaining(['usage_inbox', 'ingredients', 'recipes']));
   });
 });
