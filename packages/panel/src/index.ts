@@ -11,6 +11,7 @@ export { ALERT_KINDS, ALERT_KIND_LABEL, DEFAULT_ALERT_SETTINGS } from './circuit
 export { MAX_PHOTO_BYTES, sniffImage } from './circuits/photos';
 export { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 export type * from './feeds';
+export type { AnnouncementRow, AnnouncementsData } from './circuits/announcements';
 export type { LedgerRow, PaymentsLedgerData, ReceiptData } from './circuits/money-feeds';
 export { schemas, feedSchemas } from './schemas';
 export {

@@ -22,6 +22,7 @@ import { recipeIntents } from './circuits/recipes';
 import { usageIntents } from './circuits/usage';
 import { NOTIFY_ITEM_TTL_MS, notifyIntents, planDue, recordResults } from './circuits/notify';
 import { requestIntents } from './circuits/requests';
+import { announcementIntents } from './circuits/announcements';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
@@ -148,6 +149,7 @@ const registry = {
   ...usageIntents,
   ...alertIntents,
   ...requestIntents,
+  ...announcementIntents,
   ...notifyIntents,
   ...paymentIntents,
   ...syncIntents,

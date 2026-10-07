@@ -199,6 +199,14 @@ A message from one member of staff to a role (anyone with that role may act) or 
 - **Escalation.** Handled by the alert engine (`request_waiting`, above). An urgent request nobody has taken is escalated to the owner as a critical alert after `urgentRequestMinutes`. The feed's `escalatesAt` says when, so a screen can show "Escalates to you at 14:30" without any logic.
 - **Limits.** 50 open requests per person. Requests to the IT role show in the IT inbox but do not raise phone alerts.
 
+### Announcements
+
+A message from the owner to all staff. Not a conversation: staff can read it and, when the owner asked, acknowledge it.
+
+- **Feed.** `announcements` (every role; updates live). Newest first. Each row has `text`, `requiresAck`, `postedByName`, `createdAt`, and for the person looking `seenByMe`, `ackedByMe` and `needsAck` (show the "I have read this" button only when `needsAck` is true). The feed also gives `unseen` and `needAck` for a badge and `can.post` (true for the owner). The **owner's** rows also carry `readers` (one chip per active person with `seen` and `acked`) and `progress` ("2 of 4 acknowledged", or "1 of 4 have read it" when no acknowledgement was asked for). Staff never see each other's status.
+- **Instructions.** `announcements/post` (owner; `text` up to 500 characters, `requiresAck`), `announcements/mark_seen` (send when a person opens one; safe to repeat; the owner opening it does not count), `announcements/acknowledge` (not the owner; refused if the announcement did not ask for it; counts as reading it), `announcements/retire` (owner; takes it down for everyone but keeps it in the record).
+- **Limits.** 20 announcements up at once. People who are no longer active are not counted as readers.
+
 ### Payments list, receipts and shop details
 
 - **`payments_ledger`** (owner, cashier; `{ day?: "YYYY-MM-DD" }`, today by default). Every payment, deposit and refund of that day, newest first, with `totals`, `byMethod` (with `share` for a bar), and `outstanding`: orders that still owe money (orders still waiting for a price are left out). A *deposit* is a payment that did not finish paying the order. A refund puts the refunded amount back on what the customer owes.

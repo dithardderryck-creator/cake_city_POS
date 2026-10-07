@@ -59,6 +59,7 @@ import {
   type Tone,
 } from './circuits/order-logic';
 import { loadOrderBundle } from './circuits/orders';
+import { announcementFeeds, type AnnouncementsData } from './circuits/announcements';
 import { moneyFeeds, type PaymentsLedgerData, type ReceiptData } from './circuits/money-feeds';
 
 /* ---------- Feed data shapes (what the UI receives) ---------- */
@@ -570,6 +571,7 @@ export interface FeedMap {
   alert_inbox: { params: Record<string, never>; data: AlertInboxData };
   request_inbox: { params: Record<string, never>; data: RequestInboxData };
   payments_ledger: { params: { day?: string }; data: PaymentsLedgerData };
+  announcements: { params: Record<string, never>; data: AnnouncementsData };
   receipt: { params: { orderId: string }; data: ReceiptData };
   notification_setup: { params: Record<string, never>; data: NotificationSetupData };
   notification_log: { params: Record<string, never>; data: NotificationLogRow[] };
@@ -787,6 +789,7 @@ const NAV: Record<Role, NavItem[]> = {
 
 export const feeds: FeedRegistry = {
   ...moneyFeeds,
+  ...announcementFeeds,
   me: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => session!,

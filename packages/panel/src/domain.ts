@@ -452,6 +452,23 @@ export interface StaffRequest {
   timeline: { at: string; text: string }[];
 }
 
+/**
+ * A message from the owner to all staff. Not a conversation: staff can only see it and, when asked, acknowledge it.
+ */
+export interface Announcement {
+  id: Id;
+  text: string;
+  /** Staff are asked to confirm they have read it. */
+  requiresAck: boolean;
+  postedById: Id;
+  postedByName: string;
+  createdAt: string;
+  /** Taken down by the owner. Kept for the record, shown to nobody. */
+  retiredAt?: string;
+  seenBy: Record<Id, { name: string; at: string }>;
+  ackedBy: Record<Id, { name: string; at: string }>;
+}
+
 /** Shop-wide switches the owner controls. One record, id "shop". */
 export interface ShopSettings {
   id: 'shop';

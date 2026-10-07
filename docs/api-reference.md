@@ -593,6 +593,39 @@ Allowed: **owner, cashier, baker, inventory, it**
 | --- | --- | --- | --- |
 | `requestId` | string | yes | min length 1, max length 64 |
 
+#### `announcements/post`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `text` | string | yes | max length 500 |
+| `requiresAck` | boolean | no |  |
+
+#### `announcements/mark_seen`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `announcementId` | string | yes | min length 1, max length 64 |
+
+#### `announcements/acknowledge`
+
+Allowed: **cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `announcementId` | string | yes | min length 1, max length 64 |
+
+#### `announcements/retire`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `announcementId` | string | yes | min length 1, max length 64 |
+
 ### Notify
 
 #### `staff/set_contact`
@@ -683,6 +716,12 @@ Allowed: **owner, cashier**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
+
+#### `announcements`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+_No fields. Send an empty object `{}`._
 
 #### `me`
 

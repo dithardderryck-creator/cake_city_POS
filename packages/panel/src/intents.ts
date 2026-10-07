@@ -171,6 +171,15 @@ export interface IntentMap {
   /** The sender takes it back before anyone has taken it. */
   'requests/withdraw': { requestId: Id };
 
+  /** Owner only. Staff see it on their screen; with `requiresAck` they are asked to confirm they read it. */
+  'announcements/post': { text: string; requiresAck?: boolean };
+  /** Records that you have read an announcement. Safe to send more than once. */
+  'announcements/mark_seen': { announcementId: Id };
+  /** "I have read this." Only for announcements that ask for it. */
+  'announcements/acknowledge': { announcementId: Id };
+  /** Owner only. Takes an announcement down for everyone. */
+  'announcements/retire': { announcementId: Id };
+
   'sync/flush': Record<string, never>;
 }
 export type IntentName = keyof IntentMap;

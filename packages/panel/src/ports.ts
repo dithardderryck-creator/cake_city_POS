@@ -31,6 +31,7 @@ export const COLLECTIONS = [
   'alerts',
   'pushSubscriptions',
   'staffRequests',
+  'announcements',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

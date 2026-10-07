@@ -552,6 +552,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-67** | **Online copy = the shop computer stays primary, Google Drive holds copies.** The shop works with no internet and every sale is saved locally first. Whenever wifi is up the server uploads database backups (nightly, or every few hours) and archives to the shop's Google Drive, retrying until it works. A live cloud database that all devices use is not built (it would make every sale depend on the internet) |
 | **D-68** | **Archiving.** When the data in the database reaches a limit (default 500 MB), old finished orders (and old activity-log entries) move into spreadsheets: an .xlsx in a folder the owner chooses (`ARCHIVE_DIR`) and a Google Sheet in Drive. Safety order is in BR-38. Archived orders leave the app; the spreadsheet is the record |
 | **D-69** | **Staff requests follow the new screens' lifecycle:** Sent, Seen, Acknowledged, Done, Confirmed (the sender confirms; they can reopen). This replaces "Resolved only by the sender or owner" in 5.4. A request may carry answers to choose from (a question), and the answer closes it. The owner sees every request. Escalation uses the alert engine: urgent requests alert the people they are for at once and the owner (critical) after 15 minutes; ordinary ones after 4 hours, owner after 8. Both timings are owner settings |
+| **D-70** | **Announcements are one-way.** Only the owner posts. Staff read them and, when asked, acknowledge (which counts as reading). The owner sees who has read and who has acknowledged. No replies: questions go through requests. The owner can take one down; it stays in the record |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -603,8 +604,8 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Metric units and conversions | Built | Existing data converted once by migration 2 |
 | Delivery of alerts: phone push, SMS, WhatsApp, with retries and a log | Built | Tested against stand-in provider servers, not live accounts (O-15, O-16). Push needs HTTPS (O-13) |
 | Phone alarm (sound, vibration, repeat, notification, service worker) | Built (client library) | The UI only has to mount it. Not yet tried on a real phone |
-| Messages: staff requests (send, seen, take, done, confirm, questions with answers, escalation) | Built | D-69. Announcements and order notes are not built yet |
-| Messages: announcements | Not built | |
+| Messages: staff requests (send, seen, take, done, confirm, questions with answers, escalation) | Built | D-69. Order notes are not built yet |
+| Messages: announcements (post, read, acknowledge, take down) | Built | D-70 |
 | Delivery record | Not built | |
 | Owner reports | Not built | |
 | Receipts (print, WhatsApp/SMS) | Not built | |

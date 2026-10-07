@@ -202,6 +202,11 @@ export const schemas = {
   'requests/reopen': z.strictObject({ requestId: id, reason: z.string().max(300).optional() }),
   'requests/withdraw': z.strictObject({ requestId: id }),
 
+  'announcements/post': z.strictObject({ text: z.string().max(500), requiresAck: z.boolean().optional() }),
+  'announcements/mark_seen': z.strictObject({ announcementId: id }),
+  'announcements/acknowledge': z.strictObject({ announcementId: id }),
+  'announcements/retire': z.strictObject({ announcementId: id }),
+
   'staff/set_contact': z.strictObject({
     userId: id,
     phone: z.string().max(40).nullable().optional(),
@@ -243,6 +248,7 @@ export const feedSchemas = {
   unit_list: empty,
   alert_inbox: empty,
   request_inbox: empty,
+  announcements: empty,
   payments_ledger: z.strictObject({ day: z.string().max(10).optional() }),
   receipt: z.strictObject({ orderId: id }),
   notification_setup: empty,
