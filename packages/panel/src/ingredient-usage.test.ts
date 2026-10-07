@@ -251,7 +251,11 @@ describe('report, confirm, then stock moves (BR-12, BR-13)', () => {
     expect(rep.items.find((i) => i.name === 'Flour')).toMatchObject({ extra: false, suggestedQty: 0.24, suggestedText: '240 g', rangeLabel: 'Medium', rangeText: '200 g to 300 g', onHand: 5, onHandText: '5 kg' });
     const items = rep.items.map((i) => ({ ingredientId: i.ingredientId, qty: i.min }));
     expect(errOf(await send('baker', 'usage/confirm', { reportId, items }))).toMatch(/^forbidden/);
-    expect((await panel.feed('usage_inbox', {}, sid.baker)).ok).toBe(false);
+    // The baker can follow their own report, but cannot confirm it.
+    const own = await panel.feed('usage_inbox', {}, sid.baker);
+    expect(own.ok && own.data.pending.map((r) => r.reportId)).toEqual([reportId]);
+    expect(own.ok && own.data.can.confirm).toBe(false);
+    expect((await panel.feed('usage_inbox', {}, sid.cashier)).ok).toBe(false);
   });
 
   it('takes the exact amounts off stock only when Inventory confirms', async () => {

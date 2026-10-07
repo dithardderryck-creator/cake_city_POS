@@ -221,6 +221,25 @@ export const catalogueIntents = {
     },
   },
 
+  'catalogue/set_hidden': {
+    circuit: 'Catalogue',
+    roles: ['owner'],
+    validate: async (p, ctx) => {
+      const product = await loadProduct(ctx, p.productId);
+      if (product.status === 'archived') return ['That item is archived.'];
+      return !!product.hidden === p.hidden ? [p.hidden ? 'That item is already hidden.' : 'That item is already showing.'] : [];
+    },
+    handle: async (p, ctx) => {
+      const product = await loadProduct(ctx, p.productId);
+      await ctx.store.put('products', { ...product, hidden: p.hidden });
+      return {
+        summary: `${p.hidden ? 'Hid' : 'Showed'} ${product.name} ${p.hidden ? 'from' : 'at'} the counter`,
+        target: product.id,
+        events: [{ type: p.hidden ? 'ProductHidden' : 'ProductShown', payload: { productId: product.id } }],
+      };
+    },
+  },
+
   'catalogue/toggle_available_today': {
     circuit: 'Catalogue',
     roles: ['owner'],

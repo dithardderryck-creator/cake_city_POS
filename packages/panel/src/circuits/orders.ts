@@ -13,6 +13,7 @@ import type {
 import { DomainError, type HandlerCtx, type Registry } from '../intents';
 import { isIsoDate, todayLocal } from './dates';
 import { canAdvance, canRemoveLine, moneySummary, deriveOrderStatus, activeLines, isCustom } from './order-logic';
+import { normalisePhone } from './notify';
 import { closeOpenQuote } from './quote-util';
 import { ensureSuggestion } from './recipes';
 import { loadSettings } from './settings';
@@ -55,6 +56,7 @@ export const orderIntents = {
     validate: (p, ctx) => {
       const errors: string[] = [];
       if (p.fulfilment === 'delivery' && !p.deliveryAddress?.trim()) errors.push('Add a delivery address.');
+      if (p.customerPhone?.trim() && !normalisePhone(p.customerPhone)) errors.push('Write the phone number with the country code, like +255712345678.');
       errors.push(...dateProblems(p.deliveryDate, ctx));
       return errors;
     },
@@ -67,6 +69,7 @@ export const orderIntents = {
         fulfilment: p.fulfilment,
         deliveryDate: p.deliveryDate,
         deliveryAddress: p.fulfilment === 'delivery' ? p.deliveryAddress?.trim() : undefined,
+        customerPhone: p.customerPhone?.trim() ? normalisePhone(p.customerPhone)! : undefined,
         partialAllowed: false,
         createdBy: ctx.session!.userId,
         createdAt: ctx.now(),
@@ -88,8 +91,9 @@ export const orderIntents = {
       const { order, lines } = await loadOrderBundle(ctx, p.orderId);
       const status = deriveOrderStatus(lines);
       if (status === 'completed' || status === 'cancelled') return [`Order ${order.number} is ${status}.`];
-      if (p.deliveryDate === undefined && p.fulfilment === undefined && p.deliveryAddress === undefined) return ['Choose what to change.'];
+      if (p.deliveryDate === undefined && p.fulfilment === undefined && p.deliveryAddress === undefined && p.customerPhone === undefined) return ['Choose what to change.'];
       const errors = dateProblems(p.deliveryDate, ctx);
+      if (typeof p.customerPhone === 'string' && p.customerPhone.trim() && !normalisePhone(p.customerPhone)) errors.push('Write the phone number with the country code, like +255712345678.');
       const fulfilment = p.fulfilment ?? order.fulfilment;
       const address = p.deliveryAddress !== undefined ? p.deliveryAddress.trim() : order.deliveryAddress;
       if (fulfilment === 'delivery' && !address) errors.push('Add a delivery address.');
@@ -105,6 +109,7 @@ export const orderIntents = {
         fulfilment,
         deliveryDate: p.deliveryDate ?? order.deliveryDate,
         deliveryAddress: fulfilment === 'delivery' ? (p.deliveryAddress !== undefined ? p.deliveryAddress.trim() : order.deliveryAddress) : undefined,
+        customerPhone: p.customerPhone === undefined ? order.customerPhone : p.customerPhone && p.customerPhone.trim() ? normalisePhone(p.customerPhone)! : undefined,
       };
       await ctx.store.put('orders', next);
       const warnings: string[] = [];
@@ -132,6 +137,7 @@ export const orderIntents = {
       if (!combo) return ['That item is no longer in the catalogue.'];
       const product = await ctx.store.get<Product>('products', combo.productId);
       if (!product || product.status === 'archived') return ['That product has been archived.'];
+      if (product.hidden) return [`${product.name} is hidden from the counter.`];
       if (!product.availableToday) return [`${product.name} is off the menu today.`];
       if (combo.status !== 'available') return ['That version is not available.'];
       if (combo.price === null) return ['That version has no price yet. Ask the owner to set one.'];

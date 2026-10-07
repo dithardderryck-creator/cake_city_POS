@@ -15,6 +15,8 @@ export interface IntentMap {
   'staff/create': { name: string; role: Role; pin: string };
   'staff/set_pin': { userId: Id; pin: string };
   'staff/set_active': { userId: Id; active: boolean };
+  /** Change what someone does in the shop. Not for the owner, and nobody can be made owner this way. Ends their sign-ins. */
+  'staff/set_role': { userId: Id; role: Exclude<Role, 'owner'> };
 
   'catalogue/create_option_group': { name: string; values: { label: string; allergens?: string[] }[] };
   'catalogue/create_product': { name: string; category?: string; description?: string; allergens?: string[] };
@@ -24,6 +26,8 @@ export interface IntentMap {
   'catalogue/fill_price': { productId: Id; valueId: Id; price: number };
   'catalogue/mark_unavailable': { combinationId: Id; unavailable: boolean };
   'catalogue/archive_product': { productId: Id };
+  /** Hide a product from the counter without losing it, or bring it back. */
+  'catalogue/set_hidden': { productId: Id; hidden: boolean };
   'catalogue/toggle_available_today': { productId: Id; available: boolean };
 
   'stock/set_count': { combinationId: Id; count: number };
@@ -34,8 +38,10 @@ export interface IntentMap {
     fulfilment: 'pickup' | 'delivery';
     deliveryDate?: string;
     deliveryAddress?: string;
+    /** With the country code, such as +255712345678. */
+    customerPhone?: string;
   };
-  'orders/set_delivery': { orderId: Id; fulfilment?: 'pickup' | 'delivery'; deliveryDate?: string; deliveryAddress?: string };
+  'orders/set_delivery': { orderId: Id; fulfilment?: 'pickup' | 'delivery'; deliveryDate?: string; deliveryAddress?: string; customerPhone?: string | null };
   'orders/add_catalogue_line': { orderId: Id; combinationId: Id; qty: number };
   'orders/add_custom_line': { orderId: Id; spec: CakeSpecInput };
   'orders/update_custom_line': { orderId: Id; lineId: Id; spec: CakeSpecInput };
@@ -52,7 +58,7 @@ export interface IntentMap {
   'quotes/withdraw': { quoteId: Id };
   'quotes/revise': { quoteId: Id; price: number; reason: string };
 
-  'settings/update': { decoratingStage?: boolean };
+  'settings/update': { decoratingStage?: boolean; shopName?: string; shopAddress?: string | null; shopPhone?: string | null; receiptFooter?: string | null };
 
   'payments/record_payment': {
     orderId: Id;

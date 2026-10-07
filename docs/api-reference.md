@@ -64,6 +64,15 @@ Allowed: **owner**
 | `userId` | string | yes | min length 1, max length 64 |
 | `active` | boolean | yes |  |
 
+#### `staff/set_role`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `userId` | string | yes | min length 1, max length 64 |
+| `role` | "cashier" \| "baker" \| "inventory" \| "it" | yes |  |
+
 ### Catalogue
 
 #### `catalogue/create_option_group`
@@ -139,6 +148,15 @@ Allowed: **owner**
 | --- | --- | --- | --- |
 | `productId` | string | yes | min length 1, max length 64 |
 
+#### `catalogue/set_hidden`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `productId` | string | yes | min length 1, max length 64 |
+| `hidden` | boolean | yes |  |
+
 #### `catalogue/toggle_available_today`
 
 Allowed: **owner**
@@ -172,6 +190,7 @@ Allowed: **owner, cashier**
 | `fulfilment` | "pickup" \| "delivery" | yes |  |
 | `deliveryDate` | string | no | max length 10 |
 | `deliveryAddress` | string | no | max length 300 |
+| `customerPhone` | string | no | max length 30 |
 
 #### `orders/set_delivery`
 
@@ -183,6 +202,7 @@ Allowed: **owner, cashier**
 | `fulfilment` | "pickup" \| "delivery" | no |  |
 | `deliveryDate` | string | no | max length 10 |
 | `deliveryAddress` | string | no | max length 300 |
+| `customerPhone` | any | no |  |
 
 #### `orders/add_catalogue_line`
 
@@ -326,6 +346,10 @@ Allowed: **owner**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `decoratingStage` | boolean | no |  |
+| `shopName` | string | no | max length 60 |
+| `shopAddress` | any | no |  |
+| `shopPhone` | any | no |  |
+| `receiptFooter` | any | no |  |
 
 ### Inventory
 
@@ -644,6 +668,22 @@ _No fields. Send an empty object `{}`._
 
 Read with `POST /api/feed` as `{ "name": "<name>", "params": { ... } }`, or subscribe over the live connection to get the same data again after every change.
 
+#### `payments_ledger`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `day` | string | no | max length 10 |
+
+#### `receipt`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `orderId` | string | yes | min length 1, max length 64 |
+
 #### `me`
 
 Allowed: **owner, cashier, baker, inventory, it**
@@ -778,7 +818,7 @@ _No fields. Send an empty object `{}`._
 
 #### `usage_inbox`
 
-Allowed: **owner, inventory**
+Allowed: **owner, inventory, baker**
 
 _No fields. Send an empty object `{}`._
 

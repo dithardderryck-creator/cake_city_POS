@@ -199,6 +199,16 @@ A message from one member of staff to a role (anyone with that role may act) or 
 - **Escalation.** Handled by the alert engine (`request_waiting`, above). An urgent request nobody has taken is escalated to the owner as a critical alert after `urgentRequestMinutes`. The feed's `escalatesAt` says when, so a screen can show "Escalates to you at 14:30" without any logic.
 - **Limits.** 50 open requests per person. Requests to the IT role show in the IT inbox but do not raise phone alerts.
 
+### Payments list, receipts and shop details
+
+- **`payments_ledger`** (owner, cashier; `{ day?: "YYYY-MM-DD" }`, today by default). Every payment, deposit and refund of that day, newest first, with `totals`, `byMethod` (with `share` for a bar), and `outstanding`: orders that still owe money (orders still waiting for a price are left out). A *deposit* is a payment that did not finish paying the order. A refund puts the refunded amount back on what the customer owes.
+- **`receipt`** (owner, cashier; `{ orderId }`). Everything for a receipt, already worded: `shop` (name, address, phone, footer), `lines`, `payments`, `refunds`, `paidLabel`, `balanceLabel`, `statusLabel` ("Paid in full", "Balance due"...), and `text`, the whole receipt as plain text for printing or sending. `share.whatsappUrl` and `share.smsUrl` are ready-made links that open WhatsApp or the phone's messages with the receipt filled in (present when the order has a customer phone). `blockedReason` says why a receipt cannot be given yet (nothing paid, cake not priced, cancelled). No message provider is needed for this.
+- **Customer phone.** `orders/create_order` and `orders/set_delivery` take `customerPhone` (with country code, for example `+255712345678`; `null` clears it).
+- **Shop details.** `settings/update` also takes `shopName`, `shopAddress`, `shopPhone`, `receiptFooter` (owner). `shop_settings` returns them to everyone signed in.
+- **Roles.** `staff/set_role` (owner) moves someone between cashier, baker, inventory and IT, and signs them out. The owner's role cannot be changed and nobody can be made owner this way.
+- **Hiding an item.** `catalogue/set_hidden` (owner) takes a product off the counter without archiving it. `catalogue_grid` marks it `hidden`; only the owner's list still contains it, and it cannot be sold while hidden.
+- **Bakers and usage.** `usage_inbox` now also works for a baker, showing only the reports they sent, so they can follow what happened to them.
+
 ### Stock forecast
 
 The `stock_forecast` feed (owner, baker, Inventory) gives one line per ingredient: real stock up to today, projected stock after. It is worked out from **two inputs** and shown as **one** line:

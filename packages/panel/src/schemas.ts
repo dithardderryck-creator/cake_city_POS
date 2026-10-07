@@ -41,6 +41,7 @@ export const schemas = {
   'staff/create': z.strictObject({ name, role, pin }),
   'staff/set_pin': z.strictObject({ userId: id, pin }),
   'staff/set_active': z.strictObject({ userId: id, active: z.boolean() }),
+  'staff/set_role': z.strictObject({ userId: id, role: z.enum(['cashier', 'baker', 'inventory', 'it']) }),
 
   'catalogue/create_option_group': z.strictObject({
     name,
@@ -58,6 +59,7 @@ export const schemas = {
   'catalogue/fill_price': z.strictObject({ productId: id, valueId: id, price: money }),
   'catalogue/mark_unavailable': z.strictObject({ combinationId: id, unavailable: z.boolean() }),
   'catalogue/archive_product': z.strictObject({ productId: id }),
+  'catalogue/set_hidden': z.strictObject({ productId: id, hidden: z.boolean() }),
   'catalogue/toggle_available_today': z.strictObject({ productId: id, available: z.boolean() }),
 
   'stock/set_count': z.strictObject({ combinationId: id, count: z.number().int().min(0).max(1_000_000) }),
@@ -68,12 +70,14 @@ export const schemas = {
     fulfilment: z.enum(['pickup', 'delivery']),
     deliveryDate: z.string().max(10).optional(),
     deliveryAddress: z.string().max(300).optional(),
+    customerPhone: z.string().max(30).optional(),
   }),
   'orders/set_delivery': z.strictObject({
     orderId: id,
     fulfilment: z.enum(['pickup', 'delivery']).optional(),
     deliveryDate: z.string().max(10).optional(),
     deliveryAddress: z.string().max(300).optional(),
+    customerPhone: z.string().max(30).nullable().optional(),
   }),
   'orders/add_catalogue_line': z.strictObject({ orderId: id, combinationId: id, qty: z.number().int().min(1).max(10_000) }),
   'orders/add_custom_line': z.strictObject({ orderId: id, spec: cakeSpec }),
@@ -91,7 +95,13 @@ export const schemas = {
   'quotes/withdraw': z.strictObject({ quoteId: id }),
   'quotes/revise': z.strictObject({ quoteId: id, price: z.number().finite().min(0).max(1_000_000_000), reason: longText }),
 
-  'settings/update': z.strictObject({ decoratingStage: z.boolean().optional() }),
+  'settings/update': z.strictObject({
+    decoratingStage: z.boolean().optional(),
+    shopName: z.string().max(60).optional(),
+    shopAddress: z.string().max(160).nullable().optional(),
+    shopPhone: z.string().max(40).nullable().optional(),
+    receiptFooter: z.string().max(160).nullable().optional(),
+  }),
 
   'payments/record_payment': z.strictObject({
     orderId: id,
@@ -233,6 +243,8 @@ export const feedSchemas = {
   unit_list: empty,
   alert_inbox: empty,
   request_inbox: empty,
+  payments_ledger: z.strictObject({ day: z.string().max(10).optional() }),
+  receipt: z.strictObject({ orderId: id }),
   notification_setup: empty,
   notification_log: empty,
   alert_settings: empty,

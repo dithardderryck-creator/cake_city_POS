@@ -57,4 +57,24 @@ export const staffIntents = {
       return { summary: `${staff.name} ${p.active ? 'can sign in again' : 'can no longer sign in'}`, target: staff.id };
     },
   },
+
+  'staff/set_role': {
+    circuit: 'Staff',
+    roles: ['owner'],
+    validate: async (p, ctx) => {
+      const target = await ctx.store.get<Staff>('staff', p.userId);
+      if (!target) return ['That person no longer exists.'];
+      if (target.id === ctx.session!.userId) return ['You cannot change your own role.'];
+      if (target.role === 'owner') return ['The owner\'s role cannot be changed.'];
+      if (target.role === p.role) return [`${target.name} is already ${p.role}.`];
+      return [];
+    },
+    handle: async (p, ctx) => {
+      const staff = (await ctx.store.get<Staff>('staff', p.userId))!;
+      await ctx.store.put('staff', { ...staff, role: p.role });
+      // Whatever they were signed into was built for the old role.
+      await ctx.revokeSessions(staff.id);
+      return { summary: `Changed ${staff.name} from ${staff.role} to ${p.role}`, target: staff.id, events: [{ type: 'StaffRoleChanged', payload: { userId: staff.id, role: p.role } }] };
+    },
+  },
 } satisfies Partial<Registry>;

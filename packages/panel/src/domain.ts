@@ -109,6 +109,8 @@ export interface Product {
   description: string;
   status: 'active' | 'archived';
   availableToday: boolean;
+  /** Kept in the catalogue but not shown to the counter or sold. The owner can bring it back (not the same as archived). */
+  hidden?: boolean;
   selectedValueIds: Id[];
   allergens: string[];
   createdAt: string;
@@ -133,6 +135,8 @@ export interface Order {
   fulfilment: 'pickup' | 'delivery';
   deliveryDate?: string;
   deliveryAddress?: string;
+  /** Digits with country code, for sending a receipt. Optional. */
+  customerPhone?: string;
   partialAllowed: boolean;
   createdBy: Id;
   createdAt: string;
@@ -453,6 +457,12 @@ export interface ShopSettings {
   id: 'shop';
   /** Custom cakes pass through a Decorating stage between In production and Ready (D-11). */
   decoratingStage: boolean;
+  /** Printed at the top of every receipt. */
+  shopName: string;
+  shopAddress?: string;
+  shopPhone?: string;
+  /** A line at the bottom of every receipt, such as "Thank you!". */
+  receiptFooter?: string;
 }
 
 export interface Payment {

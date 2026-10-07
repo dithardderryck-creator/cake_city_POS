@@ -59,6 +59,7 @@ import {
   type Tone,
 } from './circuits/order-logic';
 import { loadOrderBundle } from './circuits/orders';
+import { moneyFeeds, type PaymentsLedgerData, type ReceiptData } from './circuits/money-feeds';
 
 /* ---------- Feed data shapes (what the UI receives) ---------- */
 
@@ -81,6 +82,8 @@ export interface CatalogueGridItem {
   category: string;
   description: string;
   archived: boolean;
+  /** Hidden from the counter by the owner. Only the owner's list includes hidden items. */
+  hidden: boolean;
   availableToday: boolean;
   allergens: string[];
   groups: { groupId: string; name: string; values: { valueId: string; label: string }[] }[];
@@ -171,6 +174,7 @@ export interface OrderCardLine {
 export interface OrderCardData extends OrderListItem {
   source: 'walk_in' | 'phone';
   deliveryAddress?: string;
+  customerPhone?: string;
   lines: OrderCardLine[];
   paidLabel: string;
   refundedLabel: string | null;
@@ -540,6 +544,10 @@ export interface UsageInboxData {
 
 export interface ShopSettingsData {
   decoratingStage: boolean;
+  shopName: string;
+  shopAddress: string | null;
+  shopPhone: string | null;
+  receiptFooter: string | null;
   can: { edit: boolean };
 }
 
@@ -561,6 +569,8 @@ export interface FeedMap {
   unit_list: { params: Record<string, never>; data: UnitListData };
   alert_inbox: { params: Record<string, never>; data: AlertInboxData };
   request_inbox: { params: Record<string, never>; data: RequestInboxData };
+  payments_ledger: { params: { day?: string }; data: PaymentsLedgerData };
+  receipt: { params: { orderId: string }; data: ReceiptData };
   notification_setup: { params: Record<string, never>; data: NotificationSetupData };
   notification_log: { params: Record<string, never>; data: NotificationLogRow[] };
   alert_settings: { params: Record<string, never>; data: AlertSettingsData };
@@ -776,6 +786,7 @@ const NAV: Record<Role, NavItem[]> = {
 };
 
 export const feeds: FeedRegistry = {
+  ...moneyFeeds,
   me: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => session!,
@@ -848,7 +859,7 @@ export const feeds: FeedRegistry = {
       const valueById = new Map(values.map((v) => [v.id, v]));
 
       return products
-        .filter((p) => params.includeArchived || p.status === 'active')
+        .filter((p) => (params.includeArchived || p.status === 'active') && (!p.hidden || session?.role === 'owner'))
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((p): CatalogueGridItem => {
           const chosen = values.filter((v) => p.selectedValueIds.includes(v.id));
@@ -878,6 +889,7 @@ export const feeds: FeedRegistry = {
               const open = committed.get(c.id) ?? 0;
               let reason: string | null = null;
               if (p.status === 'archived') reason = 'Archived';
+              else if (p.hidden) reason = 'Hidden';
               else if (!p.availableToday) reason = 'Off the menu today';
               else if (c.status !== 'available') reason = 'Not available';
               else if (c.price === null) reason = 'No price yet';
@@ -912,6 +924,7 @@ export const feeds: FeedRegistry = {
             category: p.category,
             description: p.description,
             archived: p.status === 'archived',
+            hidden: !!p.hidden,
             availableToday: p.availableToday,
             allergens: p.allergens,
             groups: productGroups,
@@ -1009,6 +1022,7 @@ export const feeds: FeedRegistry = {
         ...base,
         source: order.source,
         deliveryAddress: order.deliveryAddress,
+        customerPhone: order.customerPhone,
         lines: cardLines,
         paidLabel: fmt(money.paid),
         refundedLabel: money.refunded > 0 ? fmt(money.refunded) : null,
@@ -1151,10 +1165,17 @@ export const feeds: FeedRegistry = {
 
   shop_settings: {
     roles: ['owner', 'cashier', 'baker', 'inventory'],
-    build: async ({ store, session }) => ({
-      decoratingStage: (await loadSettings(store)).decoratingStage,
-      can: { edit: session?.role === 'owner' },
-    }),
+    build: async ({ store, session }) => {
+      const s = await loadSettings(store);
+      return {
+        decoratingStage: s.decoratingStage,
+        shopName: s.shopName,
+        shopAddress: s.shopAddress ?? null,
+        shopPhone: s.shopPhone ?? null,
+        receiptFooter: s.receiptFooter ?? null,
+        can: { edit: session?.role === 'owner' },
+      };
+    },
   },
 
   ingredient_list: {
@@ -1469,9 +1490,11 @@ export const feeds: FeedRegistry = {
   },
 
   usage_inbox: {
-    roles: ['owner', 'inventory'],
+    // A baker sees only their own reports (to follow what happened to them). Inventory and the owner see all.
+    roles: ['owner', 'inventory', 'baker'],
     build: async ({ store, session }) => {
-      const [reports, ingredients] = await Promise.all([store.list<UsageReport>('usageReports'), store.list<Ingredient>('ingredients')]);
+      const [allReports, ingredients] = await Promise.all([store.list<UsageReport>('usageReports'), store.list<Ingredient>('ingredients')]);
+      const reports = session?.role === 'baker' ? allReports.filter((r) => r.reportedBy === session.userId) : allReports;
       const orderIds = [...new Set(reports.map((r) => r.orderId))];
       const lineIds = [...new Set(reports.map((r) => r.lineId))];
       const [orders, lines, suggestions] = reports.length
