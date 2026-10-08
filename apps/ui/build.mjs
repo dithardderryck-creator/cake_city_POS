@@ -5,7 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const dist = path.join(here, 'dist');
+// UI_DIST lets several people build and test at the same time without sharing one output folder.
+const dist = process.env.UI_DIST ? path.resolve(process.env.UI_DIST) : path.join(here, 'dist');
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist, { recursive: true });
 

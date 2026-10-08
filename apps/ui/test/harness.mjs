@@ -28,7 +28,7 @@ export async function startShop({ seed = true } = {}) {
     DATA_DIR: path.join(work, 'data'),
     PORT: String(port),
     HOST: '127.0.0.1',
-    STATIC_DIR: path.join(root, 'apps/ui/dist'),
+    STATIC_DIR: process.env.UI_DIST ? path.resolve(process.env.UI_DIST) : path.join(root, 'apps/ui/dist'),
     LOG_LEVEL: 'warn',
   };
   if (seed) execFileSync(process.execPath, [adminJs, 'seed-demo', '--yes'], { env, encoding: 'utf8' });
