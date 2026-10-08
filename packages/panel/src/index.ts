@@ -11,6 +11,7 @@ export { ALERT_KINDS, ALERT_KIND_LABEL, DEFAULT_ALERT_SETTINGS } from './circuit
 export { MAX_PHOTO_BYTES, sniffImage } from './circuits/photos';
 export { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 export type * from './feeds';
+export type { ReportsData, ReportsParams } from './circuits/reports';
 export type { BatchLogData, BatchOption, BatchRow } from './circuits/batches';
 export type { CountItemRow, CountSessionData } from './circuits/count';
 export type { AnnouncementRow, AnnouncementsData } from './circuits/announcements';

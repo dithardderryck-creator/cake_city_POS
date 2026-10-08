@@ -555,6 +555,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-70** | **Announcements are one-way.** Only the owner posts. Staff read them and, when asked, acknowledge (which counts as reading). The owner sees who has read and who has acknowledged. No replies: questions go through requests. The owner can take one down; it stays in the record |
 | **D-71** | **The daily count is saved on the server while it is done, and applied all at once at the end.** One count is open at a time and anyone with Inventory or Owner can pick it up. Skipped items are left alone. A difference of 10% or more is big and goes to the owner as a request (unless the owner counted). Packaging is a kind of stock item (`kind`), not a separate system |
 | **D-72** | **A batch is a record that adds to the counter stock of one version of a product.** The baker can take it back for 30 minutes, the owner any time, and never if some of it has been sold. Counter stock stays on the product version, so sales, the catalogue and the owner's stock changes all see the same number |
+| **D-73** | **Reports count money when it is received.** Sales for a day are the payments taken that day less refunds paid that day, the same as the payments list. Best sellers use the value of orders placed. Usage compares confirmed amounts with what the system suggested, and waste shows amounts but no money value because ingredient prices are not recorded |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -568,7 +569,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | 0.3 | 2 Oct 2026 | Phase 2a: shop server. Added D-45 to D-54 and Q-10 to Q-13. D-36 and A-12 superseded. Sections 9, 12 and 18 rewritten. Business rules unchanged |
 | 0.4 | 5 Oct 2026 | Metric base units (D-62), stock forecast (D-63), alerts (D-64), delivery to phones/SMS/WhatsApp (D-65), phone alarm (D-66); BR-35 to BR-37 |
 | 0.5 | 6 Oct 2026 | Online copy in Google Drive (D-67), archiving to spreadsheets (D-68), BR-38 |
-| 0.6 | 6 Oct 2026 | New UI from the four mockups (docs/ui-integration.md); staff requests circuit (D-69) |
+| 0.6 | 6 Oct 2026 | New UI from the four mockups (docs/ui-integration.md); staff requests (D-69), announcements (D-70), daily count (D-71), batches (D-72), owner reports (D-73) |
 
 ---
 
@@ -609,8 +610,8 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Messages: staff requests (send, seen, take, done, confirm, questions with answers, escalation) | Built | D-69. Order notes are not built yet |
 | Messages: announcements (post, read, acknowledge, take down) | Built | D-70 |
 | Delivery record | Not built | |
-| Owner reports | Not built | |
-| Receipts (print, WhatsApp/SMS) | Not built | |
+| Owner reports (sales, methods, best sellers, stock days, usage, refunds, count differences, waste) | Built | D-73. No ingredient prices, so waste has no money value |
+| Receipts (printable text, WhatsApp and SMS links) and the payments list | Built | Shared through wa.me and sms: links, not sent by the server |
 | Daily count with review of differences, big differences to the owner | Built | D-71 |
 | Batches of ready-made items (log, take back within 30 minutes) | Built | D-72 |
 | Online copy: backups to Google Drive (nightly or every few hours), retried when offline | Built | Tested against a stand-in for Google, not a real account (O-18) |

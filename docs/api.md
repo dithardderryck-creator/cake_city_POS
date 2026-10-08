@@ -207,6 +207,19 @@ A message from the owner to all staff. Not a conversation: staff can read it and
 - **Instructions.** `announcements/post` (owner; `text` up to 500 characters, `requiresAck`), `announcements/mark_seen` (send when a person opens one; safe to repeat; the owner opening it does not count), `announcements/acknowledge` (not the owner; refused if the announcement did not ask for it; counts as reading it), `announcements/retire` (owner; takes it down for everyone but keeps it in the record).
 - **Limits.** 20 announcements up at once. People who are no longer active are not counted as readers.
 
+### Reports
+
+One feed for the owner's Overview and Reports screens. Everything is built from what the server already holds. It never estimates, and it says so when there is too little data.
+
+- **Feed.** `reports` (owner only), with `days` 7 or 30 (default 7). The period is the last `days` days ending today.
+  - `sales`: money received less refunds, by day (`series`, with ready labels like "Wed 7"), `total`, `perDay`, the same number of days before (`previousTotal`, `changePercent`, null when there was nothing to compare), `today` against `yesterday` (`todayChangePercent`) and the best day.
+  - `methods`: net by payment method, with `share` (0 to 1).
+  - `bestSellers`: the top 5 by value on orders placed in the period (cancelled and unpriced lines left out; all custom cakes together), then "Everything else".
+  - `stockDays`: the ingredients that will run out first (up to 6), with `level` (`critical` under 2 days, `low` under 4, `ok`). `noData` counts those without enough history.
+  - `usage`: for cakes whose usage was confirmed in the period, what the system suggested against what Inventory confirmed. `flagged` when more than 10% apart (`direction` more or less).
+  - `refunds`, `countDifferences` (from the daily count and from counter items found short) and `waste` (stock written off, with the reason).
+- **Limits.** "Sales" is money received on the day, not the value of orders placed. There are no ingredient prices, so waste has amounts but no money value.
+
 ### Batches (finished items)
 
 The baker logs a batch of ready-made items (brownies, cupcakes). It adds to the counter stock of that version of the product, so the cashier sees it straight away.

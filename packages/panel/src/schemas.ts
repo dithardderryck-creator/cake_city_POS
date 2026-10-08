@@ -261,6 +261,7 @@ export const feedSchemas = {
   announcements: empty,
   count_session: empty,
   batch_log: empty,
+  reports: z.strictObject({ days: z.union([z.literal(7), z.literal(30)]).optional() }),
   payments_ledger: z.strictObject({ day: z.string().max(10).optional() }),
   receipt: z.strictObject({ orderId: id }),
   notification_setup: empty,

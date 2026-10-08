@@ -792,6 +792,14 @@ Allowed: **baker, owner, inventory**
 
 _No fields. Send an empty object `{}`._
 
+#### `reports`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `days` | any | no |  |
+
 #### `me`
 
 Allowed: **owner, cashier, baker, inventory, it**

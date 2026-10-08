@@ -69,17 +69,19 @@ One small script every page loads, built from `@cake-pos/client`:
 | Reports | Gap: `reports` feed (sales mix, payment methods, usage vs suggestion, refunds, count differences, waste) | Usage and waste data exist; refunds and counts are partly there. |
 | Announcements | Gap: announcements circuit (post, needs-acknowledgement, who has seen) | |
 
-## New server pieces, in build order
+## New server pieces (all built, 7 Oct 2026)
 
-1. **Requests circuit** (staff to staff, owner, roles or a person; categories; urgent flag; lifecycle Sent, Seen, Acknowledged, Done, Confirmed; history; escalation to the owner after N minutes using the alert engine). Used by all four screens.
-2. **Payments feed** (`payments_list`) and **receipts** (`receipt` feed with a printable/shareable view).
-3. **Announcements**.
-4. **Count sessions** (daily count and the owner's closing review).
-5. **Batches**.
-6. **Reports** (overview and the reports page), built only from data the server already holds.
-7. Small additions: `catalogue/set_visibility`, `orders/adjust_total`, `staff/set_role`, a baker usage history.
+| Piece | Feeds | Instructions | Notes |
+| --- | --- | --- | --- |
+| Staff requests (D-69) | `request_inbox` | `requests/*` | Escalation through the alert engine |
+| Payments list and receipts | `payments_ledger`, `receipt` | none (read only) | Receipts are shared with wa.me and sms: links |
+| Shop details, customer phone, role change, hide catalogue items | `shop_settings`, `order_card` | `settings/update`, `staff/set_role`, `catalogue/set_hidden` | The mockup's "Draft" is derived (not every version priced); Published/Hidden is `catalogue/set_hidden` |
+| Announcements (D-70) | `announcements` | `announcements/*` | Owner posts; staff read and acknowledge |
+| Daily count and packaging (D-71) | `count_session`, `ingredient_list` (`kind`, `countedAt`) | `count/*` | Saved on the server while counting, applied at the end |
+| Batches (D-72) | `batch_log` | `batches/*` | Adds to counter stock; 30 minutes to take one back |
+| Reports (D-73) | `reports` | none (read only) | Feeds both the Overview and the Reports page |
 
-Each piece gets: intents with Zod validation and role rules, feeds, tests (including a mutation check), `docs/api-reference.md` regenerated, a blueprint entry.
+The mockup's "change the price of an order" is `quotes/revise`, so no separate `orders/adjust_total` was built. The baker's own usage history is the `usage_inbox` feed, which now shows a baker their own reports.
 
 ## Wiring order
 

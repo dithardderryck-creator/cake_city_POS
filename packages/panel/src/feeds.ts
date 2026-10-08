@@ -60,6 +60,8 @@ import {
 } from './circuits/order-logic';
 import { loadOrderBundle } from './circuits/orders';
 import { batchFeeds, type BatchLogData } from './circuits/batches';
+import { daysLeftInfo } from './days-left';
+import { reportFeeds, type ReportsData, type ReportsParams } from './circuits/reports';
 import { countFeeds, type CountSessionData } from './circuits/count';
 import { announcementFeeds, type AnnouncementsData } from './circuits/announcements';
 import { moneyFeeds, type PaymentsLedgerData, type ReceiptData } from './circuits/money-feeds';
@@ -579,6 +581,7 @@ export interface FeedMap {
   announcements: { params: Record<string, never>; data: AnnouncementsData };
   count_session: { params: Record<string, never>; data: CountSessionData };
   batch_log: { params: Record<string, never>; data: BatchLogData };
+  reports: { params: ReportsParams; data: ReportsData };
   receipt: { params: { orderId: string }; data: ReceiptData };
   notification_setup: { params: Record<string, never>; data: NotificationSetupData };
   notification_log: { params: Record<string, never>; data: NotificationLogRow[] };
@@ -664,26 +667,6 @@ const SCALING_LABEL: Record<RuleScaling, string> = {
 };
 
 const REPORT_LABEL: Record<UsageReport['status'], string> = { reported: 'Waiting for Inventory', confirmed: 'Confirmed', sent_back: 'Sent back' };
-
-const USAGE_WINDOW_DAYS = 14;
-const MIN_USAGE_RECORDS = 3;
-const MIN_HISTORY_DAYS = 3;
-
-/** Days of stock left from confirmed usage only (BR-14). Honest about having too little history. */
-function daysLeftInfo(onHand: number, usage: IngredientMovement[], now: Date): { days: number | null; label: string } {
-  const used = usage.filter((m) => m.reason === 'usage');
-  if (used.length < MIN_USAGE_RECORDS) return { days: null, label: 'Not enough data yet' };
-  const first = Math.min(...used.map((m) => Date.parse(m.at)));
-  const historyDays = (now.getTime() - first) / 86_400_000;
-  if (historyDays < MIN_HISTORY_DAYS) return { days: null, label: 'Not enough data yet' };
-  const windowDays = Math.min(USAGE_WINDOW_DAYS, historyDays);
-  const since = now.getTime() - windowDays * 86_400_000;
-  const total = used.filter((m) => Date.parse(m.at) >= since).reduce((s, m) => s - m.qty, 0);
-  if (total <= 0) return { days: null, label: 'No recent use' };
-  const days = onHand / (total / windowDays);
-  if (onHand <= 0) return { days: 0, label: 'Out of stock' };
-  return { days, label: days < 1 ? 'Less than a day' : `About ${Math.floor(days)} ${Math.floor(days) === 1 ? 'day' : 'days'}` };
-}
 
 function bestRange(ranges: Ingredient['ranges'], qty: number | null): string | null {
   if (qty === null || ranges.length === 0) return null;
@@ -799,6 +782,7 @@ export const feeds: FeedRegistry = {
   ...announcementFeeds,
   ...countFeeds,
   ...batchFeeds,
+  ...reportFeeds,
   me: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => session!,
