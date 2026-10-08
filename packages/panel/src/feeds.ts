@@ -59,6 +59,7 @@ import {
   type Tone,
 } from './circuits/order-logic';
 import { loadOrderBundle } from './circuits/orders';
+import { batchFeeds, type BatchLogData } from './circuits/batches';
 import { countFeeds, type CountSessionData } from './circuits/count';
 import { announcementFeeds, type AnnouncementsData } from './circuits/announcements';
 import { moneyFeeds, type PaymentsLedgerData, type ReceiptData } from './circuits/money-feeds';
@@ -577,6 +578,7 @@ export interface FeedMap {
   payments_ledger: { params: { day?: string }; data: PaymentsLedgerData };
   announcements: { params: Record<string, never>; data: AnnouncementsData };
   count_session: { params: Record<string, never>; data: CountSessionData };
+  batch_log: { params: Record<string, never>; data: BatchLogData };
   receipt: { params: { orderId: string }; data: ReceiptData };
   notification_setup: { params: Record<string, never>; data: NotificationSetupData };
   notification_log: { params: Record<string, never>; data: NotificationLogRow[] };
@@ -796,6 +798,7 @@ export const feeds: FeedRegistry = {
   ...moneyFeeds,
   ...announcementFeeds,
   ...countFeeds,
+  ...batchFeeds,
   me: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => session!,

@@ -31,6 +31,10 @@ export interface IntentMap {
   'catalogue/toggle_available_today': { productId: Id; available: boolean };
 
   'stock/set_count': { combinationId: Id; count: number };
+  /** The baker made `qty` finished items. Adds to the counter stock of that version of the product. */
+  'batches/log': { combinationId: Id; qty: number; note?: string };
+  /** Take back a batch logged by mistake. The baker who logged it has 30 minutes; the owner any time. Refused if some of it has been sold. */
+  'batches/undo': { batchId: Id };
 
   'orders/create_order': {
     customerName?: string;

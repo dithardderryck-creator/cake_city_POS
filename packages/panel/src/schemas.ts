@@ -135,6 +135,9 @@ export const schemas = {
   'inventory/count': z.strictObject({ ingredientId: id, counted: qty, unit: unit.optional(), note: longText.optional() }),
   'inventory/write_off': z.strictObject({ ingredientId: id, qty, unit: unit.optional(), note: longText.optional() }),
 
+  'batches/log': z.strictObject({ combinationId: id, qty: z.number().int().min(1).max(1000), note: z.string().max(80).optional() }),
+  'batches/undo': z.strictObject({ batchId: id }),
+
   'count/start': z.strictObject({}),
   'count/record': z.strictObject({ sessionId: id, ingredientId: id, counted: qty.nullable(), unit: unit.optional() }),
   'count/submit': z.strictObject({ sessionId: id }),
@@ -257,6 +260,7 @@ export const feedSchemas = {
   request_inbox: empty,
   announcements: empty,
   count_session: empty,
+  batch_log: empty,
   payments_ledger: z.strictObject({ day: z.string().max(10).optional() }),
   receipt: z.strictObject({ orderId: id }),
   notification_setup: empty,

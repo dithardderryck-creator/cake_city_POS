@@ -663,6 +663,26 @@ Allowed: **owner, inventory**
 | --- | --- | --- | --- |
 | `sessionId` | string | yes | min length 1, max length 64 |
 
+### Stock
+
+#### `batches/log`
+
+Allowed: **baker, owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `combinationId` | string | yes | min length 1, max length 64 |
+| `qty` | integer | yes | min 1, max 1000 |
+| `note` | string | no | max length 80 |
+
+#### `batches/undo`
+
+Allowed: **baker, owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `batchId` | string | yes | min length 1, max length 64 |
+
 ### Notify
 
 #### `staff/set_contact`
@@ -763,6 +783,12 @@ _No fields. Send an empty object `{}`._
 #### `count_session`
 
 Allowed: **owner, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `batch_log`
+
+Allowed: **baker, owner, inventory**
 
 _No fields. Send an empty object `{}`._
 

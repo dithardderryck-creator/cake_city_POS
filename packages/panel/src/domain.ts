@@ -533,6 +533,22 @@ export interface Refund {
   at: string;
 }
 
+/** A batch of finished, ready-to-sell items the baker made. It adds to the counter stock of one version of a product. */
+export interface Batch {
+  id: Id;
+  combinationId: Id;
+  productId: Id;
+  /** For example "Brownie" or "Chocolate cake, 8-inch". */
+  label: string;
+  qty: number;
+  note?: string;
+  byId: Id;
+  byName: string;
+  at: string;
+  /** Taken back after a mistake. The stock it added is taken off again. */
+  undoneAt?: string;
+}
+
 export interface StockMovement {
   id: Id;
   combinationId: Id;

@@ -33,6 +33,7 @@ export const COLLECTIONS = [
   'staffRequests',
   'announcements',
   'countSessions',
+  'batches',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

@@ -207,6 +207,13 @@ A message from the owner to all staff. Not a conversation: staff can read it and
 - **Instructions.** `announcements/post` (owner; `text` up to 500 characters, `requiresAck`), `announcements/mark_seen` (send when a person opens one; safe to repeat; the owner opening it does not count), `announcements/acknowledge` (not the owner; refused if the announcement did not ask for it; counts as reading it), `announcements/retire` (owner; takes it down for everyone but keeps it in the record).
 - **Limits.** 20 announcements up at once. People who are no longer active are not counted as readers.
 
+### Batches (finished items)
+
+The baker logs a batch of ready-made items (brownies, cupcakes). It adds to the counter stock of that version of the product, so the cashier sees it straight away.
+
+- **Feed.** `batch_log` (baker, owner and inventory; inventory can only look). `options` lists every active product version by name, with `onHand`, for the product picker. `rows` are the latest 40 batches (newest first, those taken back are left out) with `label`, `qty`, `note`, `byName`, `timeText` and `canUndo`. `today` has the batch and item totals. `can.log` says whether this person may log, and `undoMinutes` is 30.
+- **Instructions.** `batches/log` (`combinationId`, `qty` a whole number 1 to 1000, optional `note` up to 80 characters; baker and owner), `batches/undo` (`batchId`). The baker who logged a batch can take it back for 30 minutes; the owner at any time. It is refused if some of the batch has already been sold (the stock would go below zero). Both write a stock movement and the audit log.
+
 ### Daily count and packaging
 
 **Packaging.** Stock items have a `kind`: `ingredient` (default) or `packaging` (boxes, boards, ribbon). Packaging is counted and reordered like an ingredient but has no baker usage amounts and cannot be in a recipe rule. Set it with `kind` on `inventory/create_ingredient` or `inventory/update_ingredient`. `ingredient_list` rows carry `kind` and `countedAt` (when the item was last counted, or null), so the screen can offer Ingredients and Packaging tabs.

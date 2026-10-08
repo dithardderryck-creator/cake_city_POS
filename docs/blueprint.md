@@ -554,6 +554,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-69** | **Staff requests follow the new screens' lifecycle:** Sent, Seen, Acknowledged, Done, Confirmed (the sender confirms; they can reopen). This replaces "Resolved only by the sender or owner" in 5.4. A request may carry answers to choose from (a question), and the answer closes it. The owner sees every request. Escalation uses the alert engine: urgent requests alert the people they are for at once and the owner (critical) after 15 minutes; ordinary ones after 4 hours, owner after 8. Both timings are owner settings |
 | **D-70** | **Announcements are one-way.** Only the owner posts. Staff read them and, when asked, acknowledge (which counts as reading). The owner sees who has read and who has acknowledged. No replies: questions go through requests. The owner can take one down; it stays in the record |
 | **D-71** | **The daily count is saved on the server while it is done, and applied all at once at the end.** One count is open at a time and anyone with Inventory or Owner can pick it up. Skipped items are left alone. A difference of 10% or more is big and goes to the owner as a request (unless the owner counted). Packaging is a kind of stock item (`kind`), not a separate system |
+| **D-72** | **A batch is a record that adds to the counter stock of one version of a product.** The baker can take it back for 30 minutes, the owner any time, and never if some of it has been sold. Counter stock stays on the product version, so sales, the catalogue and the owner's stock changes all see the same number |
 | **D-54** | **Offline model.** An internet outage does not affect the shop. If the server or the shop network is down, devices **cannot sell** (there is no per-device offline mode). The client reports "offline" and retries safely. Mitigations: UPS, a spare computer, a practised restore, and a paper fallback |
 
 ---
@@ -582,7 +583,7 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Auth: PIN sign-in, lockout, stored sessions, change PIN | Built | scrypt on the server. Sessions survive restarts |
 | Staff management (create, reset PIN, switch off) | Built | Last owner and own account protected |
 | Catalogue (products, option groups, combination grid, manual prices) | Built | No UI yet to *create* products or option groups |
-| Stock (set count, decrement at completion, committed vs on hand) | Partly built | No batches yet. The daily count and its review are built (D-71) |
+| Stock (set count, decrement at completion, committed vs on hand) | Partly built | Batches, the daily count and its review are built (D-71, D-72) |
 | Orders (catalogue lines, derived status, snapshot prices) | Built | Delivery details can be changed after the order is started |
 | Payments (cash default, partial exception, owner-only refunds) | Built | Q-01 handled as allow with warning (D-43) |
 | Shop server: HTTP API, WebSocket live feeds, static UI serving, optional HTTPS | Built | Tested end to end over real connections |
@@ -611,7 +612,7 @@ What exists in the repo today against this blueprint. Update this table whenever
 | Owner reports | Not built | |
 | Receipts (print, WhatsApp/SMS) | Not built | |
 | Daily count with review of differences, big differences to the owner | Built | D-71 |
-| Counter day: batches of ready-made items | Not built | |
+| Batches of ready-made items (log, take back within 30 minutes) | Built | D-72 |
 | Online copy: backups to Google Drive (nightly or every few hours), retried when offline | Built | Tested against a stand-in for Google, not a real account (O-18) |
 | Archiving old finished orders and activity to .xlsx and Google Sheets | Built | Safety order BR-38. Local folder is configurable. `google-auth`, `archive` in the admin tool |
 | Live cloud database used by every device | Not built | The shop computer stays primary (D-67, O-19) |

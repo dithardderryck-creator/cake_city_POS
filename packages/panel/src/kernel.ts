@@ -24,6 +24,7 @@ import { NOTIFY_ITEM_TTL_MS, notifyIntents, planDue, recordResults } from './cir
 import { requestIntents } from './circuits/requests';
 import { announcementIntents } from './circuits/announcements';
 import { countIntents } from './circuits/count';
+import { batchIntents } from './circuits/batches';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
@@ -152,6 +153,7 @@ const registry = {
   ...requestIntents,
   ...announcementIntents,
   ...countIntents,
+  ...batchIntents,
   ...notifyIntents,
   ...paymentIntents,
   ...syncIntents,
