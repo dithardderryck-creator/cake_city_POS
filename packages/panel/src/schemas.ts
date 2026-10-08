@@ -119,6 +119,7 @@ export const schemas = {
     allergens: z.array(name).max(20).optional(),
     ranges: z.array(rangeInput.omit({ id: true })).max(12).optional(),
     openingStock: qty.optional(),
+    kind: z.enum(['ingredient', 'packaging']).optional(),
   }),
   'inventory/update_ingredient': z.strictObject({
     ingredientId: id,
@@ -127,11 +128,17 @@ export const schemas = {
     allergens: z.array(name).max(20).optional(),
     ranges: z.array(rangeInput).max(12).optional(),
     active: z.boolean().optional(),
+    kind: z.enum(['ingredient', 'packaging']).optional(),
     unit: unit.optional(),
   }),
   'inventory/receive': z.strictObject({ ingredientId: id, qty, unit: unit.optional(), note: longText.optional() }),
   'inventory/count': z.strictObject({ ingredientId: id, counted: qty, unit: unit.optional(), note: longText.optional() }),
   'inventory/write_off': z.strictObject({ ingredientId: id, qty, unit: unit.optional(), note: longText.optional() }),
+
+  'count/start': z.strictObject({}),
+  'count/record': z.strictObject({ sessionId: id, ingredientId: id, counted: qty.nullable(), unit: unit.optional() }),
+  'count/submit': z.strictObject({ sessionId: id }),
+  'count/discard': z.strictObject({ sessionId: id }),
 
   'recipes/save_rule': z.strictObject({
     ruleId: id.optional(),
@@ -249,6 +256,7 @@ export const feedSchemas = {
   alert_inbox: empty,
   request_inbox: empty,
   announcements: empty,
+  count_session: empty,
   payments_ledger: z.strictObject({ day: z.string().max(10).optional() }),
   receipt: z.strictObject({ orderId: id }),
   notification_setup: empty,

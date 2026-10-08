@@ -365,6 +365,7 @@ Allowed: **owner, inventory**
 | `allergens` | string[] | no | max 20 items |
 | `ranges` | { label: string, min: number, max: number }[] | no | max 12 items |
 | `openingStock` | number | no | min 0, max 1000000000 |
+| `kind` | "ingredient" \| "packaging" | no |  |
 
 #### `inventory/update_ingredient`
 
@@ -378,6 +379,7 @@ Allowed: **owner, inventory**
 | `allergens` | string[] | no | max 20 items |
 | `ranges` | { id?: string, label: string, min: number, max: number }[] | no | max 12 items |
 | `active` | boolean | no |  |
+| `kind` | "ingredient" \| "packaging" | no |  |
 | `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | no |  |
 
 #### `inventory/receive`
@@ -626,6 +628,41 @@ Allowed: **owner**
 | --- | --- | --- | --- |
 | `announcementId` | string | yes | min length 1, max length 64 |
 
+### Inventory
+
+#### `count/start`
+
+Allowed: **owner, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `count/record`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `sessionId` | string | yes | min length 1, max length 64 |
+| `ingredientId` | string | yes | min length 1, max length 64 |
+| `counted` | any | yes |  |
+| `unit` | "mg" \| "g" \| "kg" \| "t" \| "oz" \| "lb" \| "ml" \| "cl" \| "dl" \| "l" \| "tsp" \| "tbsp" \| "cup" \| "fl_oz" \| "pcs" \| "dozen" | no |  |
+
+#### `count/submit`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `sessionId` | string | yes | min length 1, max length 64 |
+
+#### `count/discard`
+
+Allowed: **owner, inventory**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `sessionId` | string | yes | min length 1, max length 64 |
+
 ### Notify
 
 #### `staff/set_contact`
@@ -720,6 +757,12 @@ Allowed: **owner, cashier**
 #### `announcements`
 
 Allowed: **owner, cashier, baker, inventory, it**
+
+_No fields. Send an empty object `{}`._
+
+#### `count_session`
+
+Allowed: **owner, inventory**
 
 _No fields. Send an empty object `{}`._
 

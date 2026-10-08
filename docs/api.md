@@ -207,6 +207,17 @@ A message from the owner to all staff. Not a conversation: staff can read it and
 - **Instructions.** `announcements/post` (owner; `text` up to 500 characters, `requiresAck`), `announcements/mark_seen` (send when a person opens one; safe to repeat; the owner opening it does not count), `announcements/acknowledge` (not the owner; refused if the announcement did not ask for it; counts as reading it), `announcements/retire` (owner; takes it down for everyone but keeps it in the record).
 - **Limits.** 20 announcements up at once. People who are no longer active are not counted as readers.
 
+### Daily count and packaging
+
+**Packaging.** Stock items have a `kind`: `ingredient` (default) or `packaging` (boxes, boards, ribbon). Packaging is counted and reordered like an ingredient but has no baker usage amounts and cannot be in a recipe rule. Set it with `kind` on `inventory/create_ingredient` or `inventory/update_ingredient`. `ingredient_list` rows carry `kind` and `countedAt` (when the item was last counted, or null), so the screen can offer Ingredients and Packaging tabs.
+
+**The daily count.** Counts are kept on the server while the person works through the list, so a count can be put down and picked up again, even on another device. Stock does not change until the count is submitted.
+
+- **Feed.** `count_session` (owner and inventory). `countedToday` is the time of day of today's count or null. `session` is null when no count is in progress; otherwise it has `done`, `total`, `skipped`, `differences`, `big` and `items`. Each item has what is expected, what has been counted (or null), `difference` and `differenceText` ("−1 kg", "matches"), `big`, `step` (how much the + and − buttons change the number), `lastCountedText`, and `kind` (ingredients come first, then packaging). `history` lists the last 10 submitted counts. `bigDifferencePercent` is 10.
+- **Instructions.** `count/start` (starts one, or picks up the one already in progress and says `resumed: true`), `count/record` (`sessionId`, `ingredientId`, `counted`, optional `unit`; `counted: null` skips the item or clears its count), `count/submit` (applies everything counted, leaves skipped items alone), `count/discard` (throws it away).
+- **Big differences.** A difference of 10% or more is "big". When someone other than the owner submits a count with big differences, the owner gets a request ("Count differences need a look") listing them, and the result says `ownerNotified: true`. Each applied difference is a stock correction ("Daily count") and can raise a low-stock alert.
+- **Closing review.** The review of differences before saving is the screen reading the same feed (`difference`, `big` and the `differences` and `big` totals). Nothing is applied until `count/submit`.
+
 ### Payments list, receipts and shop details
 
 - **`payments_ledger`** (owner, cashier; `{ day?: "YYYY-MM-DD" }`, today by default). Every payment, deposit and refund of that day, newest first, with `totals`, `byMethod` (with `share` for a bar), and `outstanding`: orders that still owe money (orders still waiting for a price are left out). A *deposit* is a payment that did not finish paying the order. A refund puts the refunded amount back on what the customer owes.

@@ -265,7 +265,38 @@ export interface Ingredient {
   ranges: IngredientRange[];
   /** Switched off instead of deleted, like products (BR-10). */
   active: boolean;
+  /** Boxes, boards and ribbon are packaging. They are counted and reordered like ingredients but never appear in recipes. Missing means ingredient. */
+  kind?: 'ingredient' | 'packaging';
+  /** When it was last counted (a single count or the daily count). */
+  countedAt?: string;
   createdAt: string;
+}
+
+/**
+ * A daily count. Counts are kept on the server while the person works through the list, so it can be put down and
+ * picked up again (even on another device). Nothing changes in stock until it is submitted.
+ */
+export interface CountSession {
+  id: Id;
+  status: 'open' | 'submitted' | 'discarded';
+  startedById: Id;
+  startedByName: string;
+  startedAt: string;
+  /** Amounts counted so far, in each item's base unit. An item not in here is skipped. */
+  counts: Record<Id, number>;
+  submittedAt?: string;
+  /** Filled in when submitted. What was expected, what was counted, and whether the difference was big. */
+  results?: CountResult[];
+}
+export interface CountResult {
+  ingredientId: Id;
+  name: string;
+  unit: IngredientUnit;
+  expected: number;
+  counted: number;
+  difference: number;
+  /** At least 10% away from what was expected. */
+  big: boolean;
 }
 
 export interface IngredientMovement {

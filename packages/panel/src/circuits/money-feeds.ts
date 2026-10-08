@@ -1,6 +1,6 @@
 import type { Order, OrderLine, Payment, PaymentMethod, Refund, Staff } from '../domain';
 import type { FeedDef } from '../feeds';
-import { todayLocal } from './dates';
+import { hhmm, localDay, todayLocal } from './dates';
 import { STATUS_LABEL, deriveOrderStatus, lineTotal, moneySummary, round2 } from './order-logic';
 import { loadSettings } from './settings';
 
@@ -69,11 +69,6 @@ export interface ReceiptData {
 
 export const METHOD_NAME: Record<PaymentMethod, string> = { cash: 'Cash', card: 'Card', bank_transfer: 'Bank transfer', mobile_money: 'Mobile money' };
 
-const localDay = (iso: string) => todayLocal(new Date(iso));
-const hhmm = (iso: string) => {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-};
 const longDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const stamp = (iso: string) => `${longDate(iso)} ${hhmm(iso)}`;
 

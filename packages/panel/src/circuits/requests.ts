@@ -1,6 +1,6 @@
 import type { Order, Role, Session, Staff, StaffRequest } from '../domain';
 import { REQUEST_CATEGORIES } from '../domain';
-import type { HandlerCtx, Registry } from '../intents';
+import type { HandlerCtx, IntentMap, Registry } from '../intents';
 import { DomainError } from '../intents';
 
 export const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', cashier: 'Cashier', baker: 'Baker', inventory: 'Inventory', it: 'IT' };
@@ -56,6 +56,34 @@ function change(ctx: HandlerCtx, r: StaffRequest, patch: Partial<StaffRequest>, 
   return { ...r, ...patch, updatedAt: ctx.now(), timeline: [...r.timeline, note(ctx, text)] };
 }
 
+/** A new request, ready to store. Used when a person sends one and when the shop sends one on their behalf (such as count differences to the owner). */
+export function buildRequest(ctx: Pick<HandlerCtx, 'ids' | 'now'>, me: Pick<Session, 'userId' | 'name' | 'role'>, p: IntentMap['requests/send'], to?: Staff): StaffRequest {
+  const audience: Role = to ? to.role : p.toRole!;
+  return {
+    id: ctx.ids.next('req'),
+    category: p.category,
+    tag: p.category === 'Other' ? clean(p.tag) : undefined,
+    urgent: !!p.urgent,
+    title: p.title.trim(),
+    body: clean(p.body),
+    link: clean(p.link),
+    orderId: p.orderId,
+    fromId: me.userId,
+    fromName: me.name,
+    fromRole: me.role,
+    toRole: p.toRole,
+    toUserId: p.toUserId,
+    toName: to?.name,
+    audience,
+    choices: p.choices?.map((c) => c.trim()),
+    status: 'sent',
+    createdAt: ctx.now(),
+    updatedAt: ctx.now(),
+    seenBy: {},
+    timeline: [note(ctx, `${me.name} sent the request`)],
+  };
+}
+
 export const requestIntents = {
   'requests/send': {
     circuit: 'Messages',
@@ -85,36 +113,13 @@ export const requestIntents = {
     handle: async (p, ctx) => {
       const me = ctx.session!;
       const to = p.toUserId ? (await ctx.store.get<Staff>('staff', p.toUserId))! : undefined;
-      const audience: Role = to ? to.role : p.toRole!;
-      const r: StaffRequest = {
-        id: ctx.ids.next('req'),
-        category: p.category,
-        tag: p.category === 'Other' ? clean(p.tag) : undefined,
-        urgent: !!p.urgent,
-        title: p.title.trim(),
-        body: clean(p.body),
-        link: clean(p.link),
-        orderId: p.orderId,
-        fromId: me.userId,
-        fromName: me.name,
-        fromRole: me.role,
-        toRole: p.toRole,
-        toUserId: p.toUserId,
-        toName: to?.name,
-        audience,
-        choices: p.choices?.map((c) => c.trim()),
-        status: 'sent',
-        createdAt: ctx.now(),
-        updatedAt: ctx.now(),
-        seenBy: {},
-        timeline: [note(ctx, `${me.name} sent the request`)],
-      };
+      const r = buildRequest(ctx, me, p, to);
       await ctx.store.put('staffRequests', r);
       return {
-        summary: `Sent a${r.urgent ? 'n urgent' : ''} request to ${to?.name ?? ROLE_LABEL[audience]}: ${r.title}`,
+        summary: `Sent a${r.urgent ? 'n urgent' : ''} request to ${to?.name ?? ROLE_LABEL[r.audience]}: ${r.title}`,
         target: r.id,
         data: { requestId: r.id },
-        events: [{ type: 'RequestSent', payload: { requestId: r.id, urgent: r.urgent, audience } }],
+        events: [{ type: 'RequestSent', payload: { requestId: r.id, urgent: r.urgent, audience: r.audience } }],
       };
     },
   },

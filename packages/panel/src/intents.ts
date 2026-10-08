@@ -81,6 +81,8 @@ export interface IntentMap {
     allergens?: string[];
     ranges?: { label: string; min: number; max: number }[];
     openingStock?: number;
+    /** Packaging (boxes, boards, ribbon) has no baker usage amounts and no recipes. Default: ingredient. */
+    kind?: 'ingredient' | 'packaging';
   };
   'inventory/update_ingredient': {
     ingredientId: Id;
@@ -90,12 +92,22 @@ export interface IntentMap {
     /** Replaces the whole list. Keep an `id` to keep that amount's identity. */
     ranges?: { id?: Id; label: string; min: number; max: number }[];
     active?: boolean;
+    kind?: 'ingredient' | 'packaging';
     /** The unit `reorderLevel` and `ranges` are written in. */
     unit?: UnitCode;
   };
   'inventory/receive': { ingredientId: Id; qty: number; unit?: UnitCode; note?: string };
   'inventory/count': { ingredientId: Id; counted: number; unit?: UnitCode; note?: string };
   'inventory/write_off': { ingredientId: Id; qty: number; unit?: UnitCode; note?: string };
+
+  /** Start the daily count, or pick up the one already in progress (then `resumed` is true in the result). */
+  'count/start': Record<string, never>;
+  /** Write down one item's count. `counted: null` skips it (clears a count already written). Stock does not change yet. */
+  'count/record': { sessionId: Id; ingredientId: Id; counted: number | null; unit?: UnitCode };
+  /** Apply everything counted. Skipped items are left alone. Big differences (10% or more) go to the owner as a request. */
+  'count/submit': { sessionId: Id };
+  /** Throw the count away without changing stock. */
+  'count/discard': { sessionId: Id };
 
   'recipes/save_rule': {
     ruleId?: Id;

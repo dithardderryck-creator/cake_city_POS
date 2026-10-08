@@ -59,6 +59,7 @@ import {
   type Tone,
 } from './circuits/order-logic';
 import { loadOrderBundle } from './circuits/orders';
+import { countFeeds, type CountSessionData } from './circuits/count';
 import { announcementFeeds, type AnnouncementsData } from './circuits/announcements';
 import { moneyFeeds, type PaymentsLedgerData, type ReceiptData } from './circuits/money-feeds';
 
@@ -373,6 +374,9 @@ export interface IngredientRow {
   allergens: string[];
   ranges: RangeRow[];
   active: boolean;
+  kind: 'ingredient' | 'packaging';
+  /** When it was last counted, or null. */
+  countedAt: string | null;
   /** Reported by bakers but not yet confirmed by Inventory (BR-12). Stock has not moved yet. */
   pending: { min: number; max: number; text: string; reports: number } | null;
   /** From confirmed usage over the last 14 days (BR-14). Null when there is not enough history. */
@@ -572,6 +576,7 @@ export interface FeedMap {
   request_inbox: { params: Record<string, never>; data: RequestInboxData };
   payments_ledger: { params: { day?: string }; data: PaymentsLedgerData };
   announcements: { params: Record<string, never>; data: AnnouncementsData };
+  count_session: { params: Record<string, never>; data: CountSessionData };
   receipt: { params: { orderId: string }; data: ReceiptData };
   notification_setup: { params: Record<string, never>; data: NotificationSetupData };
   notification_log: { params: Record<string, never>; data: NotificationLogRow[] };
@@ -790,6 +795,7 @@ const NAV: Record<Role, NavItem[]> = {
 export const feeds: FeedRegistry = {
   ...moneyFeeds,
   ...announcementFeeds,
+  ...countFeeds,
   me: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => session!,
@@ -1208,6 +1214,8 @@ export const feeds: FeedRegistry = {
             allergens: i.allergens,
             ranges: rangeRows(i),
             active: i.active,
+            kind: i.kind ?? 'ingredient',
+            countedAt: i.countedAt ?? null,
             pending: waiting.length ? { min: waiting.reduce((s, x) => s + x.min, 0), max: waiting.reduce((s, x) => s + x.max, 0), text: rangeText(waiting.reduce((s, x) => s + x.min, 0), waiting.reduce((s, x) => s + x.max, 0), i.unit), reports: waiting.length } : null,
             daysLeft: dl.days === null ? null : Math.round(dl.days * 10) / 10,
             daysLeftLabel: dl.label,
