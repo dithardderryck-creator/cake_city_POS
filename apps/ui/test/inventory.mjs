@@ -98,6 +98,7 @@ try {
   await page.click('nav.xtabs [data-v="usage"]');
   await until(async () => (await page.locator('#ulist .rc').count()) === 1, 'report listed live');
   assert.match(await txt(page, '#udet'), /Flour/);
+  assert.match(await txt(page, '#ulist'), /1 ingredient(?!s)/, 'singular wording for one ingredient');
   await page.screenshot({ path: `${shots}/usage.png` });
   await page.fill('#udet .ux', '0.35');
   await page.click('#udet [data-a="uok"]');
@@ -161,6 +162,7 @@ try {
   watch(pp, 'phone');
   await signInAs(pp, shop.base, 'inventory');
   await pp.waitForSelector('#sg .rc');
+  assert.equal(await pp.locator('.find kbd').isVisible(), false, 'no keyboard hint on a phone');
   for (const v of ['stock', 'usage', 'count', 'requests']) {
     await pp.click(`nav.xtabs [data-v="${v}"]`);
     assert.equal(await pp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `no sideways scroll on ${v}`);
