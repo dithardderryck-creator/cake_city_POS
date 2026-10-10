@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cake POS · Cashier</title>
+<link rel="stylesheet" href="/fonts.css">
+<style>
+:root{--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--on:#1a1208;--ease:cubic-bezier(.32,.72,0,1);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="light"]{--bg:#FDFBF7;--paper:#F5F1E8;--surf:#fff;--line:#E6DECD;--ink:#1F1A13;--mute:#6B5E4F;--cop:#C47F3D;--cop-s:#C47F3D1f;--sage:#5E7247;--sage-s:#5E72471c;--risk:#B4452F;--risk-s:#B4452F18;--on:#fff}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:hidden;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:400 15px/1.45 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--cop);outline-offset:2px}
+h1,h2,.num{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
+h2{font-size:17px;margin:0}.mute{color:var(--mute)}.sm{font-size:12px}[hidden]{display:none!important}
+input,select,textarea{width:100%;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit}
+textarea{padding:10px 12px;min-height:64px;resize:none}label{display:block;font-size:12px;color:var(--mute);margin:0 0 4px}
+
+.brand{font:600 20px Fraunces,serif}.brand i{font-style:normal;color:var(--cop)}
+
+
+
+
+
+
+.tkh{display:none}
+
+
+
+
+
+
+.ban{flex:none;background:var(--risk-s);color:var(--risk);padding:8px clamp(10px,2vw,24px);font-weight:600;font-size:13px}
+main{flex:1;min-height:0;width:100%;max-width:1320px;margin:0 auto;padding:clamp(10px,1.6vw,20px) clamp(10px,2vw,24px);display:flex;flex-direction:column}
+.view{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto}#v-sell,#v-orders{overflow:hidden}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.b{min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-weight:600;transition:transform .15s}
+.b:active{transform:scale(.97)}.b.p{background:var(--cop);border-color:var(--cop);color:var(--on)}.b.r{border-color:var(--risk);color:var(--risk)}.b:disabled{opacity:.4;cursor:not-allowed}
+.seg{display:inline-flex;background:var(--paper);border-radius:999px;padding:3px;flex-wrap:wrap}
+.seg button{min-height:38px;padding:0 14px;border-radius:999px;color:var(--mute);font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--cop);color:var(--on);font-weight:600}
+.chip{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--paper);color:var(--mute);white-space:nowrap}
+.chip.ok{background:var(--sage-s);color:var(--sage)}.chip.cop{background:var(--cop-s);color:var(--cop)}.chip.risk{background:var(--risk-s);color:var(--risk)}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.tools input{max-width:300px}
+.pos{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:16px}
+.cat{display:flex;flex-direction:column;min-height:0}
+.cats{display:flex;gap:8px;margin:10px 0 12px;flex-wrap:wrap}
+.cats button{min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.cats button[aria-pressed="true"]{background:var(--cop-s);border-color:var(--cop);color:var(--ink);font-weight:600}
+.tiles{flex:1;min-height:0;overflow-y:auto;align-content:start;padding:2px 4px 8px 2px;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.tile{text-align:left;min-height:112px;padding:14px;border-radius:14px;background:var(--surf);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px;transition:transform .15s,border-color .3s}
+.tile:hover{border-color:var(--cop)}.tile:active{transform:scale(.97)}.tile[disabled]{opacity:.45;cursor:not-allowed}
+.tile .nm{font-weight:600}.tile .op{color:var(--mute);font-size:12px;flex:1}.tile .pr{color:var(--cop);font-size:16px}
+.tk{display:flex;flex-direction:column;min-height:0;overflow-y:auto}.tk>*{flex:none}.tk>#lines{flex:1 1 auto}
+#lines{min-height:80px;overflow-y:auto;overscroll-behavior:contain;margin-top:6px;padding-right:4px}
+.ln{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.q{display:flex;align-items:center;gap:4px}.q button{width:38px;height:38px;border-radius:10px;background:var(--paper);border:1px solid var(--line);font-size:18px}.q b{min-width:22px;text-align:center}
+.det{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.det .w{grid-column:1/-1}
+.tot{font-size:30px;font-weight:600;margin:8px 0;border-top:1px solid var(--line);padding-top:8px}
+.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.pay button{min-height:44px;border-radius:12px;border:1px solid var(--line);color:var(--mute)}.pay button[aria-pressed="true"]{border-color:var(--cop);background:var(--cop-s);color:var(--ink);font-weight:600}
+.cash input{min-height:50px;font:600 22px Fraunces,Georgia,serif}.cs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.cs div{padding:7px 12px;border-radius:10px;background:var(--paper);display:flex;flex-direction:column}.cs small{color:var(--mute);font-size:12px}.cs b{font:600 17px Fraunces,serif}
+.cs .ok b{color:var(--sage)}.cs .short b{color:var(--risk)}
+.lst{display:grid;gap:10px}
+.or{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.or .r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.tg{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
+.form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:980px}.form .w{grid-column:1/-1}.form .w2{grid-column:span 2}
+.rqd{color:var(--cop);font-weight:500;margin-left:6px}
+.dz{border:2px dashed var(--line);border-radius:14px;min-height:112px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--mute);cursor:pointer;transition:border-color .2s,background .2s}
+.dz:hover,.dz.on{border-color:var(--cop);background:var(--cop-s);color:var(--ink)}
+.th{display:flex;gap:8px;margin-top:8px}.th div{position:relative}.th img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.th button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--risk);color:#fff;font-size:12px}
+.rq{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start}.rq input[type=checkbox]{width:22px;height:22px;min-height:0;margin-top:3px}
+.rq.un{border-left:3px solid var(--cop)}.rq.dm{opacity:.6}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}.kp b{font-size:22px;display:block}
+.ov{position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:20;padding:16px}
+.dlg{background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:20px;width:min(440px,100%);max-height:90dvh;overflow-y:auto}
+.drw{position:fixed;inset:0 0 0 auto;width:min(420px,100%);background:var(--bg);border-left:1px solid var(--line);z-index:15;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.lock{position:fixed;inset:0;background:var(--bg);z-index:30;display:grid;place-items:center}
+.dots{display:flex;gap:12px;justify-content:center;margin:16px 0}.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--cop)}.dots i.on{background:var(--cop)}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px;justify-content:center}.pad button{height:60px;border-radius:14px;background:var(--paper);border:1px solid var(--line);font:600 22px Fraunces,serif}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:all .35s var(--ease);z-index:40}.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:960px){.pos{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.8fr) minmax(0,1.4fr)}.form{grid-template-columns:1fr 1fr}.or{grid-template-columns:1fr}.or .r{align-items:flex-start}}
+@media(max-width:1100px){}
+@media(max-width:700px){.brand{order:1}
+ .pos{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}.tiles{padding-bottom:84px;grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}
+ .tk{position:fixed;left:0;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:12;max-height:88dvh;border-radius:18px 18px 0 0;transform:translateY(calc(100% - 64px));transition:transform .35s var(--ease);box-shadow:0 -8px 24px #0006}.tk.open{transform:none}
+ .tkh{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:48px;width:100%;margin:-4px 0 6px;font-weight:600}}
+@media(max-width:560px){.form{grid-template-columns:1fr}.form .w2{grid-column:auto}.tools input{max-width:none;flex:1 1 100%}.dtd-h{display:none}}
+@media(max-width:430px){}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* shared header, same as the Owner page */
+:root{--cop-d:#e3a458;--sh:0 10px 28px -14px #000a}:root[data-theme="light"]{--cop-d:#9A5F2A;--sh:0 1px 2px #1f1a1308,0 10px 28px -14px #1f1a1322}
+.xhead{position:sticky;top:0;z-index:12;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
+.xtop{display:flex;align-items:center;gap:12px;padding:10px clamp(16px,3vw,40px) 6px;max-width:1260px;margin:0 auto}
+.xtop .brand{flex:none;display:flex;align-items:center;gap:8px}.xmk{display:none;width:36px;height:36px;border-radius:50%;background:var(--cop);color:#fff;place-items:center;font:600 17px Fraunces,serif}
+.xpw{flex:1 1 0;min-width:0;container-type:inline-size;display:flex;justify-content:center}
+.xpill{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;padding:8px 10px;max-width:100%;border:1px solid var(--line);border-radius:999px;background:var(--surf);box-shadow:var(--sh)}
+.xpill>*{flex:none}.xpill .xnm{flex:0 1 auto;min-width:0}
+.xvd{width:1px;height:24px;background:var(--line)}
+.xrole{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--cop-s);color:var(--cop-d);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.xnm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xds{display:none}.xdtx{font-size:13px;color:var(--mute);white-space:nowrap}.xdtx b{color:var(--ink);font-weight:600}
+.xst{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;background:var(--sage-s);color:var(--sage);font-size:13px;font-weight:600;white-space:nowrap}.xst i{width:9px;height:9px;border-radius:50%;background:var(--sage)}
+.xib{width:40px;height:40px;border-radius:50%;border:0;background:none;display:inline-grid;place-items:center;color:var(--mute);position:relative;transition:background .3s,color .3s}.xib:hover{background:var(--cop-s);color:var(--ink)}
+.xbd{position:absolute;top:-1px;right:-1px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--cop);color:#fff;font-size:11px;display:inline-grid;place-items:center}.xbd:empty{display:none}
+@container (max-width:860px){.xdl{display:none}.xds{display:inline}}
+@container (max-width:680px){.xrt,.xsl{display:none}.xrole{padding:9px}.xst{width:36px;padding:0;justify-content:center}}
+@container (max-width:520px){.xvd,.xdd{display:none}.xpill{gap:8px}}
+@container (max-width:430px){.xpill{gap:4px;padding:5px 6px}.xib,.xst{width:34px;height:34px;min-height:34px}.xrole{padding:7px}}
+@container (max-width:340px){.xdtx{display:none}}
+@container (max-width:290px){.xnm{display:none}}
+nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:11;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:4px clamp(16px,3vw,40px)}
+nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
+nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
+nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}.xts{display:none}
+.xts{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{width:16px;height:16px}
+@container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
+@container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}nav.xtabs button{font-size:11.5px}}
+@media(max-width:540px){nav.xtabs{position:static}}
+@media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
+@media(max-width:359px){.xtop .brand{display:none}}
+.xhead{flex:none;padding-top:0}nav.xtabs{flex:none;top:0}
+button.xst{border:0;cursor:pointer}.xst.off{background:var(--risk-s);color:var(--risk)}.xst.off i{background:var(--risk)}
+.xib[aria-pressed="true"]{background:var(--cop-s);color:var(--ink)}
+.zboard{background:#201b15;border-radius:24px;padding:0 20px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0 22px;align-content:start}
+.zboard.one{display:block}.zboard.one .zcl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 18px}.zcol{min-width:0}
+.zch{position:sticky;top:0;z-index:3;background:#201b15;display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:16px 0 10px;border-bottom:1px solid #e9e1d3;color:#f3ebdd;font:600 13px "Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.zcn{min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:#3a3025;display:inline-grid;place-items:center;font-size:12px;letter-spacing:0}
+.zcl{padding:0 0 8px}.zem{color:#9a8d7b;font-size:14px;margin:0 0 14px}.ztw{max-width:340px;margin-bottom:18px}
+.ztt{position:relative;background:#fffdf8;color:#1f1a13;border-radius:22px;padding:16px 18px 14px}
+.zcap{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#7c6f60}.zshop{font:600 20px Fraunces,serif}
+.zth{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.zplus{width:38px;height:38px;border:0;border-radius:50%;background:#f6e6d2;color:#c47f3d;display:grid;place-items:center;flex:none}.zplus svg,.zgo svg{width:18px;height:18px}
+.ztm{display:flex;justify-content:space-between;align-items:center;gap:6px 10px;margin:10px 0 14px;flex-wrap:wrap}
+.zstc{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:999px;background:#f6e6d2;color:#a8641f;white-space:nowrap}
+.zstc.ok{background:#e6efdb;color:#4c6a35}.zstc.risk{background:#f6dcd5;color:#a8402b}.zstc.gr{background:#ece7dd;color:#6b5e4f}
+.zperf{position:relative;border-top:2px dashed #d9cfbf;margin:0 -18px}
+.zperf::before,.zperf::after{content:"";position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:#201b15}.zperf::before{left:-9px}.zperf::after{right:-9px}
+.ztnum{text-align:center;padding:14px 0 8px}.znum{font:600 clamp(44px,5vw,56px)/1.05 Fraunces,serif;letter-spacing:.02em}
+.zrw{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:15px}.zrw span{color:#7c6f60;flex:none}.zrw b{font-weight:500;text-align:right;min-width:0}
+.zell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.zrw.tot b{font:600 20px Fraunces,serif}.zrw b.risk{color:#a8402b}.zrw b.cop{color:#a8641f}
+.ztt dl{margin:0 0 12px}.zbc{height:30px;margin:14px 0 6px;color:#1f1a13}.zbc svg{width:100%;height:30px}.zcap.zdt{text-align:center;letter-spacing:.3em}
+.zage{position:absolute;top:-11px;right:14px;background:#b4452f;color:#fff;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
+.zgo{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;min-height:48px;border:0;border-radius:999px;background:#c47f3d;color:#fff;font-weight:600;padding:0 14px}
+.zpkc{position:absolute;top:-11px;left:14px;width:28px;height:28px;border-radius:50%;border:2px solid #c47f3d;background:#fff;color:#fff;display:grid;place-items:center;font-size:15px;font-weight:700}.zpkc.y{background:#c47f3d}
+.ztt[data-pk]{cursor:pointer}.ztt.on{box-shadow:0 0 0 3px #c47f3d}
+@media(max-width:560px){.zboard{padding:0 14px 10px;border-radius:20px}.ztw{max-width:none}}
+#ol.zwrap{display:block;flex:1;min-height:0;overflow:auto;border-radius:24px}
+.zgo.w{background:#b4452f}.zgo.alt{background:transparent;border:1.5px solid #c47f3d;color:#e8b274;margin-top:8px}
+.zdr{background:#201b15;border-radius:20px;padding:6px 14px 14px}.zdr .ztw{max-width:none;margin-top:14px}.zdr .zch{top:0;margin-top:0}
+.zcap.zpay{margin-top:10px}
+.nlab{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}.ncat .b{margin:0 6px 6px 0}.ncat .b[aria-pressed=true]{background:var(--cop);border-color:var(--cop);color:var(--on)}
+</style>
+</head>
+<body>
+<div class="xhead">
+  <div class="xtop">
+    <div class="brand"><span class="xmk">C</span><span class="xtx">Cake <i>POS</i></span></div>
+    <div class="xpw"><div class="xpill" role="group" aria-label="Session">
+      <span class="xrole" title="Cashier"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="xrt">Cashier</span></span><span class="xvd"></span>
+      <span class="xnm" id="who"></span><span class="xvd"></span>
+      <span class="xdtx"><span class="xdd"><span class="xdl" id="xdl"></span><span class="xds" id="xds"></span> · </span><b id="xdt"></b></span><span class="xvd"></span>
+      <span class="xst" id="net"><i></i><span class="xsl">Server connected</span></span><span class="xvd"></span>
+      <button class="xib" data-a="drw" aria-label="Tickets" title="Open tickets"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z"/></svg><b class="xbd" id="tkn"></b></button>
+      <button class="xib" id="bell" data-a="tab" data-v="req" aria-pressed="false" aria-label="Requests and alerts" title="Requests and alerts"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b class="xbd" id="bn"></b></button>
+      <button class="xib" id="theme" data-a="theme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></button>
+      <button class="xib" data-a="out" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
+    </div></div>
+  </div>
+</div>
+<nav class="xtabs" id="tabs" aria-label="Main"><button data-a="tab" data-v="sell" aria-current="page" aria-label="Sell" title="Sell"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 12H7zM9 7a3 3 0 0 1 6 0"/></svg><span class="xtf">Sell</span><span class="xts">Sell</span></button><button data-a="tab" data-v="orders" aria-label="Orders" title="Orders"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="xtf">Orders</span><span class="xts">Orders</span></button><button data-a="tab" data-v="custom" aria-label="Custom cakes" title="Custom cakes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16v-6H4zM6 14v-3h12v3M12 11V7M12 7c-1-1 0-3 0-3s1 2 0 3"/></svg><span class="xtf">Custom cakes</span><span class="xts">Custom</span></button><button data-a="tab" data-v="sales" aria-label="Today's sales" title="Today's sales"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span class="xtf">Today's sales</span><span class="xts">Sales</span></button></nav>
+<main>
+<div id="ntc" style="flex:none"></div>
+<section class="view" id="v-sell"><div class="pos">
+  <div class="cat"><input id="qs" placeholder="Search cakes, sizes, fillings" aria-label="Search"><div class="cats" id="cats"></div><div class="tiles" id="tiles"></div></div>
+  <aside class="card tk"><button class="tkh" id="tkh" data-a="sheet" aria-expanded="false"></button>
+    <div class="row"><h2>Ticket <span class="mute" id="tno"></span></h2><button class="b" data-a="clr" style="min-height:38px">Clear</button></div>
+    <div class="tools" style="margin:8px 0 0"><div class="seg" id="sg1"><button data-a="src" data-v="walk_in">Walk-in</button><button data-a="src" data-v="phone">Phone</button></div><div class="seg" id="sg2"><button data-a="ful" data-v="pickup">Pickup</button><button data-a="ful" data-v="delivery">Delivery</button></div></div>
+    <div class="det" id="det" hidden><div><label for="dn">Customer name</label><input id="dn"></div><div><label for="dp">Phone</label><input id="dp" inputmode="tel"></div><div class="w" id="duef"><label for="dd">Due date</label><input id="dd" type="date"></div><div class="w" id="adr"><label for="da">Delivery address</label><input id="da"></div></div>
+    <div id="lines"></div>
+    <div class="tot num" id="tot">0</div>
+    <div class="pay" id="pay"><button data-a="pm" data-i="cash">Cash</button><button data-a="pm" data-i="mobile_money">Mobile money</button><button data-a="pm" data-i="card">Card</button><button data-a="pm" data-i="bank_transfer">Bank transfer</button></div>
+    <div class="cash" id="cash" hidden><label for="rcv" id="rl">Amount received</label><input id="rcv" inputmode="numeric" autocomplete="off" placeholder="0"><div class="cs"><div><small>Paid</small><b id="pd">0</b></div><div id="cgb"><small id="cgl"></small><b id="cg"></b></div></div></div>
+    <div class="row" style="margin:8px 0"><button class="b" id="pt" data-a="part" style="min-height:38px;font-size:13px">Part payment: off</button></div>
+    <button class="b p" id="go" data-a="go" style="width:100%" disabled>Take payment</button>
+  </aside></div></section>
+
+<section class="view" id="v-orders" hidden><div class="tools"><input id="oq" placeholder="Search ticket, customer or cake" aria-label="Find order"><div class="seg" id="of"></div></div><div id="ol" class="zwrap"></div></section>
+
+<section class="view" id="v-custom" hidden><div class="card" style="max-width:980px"><h2>New custom cake</h2><p class="mute sm" style="margin:2px 0 12px">The owner prices every custom cake. The price shows on the ticket in Orders when the owner has set it.</p>
+<div class="form">
+<div class="w"><div class="tools" style="margin:0"><div class="seg" id="cs1"><button data-a="csrc" data-v="walk_in">Walk-in</button><button data-a="csrc" data-v="phone">Phone</button></div><div class="seg" id="cs2"><button data-a="cful" data-v="pickup">Pickup</button><button data-a="cful" data-v="delivery">Delivery</button></div></div></div>
+<div><label for="cn">Customer name</label><input id="cn"></div><div><label for="cp">Phone</label><input id="cp" inputmode="tel"></div><div><label for="cd">Due date</label><input id="cd" type="date"></div>
+<div class="w" id="cad" hidden><label for="ca">Delivery address <b class="rqd">required</b></label><input id="ca"></div>
+<div><label for="csv">Servings <b class="rqd">required</b></label><input id="csv" inputmode="numeric" placeholder="e.g. 20"></div><div><label for="csz">Size</label><input id="csz" placeholder="Optional, e.g. 8-inch round"></div>
+<div><label for="cfl">Flavour <b class="rqd">required</b></label><input id="cfl" placeholder="e.g. Chocolate"></div>
+<div><label for="cfi">Filling</label><input id="cfi" placeholder="Optional"></div>
+<div><label for="cly">Layers</label><input id="cly" inputmode="numeric" placeholder="Optional"></div>
+<div><label for="cdi">Dietary needs</label><input id="cdi" placeholder="Optional, e.g. eggless"></div>
+<div><label for="cin">Inscription</label><input id="cin" placeholder="Optional, writing on the cake"></div>
+<div class="w"><label for="cdn">Decoration notes</label><textarea id="cdn" placeholder="Optional"></textarea></div>
+<div class="w"><label for="cal">Allergies the customer mentioned</label><input id="cal" placeholder="Optional. The baker sees this"></div>
+<div class="w"><label>Reference photos (optional, up to 3)</label><div class="dz" id="dz" tabindex="0" role="button" aria-label="Add reference photos"><input id="cph" type="file" accept="image/*" multiple hidden><span>Drop photos here, or click anywhere in this box</span><div class="th" id="th"></div></div></div>
+<div class="w"><button class="b p" id="csb" data-a="csub">Send price request to the owner</button></div>
+</div></div></section>
+
+<section class="view" id="v-req" hidden><div id="rq"></div></section>
+
+<section class="view" id="v-sales" hidden><div class="kp" id="kp"></div><h2 style="margin-bottom:10px">Payments today</h2><div class="lst" id="sl"></div><div id="ow"></div></section>
+</main>
+<div class="ov" id="mod" hidden></div><div class="drw" id="dw" hidden></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="/cake.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=Cake.esc,M=Cake.money,toast=Cake.toast;
+const root=document.documentElement;try{const s=localStorage.getItem("theme");if(s)root.dataset.theme=s}catch(e){}
+const MT=[["cash","Cash"],["mobile_money","Mobile money"],["card","Card"],["bank_transfer","Bank transfer"]];
+const SRC=[["walk_in","Walk-in"],["phone","Phone"]],FUL=[["pickup","Pickup"],["delivery","Delivery"]];
+const TONE={neutral:"",attention:"",ready:"ok",done:"gr",muted:"gr",danger:"risk"},CHIP={neutral:"",attention:"cop",ready:"ok",done:"ok",muted:"",danger:"risk"};
+let view="sell",cat="All",qs="",cart={},meth="cash",paid=0,part=false,m={src:"walk_in",ful:"pickup"},ofl="all",cs={src:"walk_in",ful:"pickup"},photos=[],busy=false,G=[],OL=[],LG=null,RQ=null,grow=0;
+const clock12=d=>d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+const day=v=>v?new Date(v+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}):"Now";
+
+/* ---------- what is for sale (from the server) ---------- */
+const combos=()=>G.filter(p=>!p.archived&&!p.hidden).flatMap(p=>p.combinations.map(c=>({...c,name:p.name,cat:p.category||"Other"})));
+const free=c=>Math.max(0,c.onHand-c.committed);
+function rTiles(){const L=combos(),cats=["All",...new Set(L.map(c=>c.cat))];if(!cats.includes(cat))cat="All";
+ $("#cats").innerHTML=cats.map(c=>`<button aria-pressed="${c===cat}" data-a="cat" data-c="${esc(c)}">${esc(c)}</button>`).join("");const q=qs.toLowerCase();
+ $("#tiles").innerHTML=L.filter(c=>(cat==="All"||c.cat===cat)&&(c.name+" "+c.label).toLowerCase().includes(q)).map(c=>{const f=free(c),why=c.reason||c.warning||"";
+  return`<button class="tile" data-a="add" data-id="${esc(c.combinationId)}" ${c.sellable?"":"disabled"} title="${esc(why)}"><span class="nm">${esc(c.name)}</span><span class="op">${esc(c.label||"Plain")}</span><span class="row"><b class="num pr">${esc(c.priceLabel||"")}</b><span class="chip ${!c.sellable?"risk":f<=3?"cop":"ok"}">${c.sellable?f+" free":esc(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable"))}</span></span></button>`}).join("")||'<p class="mute">Nothing matches.</p>'}
+
+/* ---------- the ticket being built ---------- */
+const byId=id=>combos().find(c=>c.combinationId===id);
+const total=()=>Object.entries(cart).reduce((s,[id,q])=>s+((byId(id)?.price)||0)*q,0);
+function rTick(){const ids=Object.keys(cart),t=total(),cn=Object.values(cart).reduce((a,b)=>a+b,0),open=$(".tk").classList.contains("open");
+ $("#tkh").innerHTML=`<span>New ticket · ${cn} item${cn===1?"":"s"}</span><b class="num">${M(t)}</b><span aria-hidden="true">${open?"▼":"▲"}</span>`;
+ $("#lines").innerHTML=ids.length?ids.map(i=>{const c=byId(i),q=cart[i];return c?`<div class="ln"><div><b>${esc(c.name)}</b><div class="mute sm">${esc(c.label||"Plain")} · ${esc(c.priceLabel||"")} ${q>free(c)?`<span class="chip risk">Only ${free(c)} free</span>`:""}</div></div><div class="q"><button data-a="qty" data-id="${esc(i)}" data-d="-1" aria-label="Less">−</button><b class="num">${q}</b><button data-a="qty" data-id="${esc(i)}" data-d="1" aria-label="More">+</button></div><b class="num">${M((c.price||0)*q)}</b></div>`:`<div class="ln"><div><b>Item no longer on sale</b></div><div></div><button class="b" data-a="qty" data-id="${esc(i)}" data-d="-99">Remove</button></div>`}).join(""):'<p class="mute">Tap an item to add it.</p>';
+ if(grow){$("#lines").scrollTop=1e6;grow=0}
+ $$("#sg1 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===m.src));$$("#sg2 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===m.ful));
+ $$("#pay button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.i===meth));
+ const ph2=m.src==="phone"||m.ful==="delivery";$("#det").hidden=!(ph2||part);$("#duef").hidden=!ph2;$("#adr").hidden=m.ful!=="delivery";
+ $("#tot").textContent=M(t);$("#cash").hidden=!((meth==="cash"||part)&&t);$("#rl").textContent=meth==="cash"&&!part?"Amount received":"Amount paying now";
+ const d=paid-t,cb=$("#cgb");$("#pd").textContent=M(paid);
+ if(part){cb.className=paid>0&&paid<t?"ok":paid?"short":"";$("#cgl").textContent=paid>=t&&paid?"That is the whole total":"Balance left";$("#cg").textContent=M(paid>=t&&paid?0:Math.max(0,t-paid))}
+ else{cb.className=paid?d>=0?"ok":"short":"";$("#cgl").textContent=paid&&d<0?"Still owed":"Change to return";$("#cg").textContent=M(paid?Math.abs(d):0)}
+ $("#pt").textContent="Part payment: "+(part?"on":"off");$("#pt").setAttribute("aria-pressed",part);
+ $("#go").disabled=!(ids.length&&!busy&&!Cake.offline&&(!part||paid>0));$("#go").textContent=busy?"Working…":part?"Take part payment":ph2?"Place order and take payment":"Take payment"}
+function rst(){cart={};paid=0;part=false;m={src:"walk_in",ful:"pickup"};["#rcv","#dn","#dp","#dd","#da"].forEach(k=>$(k).value="")}
+async function go(){if(busy)return;busy=true;rTick();const v=k=>$(k).value.trim(),t=total();
+ try{const o=await Cake.send("orders/create_order",{source:m.src,fulfilment:m.ful,...(v("#dn")&&{customerName:v("#dn")}),...(v("#dp")&&{customerPhone:v("#dp")}),...((m.src==="phone"||m.ful==="delivery")&&v("#dd")&&{deliveryDate:v("#dd")}),...(m.ful==="delivery"&&v("#da")&&{deliveryAddress:v("#da")})});
+  if(!o.ok)return;const orderId=o.data.orderId;
+  for(const [id,q] of Object.entries(cart)){const r=await Cake.send("orders/add_catalogue_line",{orderId,combinationId:id,qty:q});if(!r.ok){await Cake.send("orders/cancel_order",{orderId});return}}
+  const card=await Cake.read("order_card",{orderId});if(!card)return;
+  const p=await Cake.send("payments/record_payment",{orderId,method:meth,amount:part?paid:card.balance,allowPartial:part});
+  rst();$(".tk").classList.remove("open");
+  if(!p.ok){toast("Ticket "+o.data.number+" was created but no payment was recorded. Open it in Orders to take payment.");return}
+  receipt(orderId)}
+ finally{busy=false;rTick()}}
+
+/* ---------- order board ---------- */
+const ZK=[["Queue",["empty","draft","awaiting_quote","new"],"Nothing waiting"],["In preparation",["in_production","decorating"],"Nothing being prepared"],["Ready",["ready","out_for_delivery"],"Nothing ready yet"],["Closed",["completed","cancelled"],"Nothing closed yet"]];
+function zbars(no){let h=7;for(const c of no)h=(h*31+c.charCodeAt(0))>>>0;let x=0,q="";for(let i=0;i<60;i++){h=(h*1664525+1013904223)>>>0;const w=1+(h>>>28)%3;if(i%2===0)q+=`<rect x="${x}" width="${w}" height="30"/>`;x+=w}return`<svg viewBox="0 0 ${x} 30" preserveAspectRatio="none" aria-hidden="true" fill="currentColor">${q}</svg>`}
+const ZI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>',ZK2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+function zt(o){const sc=TONE[o.statusTone]||"",pc=o.paymentTone==="danger"?"risk":o.paymentTone==="attention"?"cop":"",tag=o.fulfilment==="delivery"?"Delivery":"Pickup";
+ return`<div class="ztw"><article class="ztt" data-no="${esc(o.number)}"><div class="zth"><div><div class="zshop">${esc(o.customerName||"Walk-in")}</div><div class="zcap">Counter ticket</div></div><button class="zplus" data-a="rc" data-id="${esc(o.orderId)}" aria-label="Receipt for ${esc(o.number)}" title="Receipt">${ZI}</button></div>
+<div class="ztm"><span class="zstc ${sc}">${esc(o.statusLabel)}</span><span class="zcap">${o.hasCustomCake?"Custom · ":""}${tag}</span></div><div class="zperf"></div>
+<div class="ztnum"><div class="zcap">Ticket number</div><div class="znum">${esc(o.number)}</div></div>
+<dl><div class="zrw"><span>Items</span><b>${o.itemCount}</b></div><div class="zrw"><span>Due</span><b class="zell">${esc(o.deliveryDate?day(o.deliveryDate):"Now")}</b></div><div class="zrw"><span>Payment</span><b class="zell ${pc}">${esc(o.paymentLabel)}</b></div><div class="zrw tot"><span>Total</span><b>${o.quotePending?"Awaiting quote":esc(o.totalLabel)}</b></div></dl>
+<div class="zperf"></div><div class="zbc">${zbars(o.number)}</div></article><button class="zgo" data-a="open" data-id="${esc(o.orderId)}">Open ticket ${ZK2}</button></div>`}
+function rOrd(){const f={all:()=>true,pickup:o=>o.fulfilment==="pickup",delivery:o=>o.fulfilment==="delivery",custom:o=>o.hasCustomCake,done:o=>o.status==="completed"||o.status==="cancelled"};
+ $("#of").innerHTML=[["all","All"],["pickup","Pickup"],["delivery","Delivery"],["custom","Custom"],["done","Closed"]].map(([k,l])=>`<button aria-pressed="${k===ofl}" data-a="of" data-k="${k}">${l}</button>`).join("");
+ const q=($("#oq").value||"").toLowerCase().replace(/\s/g,""),V=OL.filter(f[ofl]).filter(o=>(o.number+o.customerName).toLowerCase().replace(/\s/g,"").includes(q)).sort((a,b)=>a.number<b.number?-1:1),cols=ZK.filter(k=>ofl!=="done"||k[0]==="Closed");
+ $("#ol").innerHTML=V.length||!q?`<div class="zboard">${cols.map(k=>{let L=V.filter(o=>k[1].includes(o.status));const n=L.length;if(k[0]==="Closed")L=L.slice(-20).reverse();return`<section class="zcol" aria-label="${k[0]}"><h2 class="zch">${k[0]}<span class="zcn">${n}</span></h2><div class="zcl">${L.map(zt).join("")||`<p class="zem">${k[2]}</p>`}</div></section>`}).join("")}</div>`:`<div class="zboard"><p class="zem" style="padding-top:18px">No tickets match your search</p></div>`}
+function rDw(){const L=OL.filter(o=>o.status!=="completed"&&o.status!=="cancelled").sort((a,b)=>a.number<b.number?-1:1);$("#dw").innerHTML=`<div class="row"><h2>Tickets</h2><button class="b" data-a="dc" style="min-height:38px">Close</button></div><div class="zdr"><h2 class="zch">Open tickets<span class="zcn">${L.length}</span></h2>${L.map(zt).join("")||'<p class="zem" style="padding-top:12px">No open tickets</p>'}</div>`;$("#tkn").textContent=L.length||""}
+
+/* ---------- today's sales ---------- */
+function rSales(){const d=LG;if(!d)return;
+ $("#kp").innerHTML=[...d.byMethod.map(x=>[x.label,x.amountLabel]),["Refunded",d.totals.refundedLabel],["Net today",d.totals.netLabel]].map(([k,v])=>`<div class="card"><span class="mute sm">${esc(k)}</span><b class="num">${esc(v)}</b></div>`).join("");
+ $("#sl").innerHTML=d.rows.map(x=>`<button class="card row" data-a="rc" data-id="${esc(x.orderId)}" style="text-align:left"><span><b class="num">${esc(x.orderNumber)}</b> <span class="mute sm">${esc(x.methodLabel)} · ${esc(x.kindLabel)} · ${esc(x.time)} · ${esc(x.byName)}</span></span><b class="num">${esc(x.amountLabel)}</b></button>`).join("")||'<p class="mute">No payments yet today.</p>';
+ $("#ow").innerHTML=d.can.seeOutstanding&&d.outstanding.length?`<h2 style="margin:18px 0 10px">Still owed · ${esc(d.outstandingTotalLabel)}</h2><div class="lst">${d.outstanding.map(x=>`<button class="card row" data-a="open" data-id="${esc(x.orderId)}" style="text-align:left"><span><b class="num">${esc(x.orderNumber)}</b> <span class="mute sm">${esc(x.customerName)} · ${esc(x.statusLabel)}${x.ready?" · ready to hand over":""}</span></span><b class="num">${esc(x.balanceLabel)}</b></button>`).join("")}</div>`:""}
+
+/* ---------- dialogs ---------- */
+let stopCard=null;
+function modal(h){$("#mod").innerHTML=`<div class="dlg" role="dialog" aria-modal="true">${h}</div>`;$("#mod").hidden=false}
+function closeModal(){if(stopCard){stopCard();stopCard=null}$("#mod").hidden=true;$("#mod").innerHTML=""}
+async function receipt(orderId){$("#dw").hidden=true;const r=await Cake.read("receipt",{orderId});if(!r)return;closeModal();
+ modal(`<div class="row"><h2>Receipt · ${esc(r.number)}</h2><span class="chip ${r.statusLabel==="Paid in full"?"ok":"cop"}">${esc(r.statusLabel)}</span></div>
+<div class="mute sm" style="margin:6px 0 10px">${esc(r.shop.name)}${r.shop.address?" · "+esc(r.shop.address):""}${r.shop.phone?" · "+esc(r.shop.phone):""}<br>${esc(r.issuedLabel)} · ${esc(r.customer.name)}${r.customer.phone?" · "+esc(r.customer.phone):""} · ${esc(r.fulfilmentLabel)}${r.deliveryAddress?" · "+esc(r.deliveryAddress):""}</div>
+<div style="margin:12px 0">${r.lines.map(l=>`<div class="row" style="padding:5px 0"><span>${esc(l.title)} × ${l.qty}<br><span class="mute sm">${esc(l.options)}</span></span><b class="num">${esc(l.totalLabel)}</b></div>`).join("")}</div>
+<div class="row"><span>Total</span><b class="num">${esc(r.totalLabel)}</b></div>${r.payments.map(p=>`<div class="row mute sm"><span>${esc(p.methodLabel)} · ${esc(p.atLabel)}${p.reference?" · "+esc(p.reference):""}</span><span>${esc(p.amountLabel)}</span></div>`).join("")}${r.refunds.map(p=>`<div class="row mute sm"><span>Refund · ${esc(p.reason)}</span><span>−${esc(p.amountLabel)}</span></div>`).join("")}
+<div class="row" style="margin-top:6px"><span>Balance</span><b class="num">${esc(r.balanceLabel)}</b></div>${r.blockedReason?`<p class="mute sm" style="margin-top:10px">${esc(r.blockedReason)}</p>`:""}${r.shop.footer?`<p class="mute sm" style="margin-top:10px">${esc(r.shop.footer)}</p>`:""}
+<div class="row" style="margin-top:14px;justify-content:flex-end;flex-wrap:wrap">${r.share.whatsappUrl?`<a class="b" style="display:inline-grid;place-items:center;text-decoration:none" target="_blank" rel="noopener" href="${esc(r.share.whatsappUrl)}">WhatsApp</a>`:""}${r.share.smsUrl?`<a class="b" style="display:inline-grid;place-items:center;text-decoration:none" href="${esc(r.share.smsUrl)}">Text message</a>`:""}<button class="b" data-a="cpy">Copy text</button><button class="b p" data-a="mc">Done</button></div>`);
+ $("#mod").dataset.text=r.text}
+const FLOW={};
+function openOrder(orderId){$("#dw").hidden=true;closeModal();let ui={form:null,meth:"cash"};
+ modal(`<div id="oc-main"><p class="mute">Loading…</p></div><div id="oc-form"></div>`);
+ const rend=c=>{FLOW.card=c;$("#oc-main").innerHTML=`<div class="row"><h2>Ticket ${esc(c.number)}</h2><span class="chip ${CHIP[c.statusTone]||""}">${esc(c.statusLabel)}</span></div>
+<div class="tg"><span class="chip">${c.source==="phone"?"Phone":"Walk-in"}</span><span class="chip">${c.fulfilment==="delivery"?"Delivery":"Pickup"}</span>${c.hasCustomCake?'<span class="chip cop">Custom</span>':""}<span class="chip ${CHIP[c.paymentTone]||""}">${esc(c.paymentLabel)}</span></div>
+<div class="mute sm">${esc(c.customerName||"Walk-in")}${c.customerPhone?" · "+esc(c.customerPhone):""}<br>Due ${esc(c.deliveryDate?day(c.deliveryDate):"now")}${c.deliveryAddress?" · "+esc(c.deliveryAddress):""}</div>
+${c.warnings.map(w=>`<p class="chip risk" style="white-space:normal;margin:8px 0 0">${esc(w)}</p>`).join("")}
+<div style="margin:12px 0">${c.lines.map(l=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="row"><span><b>${esc(l.title)}</b> × ${l.qty}<br><span class="mute sm">${esc(l.options)}</span></span><b class="num">${esc(l.totalLabel)}</b></div>
+<div class="tg"><span class="chip ${CHIP[l.statusTone]||""}">${esc(l.statusLabel)}</span>${l.allergens&&l.allergens.length?`<span class="chip">${esc(l.allergens.join(", "))}</span>`:""}</div>
+${l.quote?`<div class="mute sm">Quote: ${esc(l.quote.statusLabel)}${l.quote.priceLabel?" · "+esc(l.quote.priceLabel):""}${l.quote.answer?" · "+esc(l.quote.answer):""}</div>`:""}${l.quoteBlockedReason?`<div class="mute sm">${esc(l.quoteBlockedReason)}</div>`:""}
+<div class="acts" style="justify-content:flex-start">${l.actions.map(a=>`<button class="b p" data-a="adv" data-l="${esc(l.lineId)}" data-to="${esc(a.to)}">${esc(a.label)}</button>`).join("")}${l.canRequestQuote?`<button class="b" data-a="quo" data-l="${esc(l.lineId)}">Ask the owner for a price</button>`:""}${l.canWithdrawQuote&&l.quote?`<button class="b" data-a="qwd" data-q="${esc(l.quote.quoteId)}">Withdraw price request</button>`:""}${l.canRemove?`<button class="b r" data-a="rml" data-l="${esc(l.lineId)}">Remove</button>`:""}</div></div>`).join("")}</div>
+<div class="row"><span>Total</span><b class="num">${c.quotePending?"Awaiting quote":esc(c.totalLabel)}</b></div><div class="row mute sm"><span>Paid</span><span>${esc(c.paidLabel)}</span></div>${c.refundedLabel?`<div class="row mute sm"><span>Refunded</span><span>${esc(c.refundedLabel)}</span></div>`:""}
+<div class="row" style="margin-top:4px"><span>Balance</span><b class="num">${esc(c.balanceLabel)}</b></div>${c.payments.map(p=>`<div class="row mute sm"><span>${esc(p.methodLabel)}${p.reference?" · "+esc(p.reference):""}</span><span>${esc(p.amountLabel)}</span></div>`).join("")}
+<div class="row" style="margin-top:14px;justify-content:flex-end;flex-wrap:wrap">${c.canRecordPayment?'<button class="b p" data-a="pay1">Take payment</button>':""}${c.canEditDelivery?'<button class="b" data-a="edd">Change delivery</button>':""}<button class="b" data-a="rc" data-id="${esc(c.orderId)}">Receipt</button>${c.canCancel?'<button class="b r" data-a="cxo">Cancel order</button>':""}<button class="b" data-a="mc">Close</button></div>`};
+ stopCard=Cake.feed("order_card",{orderId},rend)}
+const PAYFORM=c=>`<hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><h2>Take payment</h2><p class="mute">Balance <b class="num">${esc(c.balanceLabel)}</b></p><div class="pay" id="bpm">${MT.map(([k,l])=>`<button data-a="bpm" data-i="${k}" aria-pressed="${k==="cash"}">${l}</button>`).join("")}</div><label for="bamt">Amount received (leave empty for the whole balance)</label><input id="bamt" inputmode="numeric" autocomplete="off" placeholder="0"><label for="bref" style="margin-top:8px">Reference (optional)</label><input id="bref" placeholder="Mobile money or card reference"><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="b" data-a="fx">Cancel</button><button class="b p" data-a="bok">Record payment</button></div>`;
+const DELFORM=c=>`<hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><h2>Change delivery</h2><div class="seg" id="df" style="margin:8px 0">${FUL.map(([k,l])=>`<button data-a="dff" data-v="${k}" aria-pressed="${k===c.fulfilment}">${l}</button>`).join("")}</div><label for="dd2">Due date</label><input id="dd2" type="date" value="${esc(c.deliveryDate||"")}"><label for="da2" style="margin-top:8px">Delivery address</label><input id="da2" value="${esc(c.deliveryAddress||"")}"><label for="dp2" style="margin-top:8px">Phone</label><input id="dp2" inputmode="tel" value="${esc(c.customerPhone||"")}"><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="b" data-a="fx">Cancel</button><button class="b p" data-a="dsave">Save</button></div>`;
+const cur=()=>FLOW.card,guard=async(b,fn)=>{if(b.disabled)return;b.disabled=true;try{return await fn()}finally{b.disabled=false}};
+
+const A={tab(d){view=d.v;$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#tabs button").forEach(b=>b.dataset.v===view?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));$("#bell").setAttribute("aria-pressed",view==="req");if(view==="req"&&RQ)RQ.shown()},
+ theme(){root.dataset.theme=root.dataset.theme==="light"?"dark":"light";try{localStorage.setItem("theme",root.dataset.theme)}catch(e){}},
+ drw(){$("#dw").hidden=!$("#dw").hidden},sheet(){const k=$(".tk");k.classList.toggle("open");$("#tkh").setAttribute("aria-expanded",k.classList.contains("open"));rTick()},dc(){$("#dw").hidden=true},mc(){closeModal()},
+ rc(d,b){guard(b,()=>receipt(d.id))},open(d){openOrder(d.id)},out(){Cake.signOut()},
+ cpy(){const t=$("#mod").dataset.text||"";navigator.clipboard?.writeText(t).then(()=>toast("Receipt copied."),()=>toast("Could not copy. Select the text and copy it by hand."))},
+ cat(d){cat=d.c;rTiles()},add(d){cart[d.id]=(cart[d.id]||0)+1;grow=1;rTick()},qty(d){cart[d.id]=(cart[d.id]||0)+(+d.d);if(cart[d.id]<1)delete cart[d.id];rTick()},
+ clr(){rst();rTick()},src(d){m.src=d.v;rTick()},ful(d){m.ful=d.v;rTick()},pm(d){meth=d.i;paid=0;$("#rcv").value="";rTick()},part(){part=!part;paid=0;$("#rcv").value="";rTick()},go(){go()},
+ of(d){ofl=d.k;rOrd()},
+ /* inside an open ticket */
+ adv(d,b){const c=cur();guard(b,()=>Cake.send("orders/advance_line",{orderId:c.orderId,lineId:d.l,to:d.to}))},
+ quo(d,b){const c=cur();guard(b,()=>Cake.send("quotes/request",{orderId:c.orderId,lineId:d.l},"Sent to the owner for a price."))},
+ qwd(d,b){guard(b,()=>Cake.send("quotes/withdraw",{quoteId:d.q},"Price request withdrawn."))},
+ rml(d,b){const c=cur();guard(b,()=>Cake.send("orders/cancel_line",{orderId:c.orderId,lineId:d.l}))},
+ cxo(d,b){const c=cur();if(!confirm("Cancel ticket "+c.number+"? This cannot be undone."))return;guard(b,()=>Cake.send("orders/cancel_order",{orderId:c.orderId},"Ticket cancelled."))},
+ pay1(){$("#oc-form").innerHTML=PAYFORM(cur());FLOW.meth="cash";$("#bamt").focus()},edd(){FLOW.ful=cur().fulfilment;$("#oc-form").innerHTML=DELFORM(cur())},fx(){$("#oc-form").innerHTML=""},
+ bpm(d){FLOW.meth=d.i;$$("#bpm button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.i===d.i))},dff(d){FLOW.ful=d.v;$$("#df button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===d.v))},
+ bok(d,b){const c=cur(),n=+($("#bamt").value.replace(/\D/g,"")||0),ref=$("#bref").value.trim();guard(b,async()=>{const r=await Cake.send("payments/record_payment",{orderId:c.orderId,method:FLOW.meth||"cash",amount:n||c.balance,allowPartial:!!n,...(ref&&{reference:ref})},"Payment recorded.");if(r.ok)$("#oc-form").innerHTML=""})},
+ dsave(d,b){const c=cur(),v=k=>$(k).value.trim();guard(b,async()=>{const r=await Cake.send("orders/set_delivery",{orderId:c.orderId,fulfilment:FLOW.ful,...(v("#dd2")&&{deliveryDate:v("#dd2")}),deliveryAddress:v("#da2"),customerPhone:v("#dp2")||null},"Delivery updated.");if(r.ok)$("#oc-form").innerHTML=""})},
+ /* custom cakes */
+ csrc(d){cs.src=d.v;rCs()},cful(d){cs.ful=d.v;rCs()},rmph(d){URL.revokeObjectURL(photos[+d.i].url);photos.splice(+d.i,1);rTh()},
+ csub(d,b){csub()}};
+document.addEventListener("click",e=>{if(e.target.id==="mod"){closeModal();return}const b=e.target.closest("[data-a]");if(b&&A[b.dataset.a])A[b.dataset.a](b.dataset,b)});
+function rCs(){$$("#cs1 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===cs.src));$$("#cs2 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===cs.ful));$("#cad").hidden=cs.ful!=="delivery";$("#csb").disabled=busy||Cake.offline}
+function rTh(){$("#dz span").textContent=photos.length?(photos.length<3?"Add more photos ("+photos.length+" of 3)":"3 of 3 added"):"Drop photos here, or click anywhere in this box";$("#th").innerHTML=photos.map((p,i)=>`<div><img src="${p.url}" alt="Reference ${i+1}"><button data-a="rmph" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
+/* Phone photos are large, so shrink them before sending. */
+async function shrink(f){try{const bm=await createImageBitmap(f),k=Math.min(1,1600/Math.max(bm.width,bm.height)),c=document.createElement("canvas");c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext("2d").drawImage(bm,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,"image/jpeg",.85))}catch(e){return f}}
+async function addFiles(fs){const room=3-photos.length;if(!room)return toast("Maximum 3 photos");for(const f of[...fs].filter(f=>f.type.startsWith("image/")).slice(0,room)){const blob=await shrink(f);photos.push({blob,url:URL.createObjectURL(blob)})}rTh()}
+async function csub(){if(busy)return;const g=k=>$(k).value.trim(),sv=parseInt(g("#csv"),10);
+ if(!(sv>=1))return toast("Enter how many people the cake should serve.");if(!g("#cfl"))return toast("Choose a flavour.");
+ busy=true;rCs();let orderId=null;
+ try{const ph=g("#cp"),o=await Cake.send("orders/create_order",{source:cs.src,fulfilment:cs.ful,...(g("#cn")&&{customerName:g("#cn")}),...(ph&&{customerPhone:ph}),...(g("#cd")&&{deliveryDate:g("#cd")}),...(cs.ful==="delivery"&&g("#ca")&&{deliveryAddress:g("#ca")})});
+  if(!o.ok)return;orderId=o.data.orderId;
+  const ly=parseInt(g("#cly"),10),di=g("#cdi").split(",").map(s=>s.trim()).filter(Boolean),
+   spec={servings:sv,flavor:g("#cfl"),...(g("#csz")&&{sizeNote:g("#csz")}),...(g("#cfi")&&{filling:g("#cfi")}),...(ly>=1&&{layers:ly}),...(di.length&&{dietary:di}),...(g("#cin")&&{inscription:g("#cin")}),...(g("#cdn")&&{decorationNotes:g("#cdn")}),...(g("#cal")&&{allergyNotes:g("#cal")})},
+   l=await Cake.send("orders/add_custom_line",{orderId,spec});if(!l.ok){await Cake.send("orders/cancel_order",{orderId});return}
+  let lost=0;for(const p of photos){const u=await Cake.client.uploadPhoto(p.blob,p.blob.type);if(!u.ok){lost++;continue}const a=await Cake.send("orders/attach_reference_photo",{orderId,lineId:l.data.lineId,photoId:u.photoId});if(!a.ok)lost++}
+  const q=await Cake.send("quotes/request",{orderId,lineId:l.data.lineId});
+  if(!q.ok){toast("Ticket "+o.data.number+" was saved but the price request did not go. Open it in Orders and ask again.");return}
+  ["#cn","#cp","#cd","#ca","#csv","#csz","#cfl","#cfi","#cly","#cdi","#cin","#cdn","#cal"].forEach(k=>$(k).value="");photos.forEach(p=>URL.revokeObjectURL(p.url));photos=[];rTh();
+  toast("Sent to the owner for a price. The price will show on the ticket in Orders."+(lost?" "+lost+" photo(s) could not be saved.":""))}
+ finally{busy=false;rCs()}}
+const dz=$("#dz");dz.onclick=e=>{if(e.target.closest("[data-a=rmph]")||e.target.id==="cph")return;$("#cph").click()};
+dz.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#cph").click()}};
+dz.ondragover=e=>{e.preventDefault();dz.classList.add("on")};dz.ondragleave=()=>dz.classList.remove("on");
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove("on");addFiles(e.dataTransfer.files)};
+$("#cph").onchange=e=>{addFiles(e.target.files);e.target.value=""};
+["dragover","drop"].forEach(t=>addEventListener(t,e=>e.preventDefault()));
+document.addEventListener("input",e=>{const t=e.target,n=t.value&&t.value.replace(/\D/g,"").slice(0,9);
+ if(t.id==="rcv"){paid=+n;t.value=n?(+n).toLocaleString("en-US"):"";rTick()}else if(t.id==="bamt")t.value=n?(+n).toLocaleString("en-US"):"";
+ else if(t.id==="qs"){qs=t.value;rTiles()}else if(t.id==="oq")rOrd()});
+function tick(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=clock12(d)}
+
+(async()=>{const me=await Cake.boot("cashier");$("#who").textContent=me.name;tick();setInterval(tick,30000);
+ Cake.client.onConnection(s=>{const up=s!=="offline";$("#net").className="xst"+(up?"":" off");$("#net span").textContent=up?"Server connected":"Server unreachable";rTick();rCs()});
+ Cake.mountNotice($("#ntc"));
+ Cake.feed("catalogue_grid",{},d=>{G=d;rTiles();rTick()});
+ Cake.feed("order_list",{},d=>{OL=d;rOrd();rDw()});
+ Cake.feed("payments_ledger",{},d=>{LG=d;rSales()});
+ RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="req",onCounts:c=>{$("#bn").textContent=(c.unseen+c.needsYou)||""}});
+ A.tab({v:"sell"});rCs();rTick()})();
+</script>
+</body>
+</html>

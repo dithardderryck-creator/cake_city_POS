@@ -32,7 +32,10 @@ const face = (family, dir, file, weight) => {
 fs.writeFileSync(
   path.join(dist, 'fonts.css'),
   face('Fraunces Variable', 'fraunces', 'fraunces-latin-wght-normal.woff2', '100 900') +
-    face('Plus Jakarta Sans Variable', 'plus-jakarta-sans', 'plus-jakarta-sans-latin-wght-normal.woff2', '200 800'),
+    face('Plus Jakarta Sans Variable', 'plus-jakarta-sans', 'plus-jakarta-sans-latin-wght-normal.woff2', '200 800') +
+    // The page designs ask for the plain family names, so the same files answer to those too.
+    face('Fraunces', 'fraunces', 'fraunces-latin-wght-normal.woff2', '100 900') +
+    face('Plus Jakarta Sans', 'plus-jakarta-sans', 'plus-jakarta-sans-latin-wght-normal.woff2', '200 800'),
 );
 
 fs.copyFileSync(path.join(here, 'src/index.html'), path.join(dist, 'index.html'));
