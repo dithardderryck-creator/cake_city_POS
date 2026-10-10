@@ -123,8 +123,10 @@ try {
   await page.fill('#cv', '1');
   await page.click('#rm [data-a="cn"]');
   await page.waitForSelector('#rm #cv');
-  await page.click('#rm [data-a="csk"]');
-  await page.waitForSelector('#rm [data-a="csub"]');
+  while (!(await page.locator('#rm [data-a="csub"]').count())) {
+    await page.click('#rm [data-a="csk"]');
+    await page.waitForTimeout(150);
+  }
   assert.match(await txt(page, '#rm'), /big/i);
   await page.screenshot({ path: `${shots}/count-review.png` });
   await page.click('#rm [data-a="csub"]');
