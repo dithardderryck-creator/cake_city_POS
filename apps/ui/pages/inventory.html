@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cake POS · Inventory</title>
+<link rel="stylesheet" href="/fonts.css">
+<style>
+:root{--bg:#FDFBF7;--paper:#F5F1E8;--surf:#fff;--line:#E6DECD;--ink:#1F1A13;--mute:#6B5E4F;--cop:#C47F3D;--cop-d:#9A5F2A;--cop-s:#C47F3D1f;--sage:#5E7247;--sage-s:#5E72471c;--risk:#B4452F;--risk-s:#B4452F18;--sh:0 1px 2px #1f1a1308,0 10px 28px -14px #1f1a1322;--ease:cubic-bezier(.32,.72,0,1);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}}
+:root[data-theme="dark"]{--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}
+html{scroll-padding-top:calc(var(--hh,120px) + 8px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cop);outline-offset:2px}
+.serif,h1,h2,.num{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
+.app{min-height:100dvh}
+.brand{font:600 20px Fraunces,serif;margin:0}
+.brand i{font-style:normal;color:var(--cop)}
+main{padding:24px clamp(16px,3vw,40px) 48px;max-width:1260px;width:100%;margin:0 auto}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:2px 0 0}
+.find{display:flex;align-items:center;gap:10px;min-width:230px;padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surf);color:var(--mute);transition:border-color .3s}
+.find:hover{border-color:var(--cop)}
+.find kbd{margin-left:auto;font:500 11px inherit;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:20px}
+.rev{grid-column:span 8}
+.due{grid-column:span 4}
+.stock{grid-column:span 5}
+.act{grid-column:span 12}
+h2{font-size:17px;font-weight:600;margin:0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.big{font-size:clamp(38px,5vw,56px);font-weight:600;letter-spacing:-.02em;line-height:1.05;margin:10px 0 2px}
+.seg{display:inline-flex;background:var(--paper);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:5px 14px;border-radius:999px;color:var(--mute);transition:all .35s var(--ease)}
+.seg button[aria-pressed="true"]{background:var(--surf);color:var(--ink);box-shadow:var(--sh)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.item{display:grid;gap:2px;padding:12px 14px;border-radius:12px;background:var(--paper);border-left:3px solid var(--sage)}
+.item.risk{border-left-color:var(--risk);background:var(--risk-s)}
+.item b{font-weight:600}
+.item small,.mute{color:var(--mute)}
+.tag{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--sage-s);color:var(--sage)}
+.tag.risk{background:var(--risk-s);color:var(--risk)}
+.tag.cop{background:var(--cop-s);color:var(--cop-d)}
+.bar{height:8px;border-radius:8px;background:var(--paper);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:8px;background:var(--sage);width:0;transition:width 1s var(--ease)}
+.bar i.low{background:var(--risk)}
+.bar i.mid{background:var(--cop)}
+.s{margin-top:14px}
+.confirm{margin-top:16px;padding:12px 14px;border-radius:12px;border:1px dashed var(--cop);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.b{border-radius:999px;padding:7px 16px;border:1px solid var(--line);background:var(--surf);transition:transform .2s,background .3s}
+.b:active{transform:scale(.96)}
+.b.p{background:var(--cop);border-color:var(--cop);color:#fff;font-weight:600}
+.b.p:hover{background:var(--cop-d)}
+.empty{color:var(--mute);padding:18px 0 4px}
+details summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+details summary::-webkit-details-marker{display:none}
+.pal{position:fixed;inset:0;background:#1f1a1366;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;z-index:20}
+.pal.on{display:flex}
+.pal>div{width:min(560px,92vw);background:var(--surf);border-radius:18px;border:1px solid var(--line);box-shadow:0 30px 70px -20px #0008;overflow:hidden;animation:pop .35s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}}
+.pal input{width:100%;border:0;border-bottom:1px solid var(--line);padding:16px 20px;background:none;outline:0}
+.pal ul{list-style:none;margin:0;padding:8px;max-height:46vh;overflow:auto}
+.pal li button{width:100%;text-align:left;border:0;background:none;padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between}
+.pal li button:hover,.pal li button:focus-visible{background:var(--cop-s)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;opacity:0;transition:all .4s var(--ease);z-index:30;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;margin-top:16px;align-items:start}
+.rl{display:grid;gap:10px}
+.rc{text-align:left;width:100%;background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:6px;transition:border-color .3s,box-shadow .3s}
+.rc:hover,.rc[aria-selected="true"]{border-color:var(--cop)}
+.rc[aria-selected="true"]{box-shadow:var(--sh)}
+.dots{display:flex;gap:4px}
+.dots i{height:4px;flex:1;border-radius:4px;background:var(--line);transition:background .4s}
+.dots i.on{background:var(--cop)}
+.steps{display:grid;grid-template-columns:repeat(var(--n),1fr);margin:20px 0 16px}
+.st{text-align:center;position:relative;font-size:12px;color:var(--mute)}
+.st::before{content:"";display:block;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);margin:0 auto 6px;background:var(--surf);position:relative;z-index:1;transition:all .4s var(--ease)}
+.st::after{content:"";position:absolute;top:8px;left:calc(-50% + 9px);right:calc(50% + 9px);height:2px;background:var(--line);transition:background .4s}
+.st:first-child::after{display:none}
+.st.on{color:var(--ink);font-weight:600}
+.st.on::before{background:var(--cop);border-color:var(--cop)}
+.st.on::after{background:var(--cop)}
+.st.cur::before{box-shadow:0 0 0 5px var(--cop-s)}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:var(--paper);font-size:12px;margin:0 6px 6px 0}
+.chip.ok{background:var(--sage-s);color:var(--sage)}
+.tl{list-style:none;padding:0;margin:8px 0 0}
+.tl li{display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.tl time{color:var(--mute);min-width:44px;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.split{grid-template-columns:1fr}.rev,.due,.stock,.req,.act{grid-column:span 12}.find{width:100%}}
+.bulk .b{background:transparent;color:var(--bg);border-color:#ffffff40}
+.ci.head{color:var(--mute);font-size:12px;padding:10px 0}
+.ci.hidden b,.ci.draft b{color:var(--mute)}
+.sw{width:42px;height:24px;border-radius:999px;border:0;background:var(--line);position:relative;transition:background .3s}
+.sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .35s var(--ease)}
+.sw[aria-checked="true"]{background:var(--sage)}
+.sw[aria-checked="true"] i{transform:translateX(18px)}
+.dr{position:fixed;inset:0;background:#1f1a1366;z-index:25;display:flex;justify-content:flex-end}
+.dr[hidden]{display:none}
+.dp{width:min(440px,100%);height:100%;background:var(--bg);padding:24px;overflow:auto;animation:slide .45s var(--ease);box-shadow:-20px 0 60px -20px #0006}
+@keyframes slide{from{transform:translateX(40px);opacity:0}}
+.fl{display:grid;gap:4px;margin-top:14px}
+.fl>span{color:var(--mute);font-size:12px}
+.fl input,.fl select{border:1px solid var(--line);border-radius:12px;background:var(--surf);padding:9px 12px;width:100%}
+@media(max-width:900px){.ci{grid-template-columns:28px 1fr 1fr}.ci.head{display:none}.ci>*:nth-child(n+4){grid-column:2/-1}.dr{align-items:flex-end}.dp{height:auto;max-height:92dvh;border-radius:20px 20px 0 0}}
+.si.head{color:var(--mute);font-size:12px;padding:10px 8px;border-radius:0}
+@media(max-width:900px){.si{grid-template-columns:1fr 1fr}.si.head{display:none}}
+.oc.risk{border-left:3px solid var(--risk)}
+.tkt .in{padding:12px 16px;display:grid;gap:2px;align-content:center}
+.xhead{position:sticky;top:0;z-index:12;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
+.xtop{display:flex;align-items:center;gap:12px;padding:10px clamp(16px,3vw,40px) 6px;max-width:1260px;margin:0 auto}
+.xtop .brand{flex:none;display:flex;align-items:center;gap:8px}
+.xmk{display:none;width:36px;height:36px;border-radius:50%;background:var(--cop);color:#fff;place-items:center;font:600 17px Fraunces,serif}
+.xpw{flex:1 1 0;min-width:0;container-type:inline-size;display:flex;justify-content:center}
+.xpill{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;padding:8px 10px;max-width:100%;border:1px solid var(--line);border-radius:999px;background:var(--surf);box-shadow:var(--sh)}
+.xpill>*{flex:none}
+.xpill .xnm{flex:0 1 auto;min-width:0}
+.xvd{width:1px;height:24px;background:var(--line)}
+.xrole{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--cop-s);color:var(--cop-d);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.xnm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xds{display:none}
+.xdtx{font-size:13px;color:var(--mute);white-space:nowrap}
+.xdtx b{color:var(--ink);font-weight:600}
+.xst{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;background:var(--sage-s);color:var(--sage);font-size:13px;font-weight:600;white-space:nowrap}
+.xst i{width:9px;height:9px;border-radius:50%;background:var(--sage)}
+.xib{width:40px;height:40px;border-radius:50%;border:0;background:none;display:inline-grid;place-items:center;color:var(--mute);position:relative;transition:background .3s,color .3s}
+.xib:hover{background:var(--cop-s);color:var(--ink)}
+.xbd{position:absolute;top:-1px;right:-1px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--cop);color:#fff;font-size:11px;display:inline-grid;place-items:center}
+.xbd:empty{display:none}
+@container (max-width:860px){.xdl{display:none}.xds{display:inline}}
+@container (max-width:680px){.xrt,.xsl{display:none}.xrole{padding:9px}.xst{width:36px;padding:0;justify-content:center}}
+@container (max-width:520px){.xvd,.xdd{display:none}.xpill{gap:8px}}
+@container (max-width:430px){.xpill{gap:4px;padding:5px 6px}.xib,.xst{width:34px;height:34px;min-height:34px}.xrole{padding:7px}}
+@container (max-width:340px){.xdtx{display:none}}
+@container (max-width:290px){.xnm{display:none}}
+nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:11;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:4px clamp(16px,3vw,40px)}
+nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
+nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
+nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}
+.xts{display:none}
+.xts{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}
+.xrole svg{width:16px;height:16px}
+@container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
+@container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}nav.xtabs button{font-size:11.5px}}
+@media(max-width:540px){nav.xtabs{position:static}}
+@media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
+@media(max-width:359px){.xtop .brand{display:none}}
+.zrow .b,.zbb .b{min-height:42px}
+.b.r{border-color:var(--risk);color:var(--risk)}
+.zrow .b[aria-pressed="true"]{border-color:var(--cop);color:var(--cop-d)}
+#zcnt{font-weight:600;margin-right:auto}
+.zboard.one{display:block}
+.zboard.one .zcl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 18px}
+.zstc.ok{background:#e6efdb;color:#4c6a35}
+.zstc.risk{background:#f6dcd5;color:#a8402b}
+.zrw b.risk{color:#a8402b}
+.zrw b.cop{color:#a8641f}
+.zpkc.y{background:#c47f3d}
+.ztt.on{box-shadow:0 0 0 3px #c47f3d}
+.mrow .row b{font-weight:500}
+.mx td.y{color:var(--sage);font-weight:700}
+.hb .bar{margin:0}
+.hb2 .bar{height:7px;margin:0}
+#rsv rect{transform-box:fill-box;transform-origin:bottom;animation:gr .8s var(--ease) both}
+#rsv rect:hover{opacity:.75}
+@keyframes gr{from{transform:scaleY(0)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.nov{position:fixed;inset:0;background:#1f1a1366;display:grid;place-items:center;padding:16px;z-index:50}
+.nov[hidden]{display:none}
+.ndl{background:var(--surf);border-radius:20px;padding:20px;width:min(460px,100%);max-height:90vh;overflow:auto;box-shadow:var(--sh)}
+.nlab{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+.ndl select,.ndl input:not([type=checkbox]){width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px 12px}
+.ncat .b{margin:0 6px 6px 0}
+.ncat .b[aria-pressed=true]{background:var(--cop);border-color:var(--cop);color:#fff}
+/* baker additions */
+.gl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:16px 0 8px}.gl.hot{color:var(--risk)}.gl:first-child{margin-top:0}
+.rc.risk{border-left:3px solid var(--risk)}.rc.hot{border-left:3px solid var(--cop)}.rc.dn{opacity:.65}
+.cdn{font-size:13px;font-weight:600;color:var(--mute);white-space:nowrap}.risk .cdn,.cdn.risk{color:var(--risk)}.hot .cdn,.cdn.hot{color:var(--cop-d)}.risk .cdn{animation:pl 1.6s ease-in-out infinite}
+@keyframes pl{50%{opacity:.45}}@media(prefers-reduced-motion:reduce){.risk .cdn{animation:none}}
+#v-queue .split{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}#dt{position:sticky;top:calc(var(--hh,120px) + 16px);max-height:calc(100dvh - var(--hh,120px) - 32px);overflow:auto}
+.bk{display:none;margin-bottom:10px}.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ph{display:flex;gap:10px;overflow-x:auto;margin:8px 0 4px}.ph div{flex:none;width:150px;height:96px;border-radius:12px;background:linear-gradient(135deg,var(--cop-s),var(--sage-s));border:1px solid var(--line);display:flex;align-items:flex-end;padding:8px;font-size:12px;color:var(--mute)}
+.rr{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rm{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:calc(24px + env(safe-area-inset-top,0px)) clamp(16px,3vw,40px) 24px}.rm>div{max-width:760px;margin:0 auto}
+.ri{width:100%;display:flex;align-items:center;gap:14px;text-align:left;min-height:64px;padding:12px 16px;margin-top:10px;border-radius:14px;background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--line);font-size:17px}.ri .nm{flex:1}
+.ri[aria-pressed="true"]{border-left-color:var(--sage);opacity:.6}.ri[aria-pressed="true"] .nm{text-decoration:line-through}.ri .sw{display:inline-block;flex:none}.ri[aria-pressed="true"] .sw{background:var(--sage)}.ri[aria-pressed="true"] .sw i{transform:translateX(18px)}
+.rmf{position:sticky;bottom:0;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--bg);padding:14px 0 6px;margin-top:12px}
+.pre{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.pre button{padding:9px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surf);font-size:13px;color:var(--mute)}.pre button[aria-pressed="true"]{background:var(--cop-s);border-color:var(--cop);color:var(--ink);font-weight:600}
+.ucv{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.ucv button{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surf);color:var(--mute)}.ucv button[aria-pressed="true"]{background:var(--cop-s);border-color:var(--cop);color:var(--ink);font-weight:600}
+.ur{padding:12px 0;border-bottom:1px solid var(--line)}.qt{display:flex;align-items:center;gap:14px;margin-top:4px}.qt .b{width:48px;height:44px;padding:0;font-size:22px}.qt b{font-size:28px;min-width:48px;text-align:center}
+.fl textarea{min-height:60px}.dp .seg{margin-top:6px}.xib[aria-pressed="false"]{opacity:.5}
+@media(max-width:540px){nav.xtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:700px){#v-queue .split{grid-template-columns:1fr}#v-queue .split.det .rl{display:none}#v-queue .split:not(.det) #dt{display:none}#dt{position:static;max-height:none}.bk{display:inline-flex}}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:14px}.sg .rc{margin:0}.nd{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:0 0 16px}.nd .card{padding:14px}
+.rc.crit{border-left:3px solid var(--risk)}.rc.low{border-left:3px solid var(--cop)}.big{font:600 22px Fraunces,serif;font-variant-numeric:tabular-nums}
+.bar{position:relative;height:8px;border-radius:99px;background:var(--paper);margin:10px 0 6px}.bar i{display:block;height:100%;border-radius:99px;background:var(--sage)}.bar.low i{background:var(--cop)}.bar.crit i{background:var(--risk)}.bar u{position:absolute;left:50%;top:-3px;width:2px;height:14px;background:var(--ink);opacity:.5}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.ln input[type=number]{width:110px}
+.rg{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:8px;align-items:center;margin:6px 0}
+.cin{display:flex;align-items:center;justify-content:center;gap:12px;margin:22px 0 6px}.cin .b{width:64px;height:64px;padding:0;font-size:28px}.cin input{width:min(220px,40vw);height:72px;text-align:center;font:600 34px Fraunces,serif}
+@media(max-width:540px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* drawer and form polish */
+.dr{justify-content:flex-end}.dp{width:min(480px,100%);max-width:100%;padding:20px;overflow-x:hidden}
+@keyframes rise{from{transform:translateY(28px);opacity:0}}
+@media(max-width:900px){.dr{justify-content:center;align-items:flex-end}.dp{width:min(560px,100%);animation:rise .35s var(--ease)}.dp:before{content:"";display:block;width:40px;height:4px;border-radius:4px;background:var(--line);margin:-6px auto 14px}}
+@media(max-width:540px){.dp{width:100%}}
+.b:disabled{opacity:.45;pointer-events:none}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.fld{display:flex;align-items:center;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--surf);transition:border-color .15s,box-shadow .15s}
+.fld:focus-within{border-color:var(--cop);box-shadow:0 0 0 3px var(--cop-s)}.fld.bad{border-color:var(--risk)}
+.fld input,.fld textarea{flex:1;min-width:0;width:100%;min-height:46px;border:0;outline:0;background:transparent;color:inherit;font:inherit;padding:12px 6px 12px 14px;border-radius:12px}
+.fld em{font-style:normal;color:var(--mute);font-size:13px;padding-right:14px;white-space:nowrap}
+.fld textarea{min-height:84px;resize:vertical;padding:12px 14px}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.ib2{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surf);font-size:22px;line-height:1;color:var(--mute);display:grid;place-items:center}.ib2:hover{color:var(--ink);border-color:var(--cop)}
+.dstat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}.dstat div{background:var(--paper);border-radius:12px;padding:10px 12px}.dstat span{display:block;font-size:12px;color:var(--mute)}.dstat b{font:600 18px Fraunces,serif}.dstat b.crit{color:var(--risk)}.dstat b.low{color:var(--cop-d)}
+.dsec{margin-top:22px}.dsec h3{font:600 15px/1.2 "Plus Jakarta Sans",sans-serif;margin:0 0 2px}.dsec .mute{margin:0 0 10px;font-size:13px}.dhint{font-size:13px;color:var(--mute);margin:8px 0 0}
+.rgc{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surf)}.rgc.bad{border-color:var(--risk)}.rgc .fld{background:var(--paper)}
+.rgl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}.rgi{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;margin-top:8px}.dash{color:var(--mute)}
+.derr{color:var(--risk);font-size:12px;margin:8px 0 0}.prev{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.dft{position:sticky;bottom:0;display:flex;gap:10px;justify-content:flex-end;margin:20px -20px -20px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+.ux,.cin input{border:1px solid var(--line);border-radius:12px;background:var(--surf);color:inherit;font:inherit;min-height:44px;padding:0 12px;text-align:right}.cin input{text-align:center}
+.ux:focus,.cin input:focus{outline:0;border-color:var(--cop);box-shadow:0 0 0 3px var(--cop-s)}
+.ln{flex-wrap:wrap}.rr{flex-wrap:wrap}
+@media(max-width:380px){.rgi{grid-template-columns:minmax(0,1fr)}.dash{display:none}.dstat b{font-size:16px}}
+
+.ndl textarea{display:block;width:100%;min-height:84px;border:1px solid var(--line);border-radius:12px;background:var(--surf);color:inherit;font:inherit;padding:10px 12px;resize:vertical;transition:border-color .15s,box-shadow .15s}
+.ndl textarea:focus{outline:0;border-color:var(--cop);box-shadow:0 0 0 3px var(--cop-s)}
+.ln{flex-wrap:nowrap}.ln>div:first-child{flex:1;min-width:0}.ln>div:last-child{flex:none}
+
+@media(max-width:1180px){.xdd,.xsl,.xrt{display:none}}
+@media(max-width:900px){.xnm,.xst,.xvd{display:none}}
+@media(max-width:480px){.xpill{gap:2px}}
+@media(max-width:360px){#xsnd{display:none}.xib{width:32px;height:32px;min-height:32px}.xtop{gap:6px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="xhead"><div class="xtop">
+<div class="brand"><span class="xmk">C</span><span class="xtx">Cake <i>POS</i></span></div>
+<div class="xpw"><div class="xpill" role="group" aria-label="Session">
+<span class="xrole" title="Inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="xrt">Inventory</span></span><span class="xvd"></span>
+<span class="xnm"></span><span class="xvd"></span>
+<span class="xdtx"><span class="xdd"><span class="xdl" id="xdl"></span><span class="xds" id="xds"></span> · </span><b id="xdt"></b></span><span class="xvd"></span>
+<span class="xst"><i></i><span class="xsl">Server connected</span></span><span class="xvd"></span>
+<button class="xib" id="xsearch" aria-label="Search" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+<button class="xib" id="xcount" aria-label="Start daily count" title="Start daily count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8M20 12v7H4V5h10"/></svg></button>
+<button class="xib" id="xbell" aria-label="Requests and alerts" title="Requests and alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b class="xbd" id="xbn"></b></button>
+<button class="xib" id="xsnd" aria-pressed="true" aria-label="Sound and vibration alerts" title="Sound and vibration alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg></button>
+<button class="xib" id="xtheme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></button>
+<button class="xib" id="xout" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
+</div></div></div></div>
+<nav class="xtabs" aria-label="Main">
+<button data-v="stock" aria-current="page" title="Stock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"/></svg><span class="xtf">Stock</span><span class="xts">Stock</span></button>
+<button data-v="usage" title="Usage reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg><span class="xtf">Usage reports</span><span class="xts">Usage</span></button>
+<button data-v="count" title="Daily count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8M20 12v7H4V5h10"/></svg><span class="xtf">Daily count</span><span class="xts">Count</span></button>
+<button data-v="requests" title="Requests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2-8h12l2 8v6H4zM4 13h5l1 2h4l1-2h5"/></svg><span class="xtf">Requests</span><span class="xts">Requests</span></button>
+</nav>
+<main>
+<div id="ntc"></div>
+<section id="v-stock"><header><div><h1>Stock</h1><p class="sub" id="ssub"></p></div><div class="acts"><button class="b" data-a="nitem">New item</button><button class="find" id="open" aria-label="Search"><span>Search stock, reports</span><kbd>Ctrl K</kbd></button></div></header>
+<div class="nd" id="sneed"></div>
+<div class="seg" id="itabs" role="group" aria-label="Stock type"><button data-a="itab" data-k="ingredient" aria-pressed="true">Ingredients</button><button data-a="itab" data-k="packaging" aria-pressed="false">Packaging</button></div>
+<div class="sg" id="sg"></div></section>
+<section id="v-usage" hidden><header><div><h1>Usage reports</h1><p class="sub">Bakers report ranges. You confirm the exact amounts, and only then does stock drop.</p></div></header><div class="split"><div class="rl" id="ulist"></div><div class="card" id="udet"></div></div></section>
+<section id="v-count" hidden><header><div><h1>Daily count</h1><p class="sub" id="csub"></p></div></header><div id="cbody" style="max-width:720px"></div></section>
+<section id="v-requests" hidden><header><div><h1>Requests</h1><p class="sub">Alerts and requests for you, and the ones you sent.</p></div></header><div id="rq"></div></section>
+</main></div>
+<div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Search"><div><input id="q" placeholder="Search stock and usage reports" autocomplete="off"><ul id="res"></ul></div></div>
+<div class="dr" id="dr" hidden><div class="dp" id="dp" role="dialog" aria-modal="true"></div></div>
+<div class="rm" id="rm" hidden></div>
+<script src="/cake.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=Cake.esc,toast=Cake.toast;
+let IL=[],UIx=null,CD=null,view="stock",it="ingredient",usel=null,udSig="",DI=null,cm=null,snd=true,ac,lastN=-1,RQ=null;
+try{snd=localStorage.getItem("invSound")!=="off"}catch(e){}
+const fmt=iso=>iso?new Date(iso).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
+const r3=n=>Math.round(n*1e4)/1e4,mid=i=>r3((i.min+i.max)/2);
+const IT=id=>IL.find(x=>x.ingredientId===id),guard=async(b,fn)=>{if(b&&b.disabled)return;if(b)b.disabled=true;try{return await fn()}finally{if(b&&b.isConnected)b.disabled=false}};
+const reports=()=>UIx?[...UIx.pending,...UIx.recent]:[];
+const sorted=L=>L.slice().sort((a,b)=>(a.daysLeft??1e9)-(b.daysLeft??1e9));
+
+/* ---------- stock ---------- */
+function sr(){const L=sorted(IL.filter(i=>i.kind===it)),n=IL.filter(i=>i.low).length,p=UIx?UIx.pending.length:0;
+ $("#ssub").textContent=n+" item"+(n===1?"":"s")+" need attention · "+(CD&&CD.countedToday?"counted today at "+CD.countedToday:"not counted today");
+ const cs=CD&&CD.session;
+ $("#sneed").innerHTML=`<div class="card"><div class="row"><div><h2>Usage reports</h2><span class="mute">${p?p+" waiting for you":"All confirmed"}</span></div><button class="b ${p?"p":""}" data-a="goto" data-v="usage">Review</button></div></div><div class="card"><div class="row"><div><h2>Daily count</h2><span class="mute">${cs?"In progress":CD&&CD.countedToday?"Done at "+esc(CD.countedToday):"Not counted today"}</span></div><button class="b ${CD&&CD.countedToday&&!cs?"":"p"}" data-a="cstart">${cs?"Resume":"Start count"}</button></div></div>`;
+ $$("#itabs button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===it));
+ $("#sg").innerHTML=L.map(i=>{const s=i.low?"low":"ok",pct=i.reorderLevel?Math.min(100,i.onHand/(i.reorderLevel*2)*100):100;return`<button class="rc ${i.low?"low":""}" data-a="item" data-id="${esc(i.ingredientId)}"><div class="row"><b>${esc(i.name)}</b><span class="tag ${i.low?"cop":""}">${i.low?"Low":"OK"}</span></div><div class="row"><span class="big">${esc(i.onHandText)}</span><span class="cdn ${i.low?"hot":""}">${esc(i.daysLeftLabel)}</span></div><div class="bar ${s}"><i style="width:${pct}%"></i><u></u></div><span class="mute">${i.reorderLevelText?"Reorder at "+esc(i.reorderLevelText):"No reorder level set"}</span><span class="mute">${i.pending?"Pending usage "+esc(i.pending.text)+" · ":""}${i.countedAt?"Counted "+esc(fmt(i.countedAt)):"Never counted"}</span></button>`}).join("")||'<p class="empty">Nothing here yet. Use New item to add one.</p>'}
+const drw=h=>{$("#dp").innerHTML=h;$("#dr").hidden=false},xdr=()=>{$("#dr").hidden=true;DI=null};
+function rrow(g,j,i){return`<div class="rgc" data-rg="${j}"><div class="rgi"><div class="fld"><input class="rgl2" value="${esc(g.label||"")}" maxlength="30" placeholder="Name" aria-label="Amount name"></div><div class="fld"><input class="rga" type="number" inputmode="decimal" step="any" min="0" value="${g.min}" aria-label="From"><em>${i.unit}</em></div><span class="dash">–</span><div class="fld"><input class="rgb" type="number" inputmode="decimal" step="any" min="0" value="${g.max}" aria-label="To"><em>${i.unit}</em></div><button class="b" data-a="rgdel" data-j="${j}" aria-label="Remove amount" style="min-height:40px">×</button></div></div>`}
+function ish(id){DI=id;const i=IT(id);if(!i)return;const U=i.unit,alt={kg:["kg","g"],l:["l","ml"],pcs:["pcs","dozen"]}[U];
+ drw(`<div class="dh"><div><h2>${esc(i.name)}</h2><div class="mute">${i.kind==="ingredient"?"Ingredient":"Packaging"}${i.countedAt?" · counted "+esc(fmt(i.countedAt)):""}</div></div><button class="ib2" data-a="xd" aria-label="Close">×</button></div>
+<div class="dstat"><div><span>On hand</span><b>${esc(i.onHandText)}</b></div><div><span>Days left</span><b>${i.daysLeft===null?"—":Math.round(i.daysLeft*10)/10}</b></div><div><span>Status</span><b class="${i.low?"low":"ok"}">${i.low?"Low":"OK"}</b></div></div>
+<div class="dsec"><h3>Stock in and out</h3><p class="mute">Receive a delivery or write off waste. Counting is done in Daily count.</p><div class="fld"><input id="mq" type="number" inputmode="decimal" step="any" min="0" placeholder="Amount" aria-label="Amount"><select id="mu" aria-label="Unit">${alt.map(u=>`<option>${u}</option>`).join("")}</select></div><div class="fld" style="margin-top:8px"><input id="mn" maxlength="80" placeholder="Note (optional)" aria-label="Note"></div><div class="btns"><button class="b p" data-a="recv" data-id="${esc(id)}">Receive</button><button class="b" data-a="woff" data-id="${esc(id)}">Write off</button></div></div>
+<div class="dsec"><h3>Reorder level</h3><p class="mute">You get an alert when stock reaches this level.</p><div class="fld"><input id="ro" type="number" inputmode="decimal" step="any" min="0" value="${i.reorderLevel??""}" aria-label="Reorder level in ${U}"><em>${U}</em></div></div>
+${i.kind==="ingredient"?`<div class="dsec"><h3>Usage amounts</h3><p class="mute">The amounts the baker can tap when reporting usage, from smallest to largest.</p><div id="rglist">${i.ranges.map((g,j)=>rrow(g,j,i)).join("")}</div><div class="btns"><button class="b" data-a="rgadd">Add amount</button></div></div>`:""}
+<div class="dft"><button class="b" data-a="xd">Cancel</button><button class="b p" data-a="isave" data-id="${esc(id)}">Save changes</button></div>`)}
+function readRanges(){return $$("#rglist .rgc").map(r=>({label:r.querySelector(".rgl2").value.trim(),min:parseFloat(r.querySelector(".rga").value),max:parseFloat(r.querySelector(".rgb").value)}))}
+function newItem(){const d=Cake.dialog(`<h2>New stock item</h2><label for="ni-n">Name</label><input id="ni-n" maxlength="60"><label>Type</label><div class="cx-g" id="ni-k"><button class="cx-b" aria-pressed="true" data-k="ingredient">Ingredient</button><button class="cx-b" aria-pressed="false" data-k="packaging">Packaging</button></div><label for="ni-u">Measured in</label><select id="ni-u"><option value="kg">Kilograms</option><option value="g">Grams</option><option value="l">Litres</option><option value="ml">Millilitres</option><option value="pcs">Pieces</option></select><label for="ni-s">Stock now (optional)</label><input id="ni-s" type="number" inputmode="decimal" step="any" min="0"><label for="ni-r">Reorder level (optional)</label><input id="ni-r" type="number" inputmode="decimal" step="any" min="0"><div class="cx-a" style="margin-top:14px;justify-content:flex-end"><button class="cx-b" id="ni-x">Cancel</button><button class="cx-b p" id="ni-go">Add item</button></div>`),q=s=>d.el.querySelector(s);let kind="ingredient";
+ q("#ni-k").onclick=e=>{const b=e.target.closest("button");if(!b)return;kind=b.dataset.k;d.el.querySelectorAll("#ni-k button").forEach(x=>x.setAttribute("aria-pressed",x===b))};q("#ni-x").onclick=d.close;
+ q("#ni-go").onclick=()=>{const name=q("#ni-n").value.trim();if(!name)return toast("Give the item a name.");const s=parseFloat(q("#ni-s").value),r=parseFloat(q("#ni-r").value);guard(q("#ni-go"),async()=>{const o=await Cake.send("inventory/create_ingredient",{name,unit:q("#ni-u").value,kind,...(s>=0&&{openingStock:s}),...(r>0&&{reorderLevel:r})},name+" added.");if(o.ok){it=kind;d.close()}})};q("#ni-n").focus()}
+
+/* ---------- usage reports ---------- */
+function ur(){const L=reports();if(!usel||!L.some(r=>r.reportId===usel))usel=L[0]?L[0].reportId:null;
+ $("#ulist").innerHTML=L.map(r=>`<button class="rc" data-id="${esc(r.reportId)}" aria-selected="${r.reportId===usel}"><div class="row"><b>${esc(r.orderNumber)} · ${esc(r.cake.flavor)} cake</b><span class="tag ${r.status==="confirmed"?"":r.status==="sent_back"?"risk":"cop"}">${esc(r.statusLabel)}</span></div><span class="mute">From ${esc(r.reportedByName)} · ${esc(fmt(r.reportedAt))} · ${r.items.length} ingredients</span></button>`).join("")||'<p class="empty">No usage reports yet.</p>';
+ const r=L.find(x=>x.reportId===usel),sig=r?r.reportId+r.status:"";if(sig===udSig&&sig)return;udSig=sig;ud(r)}
+function ud(r){if(!r){$("#udet").innerHTML='<p class="empty">Select a report to confirm.</p>';return}const open=r.status==="reported"&&UIx.can.confirm;
+ $("#udet").innerHTML=`<div class="row"><h2>${esc(r.orderNumber)} · ${esc(r.cake.flavor)} cake</h2><span class="tag ${r.status==="confirmed"?"":r.status==="sent_back"?"risk":"cop"}">${esc(r.statusLabel)}</span></div><p class="mute" style="margin:2px 0 0">Reported by ${esc(r.reportedByName)} at ${esc(fmt(r.reportedAt))}.${open?" Stock only drops when you confirm.":""}</p>${r.note?`<p>${esc(r.note)}</p>`:""}${r.sentBackReason?`<div class="item risk" style="margin:8px 0"><small>Sent back: ${esc(r.sentBackReason)}</small></div>`:""}
+ ${r.items.map(l=>`<div class="ln"><div><b>${esc(l.name)}</b>${l.extra?' <span class="tag">Extra</span>':""}<div class="mute">Baker's range ${esc(l.rangeText)}${l.suggestedText?" · expected "+esc(l.suggestedText):""} · on hand ${esc(l.onHandText)}</div></div>${open?`<div style="text-align:right"><input class="ux" data-i="${esc(l.ingredientId)}" type="number" step="any" min="0" placeholder="${mid(l)}" aria-label="Exact amount of ${esc(l.name)} in ${l.unit}"> <span class="mute">${l.unit}</span></div>`:`<b>${esc(l.confirmedText||"Not confirmed")}${l.confirmedText?" used":""}</b>`}</div>`).join("")}
+ ${open?'<div class="btns"><button class="b p" data-a="uok" data-id="'+esc(r.reportId)+'">Confirm with my amounts</button><button class="b" data-a="uacc" data-id="'+esc(r.reportId)+'">Accept ranges as reported</button><button class="b r" data-a="usb" data-id="'+esc(r.reportId)+'">Send back</button></div><p class="mute">Leave a box empty to use the middle of the baker\'s range.</p>':""}`}
+function confirmReport(r,typed,b){const xs=$$(".ux"),items=[];for(const l of r.items){const x=typed&&xs.find(y=>y.dataset.i===l.ingredientId),v=x&&x.value!==""?parseFloat(x.value):mid(l);if(!(v>=0))return toast("Check the amounts you typed.");items.push({ingredientId:l.ingredientId,qty:v})}
+ guard(b,()=>Cake.send("usage/confirm",{reportId:r.reportId,items},"Confirmed. Stock updated."))}
+
+/* ---------- daily count ---------- */
+function cr(){const cs=CD&&CD.session;$("#csub").textContent=CD&&CD.countedToday?"Counted today at "+CD.countedToday:"Not counted today";if(!CD)return;
+ $("#cbody").innerHTML=`<div class="card"><h2>${cs?"Count in progress":"Daily count"}</h2><p class="mute">${cs?cs.done+" of "+cs.total+" counted.":"Count every ingredient and packaging item, one at a time. You review the differences before anything is saved."}</p><div class="btns"><button class="b p" data-a="cstart">${cs?"Resume count":"Start daily count"}</button>${cs?'<button class="b r" data-a="cdisc">Throw this count away</button>':""}</div></div><div class="card" style="margin-top:12px"><h2>Past counts</h2>${CD.history.map(c=>`<div class="rr"><span>${esc(fmt(c.at))} · ${esc(c.byName)}</span><span class="mute">${c.items} items · ${c.differences} differences${c.big?" · "+c.big+" big":""}</span></div>`).join("")||'<p class="mute">No counts yet.</p>'}</div>`}
+function cmh(){const s=CD&&CD.session;if(!s){$("#rm").hidden=true;cm=null;return}const L=s.items,N=L.length,i=L[cm.i];let h;
+ if(cm.rev){h=`<div><div class="row"><div><span class="mute">Closing review</span><h1>Check the differences</h1></div><button class="b" data-a="xr">Exit</button></div><p class="mute">${s.differences} differences · ${s.big} big · ${s.skipped} not counted. Nothing is saved to stock until you submit.</p>${L.map((x,j)=>`<div class="rr"><span><b>${esc(x.name)}</b><br><small class="mute">Expected ${esc(x.expectedText)}</small></span><span style="text-align:right">${x.counted===null?'<span class="tag">Not counted</span>':`<b>${esc(x.countedText)}</b> <span class="tag ${x.big?"risk":x.difference?"cop":""}">${x.difference?esc(x.differenceText):"Matches"}</span>`} <button class="b" data-a="cedit" data-i="${j}">Edit</button></span></div>`).join("")}<div class="rmf"><button class="b" data-a="cb">Back to counting</button><button class="b p" data-a="csub">Submit count</button></div></div>`}
+ else h=`<div><div class="row"><div><span class="mute">Daily count · ${cm.i+1} of ${N}</span><h1>${esc(i.name)}</h1></div><button class="b" data-a="xr">Exit</button></div><div class="bar"><i style="width:${s.done/N*100}%"></i></div><p class="mute">${i.kind==="ingredient"?"Ingredient":"Packaging"} · system expects <b>${esc(i.expectedText)}</b>${i.lastCountedText?" · last counted "+esc(i.lastCountedText):""}</p><div class="cin"><button class="b" data-a="cm" aria-label="Less">−</button><input id="cv" type="number" inputmode="decimal" step="any" min="0" value="${i.counted??""}" placeholder="${r3(i.expected)}" aria-label="Counted amount in ${i.unit}"><button class="b" data-a="cp" aria-label="More">+</button></div><p class="mute" style="text-align:center">${i.unit} <button class="b" style="margin-left:8px" data-a="cx">Matches system</button></p><div class="rmf"><button class="b" data-a="cb" ${cm.i?"":"disabled"}>Back</button><span class="acts"><button class="b" data-a="csk">Skip</button><button class="b p" data-a="cn">${cm.i===N-1?"Review count":"Save and next"}</button></span></div></div>`;
+ $("#rm").innerHTML=h;$("#rm").hidden=false;const c=$("#cv");if(c)c.focus()}
+async function crec(counted){const s=CD.session,i=s.items[cm.i],o=await Cake.send("count/record",{sessionId:s.sessionId,ingredientId:i.ingredientId,counted});if(!o.ok)return false;if(cm.ret||cm.i>=s.items.length-1){cm.rev=true;cm.ret=false}else cm.i++;cmh();return true}
+
+/* ---------- search, sound, navigation ---------- */
+const pal=$("#pal"),opn=()=>{pal.classList.add("on");$("#q").value="";show();$("#q").focus()};
+function show(){const v=$("#q").value.toLowerCase(),a=IL.filter(i=>i.name.toLowerCase().includes(v)).map(i=>`<li><button data-k="i" data-id="${esc(i.ingredientId)}"><span>${esc(i.name)}</span><span class="mute">${esc(i.onHandText)} · ${esc(i.daysLeftLabel)}</span></button></li>`),b=reports().filter(r=>(r.orderNumber+r.reportedByName+r.cake.flavor).toLowerCase().includes(v)).map(r=>`<li><button data-k="u" data-id="${esc(r.reportId)}"><span>${esc(r.orderNumber)} ${esc(r.cake.flavor)} cake</span><span class="mute">Usage report</span></button></li>`);$("#res").innerHTML=[...a,...b].join("")||'<li class="empty" style="padding:12px">No match.</li>'}
+function beep(){const b=$("#xbell");b.classList.remove("ring");void b.offsetWidth;if(!matchMedia("(prefers-reduced-motion:reduce)").matches){b.classList.add("ring");setTimeout(()=>b.classList.remove("ring"),1400)}if(!snd)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume();[0,.3].forEach(d=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+d);o.stop(ac.currentTime+d+.2)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+function go(v){view=v;$$("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="stock")sr();if(v==="usage")ur();if(v==="count")cr();if(v==="requests"&&RQ)RQ.shown();scrollTo(0,0)}
+$$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
+const A={itab(d,b){it=b.dataset.k;sr()},item(d){ish(d.id)},goto(d){go(d.v)},xd(){xdr()},nitem(){newItem()},
+ recv(d,b){const n=parseFloat($("#mq").value),note=$("#mn").value.trim();if(!(n>0))return toast("Enter the amount first.");guard(b,async()=>{const o=await Cake.send("inventory/receive",{ingredientId:d.id,qty:n,unit:$("#mu").value,...(note&&{note})},"Stock received.");if(o.ok)ish(d.id)})},
+ woff(d,b){const n=parseFloat($("#mq").value),note=$("#mn").value.trim();if(!(n>0))return toast("Enter the amount first.");guard(b,async()=>{const o=await Cake.send("inventory/write_off",{ingredientId:d.id,qty:n,unit:$("#mu").value,...(note&&{note})},"Written off.");if(o.ok)ish(d.id)})},
+ rgadd(){const i=IT(DI),last=readRanges().pop(),g={label:"",min:last&&last.max>=0?last.max:0,max:""};$("#rglist").insertAdjacentHTML("beforeend",rrow(g,$$("#rglist .rgc").length,i))},rgdel(d,b){b.closest(".rgc").remove()},
+ isave(d,b){const i=IT(d.id),ro=parseFloat($("#ro").value);guard(b,async()=>{let ranges;if(i.kind==="ingredient"){const cur=readRanges();ranges=cur.map((g,j)=>({...(i.ranges[+$$("#rglist .rgc")[j].dataset.rg]?{id:i.ranges[+$$("#rglist .rgc")[j].dataset.rg].rangeId}:{}),label:g.label||"Amount "+(j+1),min:g.min,max:g.max}));if(ranges.some(g=>!(g.min>=0&&g.max>=0)))return toast("Enter both amounts for every usage range.")}
+  const o=await Cake.send("inventory/update_ingredient",{ingredientId:d.id,...(ro>0?{reorderLevel:ro}:{}),...(ranges?{ranges}:{})},i.name+" updated.");if(o.ok)xdr()})},
+ uok(d,b){confirmReport(reports().find(r=>r.reportId===d.id),true,b)},uacc(d,b){confirmReport(reports().find(r=>r.reportId===d.id),false,b)},
+ usb(d){const dl=Cake.dialog('<h2>Send back to the baker</h2><label for="sb-r">What needs fixing?</label><textarea id="sb-r" maxlength="200"></textarea><div class="cx-a" style="margin-top:14px;justify-content:flex-end"><button class="cx-b" id="sb-x">Cancel</button><button class="cx-b p" id="sb-go">Send back</button></div>');dl.el.querySelector("#sb-x").onclick=dl.close;dl.el.querySelector("#sb-go").onclick=()=>{const t=dl.el.querySelector("#sb-r").value.trim();if(!t)return toast("Say what needs fixing.");guard(dl.el.querySelector("#sb-go"),async()=>{const o=await Cake.send("usage/send_back",{reportId:d.id,reason:t},"Sent back to the baker.");if(o.ok)dl.close()})}},
+ cstart(){guard(null,async()=>{const o=await Cake.send("count/start",{});if(!o.ok)return;cm={i:0,rev:false,ret:false};const s=await Cake.read("count_session",{});if(s){CD=s;const first=s.session.items.findIndex(x=>x.counted===null);cm.i=Math.max(0,first)}cmh()})},
+ xr(){$("#rm").hidden=true;cm=null;toast("Count saved as in progress.");if(view==="count")cr();sr()},
+ cm(){const c=$("#cv"),i=CD.session.items[cm.i],v=isNaN(parseFloat(c.value))?i.expected:parseFloat(c.value);c.value=Math.max(0,r3(v-i.step))},cp(){const c=$("#cv"),i=CD.session.items[cm.i],v=isNaN(parseFloat(c.value))?i.expected:parseFloat(c.value);c.value=r3(v+i.step)},cx(){$("#cv").value=r3(CD.session.items[cm.i].expected)},
+ cn(d,b){const v=parseFloat($("#cv").value);if(!(v>=0))return toast("Enter the amount, or tap Skip.");guard(b,()=>crec(v))},csk(d,b){guard(b,()=>crec(null))},
+ cb(){cm.ret=false;if(cm.rev){cm.rev=false;cm.i=CD.session.items.length-1}else if(cm.i)cm.i--;cmh()},cedit(d){cm.i=+d.i;cm.rev=false;cm.ret=true;cmh()},
+ csub(d,b){guard(b,async()=>{const o=await Cake.send("count/submit",{sessionId:CD.session.sessionId},"Count saved.");if(o.ok){$("#rm").hidden=true;cm=null;go("count")}})},
+ cdisc(d,b){if(!confirm("Throw this count away? Stock stays as it is."))return;guard(b,()=>Cake.send("count/discard",{sessionId:CD.session.sessionId},"Count thrown away."))}};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&A[b.dataset.a]&&b.type!=="checkbox")A[b.dataset.a](b.dataset,b)});
+$("#ulist").onclick=e=>{const b=e.target.closest(".rc");if(b){usel=b.dataset.id;udSig="";ur()}};
+$("#dr").onclick=e=>{if(e.target.id==="dr")xdr()};
+$("#open").onclick=$("#xsearch").onclick=opn;$("#q").oninput=show;
+pal.onclick=e=>{const b=e.target.closest("li button");if(b){if(b.dataset.k==="i"){it=IT(b.dataset.id).kind;go("stock");ish(b.dataset.id)}else{usel=b.dataset.id;udSig="";go("usage")}}if(e.target===pal||b)pal.classList.remove("on")};
+$("#xcount").onclick=A.cstart;$("#xbell").onclick=()=>go("requests");
+$("#xsnd").setAttribute("aria-pressed",snd);$("#xsnd").onclick=()=>{snd=!snd;try{localStorage.setItem("invSound",snd?"on":"off")}catch(e){}$("#xsnd").setAttribute("aria-pressed",snd);toast(snd?"Sound and vibration on":"Sound and vibration off")};
+addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();opn()}if(e.key==="Escape"){pal.classList.remove("on");xdr();if(!$("#rm").hidden&&cm)A.xr()}});
+const xroot=document.documentElement,xhd=$(".xhead");try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
+const xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
+function xclock(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+$("#xtheme").onclick=()=>{const dark=xroot.dataset.theme?xroot.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;xroot.dataset.theme=dark?"light":"dark";try{localStorage.setItem("theme",xroot.dataset.theme)}catch(e){}};
+$("#xout").onclick=()=>Cake.signOut();
+(async()=>{const me=await Cake.boot(["inventory","owner"]);$(".xnm").textContent=me.name;xclock();setInterval(xclock,30000);
+ Cake.client.onConnection(s=>{const up=s!=="offline";$(".xst").className="xst"+(up?"":" off");$(".xst .xsl").textContent=up?"Server connected":"Server unreachable"});
+ Cake.mountNotice($("#ntc"));
+ Cake.feed("ingredient_list",{},d=>{IL=d;if(view==="stock")sr();if(DI&&!IT(DI))xdr()});
+ Cake.feed("usage_inbox",{},d=>{UIx=d;if(view==="usage")ur();if(view==="stock")sr()});
+ Cake.feed("count_session",{},d=>{CD=d;if(cm&&!d.session){$("#rm").hidden=true;cm=null;toast("The count was closed.")}if(view==="count")cr();if(view==="stock")sr()});
+ RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="requests",onCounts:c=>{const n=c.unseen+c.needsYou;$("#xbn").textContent=n||"";if(lastN>=0&&n>lastN)beep();lastN=n}});
+ go("stock")})();
+</script>
+</body>
+</html>
