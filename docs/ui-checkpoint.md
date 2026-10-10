@@ -12,7 +12,7 @@ npm run ui:try -- --fresh # same, from clean demo data
 
 Open http://localhost:8787/. A phone on the same wifi can use the address it prints. Demo PINs: owner 1111, cashier 2222, baker 3333, inventory 4444. Demo data lives in `.try-data/` (delete it to reset). The demo has no stock list or recipes and no custom cakes: add ingredients on the Inventory screen (New item) and ingredient amounts in its drawer, and make custom cakes on the Cashier screen, to see the baker and usage flows.
 
-Automated browser tests: `npm run ui:test` (cashier, baker, inventory; real server, real Chromium, desktop and phone width; screenshots go to `/tmp/ui-shots-<role>/`).
+Automated browser tests: `npm run ui:test` (cashier, baker, inventory, inventory-edge; real server, real Chromium, desktop and phone width; screenshots go to `/tmp/ui-shots-<role>/`).
 
 ## Status
 
@@ -21,7 +21,7 @@ Automated browser tests: `npm run ui:test` (cashier, baker, inventory; real serv
 | Sign-in | yes | passes | |
 | Cashier | yes | passes | |
 | Baker | yes | passes | |
-| Inventory | yes | **not passing yet** | First run stopped at "receive stock updates the open drawer". Could be a test expectation (unit text such as "12 kg") or a page fault. Not investigated. |
+| Inventory | yes | passes (`inventory.mjs` and `inventory-edge.mjs`) | Edge test covers real stock numbers after confirming, accept-as-reported, double-click safety, refused receive and write-off, new packaging, count Edit/Resume/Discard, theme, role redirect. |
 | Owner | **no** | none | Still the unedited design with demo data and a fake PIN lock. |
 | IT | not started | none | Set aside for now. Until it exists, an IT sign-in goes to `/it.html`, which is missing. |
 | Old React app (`apps/web`) | still there | | Keep until the Owner screen is done. |
@@ -69,7 +69,7 @@ Tick these on the demo shop. "Second screen" means a second browser window signe
 
 ## Left to do
 
-1. **Inventory test**: find out why the receive-stock check fails, fix, run `npm run ui:test` until all three pass.
+1. ~~Inventory test~~ done 10 Oct 2026 (also fixed: new item landing on the wrong tab, and a stale count review after Save/Edit).
 2. **Owner screen** (`apps/ui/pages/owner.html`, 700 lines of design). Screens and the server feeds to use:
    - Reports: `reports` (7 and 30 days).
    - Orders: `order_list`, `order_card`.

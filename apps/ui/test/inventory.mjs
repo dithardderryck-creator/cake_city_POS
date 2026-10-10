@@ -102,7 +102,7 @@ try {
   await page.fill('#udet .ux', '0.35');
   await page.click('#udet [data-a="uok"]');
   await until(async () => /Confirmed/.test(await txt(page, '#ulist')), 'report confirmed');
-  await until(async () => /11\.15 kg/.test(await txt(page, '#sg')) || true, 'x');
+  await until(async () => Math.abs((await owner.read('ingredient_list')).find((r) => r.name === 'Flour').onHand - 11.15) < 1e-9, 'confirmed amount taken off flour stock (11.5 - 0.35 kg)');
   await makeReport('Second');
   await until(async () => (await page.locator('#ulist .rc').count()) === 2, 'second report listed');
   await page.locator('#ulist .rc', { hasText: 'Waiting' }).click();
