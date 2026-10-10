@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cake POS · Baker</title>
+<link rel="stylesheet" href="/fonts.css">
+<style>
+:root{--bg:#FDFBF7;--paper:#F5F1E8;--surf:#fff;--line:#E6DECD;--ink:#1F1A13;--mute:#6B5E4F;--cop:#C47F3D;--cop-d:#9A5F2A;--cop-s:#C47F3D1f;--sage:#5E7247;--sage-s:#5E72471c;--risk:#B4452F;--risk-s:#B4452F18;--sh:0 1px 2px #1f1a1308,0 10px 28px -14px #1f1a1322;--ease:cubic-bezier(.32,.72,0,1);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}}
+:root[data-theme="dark"]{--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}
+html{scroll-padding-top:calc(var(--hh,120px) + 8px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cop);outline-offset:2px}
+.serif,h1,h2,.num{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
+.app{min-height:100dvh}
+.brand{font:600 20px Fraunces,serif;margin:0}
+.brand i{font-style:normal;color:var(--cop)}
+main{padding:24px clamp(16px,3vw,40px) 48px;max-width:1260px;width:100%;margin:0 auto}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:2px 0 0}
+.find{display:flex;align-items:center;gap:10px;min-width:230px;padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surf);color:var(--mute);transition:border-color .3s}
+.find:hover{border-color:var(--cop)}
+.find kbd{margin-left:auto;font:500 11px inherit;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:20px}
+.due{grid-column:span 4}
+.stock{grid-column:span 5}
+.req{grid-column:span 7}
+.act{grid-column:span 12}
+h2{font-size:17px;font-weight:600;margin:0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.seg{display:inline-flex;background:var(--paper);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:5px 14px;border-radius:999px;color:var(--mute);transition:all .35s var(--ease)}
+.seg button[aria-pressed="true"]{background:var(--surf);color:var(--ink);box-shadow:var(--sh)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.item{display:grid;gap:2px;padding:12px 14px;border-radius:12px;background:var(--paper);border-left:3px solid var(--sage)}
+.item.risk{border-left-color:var(--risk);background:var(--risk-s)}
+.item b{font-weight:600}
+.item small,.mute{color:var(--mute)}
+.tag{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--sage-s);color:var(--sage)}
+.tag.risk{background:var(--risk-s);color:var(--risk)}
+.tag.cop{background:var(--cop-s);color:var(--cop-d)}
+.s{margin-top:14px}
+.confirm{margin-top:16px;padding:12px 14px;border-radius:12px;border:1px dashed var(--cop);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rq{padding:14px;border:1px solid var(--line);border-radius:12px;margin-top:12px;transition:opacity .4s var(--ease),transform .4s var(--ease),max-height .5s var(--ease),margin .5s,padding .5s;max-height:200px;overflow:hidden}
+.rq.gone{opacity:0;transform:translateX(24px);max-height:0;margin-top:0;padding-top:0;padding-bottom:0;border-width:0}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.b{border-radius:999px;padding:7px 16px;border:1px solid var(--line);background:var(--surf);transition:transform .2s,background .3s}
+.b:active{transform:scale(.96)}
+.b.p{background:var(--cop);border-color:var(--cop);color:#fff;font-weight:600}
+.b.p:hover{background:var(--cop-d)}
+.empty{color:var(--mute);padding:18px 0 4px}
+details summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+details summary::-webkit-details-marker{display:none}
+.pal{position:fixed;inset:0;background:#1f1a1366;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;z-index:20}
+.pal.on{display:flex}
+.pal>div{width:min(560px,92vw);background:var(--surf);border-radius:18px;border:1px solid var(--line);box-shadow:0 30px 70px -20px #0008;overflow:hidden;animation:pop .35s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}}
+.pal input{width:100%;border:0;border-bottom:1px solid var(--line);padding:16px 20px;background:none;outline:0}
+.pal ul{list-style:none;margin:0;padding:8px;max-height:46vh;overflow:auto}
+.pal li button{width:100%;text-align:left;border:0;background:none;padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between}
+.pal li button:hover,.pal li button:focus-visible{background:var(--cop-s)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;opacity:0;transition:all .4s var(--ease);z-index:30;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;margin-top:16px;align-items:start}
+.rl{display:grid;gap:10px}
+.rc{text-align:left;width:100%;background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:6px;transition:border-color .3s,box-shadow .3s}
+.rc:hover,.rc[aria-selected="true"]{border-color:var(--cop)}
+.rc[aria-selected="true"]{box-shadow:var(--sh)}
+.dots{display:flex;gap:4px}
+.dots i{height:4px;flex:1;border-radius:4px;background:var(--line);transition:background .4s}
+.dots i.on{background:var(--cop)}
+.steps{display:grid;grid-template-columns:repeat(var(--n),1fr);margin:20px 0 16px}
+.st{text-align:center;position:relative;font-size:12px;color:var(--mute)}
+.st::before{content:"";display:block;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);margin:0 auto 6px;background:var(--surf);position:relative;z-index:1;transition:all .4s var(--ease)}
+.st::after{content:"";position:absolute;top:8px;left:calc(-50% + 9px);right:calc(50% + 9px);height:2px;background:var(--line);transition:background .4s}
+.st:first-child::after{display:none}
+.st.on{color:var(--ink);font-weight:600}
+.st.on::before{background:var(--cop);border-color:var(--cop)}
+.st.on::after{background:var(--cop)}
+.st.cur::before{box-shadow:0 0 0 5px var(--cop-s)}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:var(--paper);font-size:12px;margin:0 6px 6px 0}
+.chip.ok{background:var(--sage-s);color:var(--sage)}
+.tl{list-style:none;padding:0;margin:8px 0 0}
+.tl li{display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.tl time{color:var(--mute);min-width:44px;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.split{grid-template-columns:1fr}.rev,.due,.stock,.req,.act{grid-column:span 12}.find{width:100%}}
+.bulk .b{background:transparent;color:var(--bg);border-color:#ffffff40}
+.ci.head{color:var(--mute);font-size:12px;padding:10px 0}
+.ci.hidden b,.ci.draft b{color:var(--mute)}
+.sw{width:42px;height:24px;border-radius:999px;border:0;background:var(--line);position:relative;transition:background .3s}
+.sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .35s var(--ease)}
+.sw[aria-checked="true"]{background:var(--sage)}
+.sw[aria-checked="true"] i{transform:translateX(18px)}
+.dr{position:fixed;inset:0;background:#1f1a1366;z-index:25;display:flex;justify-content:flex-end}
+.dr[hidden]{display:none}
+.dp{width:min(440px,100%);height:100%;background:var(--bg);padding:24px;overflow:auto;animation:slide .45s var(--ease);box-shadow:-20px 0 60px -20px #0006}
+@keyframes slide{from{transform:translateX(40px);opacity:0}}
+.fl{display:grid;gap:4px;margin-top:14px}
+.fl>span{color:var(--mute);font-size:12px}
+.fl input,.fl select{border:1px solid var(--line);border-radius:12px;background:var(--surf);padding:9px 12px;width:100%}
+.pv .num{font-size:20px;color:var(--cop-d);font-weight:600}
+@media(max-width:900px){.ci{grid-template-columns:28px 1fr 1fr}.ci.head{display:none}.ci>*:nth-child(n+4){grid-column:2/-1}.dr{align-items:flex-end}.dp{height:auto;max-height:92dvh;border-radius:20px 20px 0 0}}
+.si.head{color:var(--mute);font-size:12px;padding:10px 8px;border-radius:0}
+@media(max-width:900px){.si{grid-template-columns:1fr 1fr}.si.head{display:none}}
+.oc.risk{border-left:3px solid var(--risk)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:12px 0}
+.kv dt{color:var(--mute)}
+.kv dd{margin:0}
+.tkt{display:flex;align-items:stretch;background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:14px 0 4px}
+.tkt .no{padding:14px 18px;background:var(--cop-s);border-right:2px dashed var(--line);font:600 26px Fraunces,serif;letter-spacing:.02em;color:var(--cop-d);display:flex;align-items:center}
+.tkt .in{padding:12px 16px;display:grid;gap:2px;align-content:center}
+.xhead{position:sticky;top:0;z-index:12;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
+.xtop{display:flex;align-items:center;gap:12px;padding:10px clamp(16px,3vw,40px) 6px;max-width:1260px;margin:0 auto}
+.xtop .brand{flex:none;display:flex;align-items:center;gap:8px}
+.xmk{display:none;width:36px;height:36px;border-radius:50%;background:var(--cop);color:#fff;place-items:center;font:600 17px Fraunces,serif}
+.xpw{flex:1 1 0;min-width:0;container-type:inline-size;display:flex;justify-content:center}
+.xpill{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;padding:8px 10px;max-width:100%;border:1px solid var(--line);border-radius:999px;background:var(--surf);box-shadow:var(--sh)}
+.xpill>*{flex:none}
+.xpill .xnm{flex:0 1 auto;min-width:0}
+.xvd{width:1px;height:24px;background:var(--line)}
+.xrole{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--cop-s);color:var(--cop-d);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.xnm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xds{display:none}
+.xdtx{font-size:13px;color:var(--mute);white-space:nowrap}
+.xdtx b{color:var(--ink);font-weight:600}
+.xst{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;background:var(--sage-s);color:var(--sage);font-size:13px;font-weight:600;white-space:nowrap}
+.xst i{width:9px;height:9px;border-radius:50%;background:var(--sage)}
+.xib{width:40px;height:40px;border-radius:50%;border:0;background:none;display:inline-grid;place-items:center;color:var(--mute);position:relative;transition:background .3s,color .3s}
+.xib:hover{background:var(--cop-s);color:var(--ink)}
+.xbd{position:absolute;top:-1px;right:-1px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--cop);color:#fff;font-size:11px;display:inline-grid;place-items:center}
+.xbd:empty{display:none}
+@container (max-width:860px){.xdl{display:none}.xds{display:inline}}
+@container (max-width:680px){.xrt,.xsl{display:none}.xrole{padding:9px}.xst{width:36px;padding:0;justify-content:center}}
+@container (max-width:520px){.xvd,.xdd{display:none}.xpill{gap:8px}}
+@container (max-width:430px){.xpill{gap:4px;padding:5px 6px}.xib,.xst{width:34px;height:34px;min-height:34px}.xrole{padding:7px}}
+@container (max-width:340px){.xdtx{display:none}}
+@container (max-width:290px){.xnm{display:none}}
+nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:11;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:4px clamp(16px,3vw,40px)}
+nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
+nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
+nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}
+.xts{display:none}
+.xts{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}
+.xrole svg{width:16px;height:16px}
+@container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
+@container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}nav.xtabs button{font-size:11.5px}}
+@media(max-width:540px){nav.xtabs{position:static}}
+@keyframes xring{0%,100%{transform:rotate(0)}15%{transform:rotate(14deg)}30%{transform:rotate(-12deg)}45%{transform:rotate(9deg)}60%{transform:rotate(-6deg)}75%{transform:rotate(3deg)}}
+.xib.ring svg{animation:xring 1.2s ease;transform-origin:50% 10%}
+@media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
+@media(max-width:359px){.xtop .brand{display:none}}
+.ztools{position:sticky;top:var(--hh,120px);z-index:9;background:var(--bg);padding:8px 0 10px}
+.zrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.zsrch{position:relative;flex:1 1 240px;min-width:0}
+.zsrch svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--mute);pointer-events:none}
+.zsrch input,.zsel select,.zbb input{width:100%;min-height:42px;border:1px solid var(--line);border-radius:999px;background:var(--surf);color:var(--ink);font:inherit;padding:0 14px}
+.zsrch input{padding-left:36px}
+.zsel{flex:1 1 170px;max-width:260px;min-width:150px}
+.zrow .b,.zbb .b{min-height:42px}
+.b.r{border-color:var(--risk);color:var(--risk)}
+.zrow .b[aria-pressed="true"]{border-color:var(--cop);color:var(--cop-d)}
+#zcnt{font-weight:600;margin-right:auto}
+.zboard{background:#201b15;border-radius:24px;padding:0 20px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0 22px;align-content:start}
+.zboard.one{display:block}
+.zboard.one .zcl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 18px}
+.zcol{min-width:0}
+.zch{position:sticky;top:calc(var(--hh,120px) + var(--zt,56px));z-index:3;background:#201b15;display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:16px 0 10px;border-bottom:1px solid #e9e1d3;color:#f3ebdd;font:600 13px "Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.zcn{min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:#3a3025;display:inline-grid;place-items:center;font-size:12px;letter-spacing:0}
+.zcl{padding:0 0 8px}
+.zem{color:#9a8d7b;font-size:14px;margin:0 0 14px}
+.ztw{max-width:340px;margin-bottom:18px}
+.ztt{position:relative;background:#fffdf8;color:#1f1a13;border-radius:22px;padding:16px 18px 14px}
+.zcap{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#7c6f60}
+.zshop{font:600 20px Fraunces,serif}
+.zth{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.zplus{width:38px;height:38px;border:0;border-radius:50%;background:#f6e6d2;color:#c47f3d;display:grid;place-items:center;flex:none}
+.zplus svg,.zgo svg{width:18px;height:18px}
+.ztm{display:flex;justify-content:space-between;align-items:center;gap:6px 10px;margin:10px 0 14px;flex-wrap:wrap}
+.zstc{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:999px;background:#f6e6d2;color:#a8641f;white-space:nowrap}
+.zstc.ok{background:#e6efdb;color:#4c6a35}
+.zstc.risk{background:#f6dcd5;color:#a8402b}
+.zstc.gr{background:#ece7dd;color:#6b5e4f}
+.zperf{position:relative;border-top:2px dashed #d9cfbf;margin:0 -18px}
+.zperf::before,.zperf::after{content:"";position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:#201b15}
+.zperf::before{left:-9px}
+.zperf::after{right:-9px}
+.ztnum{text-align:center;padding:14px 0 8px}
+.znum{font:600 clamp(44px,5vw,56px)/1.05 Fraunces,serif;letter-spacing:.02em}
+.zrw{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:15px}
+.zrw span{color:#7c6f60;flex:none}
+.zrw b{font-weight:500;text-align:right;min-width:0}
+.zell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zrw.tot b{font:600 20px Fraunces,serif}
+.zrw b.risk{color:#a8402b}
+.zrw b.cop{color:#a8641f}
+.ztt dl{margin:0 0 12px}
+.zbc{height:30px;margin:14px 0 6px;color:#1f1a13}
+.zbc svg{width:100%;height:30px}
+.zcap.zdt{text-align:center;letter-spacing:.3em}
+.zage{position:absolute;top:-11px;right:14px;background:#b4452f;color:#fff;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
+.zgo{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;min-height:48px;border:0;border-radius:999px;background:#c47f3d;color:#fff;font-weight:600;padding:0 14px}
+.zpkc.y{background:#c47f3d}
+.ztt[data-pk]{cursor:pointer}
+.ztt.on{box-shadow:0 0 0 3px #c47f3d}
+@media(max-width:560px){.zboard{padding:0 14px 10px;border-radius:20px}.ztw{max-width:none}}
+.mrow .row b{font-weight:500}
+.mx td.y{color:var(--sage);font-weight:700}
+#rsv rect{transform-box:fill-box;transform-origin:bottom;animation:gr .8s var(--ease) both}
+#rsv rect:hover{opacity:.75}
+@keyframes gr{from{transform:scaleY(0)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.nov{position:fixed;inset:0;background:#1f1a1366;display:grid;place-items:center;padding:16px;z-index:50}
+.nov[hidden]{display:none}
+.ndl{background:var(--surf);border-radius:20px;padding:20px;width:min(460px,100%);max-height:90vh;overflow:auto;box-shadow:var(--sh)}
+.nlab{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+.ndl select,.ndl input:not([type=checkbox]){width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px 12px}
+.ncat .b{margin:0 6px 6px 0}
+.ncat .b[aria-pressed=true]{background:var(--cop);border-color:var(--cop);color:#fff}
+/* baker additions */
+.gl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:16px 0 8px}.gl.hot{color:var(--risk)}.gl:first-child{margin-top:0}
+.rc.risk{border-left:3px solid var(--risk)}.rc.hot{border-left:3px solid var(--cop)}.rc.dn{opacity:.65}
+.cdn{font-size:13px;font-weight:600;color:var(--mute);white-space:nowrap}.risk .cdn,.cdn.risk{color:var(--risk)}.hot .cdn,.cdn.hot{color:var(--cop-d)}.risk .cdn{animation:pl 1.6s ease-in-out infinite}
+@keyframes pl{50%{opacity:.45}}@media(prefers-reduced-motion:reduce){.risk .cdn{animation:none}}
+#v-queue .split{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}#dt{position:sticky;top:calc(var(--hh,120px) + 16px);max-height:calc(100dvh - var(--hh,120px) - 32px);overflow:auto}
+.bk{display:none;margin-bottom:10px}.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ph{display:flex;gap:10px;overflow-x:auto;margin:8px 0 4px}.ph div{flex:none;width:150px;height:96px;border-radius:12px;background:linear-gradient(135deg,var(--cop-s),var(--sage-s));border:1px solid var(--line);display:flex;align-items:flex-end;padding:8px;font-size:12px;color:var(--mute)}
+.rr{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rm{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:calc(24px + env(safe-area-inset-top,0px)) clamp(16px,3vw,40px) 24px}.rm>div{max-width:760px;margin:0 auto}
+.ri{width:100%;display:flex;align-items:center;gap:14px;text-align:left;min-height:64px;padding:12px 16px;margin-top:10px;border-radius:14px;background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--line);font-size:17px}.ri .nm{flex:1}
+.ri[aria-pressed="true"]{border-left-color:var(--sage);opacity:.6}.ri[aria-pressed="true"] .nm{text-decoration:line-through}.ri .sw{display:inline-block;flex:none}.ri[aria-pressed="true"] .sw{background:var(--sage)}.ri[aria-pressed="true"] .sw i{transform:translateX(18px)}
+.rmf{position:sticky;bottom:0;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--bg);padding:14px 0 6px;margin-top:12px}
+.pre{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.pre button{padding:9px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surf);font-size:13px;color:var(--mute)}.pre button[aria-pressed="true"]{background:var(--cop-s);border-color:var(--cop);color:var(--ink);font-weight:600}
+.ucv{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.ucv button{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surf);color:var(--mute)}.ucv button[aria-pressed="true"]{background:var(--cop-s);border-color:var(--cop);color:var(--ink);font-weight:600}
+.ur{padding:12px 0;border-bottom:1px solid var(--line)}.qt{display:flex;align-items:center;gap:14px;margin-top:4px}.qt .b{width:48px;height:44px;padding:0;font-size:22px}.qt b{font-size:28px;min-width:48px;text-align:center}
+.fl textarea{min-height:60px}.dp .seg{margin-top:6px}.xib[aria-pressed="false"]{opacity:.5}
+@media(max-width:540px){nav.xtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:700px){#v-queue .split{grid-template-columns:1fr}#v-queue .split.det .rl{display:none}#v-queue .split:not(.det) #dt{display:none}#dt{position:static;max-height:none}.bk{display:inline-flex}}
+
+/* drawer responsive fix */
+.dr{justify-content:flex-end}.dp{width:min(480px,100%);max-width:100%;overflow-x:hidden}
+@keyframes rise{from{transform:translateY(28px);opacity:0}}
+@media(max-width:900px){.dr{justify-content:center;align-items:flex-end}.dp{width:min(560px,100%);animation:rise .35s var(--ease)}}
+@media(max-width:540px){.dp{width:100%}}
+
+.ndl textarea{display:block;width:100%;min-height:84px;border:1px solid var(--line);border-radius:12px;background:var(--surf);color:inherit;font:inherit;padding:10px 12px;resize:vertical;transition:border-color .15s,box-shadow .15s}
+.ndl textarea:focus{outline:0;border-color:var(--cop);box-shadow:0 0 0 3px var(--cop-s)}
+
+@media(max-width:1180px){.xdd,.xsl,.xrt{display:none}}
+@media(max-width:900px){.xnm,.xst,.xvd{display:none}}
+@media(max-width:480px){.xpill{gap:2px}}
+@media(max-width:360px){#xsnd{display:none}.xib{width:32px;height:32px;min-height:32px}.xtop{gap:6px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="xhead"><div class="xtop">
+<div class="brand"><span class="xmk">C</span><span class="xtx">Cake <i>POS</i></span></div>
+<div class="xpw"><div class="xpill" role="group" aria-label="Session">
+<span class="xrole" title="Baker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="xrt">Baker</span></span><span class="xvd"></span>
+<span class="xnm"></span><span class="xvd"></span>
+<span class="xdtx"><span class="xdd"><span class="xdl" id="xdl"></span><span class="xds" id="xds"></span> · </span><b id="xdt"></b></span><span class="xvd"></span>
+<span class="xst"><i></i><span class="xsl">Server connected</span></span><span class="xvd"></span>
+<button class="xib" id="xsearch" aria-label="Search" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+<button class="xib" id="xlog" aria-label="Log batch" title="Log batch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+<button class="xib" id="xuse" aria-label="Report usage" title="Report usage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></button>
+<button class="xib" id="xbell" aria-label="Requests and alerts" title="Requests and alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b class="xbd" id="xbn"></b></button>
+<button class="xib" id="xsnd" aria-pressed="true" aria-label="Sound and vibration alerts" title="Sound and vibration alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg></button>
+<button class="xib" id="xtheme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></button>
+<button class="xib" id="xout" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
+</div></div></div></div>
+<nav class="xtabs" aria-label="Main">
+<button data-v="queue" aria-current="page" title="Queue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16v-6H4zM6 14v-3h12v3M12 11V7"/></svg><span class="xtf">Queue</span><span class="xts">Queue</span></button>
+<button data-v="tickets" title="Tickets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/></svg><span class="xtf">Tickets</span><span class="xts">Tickets</span></button>
+<button data-v="batches" title="Batches"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18M5 9v10h14V9M8 9V5h8v4"/></svg><span class="xtf">Batches</span><span class="xts">Batches</span></button>
+<button data-v="usage" title="Usage reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg><span class="xtf">Usage reports</span><span class="xts">Usage</span></button>
+<button data-v="requests" title="Requests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2-8h12l2 8v6H4zM4 13h5l1 2h4l1-2h5"/></svg><span class="xtf">Requests</span><span class="xts">Requests</span></button>
+</nav>
+<main>
+<div id="ntc"></div>
+<section id="v-queue"><header><div><h1>Today's bakes</h1><p class="sub" id="qsub"></p></div><div class="acts"><button class="find" id="open" aria-label="Search"><span>Search cakes, customers</span><kbd>Ctrl K</kbd></button><button class="b" data-a="log">Log batch</button><button class="b p" data-a="use">Report usage</button></div></header>
+<div class="split"><div class="rl" id="rl0"></div><div class="card" id="dt"></div></div></section>
+<section id="v-tickets" hidden><header><div><h1>Tickets</h1><p class="sub" id="tsub"></p></div></header>
+<div class="ztools"><div class="zrow"><div class="zsrch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="zq" type="search" placeholder="Search ticket, customer or cake" aria-label="Search tickets" autocomplete="off"></div><div class="zsel"><select id="zf" aria-label="Show tickets in"></select></div></div></div>
+<div class="zboard" id="zboard"></div></section>
+<section id="v-batches" hidden><header><div><h1>Batches</h1><p class="sub">Log ready-made items as they come out of the oven.</p></div></header><div class="grid"><section class="card stock" id="bf"></section><section class="card req"><h2>Logged today</h2><div id="bl"></div></section></div></section>
+<section id="v-usage" hidden><header><div><h1>Usage reports</h1><p class="sub">Stock only drops once Inventory confirms the exact amounts.</p></div><button class="b p" data-a="use">Report usage</button></header><div class="grid"><section class="card act"><div id="ul"></div></section></div></section>
+<section id="v-requests" hidden><header><div><h1>Requests</h1><p class="sub">Alerts and requests for you, and the ones you sent.</p></div></header><div id="rq"></div></section>
+</main></div>
+<div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Search"><div><input id="q" placeholder="Search cakes and customers" autocomplete="off"><ul id="res"></ul></div></div>
+<div class="dr" id="dr" hidden><div class="dp" id="dp" role="dialog" aria-modal="true"></div></div>
+<div class="rm" id="rm" hidden></div>
+<script src="/cake.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=Cake.esc,toast=Cake.toast;
+let Q=null,BL=null,UI=null,sel=null,form=null,stopForm=null,view="queue",zf="all",snd=true,ac,lastN=-1,rmx=null,us=null,bq=12,RQ=null;
+const SNDKEY="bakerSound";try{snd=localStorage.getItem(SNDKEY)!=="off"}catch(e){}
+const TONE={neutral:"",attention:"cop",ready:"",done:"",muted:"",danger:"risk"};
+const rows=()=>Q?Q.rows:[],find=id=>rows().find(r=>r.lineId===id);
+const cakeName=r=>(r.cake.sizeNote?r.cake.sizeNote+" ":"")+"custom cake";
+const dueAt=r=>r.deliveryDate?r.dueLabel:"No date set";
+const isReady=r=>r.status==="ready"||r.status==="out_for_delivery",isHot=r=>!isReady(r)&&(r.urgency==="late"||r.urgency==="today"),isLate=r=>!isReady(r)&&r.urgency==="late";
+const cl=r=>isLate(r)?"risk":isHot(r)?"hot":isReady(r)?"dn":"";
+const tg=r=>`<span class="tag ${r.statusTone==="danger"?"risk":isReady(r)?"":r.status==="new"?"":"cop"}" style="${r.status==="new"?"background:var(--paper);color:var(--mute)":""}">${esc(r.statusLabel)}</span>`;
+const csearch=r=>[r.orderNumber,r.customerName,r.cake.flavor,r.cake.filling,r.cake.inscription,r.cake.sizeNote].join(" ").toLowerCase();
+const photoCache=new Map();
+function fillPhotos(root){root.querySelectorAll("[data-ph]").forEach(async el=>{const id=el.dataset.ph;if(!photoCache.has(id))photoCache.set(id,Cake.photoUrl(id));const u=await photoCache.get(id);if(u&&el.isConnected)el.innerHTML=`<img src="${u}" alt="Reference photo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`})}
+
+/* ---------- queue ---------- */
+function qr(){if(!Q)return;const L=rows(),c=Q.counts;
+ $("#qsub").textContent=(c.toStart+c.inProduction)+" to make"+(c.late?" · "+c.late+" overdue":"")+" · "+c.ready+" ready";
+ const G=[["Overdue and due today",L.filter(r=>isHot(r)),1],["Soon",L.filter(r=>!isReady(r)&&!isHot(r)&&r.urgency==="soon"),0],["Upcoming",L.filter(r=>!isReady(r)&&!isHot(r)&&r.urgency!=="soon"),0],["Ready for handover",L.filter(isReady),0]].filter(g=>g[1].length);
+ $("#rl0").innerHTML=G.map(([h,l,hot])=>`<div class="gl ${hot?"hot":""}">${h} · ${l.length}</div>`+l.map(r=>`<button class="rc ${cl(r)}" data-a="open" data-id="${esc(r.lineId)}" aria-selected="${r.lineId===sel}"><div class="row"><b>${esc(cakeName(r))} · ${esc(r.cake.flavor)}</b><span class="cdn">${isReady(r)?"Ready":esc(dueAt(r))}</span></div><span class="mute">${esc(r.orderNumber)} · ${esc(r.customerName)} · serves ${r.cake.servings}</span><span class="mute">${esc(r.cake.flavor)}${r.cake.filling?" · "+esc(r.cake.filling):""}</span><div class="row"><div style="flex:1"></div>${r.cake.allergyNotes?'<span class="tag risk">Allergy</span>':""}${tg(r)}${r.usage.state==="reported"||r.usage.state==="confirmed"?'<span class="tag">Usage reported</span>':""}</div></button>`).join("")).join("")||'<p class="empty">No custom cakes in the queue.</p>';
+ if(!$("#v-tickets").hidden)tkr();}
+function qd(){const r=find(sel);if(!r){$("#dt").innerHTML='<p class="empty">Pick a cake to see what to make.</p>';return}const k=r.cake;
+ const sug=form&&form.lineId===r.lineId?form:null;
+ $("#dt").innerHTML=`<button class="b bk" data-a="back">‹ Queue</button><div class="row"><h2>${esc(cakeName(r))}, ${esc(k.flavor)}</h2>${tg(r)}</div><p class="mute" style="margin:2px 0 0">Order ${esc(r.orderNumber)} · ${esc(r.customerName)} · ${esc(dueAt(r))}${r.fulfilment==="delivery"?" · delivery":""}</p>
+ ${k.allergyNotes?`<div class="item risk" style="margin:12px 0"><div class="row"><b>Allergy notes</b><span class="tag risk">Check first</span></div><small>${esc(k.allergyNotes)}</small></div>`:""}
+ <dl class="kv"><dt>Size</dt><dd>${esc(k.sizeNote||"Not given")}</dd><dt>Servings</dt><dd>${k.servings}</dd><dt>Flavor</dt><dd>${esc(k.flavor)}</dd><dt>Filling</dt><dd>${esc(k.filling||"None")}</dd><dt>Layers</dt><dd>${k.layers}</dd>${k.dietary.length?`<dt>Dietary</dt><dd>${esc(k.dietary.join(", "))}</dd>`:""}</dl>
+ ${k.decorationNotes?`<p><span class="mute">Decoration</span><br>${esc(k.decorationNotes)}</p>`:""}
+ ${k.inscription?`<div class="tkt"><div class="no">${esc(r.orderNumber)}</div><div class="in"><span class="mute">Write on the cake</span><b class="serif" style="font-size:18px">“${esc(k.inscription)}”</b></div></div>`:'<p class="mute">No text to write on this cake.</p>'}
+ <h2 style="font-size:15px;margin-top:18px">Reference photos</h2><div class="ph">${k.photoIds.length?k.photoIds.map(p=>`<div data-ph="${esc(p)}"></div>`).join(""):'<span class="mute">None attached</span>'}</div>
+ <h2 style="font-size:15px;margin-top:18px">Suggested recipe</h2>${sug?(sug.suggested.length?`<p class="mute" style="margin:2px 0 6px">System suggestion for ${k.servings} servings.</p>`+sug.suggested.map(i=>`<div class="rr"><span>${esc(i.name)}</span><b class="num">${esc(i.suggestedText||"")}</b></div>`).join(""):`<p class="mute">${esc(sug.blockedReason||"No suggestion yet. It appears when baking starts.")}</p>`):'<p class="mute">Loading…</p>'}
+ <div class="btns">${r.actions.map((a,i)=>`<button class="b ${i?"":"p"}" data-a="adv" data-id="${esc(r.lineId)}" data-to="${esc(a.to)}">${esc(a.label)}</button>`).join("")}${(r.status==="in_production"||r.status==="decorating")?`<button class="b" data-a="recipe" data-id="${esc(r.lineId)}">Open recipe mode</button>`:""}${r.usage.canReport?`<button class="b" data-a="use" data-id="${esc(r.lineId)}">Report usage</button>`:""}${isReady(r)?'<span class="tag">Ready. Cashier hands it over</span>':""}</div>`;
+ fillPhotos($("#dt"))}
+function watchForm(){if(stopForm){stopForm();stopForm=null}form=null;const r=find(sel);if(!r){qd();return}stopForm=Cake.feed("usage_form",{orderId:r.orderId,lineId:r.lineId},d=>{form=d;qd();if(rmx&&rmx.id===d.lineId)rmh()})}
+
+/* ---------- tickets ---------- */
+const ZK=[["new","New",["new"],"Nothing waiting to be started"],["baking","Baking",["in_production","decorating"],"Nothing in the oven"],["ready","Ready",["ready","out_for_delivery"],"Nothing ready yet"]];
+const ZI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>',ZA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+function zbars(no){let h=7;for(const c of no)h=(h*31+c.charCodeAt(0))>>>0;let x=0,q="";for(let i=0;i<60;i++){h=(h*1664525+1013904223)>>>0;const w=1+(h>>>28)%3;if(i%2===0)q+=`<rect x="${x}" width="${w}" height="30"/>`;x+=w}return`<svg viewBox="0 0 ${x} 30" preserveAspectRatio="none" aria-hidden="true" fill="currentColor">${q}</svg>`}
+function zt(r){const k=r.cake,late=isLate(r)?r.dueLabel:isHot(r)?"Due today":"",a=r.actions[0];
+ return`<div class="ztw"><article class="ztt">${late?`<span class="zage">${esc(late)}</span>`:""}<div class="zth"><div><div class="zshop">${esc(r.customerName)}</div><div class="zcap">Kitchen ticket</div></div><button class="zplus" data-det="${esc(r.lineId)}" aria-label="Details for ${esc(r.orderNumber)}" title="Details">${ZI}</button></div>
+<div class="ztm"><span class="zstc ${isReady(r)?"ok":isLate(r)?"risk":""}">${esc(r.statusLabel)}</span><span class="zcap">${esc(k.sizeNote||"Custom")} · serves ${k.servings}</span></div><div class="zperf"></div>
+<div class="ztnum"><div class="zcap">Ticket number</div><div class="znum">${esc(r.orderNumber)}</div></div>
+<dl><div class="zrw"><span>Flavor</span><b class="zell">${esc(k.flavor)}${k.filling?" · "+esc(k.filling):""}</b></div><div class="zrw"><span>Due</span><b class="zell">${esc(dueAt(r))}</b></div><div class="zrw"><span>Allergy</span><b class="zell ${k.allergyNotes?"risk":""}">${k.allergyNotes?"See notes":"None noted"}</b></div><div class="zrw tot"><span>Write</span><b class="zell">${k.inscription?"“"+esc(k.inscription)+"”":"Nothing"}</b></div></dl>
+<div class="zperf"></div><div class="zbc">${zbars(r.orderNumber)}</div></article>${a?`<button class="zgo" data-a="adv" data-id="${esc(r.lineId)}" data-to="${esc(a.to)}">${esc(a.label)} ${ZA}</button>`:""}</div>`}
+function tkr(){if(!Q)return;const v=($("#zq").value||"").toLowerCase().replace(/\s/g,""),V=rows().filter(r=>!v||csearch(r).replace(/\s/g,"").includes(v)),inK=z=>V.filter(r=>z[2].includes(r.status)),cols=ZK.filter(z=>zf==="all"||zf===z[0]);
+ $("#tsub").textContent=(Q.counts.toStart+Q.counts.inProduction)+" open · "+Q.counts.late+" overdue · "+Q.counts.ready+" ready. Open a ticket to see its recipe.";
+ $("#zf").innerHTML=`<option value="all">All tickets (${V.length})</option>`+ZK.map(z=>`<option value="${z[0]}">${z[1]} (${inK(z).length})</option>`).join("");$("#zf").value=zf;
+ $("#zboard").className="zboard"+(zf==="all"?"":" one");
+ $("#zboard").innerHTML=cols.map(z=>{const L=inK(z);return`<section class="zcol" aria-label="${z[1]}"><h2 class="zch">${z[1]}<span class="zcn">${L.length}</span></h2><div class="zcl">${L.map(zt).join("")||`<p class="zem">${$("#zq").value?"No tickets match your search":z[3]}</p>`}</div></section>`}).join("")}
+$("#zq").oninput=tkr;$("#zf").onchange=e=>{zf=e.target.value;tkr();scrollTo(0,0)};
+$("#zboard").onclick=e=>{const d=e.target.closest("[data-det]");if(d){go("queue");A.open({id:d.dataset.det})}};
+
+/* ---------- batches ---------- */
+let bformFor="";
+function br(){if(!BL)return;const sig=BL.options.map(o=>o.combinationId).join();
+ if(sig!==bformFor&&BL.can.log){bformFor=sig;$("#bf").innerHTML=`<h2>Log a finished batch</h2><label class="fl"><span>Product</span><select id="bp">${BL.options.map(o=>`<option value="${esc(o.combinationId)}">${esc(o.label)}</option>`).join("")}</select></label><div class="fl"><span>Quantity</span><div class="qt"><button class="b" data-a="bm" aria-label="Fewer">−</button><b class="num" id="bqn">${bq}</b><button class="b" data-a="bpl" aria-label="More">+</button></div></div><label class="fl"><span>Note (optional)</span><input id="bnt" maxlength="80" placeholder="For example, one tray slightly dark"></label><div class="btns"><button class="b p" data-a="blog">Log batch</button></div>`}
+ else if(!BL.can.log)$("#bf").innerHTML='<h2>Log a finished batch</h2><p class="mute">Only the baker and the owner log batches.</p>';
+ $("#bl").innerHTML=(BL.rows.length?`<p class="mute sm" style="margin:0 0 8px">${BL.today.batches} batch${BL.today.batches===1?"":"es"} today · ${BL.today.items} items</p>`:"")+BL.rows.map(b=>`<div class="rr"><span><b>${esc(b.label)}</b> × ${b.qty}${b.note?`<br><small class="mute">${esc(b.note)}</small>`:""}<br><small class="mute">${esc(b.byName)}</small></span><span class="mute">${esc(b.timeText)}${b.canUndo?` <button class="b" style="min-height:32px;padding:0 10px" data-a="bundo" data-id="${esc(b.batchId)}">Take back</button>`:""}</span></div>`).join("")||'<p class="empty">Nothing logged yet.</p>'}
+
+/* ---------- usage reports ---------- */
+function ul(){if(!UI)return;const L=[...UI.pending,...UI.recent];
+ $("#ul").innerHTML=L.length?L.map(u=>{const again=rows().find(r=>r.lineId===u.lineId&&r.usage.canReport);return`<div class="rq" style="max-height:none"><div class="row"><b>${esc(u.orderNumber)} · ${esc(u.cake.flavor)} cake</b><span class="tag ${u.status==="confirmed"?"":u.status==="sent_back"?"risk":"cop"}">${esc(u.statusLabel)}</span></div><div class="mute">Sent ${new Date(u.reportedAt).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})} by ${esc(u.reportedByName)}</div>${u.sentBackReason?`<div class="item risk" style="margin:6px 0"><small>Sent back: ${esc(u.sentBackReason)}</small></div>`:""}${u.items.map(l=>`<div class="rr"><span>${esc(l.name)}${l.extra?' <span class="tag">Extra</span>':""}</span><span class="mute">${esc(l.confirmedText||l.rangeText)}</span></div>`).join("")}${again?`<div class="btns"><button class="b" data-a="use" data-id="${esc(u.lineId)}">Report again</button></div>`:""}</div>`}).join(""):'<p class="empty">No reports yet. Use Report usage after a bake.</p>'}
+const drw=h=>{$("#dp").innerHTML=h;$("#dr").hidden=false},xdr=()=>{$("#dr").hidden=true;us=null};
+async function ush(){const cand=rows().filter(r=>r.usage.canReport);
+ if(!us.f&&us.id){const r=find(us.id);if(r){us.f=await Cake.read("usage_form",{orderId:r.orderId,lineId:r.lineId});if(us.f){us.p={};us.f.suggested.forEach(i=>us.p[i.ingredientId]=i.suggestedRangeId);us.ex=[]}}}
+ const f=us.f,all=f?[...f.suggested,...f.extras.filter(x=>us.ex.includes(x.ingredientId))]:[];
+ drw(`<div class="row"><h2>Report usage</h2><button class="b" data-a="xd">Close</button></div><p class="mute">Pick the cake, then tap the amount that matches what you used. Tap it again if you did not use it.</p><div class="ucv">${cand.map(r=>`<button aria-pressed="${r.lineId===us.id}" data-a="uc" data-id="${esc(r.lineId)}">${esc(r.orderNumber)} ${esc(r.cake.flavor)}</button>`).join("")||'<span class="mute">No cake is ready for a report. Start baking first.</span>'}</div>
+ ${all.map(i=>`<div class="ur"><div class="row"><b>${esc(i.name)}</b><span class="mute">${i.suggestedText?"Suggested "+esc(i.suggestedText):"Not on the suggestion"}</span></div><div class="pre">${i.ranges.map(g=>`<button aria-pressed="${us.p[i.ingredientId]===g.rangeId}" data-a="up" data-n="${esc(i.ingredientId)}" data-r="${esc(g.rangeId)}">${esc(g.text)}</button>`).join("")}</div></div>`).join("")}
+ ${f&&f.extras.length?`<label class="fl"><span>Extra ingredient not on the suggestion</span><select id="xs">${f.extras.filter(x=>!us.ex.includes(x.ingredientId)).map(x=>`<option value="${esc(x.ingredientId)}">${esc(x.name)}</option>`).join("")}</select></label><div class="btns"><button class="b" data-a="ux">Add ingredient</button>`:'<div class="btns">'}<button class="b p" id="usb" data-a="usend" ${f&&f.canReport?"":"disabled"}>Send to Inventory</button></div>${f&&!f.canReport&&f.blockedReason?`<p class="mute sm">${esc(f.blockedReason)}</p>`:""}`)}
+
+/* ---------- recipe mode ---------- */
+function rmh(){const r=find(rmx.id);if(!r){$("#rm").hidden=true;rmx=null;return}const k=r.cake,f=form&&form.lineId===r.lineId?form:null,L=f?f.suggested:[];
+ $("#rm").innerHTML=`<div><div class="row"><div><span class="mute">Recipe mode · ${esc(r.orderNumber)}</span><h1>${esc(cakeName(r))}, ${esc(k.flavor)}</h1></div><button class="b" data-a="xr">Exit</button></div>${k.allergyNotes?`<div class="item risk" style="margin-top:14px"><div class="row"><b>Allergy notes</b><span class="tag risk">Check first</span></div><small>${esc(k.allergyNotes)}</small></div>`:""}${k.inscription?`<div class="tkt"><div class="no">${esc(r.orderNumber)}</div><div class="in"><span class="mute">Write on the cake</span><b class="serif" style="font-size:18px">“${esc(k.inscription)}”</b></div></div>`:""}<p class="mute">System suggestion for ${k.servings} servings. Tick as you go.</p>${L.map((i,n)=>`<button class="ri" aria-pressed="${rmx.t.has(i.ingredientId)}" data-a="tk" data-i="${esc(i.ingredientId)}"><span class="sw"><i></i></span><span class="nm">${esc(i.name)}</span><b class="num">${esc(i.suggestedText||"")}</b></button>`).join("")||'<p class="mute">No suggestion for this cake.</p>'}<div class="rmf"><span class="mute" id="rmc">${rmx.t.size} of ${L.length} ticked</span><span class="acts">${r.usage.canReport?`<button class="b" data-a="use" data-id="${esc(r.lineId)}">Report usage</button>`:""}${r.actions.map((a,i)=>`<button class="b ${i?"":"p"}" data-a="adv" data-id="${esc(r.lineId)}" data-to="${esc(a.to)}">${esc(a.label)}</button>`).join("")}</span></div></div>`;$("#rm").hidden=false}
+
+/* ---------- search ---------- */
+const pal=$("#pal"),opn=()=>{pal.classList.add("on");$("#q").value="";show();$("#q").focus()};
+function show(){const v=$("#q").value.toLowerCase();$("#res").innerHTML=rows().filter(r=>csearch(r).includes(v)).map(r=>`<li><button data-id="${esc(r.lineId)}"><span>${esc(cakeName(r))} · ${esc(r.cake.flavor)}</span><span class="mute">${esc(r.orderNumber)} · ${esc(r.customerName)} · ${esc(dueAt(r))}</span></button></li>`).join("")||'<li class="empty" style="padding:12px">No match.</li>'}
+
+/* ---------- sound ---------- */
+function beep(){const b=$("#xbell");b.classList.remove("ring");void b.offsetWidth;if(!matchMedia("(prefers-reduced-motion:reduce)").matches){b.classList.add("ring");setTimeout(()=>b.classList.remove("ring"),1400)}if(!snd)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume();[0,.3].forEach(d=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+d);o.stop(ac.currentTime+d+.2)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+
+/* ---------- navigation and actions ---------- */
+function go(v){view=v;$$("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="queue"){qr();qd()}if(v==="tickets")tkr();if(v==="batches")br();if(v==="usage")ul();if(v==="requests"&&RQ)RQ.shown();scrollTo(0,0)}
+$$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
+const guard=async(b,fn)=>{if(b&&b.disabled)return;if(b)b.disabled=true;try{return await fn()}finally{if(b&&b.isConnected)b.disabled=false}};
+const A={open(d){sel=d.id;$("#v-queue .split").classList.add("det");watchForm();qr();scrollTo(0,0)},back(){$("#v-queue .split").classList.remove("det")},
+ adv(d,b){const r=find(d.id);guard(b,async()=>{const o=await Cake.send("orders/advance_line",{orderId:r.orderId,lineId:r.lineId,to:d.to});if(o.ok&&d.to==="in_production"){rmx={id:r.lineId,t:new Set()};rmh()}else if(o.ok&&rmx&&d.to!=="in_production"){$("#rm").hidden=true;rmx=null}})},
+ recipe(d){rmx={id:d.id,t:new Set()};rmh()},
+ tk(d,b){rmx.t.has(d.i)?rmx.t.delete(d.i):rmx.t.add(d.i);b.setAttribute("aria-pressed",rmx.t.has(d.i));const n=form?form.suggested.length:0;$("#rmc").textContent=rmx.t.size+" of "+n+" ticked"},
+ xr(){$("#rm").hidden=true;rmx=null},
+ use(d){us={id:d.id||null,f:null,p:{},ex:[]};ush()},uc(d){us.id=d.id;us.f=null;ush()},up(d){us.p[d.n]=us.p[d.n]===d.r?null:d.r;ush()},ux(){const v=$("#xs")&&$("#xs").value;if(v){us.ex.push(v);us.p[v]=us.f.extras.find(x=>x.ingredientId===v).suggestedRangeId||us.f.extras.find(x=>x.ingredientId===v).ranges[0]?.rangeId||null}ush()},xd(){xdr()},
+ usend(d,b){const r=find(us.id);if(!r)return toast("Pick a cake first.");const items=Object.entries(us.p).filter(([,g])=>g).map(([ingredientId,rangeId])=>({ingredientId,rangeId}));if(!items.length)return toast("Pick an amount for at least one ingredient.");
+  guard(b,async()=>{const o=await Cake.send("usage/report",{orderId:r.orderId,lineId:r.lineId,items},"Sent to Inventory. Stock moves when they confirm.");if(o.ok){xdr();$("#rm").hidden=true;rmx=null;go("usage")}})},
+ log(){go("batches");setTimeout(()=>$("#bp")&&$("#bp").focus(),0)},bm(){bq=Math.max(1,bq-1);$("#bqn").textContent=bq},bpl(){bq++;$("#bqn").textContent=bq},
+ blog(d,b){guard(b,async()=>{const note=$("#bnt").value.trim(),o=await Cake.send("batches/log",{combinationId:$("#bp").value,qty:bq,...(note&&{note})},"Batch logged.");if(o.ok)$("#bnt").value=""})},
+ bundo(d,b){guard(b,()=>Cake.send("batches/undo",{batchId:d.id},"Batch taken back."))}};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&A[b.dataset.a])A[b.dataset.a](b.dataset,b)});
+$("#dr").onclick=e=>{if(e.target.id==="dr")xdr()};
+$("#open").onclick=$("#xsearch").onclick=opn;$("#q").oninput=show;pal.onclick=e=>{const b=e.target.closest("li button");if(b){go("queue");A.open({id:b.dataset.id})}if(e.target===pal||b)pal.classList.remove("on")};
+$("#xlog").onclick=A.log;$("#xuse").onclick=()=>A.use({});$("#xbell").onclick=()=>go("requests");
+$("#xsnd").setAttribute("aria-pressed",snd);$("#xsnd").onclick=()=>{snd=!snd;try{localStorage.setItem(SNDKEY,snd?"on":"off")}catch(e){}$("#xsnd").setAttribute("aria-pressed",snd);toast(snd?"Sound and vibration on":"Sound and vibration off")};
+addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();opn()}if(e.key==="Escape"){pal.classList.remove("on");xdr();if(!$("#rm").hidden)A.xr()}});
+/* shared header */
+const xroot=document.documentElement,xhd=$(".xhead");try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
+const xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
+function xclock(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+$("#xtheme").onclick=()=>{const dark=xroot.dataset.theme?xroot.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;xroot.dataset.theme=dark?"light":"dark";try{localStorage.setItem("theme",xroot.dataset.theme)}catch(e){}};
+$("#xout").onclick=()=>Cake.signOut();
+(async()=>{const me=await Cake.boot(["baker","owner"]);$(".xnm").textContent=me.name;xclock();setInterval(xclock,30000);
+ Cake.client.onConnection(s=>{const up=s!=="offline";$(".xst").className="xst"+(up?"":" off");$(".xst .xsl").textContent=up?"Server connected":"Server unreachable"});
+ Cake.mountNotice($("#ntc"));
+ Cake.feed("bake_queue",{},d=>{Q=d;qr();if(view==="queue"){if(sel&&!find(sel)&&!stopForm){}qd()}if(rmx)rmh()});
+ Cake.feed("batch_log",{},d=>{BL=d;br()});
+ Cake.feed("usage_inbox",{},d=>{UI=d;ul()});
+ RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="requests",onCounts:c=>{const n=c.unseen+c.needsYou;$("#xbn").textContent=n||"";if(lastN>=0&&n>lastN)beep();lastN=n}});
+ go("queue")})();
+</script>
+</body>
+</html>

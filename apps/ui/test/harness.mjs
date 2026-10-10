@@ -77,3 +77,40 @@ export function loadPlaywright() {
     return createRequire(path.join(g, 'x.js'))('playwright');
   }
 }
+
+/** Signs in as another role in its own browser context without opening a page of theirs, and returns a way to send and read. */
+export async function actor(browser, shop, role, onPage) {
+  const ctx = await browser.newContext();
+  const p = await ctx.newPage();
+  onPage?.(p, role);
+  await p.goto(shop.base + '/');
+  await p.waitForSelector('#pick button');
+  await p.evaluate(
+    async ([role, pin]) => {
+      const rows = await Cake.staff();
+      const row = rows.find((r) => r.role === role);
+      const r = await Cake.client.signIn(row.userId ?? row.id, pin);
+      if (!r.ok) throw new Error('sign in failed');
+    },
+    [role, PINS[role]],
+  );
+  return {
+    send: (type, payload) => p.evaluate(([t, pl]) => Cake.client.dispatch(t, pl), [type, payload]),
+    read: (name, params = {}) => p.evaluate(([n, pr]) => Cake.read(n, pr), [name, params]),
+    /** Uploads a small picture and returns its id. */
+    photo: (bytes) => p.evaluate(async (b) => (await Cake.client.uploadPhoto(new Uint8Array(b), 'image/png')).photoId, [...bytes]),
+  };
+}
+
+export const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+export const until = async (fn, what, ms = 8000) => {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    try {
+      const v = await fn();
+      if (v) return v;
+    } catch {}
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  throw new Error('timed out waiting for ' + what);
+};
