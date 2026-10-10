@@ -13,7 +13,7 @@
     "build": "npm run build -w @cake-pos/web && npm run build -w @cake-pos/server",
     "start": "npm run start -w @cake-pos/server",
     "ui:try": "node apps/ui/try.mjs",
-    "ui:test": "cd apps/ui && for t in cashier baker inventory inventory-edge; do UI_DIST=/tmp/ui-dist-$t node build.mjs >/dev/null && UI_DIST=/tmp/ui-dist-$t node test/$t.mjs || exit 1; done",
+    "ui:test": "cd apps/ui && for t in cashier baker inventory inventory-edge owner; do UI_DIST=/tmp/ui-dist-$t node build.mjs >/dev/null && UI_DIST=/tmp/ui-dist-$t node test/$t.mjs || exit 1; done",
     "admin": "npm run admin -w @cake-pos/server --",
     "docs:api": "tsx scripts/gen-api-reference.ts",
     "test": "npm run test -w @cake-pos/panel && npm run test -w @cake-pos/server && npm run test -w @cake-pos/web",
