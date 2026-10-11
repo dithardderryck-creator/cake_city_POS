@@ -1,33 +1,39 @@
-import type { OutboxItem } from '../domain';
+import { flushChanges, queueFullCopy } from '../changelog';
 import type { Registry } from '../intents';
+
+const explain = (r: Awaited<ReturnType<typeof flushChanges>>) => {
+  const wait = r.pending ? [`${r.pending} changes are waiting and stay safe on this device.`] : [];
+  switch (r.state) {
+    case 'sent':
+      return { summary: `Sent ${r.sent} changes to the online database`, warnings: [] as string[] };
+    case 'nothing':
+      return { summary: 'The online database is up to date', warnings: [] as string[] };
+    case 'not_set_up':
+      return { summary: 'No online database is connected yet', warnings: wait };
+    case 'offline':
+      return { summary: 'Offline', warnings: wait.map((w) => `${w} They will send when the connection returns.`) };
+    case 'failed':
+      return { summary: 'The online database did not accept the changes', warnings: [r.error ? `It said: ${r.error}` : 'No reason was given.', ...wait, 'Nothing is lost; it will try again.'] };
+  }
+};
 
 export const syncIntents = {
   'sync/flush': {
     circuit: 'Sync',
     roles: ['owner', 'it'],
     handle: async (_p, ctx) => {
-      const items = await ctx.store.find<OutboxItem>('outbox', { where: { status: 'pending' }, orderBy: { field: 'createdAt' } });
-      const terminal = ctx.terminals.sync;
-      if (items.length === 0) return { summary: 'Everything is already synced', skipSync: true, data: { sent: 0 } };
-      if (!terminal) {
-        return {
-          summary: 'No sync connection is set up yet',
-          skipSync: true,
-          data: { sent: 0 },
-          warnings: [`${items.length} items are waiting. They stay safe on this device.`],
-        };
-      }
-      if (!terminal.isOnline()) {
-        return {
-          summary: 'Offline',
-          skipSync: true,
-          data: { sent: 0 },
-          warnings: [`${items.length} items are waiting and will send when the connection returns.`],
-        };
-      }
-      await terminal.push(items);
-      for (const i of items) await ctx.store.put('outbox', { ...i, status: 'sent' as const, attempts: i.attempts + 1 });
-      return { summary: `Synced ${items.length} items`, skipSync: true, data: { sent: items.length } };
+      const r = await flushChanges(ctx.store, ctx.terminals.sync);
+      const e = explain(r);
+      return { summary: e.summary, skipSync: true, data: { sent: r.sent, pending: r.pending, state: r.state }, ...(e.warnings.length ? { warnings: e.warnings } : {}) };
+    },
+  },
+
+  'sync/full_copy': {
+    circuit: 'Sync',
+    roles: ['owner', 'it'],
+    handle: async (_p, ctx) => {
+      const queued = await queueFullCopy(ctx.store, ctx.now);
+      return { summary: `Queued everything (${queued} records) for the online database`, skipSync: true, data: { queued } };
     },
   },
 } satisfies Partial<Registry>;

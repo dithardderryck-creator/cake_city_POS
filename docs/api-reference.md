@@ -773,6 +773,12 @@ Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 
+#### `sync/full_copy`
+
+Allowed: **owner, it**
+
+_No fields. Send an empty object `{}`._
+
 ## Feeds
 
 Read with `POST /api/feed` as `{ "name": "<name>", "params": { ... } }`, or subscribe over the live connection to get the same data again after every change.

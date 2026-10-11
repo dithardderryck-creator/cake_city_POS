@@ -34,6 +34,7 @@ export const COLLECTIONS = [
   'announcements',
   'countSessions',
   'batches',
+  'changes',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
@@ -84,6 +85,11 @@ export interface PinHasher {
 export interface SyncTerminal {
   isOnline(): boolean;
   push(items: OutboxItem[]): Promise<void>;
+  /**
+   * Send changes, oldest first, to the online database. Resolve ok only once the receiver has stored them all;
+   * the same change may arrive twice after a failure, so the receiver must ignore ids it already has. Must give up after its own timeout.
+   */
+  pushChanges?(changes: import('./changelog').Change[]): Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
 export interface BackupStatus {

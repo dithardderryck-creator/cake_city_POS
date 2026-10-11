@@ -1,3 +1,4 @@
+import { flushChanges, withChangeLog, type Change, type FlushResult } from './changelog';
 import type { Alert, AuditEntry, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
 import { feeds, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } from './feeds';
 import {
@@ -114,6 +115,8 @@ export interface Panel {
    * The server calls this every few seconds. Safe to call at any time, even twice at once.
    */
   deliver(): Promise<{ sent: number; failed: number; retrying: number }>;
+  /** Sends the changes waiting for the online database, oldest first. Safe to call any time; the server calls it every few seconds. */
+  syncNow(): Promise<FlushResult>;
   /**
    * Checks every alert condition against the data now and raises or clears alerts. Also runs after changes to orders, stock
    * and usage, but time passing alone (a cake becoming late) needs this called regularly. The server calls it every minute.
@@ -185,8 +188,9 @@ const TOUCH_EVERY_MS = 60_000;
 const SYNC_ITEM_TTL_MS = 7 * 24 * 3_600_000;
 
 export function createPanel(options: PanelOptions = {}): Panel {
-  const store = options.store ?? createMemoryStore();
   const clock = options.clock ?? systemClock;
+  // Every write to shared data is also recorded in the change log, in the same transaction (see changelog.ts).
+  const store = withChangeLog(options.store ?? createMemoryStore(), () => clock.now().toISOString());
   const ids = options.ids ?? createIds();
   const secrets = options.secrets ?? createSecrets();
   const hasher = options.hasher ?? createSha256Hasher();
@@ -541,6 +545,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
       return () => eventListeners.delete(l);
     },
     exclusive: (fn) => serial(fn),
+    syncNow: () => flushChanges(store, terminals.sync),
     deliver: async () => {
       if (delivering) return { sent: 0, failed: 0, retrying: 0 };
       delivering = true;
@@ -623,6 +628,12 @@ export function createPanel(options: PanelOptions = {}): Panel {
           for (const o of await store.find<OutboxItem>('outbox', { where: { kind: 'sync' }, orderBy: { field: 'createdAt' }, limit: 5000 })) {
             if (nowMs - Date.parse(o.createdAt) <= SYNC_ITEM_TTL_MS) break;
             await store.delete('outbox', o.id);
+            syncPruned++;
+          }
+          // Changes the online database has confirmed are only kept for a week, for diagnosis.
+          for (const c of await store.find<Change>('changes', { where: { status: 'sent' }, orderBy: { field: 'seq' }, limit: 5000 })) {
+            if (nowMs - Date.parse(c.at) <= SYNC_ITEM_TTL_MS) break;
+            await store.delete('changes', c.id);
             syncPruned++;
           }
           return { sessionsPruned, requestsPruned, photosPruned, alertsPruned, notificationsPruned, syncPruned };

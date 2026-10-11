@@ -200,6 +200,8 @@ export interface IntentMap {
   'announcements/retire': { announcementId: Id };
 
   'sync/flush': Record<string, never>;
+  /** Queue every record for the online database. For connecting a new one or recovering a lost one. */
+  'sync/full_copy': Record<string, never>;
 }
 export type IntentName = keyof IntentMap;
 

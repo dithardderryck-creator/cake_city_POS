@@ -50,3 +50,5 @@ export {
 } from './ports';
 export { createIndexedDbStore } from './adapters/indexeddb';
 export { seedDemo, DEMO_STAFF } from './demo';
+
+export { queueFullCopy, flushChanges, withChangeLog, isSynced, type Change, type FlushResult, type FlushState } from './changelog';

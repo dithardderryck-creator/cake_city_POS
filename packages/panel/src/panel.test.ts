@@ -348,7 +348,7 @@ describe('offline sync outbox', () => {
     const p = createPanel({
       store,
       clock,
-      terminals: { sync: { isOnline: () => online, push: async (items) => void pushed.push(items.length) } },
+      terminals: { sync: { isOnline: () => online, push: async () => undefined, pushChanges: async (changes) => (pushed.push(changes.length), { ok: true as const }) } },
     });
     const cashier = (await store.list<Staff>('staff')).find((s) => s.role === 'cashier')!;
     const owner = (await store.list<Staff>('staff')).find((s) => s.role === 'owner')!;
@@ -364,7 +364,8 @@ describe('offline sync outbox', () => {
     const sent = await p.dispatch('sync/flush', {}, os.data.sessionId);
     expect(sent.ok).toBe(true);
     expect(pushed[0]).toBeGreaterThan(0);
+    // The audit line for the first flush is itself a change, so a manual flush right after may carry that one line.
     const again = await p.dispatch('sync/flush', {}, os.data.sessionId);
-    expect(again.ok && again.summary).toMatch(/already synced/);
+    expect(again.ok && again.summary).toMatch(/up to date|Sent 1 changes/);
   });
 });

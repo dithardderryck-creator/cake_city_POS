@@ -235,6 +235,7 @@ export const schemas = {
   'notify/send_test': empty,
 
   'sync/flush': empty,
+  'sync/full_copy': empty,
 } as const;
 
 /** Compile-time proof that each schema and its IntentMap entry accept the same shapes. */
