@@ -254,6 +254,10 @@ function rTick(){const ids=Object.keys(cart),t=total(),cn=Object.values(cart).re
  $("#go").disabled=!(ids.length&&!busy&&!Cake.offline&&(!part||paid>0));$("#go").textContent=busy?"Working…":part?"Take part payment":ph2?"Place order and take payment":"Take payment"}
 function rst(){cart={};paid=0;part=false;m={src:"walk_in",ful:"pickup"};["#rcv","#dn","#dp","#dd","#da"].forEach(k=>$(k).value="")}
 async function go(){if(busy)return;busy=true;rTick();const v=k=>$(k).value.trim(),t=total();
+ if(!part&&m.src==="walk_in"&&m.ful==="pickup"){/* Ready-made walk-in sale: instant, no ticket to approve. */
+  try{const nm=v("#dn"),r=await Cake.send("orders/quick_sale",{items:Object.entries(cart).map(([combinationId,qty])=>({combinationId,qty})),method:meth,...(nm&&{customerName:nm})});
+   if(!r.ok)return;rst();$(".tk").classList.remove("open");receipt(r.data.orderId);return}
+  finally{busy=false;rTick()}}
  try{const o=await Cake.send("orders/create_order",{source:m.src,fulfilment:m.ful,...(v("#dn")&&{customerName:v("#dn")}),...(v("#dp")&&{customerPhone:v("#dp")}),...((m.src==="phone"||m.ful==="delivery")&&v("#dd")&&{deliveryDate:v("#dd")}),...(m.ful==="delivery"&&v("#da")&&{deliveryAddress:v("#da")})});
   if(!o.ok)return;const orderId=o.data.orderId;
   for(const [id,q] of Object.entries(cart)){const r=await Cake.send("orders/add_catalogue_line",{orderId,combinationId:id,qty:q});if(!r.ok){await Cake.send("orders/cancel_order",{orderId});return}}
