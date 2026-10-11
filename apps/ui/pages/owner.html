@@ -4,8 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cake POS · Owner</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/fonts.css">
 <style>
 :root{--bg:#FDFBF7;--paper:#F5F1E8;--surf:#fff;--line:#E6DECD;--ink:#1F1A13;--mute:#6B5E4F;--cop:#C47F3D;--cop-d:#9A5F2A;--cop-s:#C47F3D1f;--sage:#5E7247;--sage-s:#5E72471c;--risk:#B4452F;--risk-s:#B4452F18;--sh:0 1px 2px #1f1a1308,0 10px 28px -14px #1f1a1322;--ease:cubic-bezier(.32,.72,0,1);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}}
@@ -124,7 +123,6 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 @container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
 @container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}nav.xtabs button{font-size:11.5px}}
 @media(max-width:540px){nav.xtabs{position:static}}
-.xlock{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;place-items:center;text-align:center;gap:14px;align-content:center}.xlock[hidden]{display:none}
 @media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
 @media(max-width:359px){.xtop .brand{display:none}}
 .ztools{position:sticky;top:var(--hh,120px);z-index:9;background:var(--bg);padding:8px 0 10px}
@@ -174,6 +172,9 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 @media(max-width:700px){.lr{grid-template-columns:1fr auto}.lr>*:nth-child(n+3){grid-column:1/-1}.hb{grid-template-columns:100px 1fr auto}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .nov{position:fixed;inset:0;background:#1f1a1366;display:grid;place-items:center;padding:16px;z-index:50}.nov[hidden]{display:none}.ndl{background:var(--surf);border-radius:20px;padding:20px;width:min(460px,100%);max-height:90vh;overflow:auto;box-shadow:var(--sh)}.nlab{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}.ndl select,.ndl input:not([type=checkbox]){width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px 12px}.ncat .b{margin:0 6px 6px 0}.ncat .b[aria-pressed=true]{background:var(--cop);border-color:var(--cop);color:#fff}
+.xst.off{background:var(--risk-s);color:var(--risk)}.xst.off i{background:var(--risk)}
+.ph{display:flex;flex-wrap:wrap;margin:6px 0}.ph img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin:0 6px 6px 0;cursor:zoom-in;background:var(--paper)}
+#ntc{margin:0 0 12px}
 </style>
 </head>
 <body>
@@ -183,10 +184,11 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
     <div class="brand"><span class="xmk">C</span><span class="xtx">Cake <i>POS</i></span></div>
     <div class="xpw"><div class="xpill" role="group" aria-label="Session">
       <span class="xrole" title="Owner"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="xrt">Owner</span></span><span class="xvd"></span>
-      <span class="xnm">Amina</span><span class="xvd"></span>
+      <span class="xnm"></span><span class="xvd"></span>
       <span class="xdtx"><span class="xdd"><span class="xdl" id="xdl"></span><span class="xds" id="xds"></span> · </span><b id="xdt"></b></span><span class="xvd"></span>
       <span class="xst" title="Server connected"><i></i><span class="xsl">Server connected</span></span><span class="xvd"></span>
       <button class="xib" id="xsearch" aria-label="Search" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+      <button class="xib" id="xset" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
       <button class="xib" id="xbell" aria-label="Requests and alerts" title="Requests and alerts"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b class="xbd" id="xbn"></b></button>
       <button class="xib" id="xtheme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></button>
       <button class="xib" id="xout" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
@@ -195,32 +197,29 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 </div>
 <nav class="xtabs" aria-label="Main"><button data-v="overview" aria-current="page" aria-label="Overview" title="Overview"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg><span class="xtf">Overview</span><span class="xts">Overview</span></button><button data-v="requests" aria-label="Requests" title="Requests"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2-8h12l2 8v6H4zM4 13h5l1 2h4l1-2h5"/></svg><span class="xtf">Requests</span><span class="xts">Requests</span></button><button data-v="catalogue" aria-label="Catalogue" title="Catalogue"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16v-6H4zM6 14v-3h12v3M12 11V7M12 7c-1-1 0-3 0-3s1 2 0 3"/></svg><span class="xtf">Catalogue</span><span class="xts">Catalogue</span></button><button data-v="orders" aria-label="Orders" title="Orders"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="xtf">Orders</span><span class="xts">Orders</span></button><button data-v="stock" aria-label="Stock" title="Stock"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"/></svg><span class="xtf">Stock</span><span class="xts">Stock</span></button><button data-v="transactions" aria-label="Transactions" title="Transactions"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 10h18M7 15h3"/></svg><span class="xtf">Transactions</span><span class="xts">Payments</span></button><button data-v="staff" aria-label="Staff" title="Staff"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 20v-1a4 4 0 0 0-3-3.9M16 5.1a3 3 0 0 1 0 5.8"/></svg><span class="xtf">Staff</span><span class="xts">Staff</span></button><button data-v="reports" aria-label="Reports" title="Reports"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span class="xtf">Reports</span><span class="xts">Reports</span></button></nav>
 <main>
+<div id="ntc"></div>
 <section id="v-overview">
   <header>
-    <div><h1>Good afternoon, Amina</h1><p class="sub" id="date"></p></div>
+    <div><h1 id="hello">Hello</h1><p class="sub" id="date"></p></div>
     <button class="find" id="open" aria-label="Search"><span>Search tickets, items, customers</span><kbd>Ctrl K</kbd></button>
   </header>
   <div class="grid">
     <section class="card rev">
       <div class="row"><h2>Revenue</h2><div class="seg" role="group" aria-label="Range"><button aria-pressed="true" data-r="7">7 days</button><button aria-pressed="false" data-r="30">30 days</button></div></div>
-      <div class="big num" id="today">TSh 0</div>
-      <div class="mute"><span class="delta" id="delta"></span> compared with yesterday</div>
+      <div class="big num" id="today">0</div>
+      <div class="mute" id="dline"></div>
       <div class="chart" id="chart"><svg id="svg" viewBox="0 0 640 210" role="img" aria-label="Revenue trend"></svg><div class="tip" id="tip"></div></div>
     </section>
 
     <section class="card due">
-      <div class="row"><h2>Due soon</h2><span class="tag risk" id="riskn">1 at risk</span></div>
-      <ul class="list">
-        <li class="item risk"><div class="row"><b>3-tier wedding cake</b><span class="tag risk">Not started</span></div><small>Today 16:00 · Baker has not begun</small></li>
-        <li class="item"><div class="row"><b>Birthday cake, 2 kg</b><span class="tag">Decorating</span></div><small>Today 18:30 · on track</small></li>
-        <li class="item"><div class="row"><b>Graduation cake</b><span class="tag cop">Baking</span></div><small>Tomorrow 10:00</small></li>
-      </ul>
+      <div class="row"><h2>Due soon</h2><span class="tag" id="riskn"></span></div>
+      <ul class="list" id="duel"></ul>
     </section>
 
     <section class="card stock">
       <div class="row"><h2>Stock running low</h2></div>
       <div id="bars"></div>
-      <div class="confirm"><span id="uc"><b>2 usage reports</b> are waiting for Inventory to confirm</span><span class="tag cop">Pending</span></div>
+      <div class="confirm"><span id="uc"></span><span class="tag cop">Pending</span></div>
     </section>
 
     <section class="card req">
@@ -231,29 +230,22 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
     <section class="card act">
       <details>
         <summary><h2>Staff activity</h2><span class="mute chev">Show</span></summary>
-        <div class="feed">
-          <div><time>14:42</time><span>Moses took payment for order A-0082, TSh 48,000</span></div>
-          <div><time>14:10</time><span>Neema counted flour: 12 kg on hand</span></div>
-          <div><time>13:55</time><span>Baker logged 2 batches of vanilla sponge</span></div>
-          <div><time>13:20</time><span>Moses created custom order A-0081 and asked for a quote</span></div>
-          <div><time>12:48</time><span>Neema received 20 kg butter from supplier</span></div>
-          <div><time>12:05</time><span>Baker reported chocolate usage, waiting for confirmation</span></div>
-        </div>
+        <div class="feed" id="afeed"></div>
       </details>
     </section>
   </div>
 </section>
 <section id="v-requests" hidden>
-<header><div><h1>Requests</h1><p class="sub">Staff talk through requests and announcements, never free chat. Each one moves through clear steps.</p></div><button class="b p" id="nrq">New request</button></header>
-<div class="seg" id="flt" role="group" aria-label="Filter requests"><button aria-pressed="true" data-f="all">All</button><button aria-pressed="false" data-f="needs">Needs you</button><button aria-pressed="false" data-f="prog">In progress</button><button aria-pressed="false" data-f="done">Done</button></div>
-<div class="split"><div class="rl" id="rlist"></div><div class="card" id="rdet"></div></div>
+<header><div><h1>Requests</h1><p class="sub">Staff talk through requests and announcements, never free chat. Each one moves through clear steps.</p></div></header>
+<section class="card" style="margin-bottom:16px"><div class="row"><h2>Custom cake prices</h2><span class="tag cop" id="qcount"></span></div><p class="mute" style="margin:2px 0 0">The cashier is waiting for your price. It goes straight onto the order.</p><div id="qbox"></div></section>
+<div id="rq"></div>
 <section class="card" style="margin-top:16px"><h2>Announcements</h2><p class="mute" style="margin:2px 0 12px">Only you can post. Ask staff to acknowledge when it matters.</p>
-<textarea id="at" placeholder="Write an announcement for all staff" aria-label="Announcement"></textarea>
+<textarea id="at" placeholder="Write an announcement for all staff" aria-label="Announcement" maxlength="500"></textarea>
 <div class="btns" style="align-items:center"><label><input type="checkbox" id="ak" checked> Staff must acknowledge</label><button class="b p" id="post">Post announcement</button></div>
 <div id="alist"></div></section>
 </section>
 <section id="v-catalogue" hidden>
-<header><div><h1>Catalogue</h1><p class="sub">What the Cashier can sell. Nothing reaches the counter until you publish it.</p></div><button class="b p" id="cnew">New item</button></header>
+<header><div><h1>Catalogue</h1><p class="sub">What the Cashier can sell. Hidden items and items without a price never reach the counter.</p></div><button class="b p" id="cnew">New item</button></header>
 <div class="row" style="flex-wrap:wrap;margin-bottom:14px"><input class="pr" id="cq" style="width:min(300px,100%)" placeholder="Search the catalogue" aria-label="Search the catalogue"><div class="seg" id="cflt" role="group" aria-label="Filter by status"><button aria-pressed="true" data-f="all">All</button><button aria-pressed="false" data-f="published">Published</button><button aria-pressed="false" data-f="draft">Draft</button><button aria-pressed="false" data-f="hidden">Hidden</button></div></div>
 <div class="bulk" id="bulk" hidden><b id="bn"></b><button class="b" data-b="publish">Publish</button><button class="b" data-b="hide">Hide</button><button class="b" data-b="unavail">Mark unavailable</button><button class="b" data-b="clear">Clear</button></div>
 <div class="card" style="padding:6px 16px"><div class="ci head"><span></span><span>Item</span><span>Price</span><span>Stock</span><span>Status</span><span>At counter</span><span></span></div><div id="ctab"></div></div>
@@ -263,14 +255,14 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 <header><div><h1>Stock</h1><p class="sub">You watch, Inventory acts. Quantities only change when Inventory confirms them.</p></div></header>
 <div class="row" style="flex-wrap:wrap;margin-bottom:14px"><input class="pr" id="sq" style="width:min(300px,100%)" placeholder="Search ingredients" aria-label="Search ingredients"><div class="seg" id="sflt" role="group" aria-label="Filter stock"><button aria-pressed="true" data-f="all">All</button><button aria-pressed="false" data-f="low">Running low</button><button aria-pressed="false" data-f="pend">Usage pending</button></div></div>
 <div class="split"><div class="card" style="padding:6px 16px"><div class="si head"><span>Ingredient</span><span>On hand</span><span>Days left</span><span>Status</span></div><div id="stab"></div></div><div class="card" id="sdet"></div></div>
-<div class="grid" style="margin-top:16px"><section class="card req"><h2>Usage awaiting confirmation</h2><div id="ulist"></div></section><section class="card stock"><h2>Purchase proposals</h2><div id="plist"></div></section></div>
+<div class="grid" style="margin-top:16px"><section class="card req"><h2>Usage awaiting confirmation</h2><div id="ulist"></div></section><section class="card stock"><h2>Stock requests</h2><div id="plist"></div></section></div>
 </section>
 <section id="v-orders" hidden>
 <header><div><h1>Orders</h1><p class="sub" id="osub"></p></div></header>
 <div class="ztools" id="ztools">
   <div class="zrow"><div class="zsrch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="zq" type="search" placeholder="Search ticket, customer or cake" aria-label="Search tickets" autocomplete="off"></div><div class="zsel"><select id="zf" aria-label="Show tickets in"></select></div><button class="b" id="zsm" aria-pressed="false">Select</button></div>
-  <div class="zbb" id="zbb" hidden><span id="zcnt"></span><button class="b" id="zall">Select all</button><button class="b" id="zdemo" disabled>Demo: Moses advances</button><button class="b r" id="zcx" disabled>Cancel orders…</button></div>
-  <div class="zbb" id="zcb" hidden><input id="zcr" placeholder="Reason for cancelling (required)" aria-label="Reason for cancelling"><button class="b r" id="zcok">Confirm cancel</button><button class="b" id="zcno">Keep them</button></div>
+  <div class="zbb" id="zbb" hidden><span id="zcnt"></span><button class="b" id="zall">Select all</button><button class="b r" id="zcx" disabled>Cancel orders…</button></div>
+  <div class="zbb" id="zcb" hidden><span class="mute" style="margin-right:auto">Cancelling does not refund anything paid.</span><button class="b r" id="zcok">Confirm cancel</button><button class="b" id="zcno">Keep them</button></div>
 </div>
 <div class="zboard" id="zboard"></div>
 </section>
@@ -278,20 +270,19 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 <section id="v-transactions" hidden>
 <header><div><h1>Transactions</h1><p class="sub">Every payment and refund, tied to a ticket and a named person. Refunds are your decision.</p></div></header>
 <div class="grid">
-<section class="card rev"><div class="row"><h2>Collected today</h2><span class="mute" id="trnet"></span></div><div class="big num" id="trtot">TSh 0</div><div id="trm"></div></section>
+<section class="card rev"><div class="row"><h2 id="trh">Collected today</h2><span class="mute" id="trnet"></span></div><input class="pr" type="date" id="trday" aria-label="Show another day" style="margin-top:8px"><div class="big num" id="trtot">0</div><div id="trm"></div></section>
 <section class="card due"><div class="row"><h2>Outstanding balances</h2><span class="tag cop" id="trobn"></span></div><ul class="list" id="trob"></ul></section>
-<section class="card act"><div class="row" style="flex-wrap:wrap"><h2>Ledger</h2><div class="row" style="flex-wrap:wrap;justify-content:flex-end"><input class="pr" id="trq" style="width:min(260px,100%)" placeholder="Search ticket or customer" aria-label="Search the ledger"><div class="seg" id="trf" role="group" aria-label="Filter ledger"><button aria-pressed="true" data-f="all">All</button><button aria-pressed="false" data-f="pay">Payments</button><button aria-pressed="false" data-f="ref">Refunds</button></div></div></div><div id="trrf"></div><div id="trl" style="margin-top:8px"></div></section>
+<section class="card act"><div class="row" style="flex-wrap:wrap"><h2>Ledger</h2><div class="row" style="flex-wrap:wrap;justify-content:flex-end"><input class="pr" id="trq" style="width:min(260px,100%)" placeholder="Search ticket or customer" aria-label="Search the ledger"><div class="seg" id="trf" role="group" aria-label="Filter ledger"><button aria-pressed="true" data-f="all">All</button><button aria-pressed="false" data-f="pay">Payments</button><button aria-pressed="false" data-f="ref">Refunds</button></div></div></div><div id="trl" style="margin-top:8px"></div></section>
 </div></section>
 <section id="v-staff" hidden>
 <header><div><h1>Staff</h1><p class="sub">Everyone signs in with a PIN, so every action is tied to a named person. Only you manage staff and PINs.</p></div><button class="b p" id="sfnew">Add staff</button></header>
 <div class="split"><div class="rl" id="sflist"></div><div class="card" id="sfdet"></div></div>
-<section class="card" style="margin-top:16px"><h2>What each role can do</h2><div class="mxw"><table class="mx" id="mx"></table></div></section>
 <section class="card" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Audit log</h2><select class="pr" id="auf" aria-label="Filter by person" style="width:auto"></select></div><ul class="tl" id="aul" style="margin-top:10px"></ul></section>
 </section>
 <section id="v-reports" hidden>
 <header><div><h1>Reports</h1><p class="sub">How the shop is doing, and where money and stock are leaking.</p></div><div class="seg" id="rpr" role="group" aria-label="Range"><button aria-pressed="true" data-r="7">7 days</button><button aria-pressed="false" data-r="30">30 days</button></div></header>
 <div class="grid">
-<section class="card rev"><div class="row"><h2>Sales</h2><span class="mute" id="rsd"></span></div><div class="big num" id="rst">TSh 0</div><svg id="rsv" viewBox="0 0 640 200" role="img" aria-label="Sales by day" style="margin-top:10px"></svg></section>
+<section class="card rev"><div class="row"><h2>Sales</h2><span class="mute" id="rsd"></span></div><div class="big num" id="rst">0</div><svg id="rsv" viewBox="0 0 640 200" role="img" aria-label="Sales by day" style="margin-top:10px"></svg></section>
 <section class="card due"><h2>By payment method</h2><div class="stk" id="rmb"></div><div id="rml"></div></section>
 <section class="card s6"><h2>Best sellers</h2><div id="rbs"></div></section>
 <section class="card s6"><div class="row"><h2>Days of stock left</h2><button class="b" id="rgs" style="min-height:0;padding:4px 14px">Open Stock</button></div><div id="rds"></div></section>
@@ -305,398 +296,363 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 </div>
 
 <div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Search"><div><input id="q" placeholder="Search tickets, items, customers" autocomplete="off"><ul id="res"></ul></div></div>
-<div class="toast" id="toast" role="status"></div>
 
-<div class="xlock" id="xlock" hidden><div class="brand" style="font-size:26px">Cake <i>POS</i></div><p class="mute" style="margin:0">Signed out</p><button class="b p" id="xin">Sign in as Amina</button></div>
+<script src="/cake.js"></script>
 <script>
-const $=s=>document.querySelector(s),T=n=>"TSh "+Math.round(n).toLocaleString("en-US");
-const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
-$("#date").textContent=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+" · open until 20:00";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const E=Cake.esc,M=Cake.money,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+const D={};            // the latest data of every feed this page listens to
+const ROLE_L={owner:"Owner",cashier:"Cashier",baker:"Baker",inventory:"Inventory",it:"IT"};
+const toneCls=t=>t==="danger"?"risk":t==="attention"?"cop":"";
+const todayISO=()=>new Date().toLocaleDateString("en-CA");
+const hhmm=iso=>new Date(iso).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+const when=iso=>{const d=new Date(iso);return d.toDateString()===new Date().toDateString()?hhmm(iso):d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+hhmm(iso)};
+const dayLabel=iso=>{if(!iso)return"No date";const d=new Date(iso+"T00:00:00"),t=new Date();t.setHours(0,0,0,0);const n=Math.round((d-t)/864e5);return n===0?"Today":n===1?"Tomorrow":n===-1?"Yesterday":d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})};
+const pct=n=>Math.round(Math.max(0,Math.min(1,n))*100);
 
-/* count-up */
-function count(el,to){if(reduce){el.textContent=T(to);return}const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/1100),e=1-Math.pow(1-p,4);el.textContent=T(to*e);if(p<1)requestAnimationFrame(f)})(t0)}
+/* Keeps what the person has typed (and where the cursor is) when a live update redraws a region. */
+function keep(box,fn){const v={};box.querySelectorAll("[data-k]").forEach(e=>v[e.dataset.k]=e.type==="checkbox"?e.checked:e.value);
+ const a=document.activeElement,ak=a&&box.contains(a)?a.dataset.k:null,sel=ak&&a.selectionStart!=null?[a.selectionStart,a.selectionEnd]:null;
+ const det=[...box.querySelectorAll("details")].map(d=>d.open);
+ fn();
+ box.querySelectorAll("[data-k]").forEach(e=>{if(!(e.dataset.k in v))return;if(e.type==="checkbox")e.checked=v[e.dataset.k];else e.value=v[e.dataset.k]});
+ box.querySelectorAll("details").forEach((d,i)=>{if(det[i])d.open=true});
+ if(ak){const n=box.querySelector(`[data-k="${ak}"]`);if(n){n.focus();if(sel&&n.setSelectionRange)try{n.setSelectionRange(sel[0],sel[1])}catch(e){}}}}
+async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return await fn()}finally{b.disabled=false}}
+const seg=(box,attr,cb)=>$(box).addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!(attr in b.dataset))return;$$(box+" button").forEach(x=>x.setAttribute("aria-pressed",x===b));cb(b.dataset[attr])});
+const PH={};
+function loadPhotos(box){box.querySelectorAll("img[data-ph]").forEach(async i=>{const id=i.dataset.ph;if(PH[id]){i.src=PH[id];return}const u=await Cake.photoUrl(id);if(u){PH[id]=u;i.src=u}})}
+document.addEventListener("click",e=>{const i=e.target.closest("img[data-ph]");if(i&&i.src)Cake.dialog(`<img src="${i.src}" alt="Reference photo" style="width:100%;border-radius:12px"><div class="cx-a"><button class="cx-b" data-close>Close</button></div>`)});
+const cakeHtml=c=>!c?"":`<dl class="kv"><dt>Serves</dt><dd>${c.servings}${c.sizeNote?" · "+E(c.sizeNote):""}</dd><dt>Flavour</dt><dd>${E(c.flavor)}${c.filling?", "+E(c.filling)+" filling":""}</dd>${c.layers>1?`<dt>Layers</dt><dd>${c.layers}</dd>`:""}${c.dietary&&c.dietary.length?`<dt>Dietary</dt><dd>${c.dietary.map(E).join(", ")}</dd>`:""}${c.inscription?`<dt>Message</dt><dd>${E(c.inscription)}</dd>`:""}${c.decorationNotes?`<dt>Design</dt><dd>${E(c.decorationNotes)}</dd>`:""}${c.allergyNotes?`<dt>Allergies</dt><dd>${E(c.allergyNotes)}</dd>`:""}</dl>${c.photoIds&&c.photoIds.length?`<div class="ph">${c.photoIds.map(id=>`<img data-ph="${E(id)}" alt="Reference photo">`).join("")}</div>`:""}`;
 
-/* revenue chart */
-const d7=[412000,538000,465000,610000,702000,655000,780000];
-const d30=Array.from({length:30},(_,i)=>Math.round(430000+i*9500+Math.sin(i*1.7)*70000+(i%7>4?90000:0)));d30[29]=780000;
-const lab=n=>{const a=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);a.push(d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}))}return a};
-let data=d7,labels=lab(7);
-function draw(){
-  const W=640,H=210,p={l:8,r:8,t:12,b:26},mx=Math.max(...data)*1.1,mn=Math.min(...data)*.8;
-  const X=i=>p.l+i*(W-p.l-p.r)/(data.length-1),Y=v=>p.t+(1-(v-mn)/(mx-mn))*(H-p.t-p.b);
-  const pts=data.map((v,i)=>[X(i),Y(v)]),line="M"+pts.map(q=>q.join(",")).join("L");
-  let g="";for(let i=0;i<4;i++){const y=p.t+i*(H-p.t-p.b)/3;g+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y}" y2="${y}" stroke="var(--line)"/>`}
-  const step=Math.ceil(data.length/6);let xl="";labels.forEach((l,i)=>{if(i%step===0||i===data.length-1)xl+=`<text x="${X(i)}" y="${H-6}" font-size="11" fill="var(--mute)" text-anchor="middle">${l}</text>`});
-  $("#svg").innerHTML=`<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--cop)" stop-opacity=".28"/><stop offset="1" stop-color="var(--cop)" stop-opacity="0"/></linearGradient></defs>${g}<path d="${line}L${X(data.length-1)},${H-p.b}L${p.l},${H-p.b}Z" fill="url(#a)" id="ar" style="opacity:0;transition:opacity 1s .5s"/><path id="ln" d="${line}" fill="none" stroke="var(--cop)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><line id="cx" y1="${p.t}" y2="${H-p.b}" stroke="var(--mute)" stroke-dasharray="3 4" opacity="0"/><circle id="dot" r="5" fill="var(--cop)" stroke="var(--surf)" stroke-width="2" opacity="0"/>${xl}`;
-  const ln=$("#ln"),L=ln.getTotalLength();
-  if(!reduce){ln.style.strokeDasharray=L;ln.style.strokeDashoffset=L;ln.getBoundingClientRect();ln.style.transition="stroke-dashoffset 1.3s cubic-bezier(.32,.72,0,1)";ln.style.strokeDashoffset=0}
-  requestAnimationFrame(()=>$("#ar").style.opacity=1);
-  const c=$("#chart");
-  const mv=e=>{const r=$("#svg").getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;let i=Math.round((x-p.l)/((W-p.l-p.r)/(data.length-1)));i=Math.max(0,Math.min(data.length-1,i));
-    $("#cx").setAttribute("x1",X(i));$("#cx").setAttribute("x2",X(i));$("#cx").style.opacity=1;$("#dot").setAttribute("cx",X(i));$("#dot").setAttribute("cy",Y(data[i]));$("#dot").style.opacity=1;
-    const t=$("#tip");t.textContent=labels[i]+" · "+T(data[i]);t.style.left=(X(i)/W*r.width)+"px";t.style.top=(Y(data[i])/210*r.height)+"px";t.style.opacity=1};
-  c.onpointermove=mv;c.onpointerdown=mv;c.onpointerleave=()=>{["#cx","#dot","#tip"].forEach(s=>$(s).style.opacity=0)};
-}
-document.querySelectorAll("#v-overview .seg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#v-overview .seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));const n=+b.dataset.r;data=n===7?d7:d30;labels=lab(n);draw()});
+/* ---------- navigation ---------- */
+let view="overview",RQ=null,RC={unseen:0,needsYou:0};
+function go(v){view=v;$$("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));
+ if(v==="requests"){RQ&&RQ.shown();qmark()}scrollTo(0,0)}
+$$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
+function badge(){const n=RC.unseen+RC.needsYou+((D.quotes&&D.quotes.open.length)||0);$("#xbn").textContent=n||"";$("#xbell").title=n?n+" need you":"Requests and alerts"}
 
-/* stock */
-function ob(){$("#bars").innerHTML=S.slice().sort((a,b)=>a.dl-b.dl).slice(0,4).map(i=>`<div class="s"><div class="row"><span>${esc(i.n)}</span><span class="mute">${i.dl} days left</span></div><div class="bar"><i class="${i.dl<2?"low":i.dl<4?"mid":""}" data-w="${Math.min(100,i.dl/7*100)}"></i></div></div>`).join("");requestAnimationFrame(()=>setTimeout(()=>document.querySelectorAll("#bars .bar i").forEach(i=>i.style.width=i.dataset.w+"%"),60))}
+/* ---------- overview ---------- */
+let rpd=7,stopRep=null,drawn=false,counted=false;
+function subReports(){stopRep&&stopRep();stopRep=Cake.feed("reports",{days:rpd},d=>{D.reports=d;ov();rpt()})}
+function setRange(n){rpd=n;$$("#v-overview .seg button,#rpr button").forEach(x=>x.setAttribute("aria-pressed",+x.dataset.r===n));drawn=false;subReports()}
+$$("#v-overview .seg button,#rpr button").forEach(b=>b.onclick=()=>setRange(+b.dataset.r));
+function countTo(el,n,label){if(reduce||counted){el.textContent=label;return}counted=true;const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/900),e=1-Math.pow(1-p,4);el.textContent=p<1?M(Math.round(n*e)):label;if(p<1)requestAnimationFrame(f)})(t0)}
+function draw(series){const svg=$("#svg"),W=640,H=210,p={l:8,r:8,t:12,b:26},data=series.map(s=>s.total),mx=Math.max(1,Math.max(...data)*1.1);
+ const X=i=>p.l+i*(W-p.l-p.r)/Math.max(1,data.length-1),Y=v=>p.t+(1-v/mx)*(H-p.t-p.b);
+ const pts=data.map((v,i)=>[X(i),Y(v)]),line="M"+pts.map(q=>q.join(",")).join("L");
+ let g="";for(let i=0;i<4;i++){const y=p.t+i*(H-p.t-p.b)/3;g+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y}" y2="${y}" stroke="var(--line)"/>`}
+ const step=Math.ceil(data.length/6);let xl="";series.forEach((s,i)=>{if(i%step===0||i===data.length-1)xl+=`<text x="${X(i)}" y="${H-6}" font-size="11" fill="var(--mute)" text-anchor="middle">${E(s.label)}</text>`});
+ svg.innerHTML=`<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--cop)" stop-opacity=".28"/><stop offset="1" stop-color="var(--cop)" stop-opacity="0"/></linearGradient></defs>${g}<path d="${line}L${X(data.length-1)},${H-p.b}L${p.l},${H-p.b}Z" fill="url(#a)"/><path id="ln" d="${line}" fill="none" stroke="var(--cop)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><line id="cx" y1="${p.t}" y2="${H-p.b}" stroke="var(--mute)" stroke-dasharray="3 4" opacity="0"/><circle id="dot" r="5" fill="var(--cop)" stroke="var(--surf)" stroke-width="2" opacity="0"/>${xl}`;
+ if(!drawn&&!reduce){const ln=$("#ln"),L=ln.getTotalLength();ln.style.strokeDasharray=L;ln.style.strokeDashoffset=L;ln.getBoundingClientRect();ln.style.transition="stroke-dashoffset 1.1s cubic-bezier(.32,.72,0,1)";ln.style.strokeDashoffset=0}
+ drawn=true;
+ const mv=e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;let i=Math.round((x-p.l)/((W-p.l-p.r)/Math.max(1,data.length-1)));i=Math.max(0,Math.min(data.length-1,i));
+  $("#cx").setAttribute("x1",X(i));$("#cx").setAttribute("x2",X(i));$("#cx").style.opacity=1;$("#dot").setAttribute("cx",X(i));$("#dot").setAttribute("cy",Y(data[i]));$("#dot").style.opacity=1;
+  const t=$("#tip");t.textContent=series[i].label+" · "+series[i].totalLabel;t.style.left=(X(i)/W*r.width)+"px";t.style.top=(Y(data[i])/H*r.height)+"px";t.style.opacity=1};
+ const c=$("#chart");c.onpointermove=mv;c.onpointerdown=mv;c.onpointerleave=()=>["#cx","#dot","#tip"].forEach(s=>$(s)&&($(s).style.opacity=0))}
+function daysText(r){if(r.status==="out")return"Out of stock";if(r.daysUntilOut!=null)return r.daysUntilOut===0?"Runs out today":r.daysUntilOut+" day"+(r.daysUntilOut===1?"":"s")+" left";if(r.daysUntilReorder!=null)return"Reorder in "+r.daysUntilReorder+" day"+(r.daysUntilReorder===1?"":"s");return r.status==="no_data"?"Not enough history":"OK"}
+const fcUrgent=r=>r.status==="out"||r.status==="stockout_soon"||r.status==="reorder_soon";
+function ov(){
+ const r=D.reports;
+ if(r){const s=r.sales,c=s.todayChangePercent;countTo($("#today"),s.today,s.todayLabel);
+  $("#dline").innerHTML=c==null?"No sales yesterday to compare with":`<span class="delta" ${c<0?'style="color:var(--risk)"':""}>${c>0?"+":""}${c}%</span> compared with yesterday`;
+  draw(s.series)}
+ const open=(D.orders||[]).filter(o=>!["completed","cancelled","empty","draft"].includes(o.status)).sort((a,b)=>(a.deliveryDate||"9999").localeCompare(b.deliveryDate||"9999")||a.number.localeCompare(b.number)),t=todayISO(),late=o=>o.deliveryDate&&o.deliveryDate<t;
+ const nl=open.filter(late).length;$("#riskn").className="tag "+(nl?"risk":"");$("#riskn").textContent=nl?nl+" late":open.length?"On track":"None";
+ $("#duel").innerHTML=open.slice(0,4).map(o=>`<li class="item ${late(o)?"risk":""}" data-o="${E(o.orderId)}" tabindex="0" style="cursor:pointer"><div class="row"><b>${E(o.number)} · ${E(o.customerName)}</b><span class="tag ${toneCls(o.statusTone)}">${E(o.statusLabel)}</span></div><small>${E(dayLabel(o.deliveryDate))} · ${o.fulfilment==="delivery"?"Delivery":"Pickup"}${o.needsQuote?" · needs your price":""}</small></li>`).join("")||'<p class="empty">Nothing is waiting to go out.</p>';
+ const low=((D.forecast&&D.forecast.rows)||[]).filter(fcUrgent).slice(0,4);
+ $("#bars").innerHTML=low.map(i=>{const d=i.daysUntilOut!=null?i.daysUntilOut:i.status==="out"?0:7;return`<div class="s"><div class="row"><span>${E(i.name)}</span><span class="mute">${E(daysText(i))}</span></div><div class="bar"><i class="${d<2?"low":d<4?"mid":""}" style="width:${Math.min(100,d/7*100)}%"></i></div></div>`}).join("")||'<p class="empty">Nothing is running low.</p>';
+ const n=D.usage?D.usage.pending.length:0;$("#uc").innerHTML=n?`<b>${n} usage report${n>1?"s":""}</b> waiting for Inventory to confirm`:"<b>All usage</b> is confirmed";
+ const q=((D.quotes&&D.quotes.open)||[]).map(x=>({t:"Price for "+x.orderNumber+", custom cake",f:x.requestedByName,m:x.customerName+(x.deliveryDate?" · "+dayLabel(x.deliveryDate):"")})),
+  rq=((D.inbox&&D.inbox.rows)||[]).filter(x=>x.needsYou).map(x=>({t:x.title,f:x.from.name,m:x.category+(x.urgent?" · Urgent":"")})),all=q.concat(rq);
+ $("#reqn").textContent=all.length;
+ $("#reqs").innerHTML=all.slice(0,3).map(x=>`<div class="rq" style="max-height:none"><div class="row"><b>${E(x.t)}</b><span class="tag">${E(x.f)}</span></div><div class="mute">${E(x.m)}</div><div class="btns"><button class="b p" data-go="requests">Review</button></div></div>`).join("")||'<p class="empty">All caught up. New requests from staff will appear here.</p>';
+ $("#afeed").innerHTML=((D.audit||[]).filter(a=>a.outcome==="ok").slice(0,8).map(a=>`<div><time>${E(when(a.at))}</time><span><b>${E(a.who)}</b>: ${E(a.summary)}</span></div>`).join(""))||'<p class="empty">Nothing yet today.</p>';
+ badge()}
+$("#duel").onclick=e=>{const i=e.target.closest("[data-o]");if(i){go("orders");oopen(i.dataset.o)}};
+$("#reqs").onclick=e=>{if(e.target.closest("[data-go]"))go("requests")};
 
-/* requests */
-const now=()=>new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
-const esc=t=>t.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const STAFF=["Moses","Zawadi","Neema"],ROLE={Baker:"Zawadi",Inventory:"Neema",Cashier:"Moses"};
-const LC=["Sent","Seen","Acknowledged","Resolved"],QL=["Sent","Seen","Quoted"],SL=["Sent","Seen","Acknowledged","Done","Confirmed"];
-const L=r=>r.k==="quote"?QL:r.k==="staff"?SL:LC,fin=r=>r.s>=L(r).length-1,needs=r=>(r.k==="staff"?(r.to==="Owner"&&r.s<3)||(r.s===3&&r.from==="Amina"):r.oa)&&!fin(r);
-let sel=1,flt="all";
-let R=[
-{id:1,k:"quote",oa:1,ttl:"Quote: 3-tier wedding cake",from:"Moses",to:"Owner",link:"Order A-0081, delivery Sat 10 Oct",body:"Vanilla sponge with raspberry filling, serves 80. The customer needs a price today.",s:0,seen:[],tl:[["13:20","Moses sent the request"]]},
-{id:2,k:"req",oa:1,ttl:"Refund: order A-0076",from:"Moses",to:"Owner",link:"Order A-0076, TSh 15,000",body:"Cake collected with a cracked base. The customer asks for the money back.",acts:[["Approve refund","Refund approved"],["Decline","Declined"]],s:0,seen:[],tl:[["12:52","Moses sent the request"]]},
-{id:3,k:"req",oa:1,ttl:"Restock butter, 40 kg",from:"Neema",to:"Owner",link:"Butter, 1.4 days left",body:"At the current pace butter runs out before the weekend.",acts:[["Approve","Restock approved"],["Not now","Postponed"]],stk:1,s:1,seen:["Amina"],tl:[["11:30","Neema sent the request"],["11:41","Amina saw it"]]},
-{id:7,k:"req",oa:1,stk:1,ttl:"New ingredient: pistachio paste",from:"Zawadi",to:"Owner",link:"Not in stock yet, for the new pistachio cake",body:"The baker wants to trial a pistachio cake. It needs an ingredient the shop has never stocked.",acts:[["Approve purchase","Purchase approved"],["Decline","Declined"]],s:0,seen:[],tl:[["10:15","Zawadi sent the request"]]},
-{id:4,k:"usage",ttl:"Confirm chocolate usage",from:"Zawadi",to:"Inventory",sys:1,link:"Report from the 12:05 bake",body:"Usage is pending. Stock only drops once Inventory confirms exact amounts.",esc:"Escalates to you at 17:00 if still open",s:2,seen:["Neema"],own:"Neema",tl:[["12:05","Zawadi reported usage, request sent to Inventory"],["12:20","Neema saw it"],["12:24","Neema took it"]]},
-{id:5,k:"alert",ttl:"Wedding cake not started",from:"System",to:"Baker",sys:1,link:"Order A-0079, due today 16:00",body:"The order is close to its date and still New.",esc:"Escalates to you at 14:30 if still open",s:1,seen:["Zawadi"],tl:[["13:30","System alert sent to Baker"],["13:32","Zawadi saw it"]]},
-{id:6,k:"alert",ttl:"Flour below reorder level",from:"System",to:"Inventory",sys:1,link:"Flour, 12 kg on hand",s:3,seen:["Neema"],own:"Neema",outcome:"Resolved by Amina",tl:[["09:10","System alert sent to Inventory"],["09:15","Neema took it"],["10:40","Resolved by Amina"]]}];
-function rl(){const f=R.filter(r=>flt==="all"||(flt==="needs"&&needs(r))||(flt==="prog"&&!fin(r)&&!needs(r))||(flt==="done"&&fin(r)));
- $("#rlist").innerHTML=f.slice().sort((a,b)=>!!b.urg-!!a.urg).map(r=>`<button class="rc" data-id="${r.id}" aria-selected="${r.id===sel}"><div class="row"><b>${r.ttl}</b>${r.urg?'<span class="tag" style="background:var(--risk-s);color:var(--risk)">Urgent</span>':""}${r.cat?'<span class="tag">'+r.cat+'</span>':""}${needs(r)?'<span class="tag cop">Needs you</span>':fin(r)?'<span class="tag">Done</span>':''}</div><span class="mute">${r.from} to ${r.to} · ${r.sys?"System":"Manual"}</span><div class="dots">${L(r).map((_,i)=>`<i class="${i<=r.s?"on":""}"></i>`).join("")}</div></button>`).join("")||'<p class="empty">Nothing here right now.</p>'}
-function rdet(){const r=R.find(x=>x.id===sel);if(!r){$("#rdet").innerHTML='<p class="empty">Select a request to see where it stands.</p>';return}
- const lb=L(r).slice();if(r.k==="quote"&&fin(r))lb[2]=r.outcome==="Declined"?"Declined":"Quoted";
- const w=ROLE[r.to];let act="";
- if(fin(r))act=`<p><b>${r.outcome}</b></p>`;
- else if(r.k==="quote")act='<div class="btns"><input class="pr" id="pr" type="number" min="0" placeholder="Price in TSh" aria-label="Price in TSh"><button class="b p" data-a="quote">Send quote</button><button class="b" data-a="decline">Decline</button></div>';
- else if(r.k==="staff")act=sact(r);
- else if(r.acts)act=`<div class="btns"><button class="b p" data-a="o0">${r.acts[0][0]}</button><button class="b" data-a="o1">${r.acts[1][0]}</button></div>`;
- else act=`<div class="btns"><button class="b p" data-a="resolve">Resolve</button>${r.s<2&&w?`<button class="b" data-a="demo">Demo: ${w} ${r.s?"takes it":"sees it"}</button>`:""}</div>`;
- $("#rdet").innerHTML=`<div class="row"><h2>${r.ttl}</h2><span class="tag ${r.sys?"":"cop"}">${r.sys?"System":"Manual"}</span></div>
- <p class="mute" style="margin:2px 0 0">${r.from} to ${r.to} · ${r.link}</p>${r.body?`<p>${r.body}</p>`:""}
- <div class="steps" style="--n:${lb.length}">${lb.map((l,i)=>`<div class="st ${i<=r.s?"on":""} ${i===r.s?"cur":""}">${l}</div>`).join("")}</div>
- <div><span class="mute">Seen by </span>${r.seen.length?r.seen.map(n=>`<span class="chip ok">${n}</span>`).join(""):'<span class="chip">Nobody yet</span>'}</div>
- ${r.to!=="Owner"?`<div class="mute" style="margin:2px 0 8px">${r.own?"Owned by "+r.own:"Nobody has taken this yet"}</div>`:""}
- ${r.esc&&!fin(r)?`<div class="confirm" style="margin:8px 0">${r.esc}</div>`:""}${act}
- <h2 style="font-size:15px;margin-top:20px">History</h2><ul class="tl">${r.tl.slice().reverse().map(x=>`<li><time>${x[0]}</time><span>${x[1]}</span></li>`).join("")}</ul>`}
-function rd(){const n=R.filter(needs).slice(0,3),tot=R.filter(needs).length;$("#reqs").innerHTML=n.length?n.map(r=>`<div class="rq"><div class="row"><b>${r.ttl}</b><span class="tag">${r.from}</span></div><div class="mute">${r.link}</div><div class="btns"><button class="b p" data-id="${r.id}">Review</button></div></div>`).join(""):'<p class="empty">All caught up. New requests from staff will appear here.</p>';$("#reqn").textContent=tot}
-const rr=()=>{rl();rdet();rd()};
-function pick(id){sel=id;const r=R.find(x=>x.id===id);if(r.to==="Owner"&&!r.seen.includes("Amina")){r.seen.push("Amina");if(r.s===0)r.s=1;r.tl.push([now(),"Amina saw it"])}rr()}
-$("#rlist").onclick=e=>{const b=e.target.closest(".rc");if(b)pick(+b.dataset.id)};
-$("#flt").onclick=e=>{const b=e.target.closest("button");if(!b)return;flt=b.dataset.f;document.querySelectorAll("#flt button").forEach(x=>x.setAttribute("aria-pressed",x===b));rl()};
-$("#rdet").onclick=e=>{const b=e.target.closest("[data-a]");if(!b)return;const r=R.find(x=>x.id===sel),a=b.dataset.a;let m="";
- if(a==="sadv"||a==="sreo"){sstep(r,a);return}
- else if(a==="quote"){const v=+$("#pr").value;if(!(v>0)){toast("Enter a price first");return}r.s=2;r.outcome="Quoted "+T(v);m="Quote sent to "+r.from;const q=O.find(x=>x.id===81);if(r.id===1&&q){q.total=v;q.tl.push([now(),"Amina quoted "+T(v)])}}
- else if(a==="decline"){r.s=2;r.outcome="Declined";m="Declined. "+r.from+" is notified";const q=O.find(x=>x.id===81);if(r.id===1&&q&&q.st==="quote"){q.st="cancelled";q.tl.push([now(),"Amina declined the quote"])}}
- else if(a[0]==="o"){const o=r.acts[+a[1]][1];r.s=3;r.outcome=o+" by Amina";m=o;if(r.id===2&&a==="o0"){PAYS.unshift({d:0,t:now(),id:76,cust:"Customer",m:"Cash",k:"Refund",a:-15000,by:"Amina",why:"Cracked base"});RRF.unshift([0,"A-0076","Customer",15000,"Cracked base"])}}
- else if(a==="resolve"){r.s=3;r.outcome="Resolved by Amina";m="Resolved. "+r.from+" is notified"}
- else{const w=ROLE[r.to];if(r.s===0){r.s=1;r.seen.push(w);r.tl.push([now(),w+" saw it"])}else{r.s=2;r.own=w;r.tl.push([now(),w+" took it"])}rr();return}
- r.tl.push([now(),r.outcome]);aud("Handled request",r.ttl,r.outcome); rr();toast(m)};
-$("#reqs").onclick=e=>{const b=e.target.closest("button");if(b)go("requests",+b.dataset.id)};
-const built=["overview","requests","catalogue","stock","orders","transactions","staff","reports"];
-function go(v,id){if(!built.includes(v)){toast(v[0].toUpperCase()+v.slice(1)+" is the next page to build");return}
- document.querySelectorAll("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);
- document.querySelectorAll("nav button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));
- if(v==="overview")ob();if(v==="requests"){if(id)pick(id);else rr()}if(v==="catalogue")cr();if(v==="stock")sr(1);if(v==="orders")orr();if(v==="transactions")trn();if(v==="staff")sfr();if(v==="reports")rpt();scrollTo(0,0)}
-document.querySelectorAll("nav button").forEach(x=>x.onclick=()=>go(x.dataset.v));
-/* announcements */
-let A=[{t:"Closing early on Friday at 18:00 for the monthly stocktake.",ack:1,seen:["Moses","Zawadi","Neema"],acked:["Moses","Zawadi"],at:"Yesterday"}];
-function ra(){$("#alist").innerHTML=A.map((a,i)=>`<div class="rq" style="max-height:none"><div class="row"><b>${esc(a.t)}</b>${a.ack?'<span class="tag cop">Needs acknowledgement</span>':''}</div><div class="mute">${a.at}</div><div style="margin-top:8px">${STAFF.map(n=>{const k=a.acked.includes(n);return `<span class="chip ${k?"ok":""}">${n}: ${k?"Acknowledged":a.seen.includes(n)?"Seen":"Not seen"}</span>`}).join("")}</div>${STAFF.some(n=>!(a.ack?a.acked:a.seen).includes(n))?`<div class="btns"><button class="b" data-i="${i}">Demo: next person responds</button></div>`:""}</div>`).join("")}
-$("#alist").onclick=e=>{const b=e.target.closest("[data-i]");if(!b)return;const a=A[+b.dataset.i];for(const n of STAFF){if(!a.seen.includes(n)){a.seen.push(n);break}if(a.ack&&!a.acked.includes(n)){a.acked.push(n);break}}ra()};
-$("#post").onclick=()=>{const t=$("#at").value.trim();if(!t){toast("Write the announcement first");return}A.unshift({t,ack:$("#ak").checked,seen:[],acked:[],at:"Just now"});$("#at").value="";ra();toast("Announcement posted")};
-ra();
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2200)}
+/* ---------- requests, quotes and announcements ---------- */
+const seenQ=new Set();
+function qmark(){if(view!=="requests"||!D.quotes)return;D.quotes.open.filter(x=>x.status==="sent"&&!seenQ.has(x.quoteId)).forEach(x=>{seenQ.add(x.quoteId);Cake.send("quotes/mark_seen",{quoteId:x.quoteId})})}
+const qcard=x=>`<div class="rq" style="max-height:none" data-q="${E(x.quoteId)}"><div class="row"><b>${E(x.orderNumber)} · ${E(x.customerName)}</b><span class="tag cop">${E(x.statusLabel)}</span></div><div class="mute">Asked by ${E(x.requestedByName)} · ${x.fulfilment==="delivery"?"Delivery":"Pickup"}${x.deliveryDate?" · "+E(dayLabel(x.deliveryDate)):""}</div>${cakeHtml(x.cake)}${x.note?`<p class="mute">Note from ${E(x.requestedByName)}: ${E(x.note)}</p>`:""}<div class="btns"><input class="pr" data-k="p-${E(x.quoteId)}" type="number" inputmode="decimal" min="0" placeholder="Price" aria-label="Price"><input class="pr" data-k="n-${E(x.quoteId)}" placeholder="Note to the cashier (optional)" style="width:min(260px,100%)" aria-label="Note to the cashier"><button class="b p" data-qa="send">Send price</button></div><div class="btns"><input class="pr" data-k="d-${E(x.quoteId)}" placeholder="Reason, if you decline" style="width:min(260px,100%)" aria-label="Reason for declining"><button class="b" data-qa="no">Decline</button></div></div>`;
+function qr(){const q=D.quotes;if(!q)return;const box=$("#qbox"),o=q.open,rc=q.recent;$("#qcount").textContent=o.length||"";
+ keep(box,()=>{box.innerHTML=(o.map(qcard).join("")||'<p class="empty">No custom cake is waiting for a price.</p>')+(rc.length?`<details style="margin-top:14px"><summary><b>Recently answered</b><span class="mute chev">Show</span></summary>${rc.slice(0,6).map(x=>`<div class="rq" style="max-height:none"><div class="row"><b>${E(x.orderNumber)} · ${E(x.customerName)}</b><span class="tag">${E(x.statusLabel)}${x.priceLabel?" · "+E(x.priceLabel):""}</span></div>${x.answer?`<div class="mute">${E(x.answer)}</div>`:""}</div>`).join("")}</details>`:"")});
+ loadPhotos(box);qmark();ov()}
+$("#qbox").onclick=e=>{const c=e.target.closest("[data-q]"),b=e.target.closest("button[data-qa]");if(!c||!b)return;const id=c.dataset.q,f=k=>c.querySelector(`[data-k="${k}-${id}"]`).value.trim();
+ if(b.dataset.qa==="send"){const p=f("p");if(p===""||!(+p>=0)){Cake.toast("Enter a price first.");return}guard(b,()=>Cake.send("quotes/provide",{quoteId:id,price:+p,note:f("n")||undefined},"Price sent to the cashier"))}
+ else{const r=f("d");if(!r){Cake.toast("Say why you are declining.");return}guard(b,()=>Cake.send("quotes/decline",{quoteId:id,reason:r},"Declined. The cashier is told"))}};
+function ann(){const a=D.ann;if(!a)return;$("#alist").innerHTML=a.rows.map(x=>`<div class="rq" style="max-height:none"><div class="row"><b>${E(x.text)}</b>${x.requiresAck?'<span class="tag cop">Needs acknowledgement</span>':""}</div><div class="mute">Posted ${E(when(x.createdAt))}${x.progress?" · "+E(x.progress):""}</div><div style="margin-top:8px">${(x.readers||[]).map(r=>`<span class="chip ${r.acked||(!x.requiresAck&&r.seen)?"ok":""}">${E(r.name)}: ${r.acked?"Acknowledged":r.seen?"Seen":"Not seen"}</span>`).join("")}</div><div class="btns"><button class="b" data-ret="${E(x.announcementId)}">Take down</button></div></div>`).join("")||'<p class="empty">Nothing is up right now.</p>'}
+$("#alist").onclick=e=>{const b=e.target.closest("[data-ret]");if(b)guard(b,()=>Cake.send("announcements/retire",{announcementId:b.dataset.ret},"Taken down"))};
+$("#post").onclick=e=>{const t=$("#at").value.trim();if(!t){Cake.toast("Write the announcement first.");return}guard(e.currentTarget,async()=>{const r=await Cake.send("announcements/post",{text:t,requiresAck:$("#ak").checked},"Announcement posted");if(r.ok)$("#at").value=""})};
 
-/* catalogue */
-let C=[
-{id:1,n:"Vanilla sponge cake",k:"Ready-made",s:"published",a:true,v:[{n:"1 kg",p:28000,q:6},{n:"2 kg",p:52000,q:3}]},
-{id:2,n:"Chocolate drip cake",k:"Ready-made",s:"published",a:true,v:[{n:"1 kg",p:32000,q:4},{n:"2 kg",p:60000,q:0}]},
-{id:3,n:"Red velvet slice",k:"Ready-made",s:"published",a:false,v:[{n:"Slice",p:6500,q:0}]},
-{id:4,n:"Cupcakes, box of 6",k:"Ready-made",s:"published",a:true,v:[{n:"Box",p:18000,q:12}]},
-{id:5,n:"Fruit tart",k:"Ready-made",s:"draft",a:true,v:[{n:"Standard",p:0,q:0}]},
-{id:6,n:"Butter croissant",k:"Ready-made",s:"hidden",a:true,v:[{n:"Each",p:3500,q:20}]},
-{id:7,n:"Custom celebration cake",k:"Custom cake",s:"published",a:true,v:[]}];
-let CL=[["09:05","Amina published Cupcakes, box of 6"],["Yesterday","Amina changed prices on Vanilla sponge cake (flour cost went up)"]],cs=new Set(),cf="all",cd=null;
-const cap=t=>t[0].toUpperCase()+t.slice(1),priced=i=>i.k==="Custom cake"||i.v.every(v=>v.p>0);
-const cprice=i=>{if(i.k==="Custom cake")return "Set by quote";const p=i.v.map(v=>v.p).filter(Boolean);return !p.length?'<span class="tag risk">No price</span>':Math.min(...p)===Math.max(...p)?T(p[0]):"From "+T(Math.min(...p))};
-const cstock=i=>{if(i.k==="Custom cake")return "Made to order";const q=i.v.reduce((a,v)=>a+v.q,0);return q?q+" in stock":'<span class="tag risk">Out of stock</span>'};
-const clog=t=>{CL.unshift([now(),"Amina "+t]);aud("Changed catalogue",t,"Catalogue");cl()};
-function cl(){$("#clog").innerHTML=CL.map(x=>`<li><time>${x[0]}</time><span>${esc(x[1])}</span></li>`).join("")}
-function cr(){const q=$("#cq").value.toLowerCase(),f=C.filter(i=>(cf==="all"||i.s===cf)&&i.n.toLowerCase().includes(q));
- $("#ctab").innerHTML=f.map(i=>`<div class="ci ${i.s}" data-id="${i.id}"><input type="checkbox" class="ck" aria-label="Select ${esc(i.n)}" ${cs.has(i.id)?"checked":""}><div><b>${esc(i.n)}</b><div class="mute">${i.k}</div></div><div>${cprice(i)}</div><div>${cstock(i)}</div><select aria-label="Status of ${esc(i.n)}">${["published","draft","hidden"].map(x=>`<option value="${x}" ${x===i.s?"selected":""}>${cap(x)}</option>`).join("")}</select><button class="sw" role="switch" aria-checked="${i.a}" aria-label="Available at the counter"><i></i></button><button class="b" data-edit>Edit</button></div>`).join("")||'<p class="empty">No items match. Clear the search or add a new item.</p>';
- $("#bulk").hidden=!cs.size;$("#bn").textContent=cs.size+" selected";cl()}
-function setS(i,st){if(st==="published"&&!priced(i)){toast("Set a price on every size before publishing "+i.n);return false}i.s=st;return true}
-$("#cq").oninput=cr;
-$("#cflt").onclick=e=>{const b=e.target.closest("button");if(!b)return;cf=b.dataset.f;document.querySelectorAll("#cflt button").forEach(x=>x.setAttribute("aria-pressed",x===b));cr()};
-$("#ctab").onchange=e=>{const row=e.target.closest(".ci"),i=C.find(x=>x.id===+row.dataset.id);if(e.target.classList.contains("ck")){e.target.checked?cs.add(i.id):cs.delete(i.id);cr();return}
- if(e.target.tagName==="SELECT"){if(setS(i,e.target.value))clog("set "+i.n+" to "+e.target.value);cr()}};
-$("#ctab").onclick=e=>{const row=e.target.closest(".ci");if(!row)return;const i=C.find(x=>x.id===+row.dataset.id);
- if(e.target.closest(".sw")){i.a=!i.a;clog("marked "+i.n+(i.a?" available":" unavailable")+" at the counter");cr()}
- else if(e.target.closest("[data-edit]"))ed(i.id)};
-$("#bulk").onclick=e=>{const b=e.target.closest("[data-b]");if(!b)return;const k=b.dataset.b,sel=C.filter(i=>cs.has(i.id));let skip=0;
- if(k==="clear"){cs.clear();cr();return}
- sel.forEach(i=>{if(k==="publish"){if(!setS(i,"published")){skip++}}else if(k==="hide")i.s="hidden";else i.a=false});
- clog((k==="publish"?"published":k==="hide"?"hid":"marked unavailable: ")+" "+(sel.length-(k==="publish"?skip:0))+" items");cs.clear();cr();if(skip)toast(skip+" skipped: no price yet")};
-function ed(id){const it=id?C.find(x=>x.id===id):{id:0,n:"",k:"Ready-made",s:"draft",a:true,v:[{n:"Standard",p:0,q:0}]};cd=JSON.parse(JSON.stringify(it));cd.old=JSON.stringify(it.v.map(v=>v.p));cd.wasPriced=it.v.some(v=>v.p>0);
- const cus=cd.k==="Custom cake";
- $("#dpn").innerHTML=`<div class="row"><h2>${id?"Edit item":"New item"}</h2><button class="b" id="dx">Close</button></div>
- <label class="fl"><span>Name</span><input id="dn" value="${esc(cd.n)}" placeholder="For example, Lemon drizzle loaf"></label>
- ${id?"":`<label class="fl"><span>Type</span><select id="dk"><option>Ready-made</option><option>Custom cake</option></select></label>`}
- <div id="dv">${cus?'<p class="mute">Custom cakes are priced by your quote on each order, so there is no price to set here.</p>':`<div class="fl"><span>Sizes and prices (TSh)</span></div>${cd.v.map(v=>`<div class="vr" data-q="${v.q}"><input class="vn" value="${esc(v.n)}" aria-label="Size name"><input class="vp" type="number" min="0" value="${v.p||""}" placeholder="Price" aria-label="Price"><button aria-label="Remove size">✕</button></div>`).join("")}<div class="btns"><button class="b" id="va">Add size</button></div><label class="fl"><span>Reason for a price change</span><input id="dre" placeholder="Needed when you change an existing price"></label>`}</div>
- <div class="pv"><div class="mute">How the Cashier sees it</div><b id="pn">${esc(cd.n)||"New item"}</b><div class="num" id="pp"></div></div>
- <div class="btns" style="margin-top:20px"><button class="b p" id="ds">Save item</button><button class="b" id="dc">Cancel</button></div>`;
- $("#dr").hidden=false;pvw();$("#dn").focus()}
-function pvw(){const p=[...document.querySelectorAll(".vp")].map(x=>+x.value).filter(Boolean);$("#pn").textContent=$("#dn").value||"New item";$("#pp").textContent=(cd.k==="Custom cake")?"Price set by quote":!p.length?"No price yet":(Math.min(...p)===Math.max(...p)?T(p[0]):"From "+T(Math.min(...p)))}
-const dc=()=>{$("#dr").hidden=true};
-$("#cnew").onclick=()=>ed(0);
-$("#dr").onclick=e=>{if(e.target.id==="dr"||e.target.id==="dx"||e.target.id==="dc"){dc();return}
- if(e.target.id==="va"){const d=document.createElement("div");d.className="vr";d.dataset.q=0;d.innerHTML='<input class="vn" placeholder="Size" aria-label="Size name"><input class="vp" type="number" min="0" placeholder="Price" aria-label="Price"><button aria-label="Remove size">✕</button>';e.target.closest(".btns").before(d);d.firstChild.focus();return}
- if(e.target.closest(".vr button")){const r=e.target.closest(".vr");if(document.querySelectorAll(".vr").length>1)r.remove();else toast("Keep at least one size");pvw();return}
- if(e.target.id==="ds")sv()};
-$("#dr").oninput=e=>{if(e.target.id==="dk"){cd.k=e.target.value;const cus=cd.k==="Custom cake";$("#dv").style.display=cus?"none":""}pvw()};
-function sv(){const n=$("#dn").value.trim();if(!n){toast("Give the item a name");return}
- const cus=cd.k==="Custom cake",v=cus?[]:[...document.querySelectorAll(".vr")].map(r=>({n:r.querySelector(".vn").value.trim()||"Standard",p:+r.querySelector(".vp").value||0,q:+r.dataset.q}));
- const ch=!cus&&cd.id&&JSON.stringify(v.map(x=>x.p))!==cd.old&&cd.wasPriced,why=cus||!$("#dre")?"":$("#dre").value.trim();
- if(ch&&!why){toast("Add a reason for the price change");$("#dre").focus();return}
- if(cd.id){const it=C.find(x=>x.id===cd.id);it.n=n;it.v=v;if(it.s==="published"&&!priced(it)){it.s="draft";toast("Moved to Draft: a size has no price")}clog(ch?"changed prices on "+n+" ("+why+")":"edited "+n)}
- else{C.push({id:Math.max(...C.map(x=>x.id))+1,n,k:cd.k,s:"draft",a:true,v});clog("added "+n+" as a draft")}
- dc();cr();if(!document.querySelector(".toast.on"))toast("Saved")}
-addEventListener("keydown",e=>{if(e.key==="Escape"){dc();$("#od").hidden=true}});
-cl();
-/* stock (observe only) */
-const mk=(n,u,oh,rl,dl,h,mv)=>({n,u,oh,rl,dl,h,mv,by:"Neema",at:mv[0][0]});
-let S=[
-mk("Butter","kg",18,20,1.4,[34,30,27,41,33,26,18],[["12:48","Received from supplier","+20"],["09:00","Confirmed usage, vanilla bake","−6"],["Yesterday","Counted by Neema, matched",""]]),
-mk("Raspberries","kg",3,2,1.5,[6,5,5,4,4,3,3],[["08:30","Counted by Neema, spoilage","−0.2"]]),
-mk("Flour","kg",12,25,2.1,[60,52,45,38,30,21,12],[["10:40","Confirmed usage, sponge batches","−9"],["Yesterday","Received from supplier","+25"]]),
-mk("Fresh cream","L",8,6,2.8,[14,12,13,11,10,9,8],[["11:15","Confirmed usage, drip cake","−1"]]),
-mk("Eggs","trays",7,5,3.5,[12,11,9,10,8,8,7],[["09:20","Confirmed usage","−1"]]),
-mk("Cocoa powder","kg",4.5,2,6,[6,6,5.5,5.5,5,5,4.5],[["Yesterday","Confirmed usage, chocolate cake","−0.5"]]),
-mk("Sugar","kg",30,15,9,[40,38,36,35,33,31,30],[["Yesterday","Confirmed usage","−1"]]),
-mk("Vanilla extract","L",1.2,0.5,14,[1.5,1.4,1.4,1.3,1.3,1.2,1.2],[["Mon","Confirmed usage","−0.1"]])];
-let U=[{id:1,ing:"Cocoa powder",by:"Zawadi",at:"12:05",rng:"0.4–0.8 kg",amt:0.6,for:"chocolate drip cake bake",s:1},{id:2,ing:"Butter",by:"Zawadi",at:"13:55",rng:"1.5–2.5 kg",amt:2,for:"vanilla sponge, 2 batches",s:1}];
-const UL=["Suggested","Reported","Confirmed","Stock updated"];
-let ss="Butter",sf="all";
-const pend=i=>U.filter(u=>u.ing===i.n&&u.s<3),stt=i=>i.dl<2?["Out soon","risk"]:i.dl<4?["Low","cop"]:["OK",""];
-function sr(first){const q=$("#sq").value.toLowerCase(),f=S.filter(i=>i.n.toLowerCase().includes(q)&&(sf==="all"||(sf==="low"&&i.dl<4)||(sf==="pend"&&pend(i).length))).sort((a,b)=>a.dl-b.dl);
- $("#stab").innerHTML=f.map(i=>{const t=stt(i);return `<button class="si" data-n="${i.n}" aria-selected="${i.n===ss}"><span><b>${i.n}</b>${pend(i).length?'<div class="mute">Usage pending</div>':''}</span><span class="num">${i.oh} ${i.u}</span><span><div class="mute">${i.dl} days left</div><div class="bar"><i class="${i.dl<2?"low":i.dl<4?"mid":""}" data-w="${Math.min(100,i.dl/10*100)}"></i></div></span><span><span class="tag ${t[1]}">${t[0]}</span></span></button>`}).join("")||'<p class="empty">No ingredients match.</p>';
- sd();su();sp();anim(first===1)}
-function sd(){const i=S.find(x=>x.n===ss);if(!i)return;const p=pend(i),mx=Math.max(...i.h);
- $("#sdet").innerHTML=`<div class="row"><h2>${i.n}</h2><span class="tag ${stt(i)[1]}">${stt(i)[0]}</span></div>
- <div class="big num" style="font-size:40px">${i.oh} ${i.u}</div>
- <div class="mute">Reorder level ${i.rl} ${i.u} · about ${i.dl} days left at the current pace</div>
- ${p.length?`<div class="confirm" style="margin-top:14px">${p.map(u=>`${u.rng} reported by ${u.by}, not yet confirmed`).join("<br>")}</div>`:""}
- <div class="sp" aria-label="Stock level over the last 7 days">${i.h.map(v=>`<i data-h="${Math.round(v/mx*100)}"></i>`).join("")}</div><div class="mute">Last 7 days</div>
- <h2 style="font-size:15px;margin-top:18px">Movements</h2><ul class="tl">${i.mv.map(m=>`<li><time>${m[0]}</time><span>${m[1]}</span><b style="margin-left:auto">${m[2]}</b></li>`).join("")}</ul>
- <p class="mute" style="margin:14px 0 0">Last changed by ${i.by} at ${i.at}. Only Inventory can change quantities.</p>`}
-function su(){const n=U.filter(u=>u.s<3).length;$("#uc").innerHTML=n?`<b>${n} usage report${n>1?"s":""}</b> waiting for Inventory to confirm`:"<b>All usage</b> is confirmed";
- $("#ulist").innerHTML=U.map(u=>`<div class="rq" style="max-height:none"><div class="row"><b>${u.ing}</b><span class="mute">${u.rng}</span></div><div class="mute">${u.by} reported at ${u.at} for ${u.for}</div><div class="steps" style="--n:4;margin:14px 0 6px">${UL.map((l,k)=>`<div class="st ${k<=u.s?"on":""} ${k===u.s?"cur":""}">${l}</div>`).join("")}</div>${u.s<3?`<div class="btns"><button class="b" data-u="${u.id}">Demo: Inventory confirms</button></div><div class="mute" style="margin-top:6px">Escalates to you at 17:00 if still unconfirmed</div>`:'<div class="mute">Confirmed by Neema. Stock updated.</div>'}</div>`).join("")||'<p class="empty">Nothing reported yet today.</p>'}
-function sp(){$("#plist").innerHTML=R.filter(r=>r.stk).map(r=>`<div class="rq" style="max-height:none"><div class="row"><b>${r.ttl}</b><span class="tag ${fin(r)?"":"cop"}">${fin(r)?r.outcome.replace(" by Amina",""):LC[r.s]}</span></div><div class="mute">${r.from}, ${r.link}</div><div class="btns"><button class="b" data-id="${r.id}">${fin(r)?"View":"Review"}</button></div></div>`).join("")}
-function anim(first){const set=()=>{document.querySelectorAll("#stab .bar i").forEach(i=>i.style.width=i.dataset.w+"%");document.querySelectorAll(".sp i").forEach(i=>i.style.height=i.dataset.h+"%")};if(first)requestAnimationFrame(()=>setTimeout(set,30));else set()}
-$("#sq").oninput=sr;
-$("#sflt").onclick=e=>{const b=e.target.closest("button");if(!b)return;sf=b.dataset.f;document.querySelectorAll("#sflt button").forEach(x=>x.setAttribute("aria-pressed",x===b));sr()};
+/* ---------- catalogue ---------- */
+let cf="all",cs=new Set(),drMode=null;
+const cState=p=>p.hidden?"hidden":(p.combinations.length&&p.combinations.every(c=>c.price!=null)?"published":"draft");
+const cap=t=>t[0].toUpperCase()+t.slice(1);
+function cr(){const all=D.cat||[],q=$("#cq").value.toLowerCase().trim(),f=all.filter(p=>(cf==="all"||cState(p)===cf)&&(p.name+" "+p.category).toLowerCase().includes(q));
+ cs=new Set([...cs].filter(id=>all.some(p=>p.productId===id)));
+ $("#ctab").innerHTML=f.map(p=>{const st=cState(p),qty=p.combinations.reduce((a,c)=>a+(c.onHand||0),0);
+  return`<div class="ci ${st}" data-id="${E(p.productId)}"><input type="checkbox" class="ck" aria-label="Select ${E(p.name)}" ${cs.has(p.productId)?"checked":""}><div><b>${E(p.name)}</b><div class="mute">${E(p.category)}</div></div><div>${p.priceFromLabel?E(p.priceFromLabel):'<span class="tag risk">No price</span>'}</div><div>${qty>0?M(qty)+" in stock":'<span class="tag risk">Out of stock</span>'}</div><select aria-label="Status of ${E(p.name)}">${st==="draft"?'<option value="draft" selected disabled>Draft</option>':`<option value="published" ${st==="published"?"selected":""}>Published</option>`}<option value="hidden" ${st==="hidden"?"selected":""}>Hidden</option></select><button class="sw" role="switch" aria-checked="${p.availableToday}" aria-label="Available at the counter today"><i></i></button><button class="b" data-edit>Edit</button></div>`}).join("")||'<p class="empty">No items match. Clear the search or add a new item.</p>';
+ $("#bulk").hidden=!cs.size;$("#bn").textContent=cs.size+" selected";
+ $("#clog").innerHTML=(D.audit||[]).filter(a=>a.intent.startsWith("catalogue/")&&a.outcome==="ok").slice(0,15).map(a=>`<li><time>${E(when(a.at))}</time><span>${E(a.who)}: ${E(a.summary)}</span></li>`).join("")||'<li><span class="mute">No changes yet.</span></li>'}
+$("#cq").oninput=cr;seg("#cflt","f",v=>{cf=v;cr()});
+$("#ctab").onchange=async e=>{const row=e.target.closest(".ci");if(!row)return;const id=row.dataset.id;
+ if(e.target.classList.contains("ck")){e.target.checked?cs.add(id):cs.delete(id);cr();return}
+ if(e.target.tagName==="SELECT"){await Cake.send("catalogue/set_hidden",{productId:id,hidden:e.target.value==="hidden"});cr()}};
+$("#ctab").onclick=e=>{const row=e.target.closest(".ci");if(!row)return;const id=row.dataset.id;
+ if(e.target.closest(".sw")){const p=D.cat.find(x=>x.productId===id),b=e.target.closest(".sw");guard(b,()=>Cake.send("catalogue/toggle_available_today",{productId:id,available:!p.availableToday}))}
+ else if(e.target.closest("[data-edit]"))editor(id)};
+$("#bulk").onclick=async e=>{const b=e.target.closest("[data-b]");if(!b)return;const k=b.dataset.b;if(k==="clear"){cs.clear();cr();return}
+ const sel=(D.cat||[]).filter(p=>cs.has(p.productId));let n=0;
+ await guard(b,async()=>{for(const p of sel){let r=null;
+  if(k==="publish"&&p.hidden)r=await Cake.send("catalogue/set_hidden",{productId:p.productId,hidden:false});
+  else if(k==="hide"&&!p.hidden)r=await Cake.send("catalogue/set_hidden",{productId:p.productId,hidden:true});
+  else if(k==="unavail"&&p.availableToday)r=await Cake.send("catalogue/toggle_available_today",{productId:p.productId,available:false});
+  if(r){if(!r.ok)break;n++}}});
+ cs.clear();cr();Cake.toast(n+" item"+(n===1?"":"s")+" changed.")};
+const drawer=html=>{$("#dpn").innerHTML=html;$("#dr").hidden=false};
+const dclose=()=>{$("#dr").hidden=true;drMode=null};
+function sizeRow(l="",p=""){return`<div class="vr" style="grid-template-columns:1fr 120px 32px"><input class="vn" value="${E(l)}" placeholder="Size, e.g. 1 kg" aria-label="Size name"><input class="vp" type="number" min="0" inputmode="decimal" value="${E(p)}" placeholder="Price" aria-label="Price"><button aria-label="Remove size">✕</button></div>`}
+function editor(id){const p=id?D.cat.find(x=>x.productId===id):null;drMode=id?"edit":"new";
+ if(!p&&id)return;
+ drawer(p?`<div class="row"><h2>Edit item</h2><button class="b" data-d="close">Close</button></div><p class="mute" style="margin:2px 0 0">${E(p.name)} · ${E(p.category)}</p>${p.description?`<p>${E(p.description)}</p>`:""}${p.allergens.length?`<p class="mute">Contains: ${p.allergens.map(E).join(", ")}</p>`:""}
+ <div class="fl"><span>Sizes and prices. The switch offers a size at the counter.</span></div>${p.combinations.map(c=>`<div class="vr" style="grid-template-columns:1fr 120px 46px" data-c="${E(c.combinationId)}" data-was="${c.price==null?"":c.price}" data-wasu="${c.markedUnavailable?1:0}"><span>${E(c.label)}${c.warning?`<div class="mute">${E(c.warning)}</div>`:""}</span><input class="vp" type="number" min="0" inputmode="decimal" value="${c.price==null?"":c.price}" placeholder="Price" aria-label="Price for ${E(c.label)}"><button class="sw" role="switch" aria-checked="${!c.markedUnavailable}" aria-label="Offered at the counter"><i></i></button></div>`).join("")||'<p class="mute">This item has no sizes yet.</p>'}
+ <div class="btns" style="margin-top:20px"><button class="b p" data-d="save" data-id="${E(p.productId)}">Save changes</button><button class="b" data-d="close">Cancel</button><button class="b r" data-d="arch">Archive item</button></div>`
+ :`<div class="row"><h2>New item</h2><button class="b" data-d="close">Close</button></div><label class="fl"><span>Name</span><input id="dn" maxlength="60" placeholder="For example, Lemon drizzle loaf"></label><label class="fl"><span>Category</span><input id="dcat" maxlength="60" placeholder="Cakes"></label><label class="fl"><span>Description (optional)</span><input id="ddesc" maxlength="300"></label><div class="fl"><span>Sizes and prices. A size with no price cannot be sold yet.</span></div><div id="dsz">${sizeRow("Standard")}</div><div class="btns"><button class="b" data-d="add">Add size</button></div><div class="btns" style="margin-top:20px"><button class="b p" data-d="create">Add item</button><button class="b" data-d="close">Cancel</button></div>`);
+ if(!p)$("#dn").focus()}
+$("#cnew").onclick=()=>editor(null);
+$("#dr").onclick=async e=>{if(e.target.id==="dr"){dclose();return}
+ const sw=e.target.closest(".sw");if(sw){sw.setAttribute("aria-checked",sw.getAttribute("aria-checked")!=="true");return}
+ const rm=e.target.closest(".vr button");if(rm&&drMode==="new"){const r=rm.closest(".vr");if($$("#dsz .vr").length>1)r.remove();else Cake.toast("Keep at least one size.");return}
+ const b=e.target.closest("[data-d]");if(!b)return;const k=b.dataset.d;
+ if(k==="close")dclose();
+ else if(k==="add"){$("#dsz").insertAdjacentHTML("beforeend",sizeRow());$("#dsz .vr:last-child .vn").focus()}
+ else if(k==="arch"){b.dataset.d="archok";b.textContent="Yes, archive it"}
+ else if(k==="archok"){const id=$("[data-d=save]").dataset.id;guard(b,async()=>{const r=await Cake.send("catalogue/archive_product",{productId:id},"Item archived");if(r.ok)dclose()})}
+ else if(k==="save"){const id=b.dataset.id;guard(b,async()=>{let n=0;
+  for(const r of $$("#dpn .vr[data-c]")){const c=r.dataset.c,v=r.querySelector(".vp").value.trim(),on=r.querySelector(".sw").getAttribute("aria-checked")==="true";
+   if(v!==""&&+v!==+r.dataset.was){if(!(+v>=0)){Cake.toast("Enter a price of zero or more.");return}const o=await Cake.send("catalogue/set_price",{combinationId:c,price:+v});if(!o.ok)return;n++}
+   if(on===(r.dataset.wasu==="1")){const o=await Cake.send("catalogue/mark_unavailable",{combinationId:c,unavailable:!on});if(!o.ok)return;n++}}
+  Cake.toast(n?"Saved":"Nothing to change.");if(n)dclose()})}
+ else if(k==="create"){guard(b,async()=>{const name=$("#dn").value.trim();const rows=$$("#dsz .vr").map(r=>({l:r.querySelector(".vn").value.trim(),p:r.querySelector(".vp").value.trim()})).filter(r=>r.l);
+  if(!name){Cake.toast("Give the item a name.");return}if(!rows.length){Cake.toast("Add at least one size.");return}
+  const pr=await Cake.send("catalogue/create_product",{name,category:$("#dcat").value.trim()||undefined,description:$("#ddesc").value.trim()||undefined});if(!pr.ok)return;
+  const g=await Cake.send("catalogue/create_option_group",{name:"Size",values:rows.map(r=>({label:r.l}))});if(!g.ok)return;
+  const productId=pr.data.productId,valueIds=g.data.valueIds;
+  if(!(await Cake.send("catalogue/set_product_options",{productId,valueIds})).ok)return;
+  if(!(await Cake.send("catalogue/generate_combinations",{productId})).ok)return;
+  const grid=await Cake.read("catalogue_grid",{}),np=grid&&grid.find(x=>x.productId===productId);
+  for(let i=0;np&&i<rows.length;i++){if(rows[i].p==="")continue;const c=np.combinations.find(x=>x.valueIds.includes(valueIds[i]));if(c&&!(await Cake.send("catalogue/set_price",{combinationId:c.combinationId,price:+rows[i].p})).ok)return}
+  Cake.toast(rows.some(r=>r.p==="")?"Added. Set a price on every size to sell it.":"Added to the catalogue");dclose()})}
+ else if(k==="shop"||k==="alerts")guard(b,()=>saveSettings(k))};
+
+/* ---------- stock ---------- */
+let ss=null,sf="all";
+const fcOf=id=>((D.forecast&&D.forecast.rows)||[]).find(r=>r.ingredientId===id);
+const sTag=(i,f)=>f&&(f.status==="out"||f.status==="stockout_soon")?["Out soon","risk"]:(i.low||(f&&f.status==="reorder_soon"))?["Low","cop"]:f&&f.status==="no_data"?["No history",""]:["OK",""];
+function sr(){const rows=(D.ingr||[]).filter(i=>i.active),rank=id=>{const x=((D.forecast&&D.forecast.rows)||[]).findIndex(r=>r.ingredientId===id);return x<0?9999:x},q=$("#sq").value.toLowerCase().trim();
+ const f=rows.filter(i=>i.name.toLowerCase().includes(q)&&(sf==="all"||(sf==="low"&&(i.low||fcUrgent(fcOf(i.ingredientId)||{})))||(sf==="pend"&&i.pending))).sort((a,b)=>rank(a.ingredientId)-rank(b.ingredientId));
+ if(!ss||!rows.some(i=>i.ingredientId===ss))ss=f.length?f[0].ingredientId:null;
+ $("#stab").innerHTML=f.map(i=>{const fc=fcOf(i.ingredientId),t=sTag(i,fc),d=fc&&fc.daysUntilOut!=null?fc.daysUntilOut:null;return`<button class="si" data-n="${E(i.ingredientId)}" aria-selected="${i.ingredientId===ss}"><span><b>${E(i.name)}</b>${i.pending?'<div class="mute">Usage pending</div>':""}</span><span class="num">${E(i.onHandText)}</span><span><div class="mute">${E(fc?daysText(fc):i.daysLeftLabel)}</div><div class="bar"><i class="${d!=null&&d<2?"low":d!=null&&d<4?"mid":""}" style="width:${d==null?(fc&&fc.status==="ok"?100:0):Math.min(100,d/10*100)}%"></i></div></span><span><span class="tag ${t[1]}">${t[0]}</span></span></button>`}).join("")||'<p class="empty">No ingredients match.</p>';
+ sd();su()}
+function sd(){const i=(D.ingr||[]).find(x=>x.ingredientId===ss);if(!i){$("#sdet").innerHTML='<p class="empty">Pick an ingredient to see how it is going.</p>';return}
+ const fc=fcOf(i.ingredientId),t=sTag(i,fc),ser=fc?fc.series:[],mx=Math.max(1,...ser.map(p=>p.stock));
+ $("#sdet").innerHTML=`<div class="row"><h2>${E(i.name)}</h2><span class="tag ${t[1]}">${t[0]}</span></div><div class="big num" style="font-size:40px">${E(i.onHandText)}</div>
+ <div class="mute">${i.reorderLevelText?"Reorder level "+E(i.reorderLevelText):"No reorder level set"}${i.countedAt?" · counted "+E(when(i.countedAt)):""}</div>
+ ${i.pending?`<div class="confirm" style="margin-top:14px">${E(i.pending.text)} reported by bakers, not yet confirmed. Stock has not moved.</div>`:""}
+ ${fc?`<p style="margin:14px 0 0">${E(fc.text)}</p>${ser.length?`<div class="sp" aria-label="Stock level, past and forecast">${ser.map(p=>`<i title="${E(p.date)}" style="height:${Math.round(p.stock/mx*100)}%;${p.kind==="projected"?"opacity:.55":""}"></i>`).join("")}</div><div class="mute">Solid is real, faded is the forecast</div>`:""}<dl class="kv"><dt>Usual use</dt><dd>${fc.usualPerDay!=null?M(fc.usualPerDay)+" "+E(fc.unit)+" a day":"Not enough history"}</dd><dt>Next 7 days</dt><dd>${E(fc.next7DaysText)}</dd>${fc.shortfallInHorizon>0?`<dt>To buy</dt><dd>${E(fc.shortfallText)}</dd>`:""}</dl>`:""}
+ <p class="mute" style="margin:14px 0 0">Only Inventory can change quantities.</p>`}
+function su(){const u=D.usage,rq=(D.inbox?D.inbox.rows:[]).filter(r=>r.category==="Stock and supplies"&&!r.final);
+ $("#ulist").innerHTML=u?u.pending.map(x=>`<div class="rq" style="max-height:none"><div class="row"><b>${E(x.reportedByName)} · ${E(when(x.reportedAt))}</b><span class="tag cop">${E(x.statusLabel)}</span></div>${x.items.map(i=>`<div class="mute">${E(i.name)}: ${E(i.rangeText||i.rangeLabel)}${i.suggestedText?" (suggested "+E(i.suggestedText)+")":""}</div>`).join("")}</div>`).join("")||'<p class="empty">Nothing is waiting for Inventory.</p>':"";
+ $("#plist").innerHTML=rq.map(r=>`<div class="rq" style="max-height:none"><div class="row"><b>${E(r.title)}</b><span class="tag cop">${E(r.statusLabel)}</span></div><div class="mute">${E(r.from.name)}${r.body?" · "+E(r.body):""}</div>${r.needsYou?'<div class="btns"><button class="b p" data-go="requests">Review</button></div>':""}</div>`).join("")||'<p class="empty">No stock requests are open.</p>'}
+$("#plist").onclick=e=>{if(e.target.closest("[data-go]"))go("requests")};
+$("#sq").oninput=sr;seg("#sflt","f",v=>{sf=v;sr()});
 $("#stab").onclick=e=>{const b=e.target.closest(".si");if(b){ss=b.dataset.n;sr()}};
-$("#plist").onclick=e=>{const b=e.target.closest("button");if(b)go("requests",+b.dataset.id)};
-$("#ulist").onclick=e=>{const b=e.target.closest("[data-u]");if(!b)return;const u=U.find(x=>x.id===+b.dataset.u),i=S.find(x=>x.n===u.ing),old=i.oh;
- u.s=3;i.oh=+(i.oh-u.amt).toFixed(1);i.dl=+(i.dl*i.oh/old).toFixed(1);i.h[6]=i.oh;i.by="Neema";i.at=now();i.mv.unshift([now(),"Confirmed usage, "+u.for,"−"+u.amt]);sr();ob();toast("Neema confirmed "+u.ing+". Stock updated")};
-su();
-/* orders */
-const tk=o=>"A-"+String(o.id).padStart(4,"0");
-const OL={quote:"Quote",new:"New",baking:"Baking",decorating:"Decorating",ready:"Ready",out:"Out",done:"Done"},OF={quote:"Awaiting quote",new:"New",baking:"Baking",decorating:"Decorating",ready:"Ready for handover",out:"Out for delivery",done:"Completed",cancelled:"Cancelled"};
-const COL=[["Awaiting quote",["quote"]],["In production",["new","baking","decorating"]],["Ready",["ready"]],["Out for delivery",["out"]],["Completed today",["done"]]];
-const od=(id,cust,what,kind,st,day,time,total,paid,mode,addr,spec,x={})=>({id,cust,what,kind,st,day,time,total,paid,mode,addr,spec,tl:[["09:00","Moses created the order"]],...x});
-let O=[
-od(81,"Grace M.","3-tier wedding cake","Custom","quote",5,"14:00",null,0,"Delivery","Masaki",{size:"3 tiers, serves 80",flavour:"Vanilla with raspberry",msg:"Congratulations Asha and Peter",notes:"Fresh flowers, ivory finish"},{tl:[["13:20","Moses created the order and asked for a quote"]]}),
-od(79,"Hassan K.","Wedding cake, 2 tiers","Custom","new",0,"16:00",420000,200000,"Pickup","",{size:"2 tiers, serves 40",flavour:"Chocolate with ganache",msg:"Forever together",notes:"White roses, gold edging"},{risk:1}),
-od(80,"Fatma S.","Birthday cake, 2 kg","Custom","decorating",0,"18:30",85000,85000,"Pickup","",{size:"2 kg round",flavour:"Red velvet",msg:"Happy 30th Zuri",notes:"Pink and gold, no nuts"}),
-od(78,"Joseph L.","Graduation cake","Custom","baking",1,"10:00",120000,60000,"Delivery","Sinza",{size:"3 kg square",flavour:"Vanilla sponge",msg:"Congratulations Doctor",notes:"Black and gold, cap on top"}),
-od(77,"Rehema A.","Cupcakes, 4 boxes","Catalogue","ready",0,"17:00",72000,72000,"Pickup","",null),
-od(75,"Daniel O.","Anniversary cake","Custom","ready",0,"15:30",95000,95000,"Delivery","Masaki",{size:"1.5 kg heart",flavour:"Chocolate",msg:"25 years",notes:"Red roses"}),
-od(74,"Neha P.","Baby shower cake","Custom","out",0,"14:30",110000,110000,"Delivery","Mikocheni",{size:"2 kg round",flavour:"Vanilla",msg:"Welcome Baby Amani",notes:"Soft blue and white"},{late:"15 minutes late"}),
-od(82,"Walk-in","Vanilla sponge cake, 2 kg","Catalogue","done",0,"14:42",48000,48000,"Pickup","",null),
-od(73,"Mariam T.","Chocolate cake, 1 kg","Catalogue","done",0,"11:10",32000,32000,"Pickup","",null)];
-let ov="board",so=null,oa=null;
-const flow=o=>(o.kind==="Custom"?["quote","new","baking","decorating","ready"]:["new","ready"]).concat(o.mode==="Delivery"?["out"]:[],["done"]).filter(x=>!(x==="quote"&&o.total!=null&&o.id!==81));
-const opay=o=>o.total==null?["No price yet","risk"]:o.paid>=o.total?["Paid",""]:o.paid>0?["Deposit "+T(o.paid),"cop"]:["Unpaid","risk"];
-const dayL=d=>d===0?"Today":d===1?"Tomorrow":new Date(Date.now()+d*864e5).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-const live=()=>O.filter(o=>o.st!=="cancelled");
-function adv(o){const f=flow(o),n=f[f.indexOf(o.st)+1];if(!n)return;o.st=n;if(n!=="out")delete o.late;o.tl.push([now(),"Moses moved it to "+OF[n]]);toast(tk(o)+": "+OF[n])}
-const say=o=>({quote:"Your quote is being prepared. We will call you with the price.",new:"Your order is received and baking starts soon.",baking:"Your cake is baking.",decorating:"Your cake is being decorated.",ready:o.mode==="Delivery"?"Your cake is ready and will go out for delivery soon.":"Your cake is ready to collect.",out:"Your cake is on its way to "+o.addr+".",done:"This order is complete.",cancelled:"This order was cancelled."}[o.st]+(["done","cancelled"].includes(o.st)?"":" Due "+dayL(o.day).toLowerCase()+" at "+o.time+"."));
-const ZK=[["queue","Queue",["quote","new"],"Nothing in the queue"],["prep","In preparation",["baking","decorating"],"Nothing being prepared"],["ready","Ready",["ready","out"],"Nothing ready yet"],["done","Completed",["done"],"Nothing completed yet"]];
+
+/* ---------- orders ---------- */
+const ZK=[["queue","Queue",["awaiting_quote","new"],"Nothing in the queue"],["prep","In preparation",["in_production","decorating"],"Nothing being prepared"],["ready","Ready",["ready","out_for_delivery"],"Nothing ready yet"],["done","Completed",["completed"],"Nothing completed yet"]];
 let zf="all",zsel=false,zcxm=false;const zs=new Set();
-const zhit=o=>{const q=$("#zq").value.toLowerCase().replace(/\s/g,"");return!q||(tk(o)+o.cust+o.what+OF[o.st]).toLowerCase().replace(/\s/g,"").includes(q)};
-const zvis=()=>live().filter(o=>zhit(o)&&(zf==="all"||ZK.find(k=>k[0]===zf)[2].includes(o.st)));
+const zhit=o=>{const q=$("#zq").value.toLowerCase().replace(/\s/g,"");return!q||(o.number+o.customerName+o.statusLabel).toLowerCase().replace(/\s/g,"").includes(q)};
+const zlive=()=>(D.orders||[]).filter(o=>!["cancelled","empty","draft"].includes(o.status));
 function zbars(no){let h=7;for(const c of no)h=(h*31+c.charCodeAt(0))>>>0;let x=0,q="";for(let i=0;i<60;i++){h=(h*1664525+1013904223)>>>0;const w=1+(h>>>28)%3;if(i%2===0)q+=`<rect x="${x}" width="${w}" height="30"/>`;x+=w}return`<svg viewBox="0 0 ${x} 30" preserveAspectRatio="none" aria-hidden="true" fill="currentColor">${q}</svg>`}
 const ZI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>',ZK2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
-function zt(o){const p=opay(o),done=o.st==="done",pk=zsel&&!done,on=pk&&zs.has(o.id),late=o.risk?"At risk":o.late&&o.st==="out"?o.late:"",sc=done?"gr":o.st==="quote"?"risk":o.st==="ready"?"ok":"",d=new Date(Date.now()+o.day*864e5).toLocaleDateString("en-CA");
- return`<div class="ztw"><article class="ztt${on?" on":""}"${pk?` data-pk="${o.id}"`:""}>${pk?`<span class="zpkc${on?" y":""}">${on?"✓":""}</span>`:""}${late?`<span class="zage">${esc(late)}</span>`:""}<div class="zth"><div><div class="zshop">Cake City</div><div class="zcap">Counter ticket</div></div><button class="zplus" data-det="${o.id}" aria-label="Details for ${tk(o)}" title="Details">${ZI}</button></div>
-<div class="ztm"><span class="zstc ${sc}">${o.st==="ready"?"Ready":OF[o.st]}</span><span class="zcap">${o.kind} · ${o.mode}</span></div><div class="zperf"></div>
-<div class="ztnum"><div class="zcap">Ticket number</div><div class="znum">${String(o.id).padStart(4,"0")}</div></div>
-<dl><div class="zrw"><span>Customer</span><b class="zell">${esc(o.cust)}</b></div><div class="zrw"><span>Item</span><b class="zell">${esc(o.what)}</b></div><div class="zrw"><span>Due</span><b class="zell">${dayL(o.day)} ${o.time}</b></div><div class="zrw"><span>Payment</span><b class="zell ${p[1]}">${p[0]}</b></div><div class="zrw tot"><span>Total</span><b>${o.total==null?"Awaiting quote":T(o.total)}</b></div></dl>
-<div class="zperf"></div><div class="zbc">${zbars(tk(o))}</div><div class="zcap zdt">${d}</div></article>${zsel||done?"":`<button class="zgo" data-det="${o.id}">Details ${ZK2}</button>`}</div>`}
-function orr(){const L0=live(),V=L0.filter(zhit),inK=k=>V.filter(o=>k[2].includes(o.st)).sort((a,b)=>a.id-b.id),op=L0.filter(o=>o.st!=="done");
- $("#osub").textContent=op.length+" open · "+L0.filter(o=>o.risk&&o.st!=="done").length+" at risk · "+L0.filter(o=>o.st==="out").length+" out for delivery. The Cashier moves orders along; you step in on price and cancellations.";
+function zt(o){const done=o.status==="completed",pk=zsel&&!done,on=pk&&zs.has(o.orderId),late=!done&&o.deliveryDate&&o.deliveryDate<todayISO()?"Late":"",sc=done?"gr":o.status==="awaiting_quote"?"risk":o.status==="ready"?"ok":"";
+ return`<div class="ztw"><article class="ztt${on?" on":""}"${pk?` data-pk="${E(o.orderId)}"`:""}>${pk?`<span class="zpkc${on?" y":""}">${on?"✓":""}</span>`:""}${late?`<span class="zage">${late}</span>`:""}<div class="zth"><div><div class="zshop">${E(SHOP)}</div><div class="zcap">Counter ticket</div></div><button class="zplus" data-det="${E(o.orderId)}" aria-label="Details for ${E(o.number)}" title="Details">${ZI}</button></div>
+<div class="ztm"><span class="zstc ${sc}">${E(o.statusLabel)}</span><span class="zcap">${o.hasCustomCake?"Custom":"Catalogue"} · ${o.fulfilment==="delivery"?"Delivery":"Pickup"}</span></div><div class="zperf"></div>
+<div class="ztnum"><div class="zcap">Ticket number</div><div class="znum" style="font-size:clamp(34px,4vw,44px)">${E(o.number)}</div></div>
+<dl><div class="zrw"><span>Customer</span><b class="zell">${E(o.customerName)}</b></div><div class="zrw"><span>Items</span><b class="zell">${o.itemCount}</b></div><div class="zrw"><span>Due</span><b class="zell">${E(dayLabel(o.deliveryDate))}</b></div><div class="zrw"><span>Payment</span><b class="zell ${toneCls(o.paymentTone)}">${E(o.paymentLabel)}</b></div><div class="zrw tot"><span>Total</span><b>${o.quotePending?"Awaiting price":E(o.totalLabel)}</b></div></dl>
+<div class="zperf"></div><div class="zbc">${zbars(o.number)}</div><div class="zcap zdt">${E(o.deliveryDate||"")}</div></article>${zsel||done?"":`<button class="zgo" data-det="${E(o.orderId)}">Details ${ZK2}</button>`}</div>`}
+function orr(){const L0=zlive(),V=L0.filter(zhit),inK=k=>V.filter(o=>k[2].includes(o.status)).sort((a,b)=>(a.deliveryDate||"9999").localeCompare(b.deliveryDate||"9999")||a.number.localeCompare(b.number));
+ const cnt=s=>L0.filter(o=>o.status===s).length;
+ $("#osub").textContent=L0.filter(o=>o.status!=="completed").length+" open · "+cnt("ready")+" ready · "+cnt("out_for_delivery")+" out for delivery. The cashier moves orders along; you step in on price and cancellations.";
  $("#zf").innerHTML=`<option value="all">All tickets (${V.length})</option>`+ZK.map(k=>`<option value="${k[0]}">${k[1]} (${inK(k).length})</option>`).join("");$("#zf").value=zf;
- const cols=ZK.filter(k=>zf==="all"||zf===k[0]),shown=new Set(cols.flatMap(k=>inK(k).map(o=>o.id)));[...zs].forEach(id=>{if(!shown.has(id))zs.delete(id)});
+ const cols=ZK.filter(k=>zf==="all"||zf===k[0]),shown=new Set(cols.flatMap(k=>inK(k).map(o=>o.orderId)));[...zs].forEach(id=>{if(!shown.has(id))zs.delete(id)});
  $("#zboard").className="zboard"+(zf==="all"?"":" one");
  $("#zboard").innerHTML=cols.map(k=>{const L=inK(k);return`<section class="zcol" aria-label="${k[1]}"><h2 class="zch">${k[1]}<span class="zcn">${L.length}</span></h2><div class="zcl">${L.map(zt).join("")||`<p class="zem">${$("#zq").value?"No tickets match your search":k[3]}</p>`}</div></section>`}).join("");
- $("#zbb").hidden=!zsel||zcxm;$("#zcb").hidden=!(zsel&&zcxm);$("#zsm").textContent=zsel?"Done":"Select";$("#zsm").setAttribute("aria-pressed",zsel);$("#zcnt").textContent=zs.size+" selected";$("#zdemo").disabled=!zs.size;$("#zcx").disabled=!zs.size}
+ $("#zbb").hidden=!zsel||zcxm;$("#zcb").hidden=!(zsel&&zcxm);$("#zsm").textContent=zsel?"Done":"Select";$("#zsm").setAttribute("aria-pressed",zsel);$("#zcnt").textContent=zs.size+" selected";$("#zcx").disabled=!zs.size;$("#zcok").textContent="Cancel "+zs.size+" order"+(zs.size===1?"":"s")}
 $("#zq").oninput=orr;$("#zf").onchange=e=>{zf=e.target.value;orr();scrollTo(0,0)};
 $("#zsm").onclick=()=>{zsel=!zsel;if(!zsel){zs.clear();zcxm=false}orr()};
-$("#zall").onclick=()=>{const v=zvis().filter(o=>o.st!=="done"),all=v.length&&v.every(o=>zs.has(o.id));v.forEach(o=>all?zs.delete(o.id):zs.add(o.id));orr()};
-$("#zdemo").onclick=()=>{let n=0,sk=0;[...zs].forEach(id=>{const o=O.find(x=>x.id===id),f=o&&flow(o);if(!o)return;if(o.st==="quote"||f.indexOf(o.st)>=f.length-1){sk++;return}adv(o);zs.delete(id);n++});orr();toast(n+" moved by Moses (demo)"+(sk?" · "+sk+" skipped":""))};
-$("#zcx").onclick=()=>{zcxm=true;orr();$("#zcr").focus()};$("#zcno").onclick=()=>{zcxm=false;orr()};
-$("#zcok").onclick=()=>{const why=$("#zcr").value.trim();if(!why){toast("Add a reason first");return}let n=0;[...zs].forEach(id=>{const o=O.find(x=>x.id===id);if(!o||o.st==="done")return;o.st="cancelled";o.tl.push([now(),"Amina cancelled the order ("+why+")"]);aud("Cancelled order",tk(o),why);zs.delete(id);n++});$("#zcr").value="";zcxm=false;orr();toast(n+" cancelled. Refunds are decided separately")};
-$("#zboard").onclick=e=>{const d=e.target.closest("[data-det]");if(d){oopen(+d.dataset.det);return}const k=e.target.closest("[data-pk]");if(k){const id=+k.dataset.pk;zs.has(id)?zs.delete(id):zs.add(id);orr()}};
+$("#zall").onclick=()=>{const v=zlive().filter(o=>zhit(o)&&o.status!=="completed"),all=v.length&&v.every(o=>zs.has(o.orderId));v.forEach(o=>all?zs.delete(o.orderId):zs.add(o.orderId));orr()};
+$("#zcx").onclick=()=>{zcxm=true;orr()};$("#zcno").onclick=()=>{zcxm=false;orr()};
+$("#zcok").onclick=e=>guard(e.currentTarget,async()=>{let n=0;for(const id of [...zs]){const r=await Cake.send("orders/cancel_order",{orderId:id});if(!r.ok)break;zs.delete(id);n++}zcxm=false;orr();Cake.toast(n+" cancelled. Refunds are decided separately.")});
+$("#zboard").onclick=e=>{const d=e.target.closest("[data-det]");if(d){oopen(d.dataset.det);return}const k=e.target.closest("[data-pk]");if(k){const id=k.dataset.pk;zs.has(id)?zs.delete(id):zs.add(id);orr()}};
 {const zt2=$("#ztools");new ResizeObserver(()=>document.documentElement.style.setProperty("--zt",zt2.offsetHeight+"px")).observe(zt2)}
-function odt(){const o=O.find(x=>x.id===so),f=flow(o),i=f.indexOf(o.st),p=opay(o),sp=o.spec,cx=o.st==="cancelled";
- const canPrice=!cx&&["new"].includes(o.st),canCancel=!cx&&o.st!=="done";
- let act="";
- if(o.st==="quote")act='<div class="btns"><button class="b p" data-x="quote">Open the quote request</button></div>';
- else if(oa==="price")act=`<div class="fl"><span>New total (TSh)</span><input id="np" type="number" min="0"></div><label class="fl"><span>Reason</span><input id="nr"></label>${o.paid?`<p class="mute">TSh ${o.paid.toLocaleString("en-US")} has already been taken on this order.</p>`:""}<div class="btns"><button class="b p" data-x="priceok">Save new price</button><button class="b" data-x="no">Cancel</button></div>`;
- else if(oa==="cancel")act=`<label class="fl"><span>Reason for cancelling</span><input id="nr"></label>${o.paid?`<p class="mute">TSh ${o.paid.toLocaleString("en-US")} was paid. Cancelling does not refund it. You decide that separately.</p>`:""}<div class="btns"><button class="b p" data-x="cancelok">Cancel this order</button><button class="b" data-x="no">Keep it</button></div>`;
- else act=`<div class="btns">${canPrice?'<button class="b" data-x="price">Change price</button>':""}${canCancel?'<button class="b" data-x="cancel">Cancel order</button>':""}${!canPrice&&o.st!=="quote"&&!cx&&o.st!=="done"?'<span class="mute">Price is locked once baking starts.</span>':""}</div>`;
- $("#odp").innerHTML=`<div class="row"><h2>${esc(o.what)}</h2><button class="b" data-x="close">Close</button></div>
- <p class="mute" style="margin:2px 0 0">${esc(o.cust)} · ${o.mode}${o.addr?" to "+esc(o.addr):""} · ${dayL(o.day)} ${o.time}</p>
- <div class="tkt"><div class="no">${tk(o)}</div><div class="in"><b>Taken at ${o.tl[0][0]} by Moses</b><span class="mute">${live().filter(x=>x.id<o.id&&x.st!=="done").length} earlier tickets still open</span></div></div>
- <div class="confirm" style="display:block;margin:12px 0"><b>Tell the customer:</b> ${say(o)}</div>
- ${cx?'<p><span class="tag risk">Cancelled</span></p>':`<div class="steps" style="--n:${f.length};margin:18px 0 10px">${f.map((k,j)=>`<div class="st ${j<=i?"on":""} ${j===i?"cur":""}">${OL[k]}</div>`).join("")}</div>`}
- ${sp?`<dl class="kv"><dt>Size</dt><dd>${esc(sp.size)}</dd><dt>Flavour</dt><dd>${esc(sp.flavour)}</dd><dt>Message</dt><dd>${esc(sp.msg)}</dd><dt>Design notes</dt><dd>${esc(sp.notes)}</dd></dl>`:""}
- <dl class="kv"><dt>Total</dt><dd>${o.total==null?"Waiting for your quote":T(o.total)}</dd><dt>Paid</dt><dd>${T(o.paid)} <span class="tag ${p[1]}">${p[0]}</span></dd>${o.total!=null?`<dt>Balance</dt><dd>${T(Math.max(0,o.total-o.paid))}</dd>`:""}</dl>
- ${act}<h2 style="font-size:15px;margin-top:20px">History</h2><ul class="tl">${o.tl.slice().reverse().map(x=>`<li><time>${x[0]}</time><span>${esc(x[1])}</span></li>`).join("")}</ul>`}
-function oopen(id){so=id;oa=null;odt();$("#od").hidden=false}
-$("#od").onclick=e=>{if(e.target.id==="od"){$("#od").hidden=true;return}const b=e.target.closest("[data-x]");if(!b)return;const o=O.find(x=>x.id===so),k=b.dataset.x;
- if(k==="close")$("#od").hidden=true;
- else if(k==="quote"){$("#od").hidden=true;go("requests",1)}
- else if(k==="no"){oa=null;odt()}
- else if(k==="price"||k==="cancel"){oa=k;odt()}
- else{const why=$("#nr").value.trim();if(!why){toast("Add a reason first");return}
-  if(k==="priceok"){const v=+$("#np").value;if(!(v>0)){toast("Enter the new total");return}o.total=v;o.tl.push([now(),"Amina changed the total to "+T(v)+" ("+why+")"]);aud("Changed order total",tk(o),"Total set to "+T(v)+" ("+why+")");toast("Price updated")}
-  else{o.st="cancelled";o.tl.push([now(),"Amina cancelled the order ("+why+")"]);aud("Cancelled order",tk(o),why);toast("Order cancelled")}
-  oa=null;odt();orr()}};
-/* transactions */
-const neg=n=>n<0?"−"+T(-n):T(n);
-const PAYS=[
-{d:0,t:"14:42",id:82,cust:"Walk-in",m:"Cash",k:"Payment",a:48000,by:"Moses"},
-{d:0,t:"13:25",id:70,cust:"Walk-in",m:"Cash",k:"Payment",a:64000,by:"Moses"},
-{d:0,t:"12:20",id:72,cust:"Walk-in",m:"Mobile money",k:"Payment",a:74000,by:"Moses"},
-{d:0,t:"11:10",id:73,cust:"Mariam T.",m:"Mobile money",k:"Payment",a:32000,by:"Moses"},
-{d:0,t:"10:05",id:77,cust:"Rehema A.",m:"Card",k:"Payment",a:72000,by:"Moses"},
-{d:0,t:"09:40",id:80,cust:"Fatma S.",m:"Mobile money",k:"Payment",a:85000,by:"Moses"},
-{d:0,t:"09:15",id:79,cust:"Hassan K.",m:"Cash",k:"Deposit",a:200000,by:"Moses"},
-{d:0,t:"08:50",id:74,cust:"Neha P.",m:"Mobile money",k:"Payment",a:110000,by:"Moses"},
-{d:0,t:"08:35",id:75,cust:"Daniel O.",m:"Cash",k:"Payment",a:95000,by:"Moses"},
-{d:1,t:"16:30",id:78,cust:"Joseph L.",m:"Mobile money",k:"Deposit",a:60000,by:"Moses"},
-{d:1,t:"15:10",id:71,cust:"Salma R.",m:"Cash",k:"Refund",a:-8000,by:"Amina",why:"Wrong flavour delivered"}];
-const MET=["Cash","Mobile money","Card"],MC=["var(--cop)","var(--sage)","var(--mute)"];
-let trf="all";
-function trn(){const td=PAYS.filter(p=>p.d===0),sum=a=>a.reduce((s,p)=>s+p.a,0);
- count($("#trtot"),sum(td));$("#trnet").textContent=td.filter(p=>p.k==="Refund").length?"After refunds":"No refunds today";
- $("#trm").innerHTML=MET.map((m,i)=>{const a=sum(td.filter(p=>p.m===m));return `<div class="mrow"><div class="row"><span><i class="dot" style="background:${MC[i]}"></i>${m}</span><b class="num">${T(a)}</b></div><div class="bar"><i data-w="${Math.round(a/sum(td)*100)}" style="background:${MC[i]}"></i></div></div>`}).join("");
- const ob=live().filter(x=>x.total!=null&&x.total>x.paid);$("#trobn").textContent=T(ob.reduce((s,x)=>s+x.total-x.paid,0));
- $("#trob").innerHTML=ob.map(x=>`<li class="item ${x.st==="ready"?"risk":""}"><div class="row"><button class="lk" data-id="${x.id}">${tk(x)}</button><b class="num">${T(x.total-x.paid)}</b></div><small>${esc(x.cust)} · ${OF[x.st]}, due ${dayL(x.day).toLowerCase()} ${x.time}</small></li>`).join("")||'<p class="empty">Nobody owes anything.</p>';
- const rq=R.find(r=>r.id===2&&needs(r));$("#trrf").innerHTML=rq?`<div class="confirm"><span><b>Refund waiting for you:</b> ${esc(rq.link)}. ${esc(rq.body)}</span><button class="b p" data-rq="2">Review</button></div>`:"";
- trl();requestAnimationFrame(()=>setTimeout(()=>document.querySelectorAll("#trm .bar i").forEach(i=>i.style.width=i.dataset.w+"%"),40))}
-function trl(){const q=$("#trq").value.toLowerCase().replace(/\s/g,""),f=PAYS.filter(p=>(trf==="all"||(trf==="pay"&&p.k!=="Refund")||(trf==="ref"&&p.k==="Refund"))&&("a-"+String(p.id).padStart(4,"0")+p.cust).toLowerCase().replace(/\s/g,"").includes(q));
- $("#trl").innerHTML=f.map(p=>{const no="A-"+String(p.id).padStart(4,"0"),has=O.some(x=>x.id===p.id);return `<div class="lr"><span class="mute">${p.d?"Yesterday ":""}${p.t}</span><span>${has?`<button class="lk" data-id="${p.id}">${no}</button>`:`<b>${no}</b>`}<div class="mute">${esc(p.cust)} · ${p.k==="Refund"?esc(p.why)+", approved by "+p.by:"taken by "+p.by}</div></span><span>${p.m}</span><span><span class="tag ${p.k==="Refund"?"risk":p.k==="Deposit"?"cop":""}">${p.k}</span></span><b class="num" style="text-align:right;${p.a<0?"color:var(--risk)":""}">${neg(p.a)}</b></div>`}).join("")||'<p class="empty">No transactions match.</p>'}
-$("#trq").oninput=trl;
-$("#trf").onclick=e=>{const b=e.target.closest("button");if(!b)return;trf=b.dataset.f;document.querySelectorAll("#trf button").forEach(x=>x.setAttribute("aria-pressed",x===b));trl()};
-$("#v-transactions").onclick=e=>{const k=e.target.closest(".lk");if(k){go("orders");oopen(+k.dataset.id);return}const r=e.target.closest("[data-rq]");if(r)go("requests",+r.dataset.rq)};
+/* the order drawer: one live order_card while it is open */
+let so=null,stopO=null,oform=null;
+const METHODS=[["cash","Cash"],["mobile_money","Mobile money"],["card","Card"],["bank_transfer","Bank transfer"]];
+function odt(){const o=D.card;if(!o)return;
+ keep($("#odp"),()=>{$("#odp").innerHTML=`<div class="row"><h2>${E(o.number)} · ${E(o.customerName)}</h2><button class="b" data-x="close">Close</button></div>
+ <p class="mute" style="margin:2px 0 0">${o.fulfilment==="delivery"?"Delivery":"Pickup"}${o.deliveryDate?" · "+E(dayLabel(o.deliveryDate)):""}${o.deliveryAddress?" · "+E(o.deliveryAddress):""}${o.customerPhone?" · "+E(o.customerPhone):""}</p>
+ <p><span class="tag ${toneCls(o.statusTone)}">${E(o.statusLabel)}</span> <span class="tag ${toneCls(o.paymentTone)}">${E(o.paymentLabel)}</span></p>
+ ${o.warnings.map(w=>`<div class="confirm" style="margin:8px 0;display:block">${E(w)}</div>`).join("")}
+ ${o.lines.map(l=>`<div class="rq" style="max-height:none;${l.cancelled?"opacity:.55":""}"><div class="row"><b>${E(l.title)}</b><span class="tag ${toneCls(l.statusTone)}">${E(l.statusLabel)}</span></div><div class="mute">${l.qty} × ${E(l.unitPriceLabel)} = ${E(l.totalLabel)}${l.options?" · "+E(l.options):""}</div>${l.allergens.length?`<div class="mute">Contains: ${l.allergens.map(E).join(", ")}</div>`:""}${l.cake?cakeHtml(l.cake):""}${quoteBlock(l)}</div>`).join("")}
+ <dl class="kv"><dt>Total</dt><dd>${o.quotePending?"Waiting for your price":E(o.totalLabel)}</dd><dt>Paid</dt><dd>${E(o.paidLabel)}</dd>${o.refundedLabel?`<dt>Refunded</dt><dd>${E(o.refundedLabel)}</dd>`:""}<dt>Balance</dt><dd>${E(o.balanceLabel)}</dd></dl>
+ ${o.payments.length?`<h2 style="font-size:15px">Payments</h2><ul class="tl">${o.payments.map(p=>`<li><time>${E(hhmm(p.at))}</time><span>${E(p.methodLabel)}${p.reference?" · "+E(p.reference):""}</span><b style="margin-left:auto">${E(p.amountLabel)}</b></li>`).join("")}</ul>`:""}
+ ${oform==="refund"?`<div class="fl"><span>Refund amount (up to ${E(o.refundableLabel)})</span><input data-k="ra" type="number" min="0" inputmode="decimal"></div><label class="fl"><span>Paid back by</span><select data-k="rm">${METHODS.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join("")}</select></label><label class="fl"><span>Reason</span><input data-k="rr" maxlength="200"></label><div class="btns"><button class="b p" data-x="refundok">Approve refund</button><button class="b" data-x="no">Not now</button></div>`
+  :oform==="cancel"?`<p class="mute">${o.paidLabel&&o.paidLabel!==M(0)?"Cancelling does not refund what was paid. You decide that separately.":"Nothing has been paid on this order."}</p><div class="btns"><button class="b p" data-x="cancelok">Cancel this order</button><button class="b" data-x="no">Keep it</button></div>`
+  :`<div class="btns">${o.canCancel?'<button class="b" data-x="cancel">Cancel order</button>':""}${o.canRefund?'<button class="b" data-x="refund">Refund…</button>':""}</div>`}`});
+ loadPhotos($("#odp"))}
+function quoteBlock(l){const q=l.quote;if(!q||l.cancelled)return"";
+ let h=`<div class="confirm" style="display:block;margin:8px 0"><b>Price:</b> ${E(q.statusLabel)}${q.priceLabel?" · "+E(q.priceLabel):""}${q.answer?`<div class="mute">${E(q.answer)}</div>`:""}</div>`;
+ if(q.status==="sent"||q.status==="seen")h+=`<div class="btns"><button class="b p" data-x="quote">Answer the price request</button></div>`;
+ else if(q.status==="quoted"&&l.canEdit){h+=oform==="price:"+q.quoteId?`<div class="fl"><span>New price</span><input data-k="np" type="number" min="0" inputmode="decimal"></div><label class="fl"><span>Reason</span><input data-k="nr" maxlength="200"></label><div class="btns"><button class="b p" data-x="priceok" data-q="${E(q.quoteId)}">Save new price</button><button class="b" data-x="no">Cancel</button></div>`:`<div class="btns"><button class="b" data-x="price" data-q="${E(q.quoteId)}">Change price</button></div>`}
+ return h}
+function oopen(id){so=id;oform=null;stopO&&stopO();D.card=null;$("#odp").innerHTML='<p class="empty">Loading…</p>';$("#od").hidden=false;stopO=Cake.feed("order_card",{orderId:id},d=>{D.card=d;odt()})}
+function oclose(){$("#od").hidden=true;stopO&&stopO();stopO=null;so=null;D.card=null}
+$("#od").onclick=e=>{if(e.target.id==="od"){oclose();return}const b=e.target.closest("[data-x]");if(!b)return;const k=b.dataset.x,o=D.card,v=n=>($("#odp").querySelector(`[data-k="${n}"]`)||{value:""}).value.trim();
+ if(k==="close")oclose();
+ else if(k==="quote"){oclose();go("requests")}
+ else if(k==="no"){oform=null;odt()}
+ else if(k==="price"){oform="price:"+b.dataset.q;odt()}
+ else if(k==="cancel"||k==="refund"){oform=k;odt()}
+ else if(k==="cancelok")guard(b,async()=>{const r=await Cake.send("orders/cancel_order",{orderId:o.orderId},"Order cancelled");if(r.ok)oform=null})
+ else if(k==="priceok"){if(!(v("np")!==""&&+v("np")>=0)){Cake.toast("Enter the new price.");return}if(!v("nr")){Cake.toast("Add a reason.");return}guard(b,async()=>{const r=await Cake.send("quotes/revise",{quoteId:b.dataset.q,price:+v("np"),reason:v("nr")},"Price updated");if(r.ok)oform=null})}
+ else if(k==="refundok"){if(!(+v("ra")>0)){Cake.toast("Enter the refund amount.");return}if(!v("rr")){Cake.toast("Add a reason.");return}guard(b,async()=>{const r=await Cake.send("payments/approve_refund",{orderId:o.orderId,amount:+v("ra"),reason:v("rr"),method:v("rm")},"Refund approved");if(r.ok)oform=null})}};
 
-/* staff */
-const ROLES=["Owner","Cashier","Baker","Inventory"];
-let STF=[{id:1,n:"Amina",r:"Owner",on:1,act:1,dev:"This device",seen:"Now"},{id:2,n:"Moses",r:"Cashier",on:1,act:1,dev:"Counter PC",seen:"Signed in since 08:02"},{id:3,n:"Zawadi",r:"Baker",on:1,act:1,dev:"Kitchen tablet",seen:"Signed in since 06:30"},{id:4,n:"Neema",r:"Inventory",on:1,act:0,dev:"Store tablet",seen:"Last seen 12:48"},{id:5,n:"Juma",r:"Cashier",on:0,act:0,dev:"Counter PC",seen:"Deactivated 2 Oct"}];
-const AUD=[["14:42","Moses","Cashier","Recorded payment","A-0082","Paid TSh 0 to 48,000","Counter PC"],["13:55","Zawadi","Baker","Submitted usage report","Butter, 1.5–2.5 kg","Pending to reported","Kitchen tablet"],["12:48","Neema","Inventory","Received stock","Butter","On hand 0 to 20 kg","Store tablet"],["11:41","Amina","Owner","Viewed request","Restock butter, 40 kg","Sent to seen","This device"],["10:40","Amina","Owner","Resolved alert","Flour below reorder level","Open to resolved","This device"],["09:05","Amina","Owner","Published item","Cupcakes, box of 6","Draft to published","This device"],["Yesterday","Amina","Owner","Approved refund","A-0071, TSh 8,000","Reason: wrong flavour","This device"],["Yesterday","Amina","Owner","Deactivated user","Juma","Active to deactivated","This device"]].map(a=>({t:a[0],who:a[1],role:a[2],int:a[3],tg:a[4],ch:a[5],dev:a[6]}));
-let sfs=2,sfm=null,sfp=null,auw="all";
-const sst=u=>!u.on?["Deactivated","risk"]:u.act?["Signed in",""]:["Offline","cop"];
-const aud=(int,tg,ch)=>AUD.unshift({t:now(),who:"Amina",role:"Owner",int,tg,ch,dev:"This device"}),alog=(int,tg,ch)=>{aud(int,tg,ch);sfr()};
-function sfr(){
- $("#sflist").innerHTML=STF.map(u=>{const s=sst(u);return `<button class="rc" data-id="${u.id}" aria-selected="${u.id===sfs&&!sfm}"><div class="row"><b>${esc(u.n)}</b><span class="tag ${s[1]}">${s[0]}</span></div><span class="mute">${u.r} · ${u.dev}</span></button>`}).join("");
- const u=STF.find(x=>x.id===sfs);
- if(sfm==="add")$("#sfdet").innerHTML=`<h2>Add staff</h2><label class="fl"><span>Name</span><input id="an" placeholder="For example, Rehema"></label><label class="fl"><span>Role</span><select id="ar">${ROLES.filter(r=>r!=="Owner").map(r=>`<option>${r}</option>`).join("")}</select></label><label class="fl"><span>PIN (4 to 6 digits)</span><input id="ap" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Choose a PIN"></label><div class="btns"><button class="b p" data-s="create">Create account</button><button class="b" data-s="no">Cancel</button></div>`;
- else if(u){const s=sst(u),me=u.r==="Owner",hist=AUD.filter(a=>a.who===u.n).slice(0,4);
-  $("#sfdet").innerHTML=`<div class="row"><h2>${esc(u.n)}</h2><span class="tag ${s[1]}">${s[0]}</span></div><p class="mute" style="margin:2px 0 0">${u.dev} · ${u.seen}</p>
-  <label class="fl"><span>Role</span><select id="rl" ${me?"disabled":""}>${ROLES.map(r=>`<option ${r===u.r?"selected":""} ${r==="Owner"&&!me?"disabled":""}>${r}</option>`).join("")}</select></label>
-  ${sfp&&sfp.id===u.id?`<div class="pn">New PIN for ${esc(u.n)}<br><b>${sfp.pin}</b><div class="mute" style="margin-top:6px">Tell them in person. It will not be shown again.</div></div>`:""}
-  ${me?'<p class="mute">This is your account. It cannot be deactivated or change role.</p>':`<div class="btns"><button class="b" data-s="role">Save role</button><button class="b" data-s="pin">Reset PIN</button><button class="b ${u.on?"":"p"}" data-s="tog">${u.on?"Deactivate":"Reactivate"}</button></div>`}
-  <h2 style="font-size:15px;margin-top:20px">Recent actions</h2><ul class="tl">${hist.map(a=>`<li><time>${a.t}</time><span>${a.int}: ${esc(a.tg)}</span></li>`).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>'}</ul>`}
- $("#mx").innerHTML=`<tr><th>Capability</th>${ROLES.map(r=>`<th>${r}</th>`).join("")}</tr>`+[["Take orders and payments, hand over catalogue orders",[0,1,0,0]],["Price and quote custom cakes, edit the catalogue",[1,0,0,0]],["Approve refunds, cancel with a money decision",[1,0,0,0]],["Log batches and report ingredient usage",[0,0,1,0]],["Confirm usage, manage stock, handle stock requests",[0,0,0,1]],["Closing review, reports, announcements",[1,0,0,0]],["Manage staff and PINs, view the audit log",[1,0,0,0]]].map(([c,a])=>`<tr><td>${c}</td>${a.map(x=>x?'<td class="y" aria-label="Allowed">✓</td>':'<td class="mute" aria-label="Not allowed">–</td>').join("")}</tr>`).join("");
- $("#auf").innerHTML='<option value="all">Everyone</option>'+STF.map(x=>`<option ${auw===x.n?"selected":""}>${esc(x.n)}</option>`).join("");
- $("#aul").innerHTML=AUD.filter(a=>auw==="all"||a.who===auw).map(a=>`<li style="flex-wrap:wrap"><time style="min-width:70px">${a.t}</time><span><b>${esc(a.who)}</b> <span class="mute">(${a.role})</span> · ${a.int}: ${esc(a.tg)}<div class="mute">${esc(a.ch)} · ${a.dev}</div></span></li>`).join("")||'<li><span class="mute">No actions recorded for this person.</span></li>'}
-$("#sflist").onclick=e=>{const b=e.target.closest(".rc");if(!b)return;sfs=+b.dataset.id;sfm=null;sfp=null;sfr()};
-$("#sfnew").onclick=()=>{sfm="add";sfr();$("#an").focus()};
+/* ---------- transactions ---------- */
+let trf="all",trday="",stopL=null;
+function subLedger(){stopL&&stopL();stopL=Cake.feed("payments_ledger",trday?{day:trday}:{},d=>{D.ledger=d;trn()})}
+function trn(){const l=D.ledger;if(!l)return;
+ $("#trh").textContent=l.isToday?"Collected today":"Collected on "+dayLabel(l.day);$("#trtot").textContent=l.totals.netLabel;
+ $("#trnet").textContent=l.totals.refunds?"After refunds of "+l.totals.refundedLabel:"No refunds";
+ $("#trm").innerHTML=l.byMethod.map((m,i)=>`<div class="mrow"><div class="row"><span><i class="dot" style="background:${MC[i%3]}"></i>${E(m.label)}</span><b class="num">${E(m.amountLabel)}</b></div><div class="bar"><i style="width:${Math.min(100,m.share)}%;background:${MC[i%3]}"></i></div></div>`).join("")||'<p class="empty">No payments on this day.</p>';
+ const ob=l.outstanding||[];$("#trobn").textContent=l.can.seeOutstanding?l.outstandingTotalLabel:"";
+ $("#trob").innerHTML=l.can.seeOutstanding?ob.map(x=>`<li class="item ${x.ready?"risk":""}" data-o="${E(x.orderId)}" style="cursor:pointer"><div class="row"><b>${E(x.orderNumber)}</b><b class="num">${E(x.balanceLabel)}</b></div><small>${E(x.customerName)} · ${E(x.statusLabel)}${x.deliveryDate?", due "+E(dayLabel(x.deliveryDate).toLowerCase()):""}</small></li>`).join("")||'<p class="empty">Nobody owes anything.</p>':"";
+ trl()}
+const MC=["var(--cop)","var(--sage)","var(--mute)"];
+function trl(){const l=D.ledger;if(!l)return;const q=$("#trq").value.toLowerCase().replace(/\s/g,""),f=l.rows.filter(p=>(trf==="all"||(trf==="pay"&&p.kind!=="refund")||(trf==="ref"&&p.kind==="refund"))&&(p.orderNumber+p.customerName).toLowerCase().replace(/\s/g,"").includes(q));
+ $("#trl").innerHTML=f.map(p=>`<div class="lr"><span class="mute">${E(p.time)}</span><span><button class="lk" data-o="${E(p.orderId)}">${E(p.orderNumber)}</button><div class="mute">${E(p.customerName)} · ${p.kind==="refund"?E(p.reason||"")+", approved by "+E(p.byName):"taken by "+E(p.byName)}</div></span><span>${E(p.methodLabel)}</span><span><span class="tag ${p.kind==="refund"?"risk":p.kind==="deposit"?"cop":""}">${E(p.kindLabel)}</span></span><b class="num" style="text-align:right;${p.amount<0?"color:var(--risk)":""}">${E(p.amountLabel)}</b></div>`).join("")||'<p class="empty">No transactions match.</p>'}
+$("#trq").oninput=trl;seg("#trf","f",v=>{trf=v;trl()});
+$("#trday").onchange=e=>{trday=e.target.value;subLedger()};
+$("#v-transactions").onclick=e=>{const k=e.target.closest("[data-o]");if(k){go("orders");oopen(k.dataset.o)}};
+
+/* ---------- staff ---------- */
+let sfs=null,sfm=null,auw="all";
+const sst=u=>!u.active?["Deactivated","risk"]:u.locked?["Locked","cop"]:["Active",""];
+const LVL=[["off","Off"],["critical","Critical alerts only"],["all","All alerts"]];
+function sfr(){const L=D.staff||[],me=Cake.me();if(!sfs&&L.length)sfs=L[0].id;
+ $("#sflist").innerHTML=L.map(u=>{const s=sst(u);return`<button class="rc" data-id="${E(u.id)}" aria-selected="${u.id===sfs&&!sfm}"><div class="row"><b>${E(u.name)}</b><span class="tag ${s[1]}">${s[0]}</span></div><span class="mute">${E(ROLE_L[u.role]||u.role)}</span></button>`}).join("");
+ keep($("#sfdet"),()=>{const u=L.find(x=>x.id===sfs);
+  if(sfm==="add")$("#sfdet").innerHTML=`<h2>Add staff</h2><label class="fl"><span>Name</span><input data-k="an" placeholder="For example, Rehema" maxlength="60"></label><label class="fl"><span>Role</span><select data-k="ar"><option value="cashier">Cashier</option><option value="baker">Baker</option><option value="inventory">Inventory</option><option value="it">IT</option></select></label><label class="fl"><span>PIN (4 to 6 digits)</span><input data-k="ap" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Choose a PIN"></label><div class="btns"><button class="b p" data-s="create">Create account</button><button class="b" data-s="no">Cancel</button></div>`;
+  else if(u){const s=sst(u),own=u.role==="owner"||u.id===(me&&me.userId),hist=(D.audit||[]).filter(a=>a.who===u.name&&a.outcome==="ok").slice(0,4);
+   $("#sfdet").innerHTML=`<div class="row"><h2>${E(u.name)}</h2><span class="tag ${s[1]}">${s[0]}</span></div><p class="mute" style="margin:2px 0 0">${E(ROLE_L[u.role]||u.role)}</p>
+   ${own?'<p class="mute">This is the owner account. It cannot be deactivated or change role.</p>':`<label class="fl"><span>Role</span><select data-k="rl">${["cashier","baker","inventory","it"].map(r=>`<option value="${r}" ${r===u.role?"selected":""}>${ROLE_L[r]}</option>`).join("")}</select></label><div class="btns"><button class="b" data-s="role">Save role</button><button class="b ${u.active?"":"p"}" data-s="tog">${u.active?"Deactivate":"Reactivate"}</button></div>`}
+   <label class="fl"><span>New PIN (4 to 6 digits)</span><input data-k="np" inputmode="numeric" maxlength="6" autocomplete="off"></label><div class="btns"><button class="b" data-s="pin">Set PIN</button><button class="b" data-s="sug">Suggest one</button></div>
+   <h2 style="font-size:15px;margin-top:20px">Alerts outside the app</h2><label class="fl"><span>Phone</span><input data-k="ph" value="${E(u.contact.phone||"")}" inputmode="tel" maxlength="40"></label><label class="fl"><span>Text message</span><select data-k="sm">${LVL.map(x=>`<option value="${x[0]}" ${x[0]===u.contact.sms?"selected":""}>${x[1]}</option>`).join("")}</select></label><label class="fl"><span>WhatsApp</span><select data-k="wa">${LVL.map(x=>`<option value="${x[0]}" ${x[0]===u.contact.whatsapp?"selected":""}>${x[1]}</option>`).join("")}</select></label><div class="btns"><button class="b" data-s="contact">Save contact</button></div>
+   <h2 style="font-size:15px;margin-top:20px">Recent actions</h2><ul class="tl">${hist.map(a=>`<li><time>${E(when(a.at))}</time><span>${E(a.summary)}</span></li>`).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>'}</ul>`}
+  else $("#sfdet").innerHTML='<p class="empty">Pick someone to see their details.</p>'});
+ const names=[...new Set((D.audit||[]).map(a=>a.who))];if(auw!=="all"&&!names.includes(auw))auw="all";
+ $("#auf").innerHTML='<option value="all">Everyone</option>'+names.map(n=>`<option ${auw===n?"selected":""}>${E(n)}</option>`).join("");
+ $("#aul").innerHTML=(D.audit||[]).filter(a=>auw==="all"||a.who===auw).slice(0,60).map(a=>`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span><b>${E(a.who)}</b>${a.role?` <span class="mute">(${E(ROLE_L[a.role]||a.role)})</span>`:""} · ${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`).join("")||'<li><span class="mute">No actions recorded for this person.</span></li>'}
+$("#sflist").onclick=e=>{const b=e.target.closest(".rc");if(!b)return;sfs=b.dataset.id;sfm=null;sfr()};
+$("#sfnew").onclick=()=>{sfm="add";sfr();const i=$("#sfdet [data-k=an]");i&&i.focus()};
 $("#auf").onchange=e=>{auw=e.target.value;sfr()};
-$("#sfdet").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const k=b.dataset.s,u=STF.find(x=>x.id===sfs);
+$("#sfdet").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const k=b.dataset.s,u=(D.staff||[]).find(x=>x.id===sfs),v=n=>($("#sfdet").querySelector(`[data-k="${n}"]`)||{value:""}).value.trim();
  if(k==="no"){sfm=null;sfr()}
- else if(k==="create"){const n=$("#an").value.trim(),p=$("#ap").value.trim();if(!n){toast("Enter a name");return}if(!/^\d{4,6}$/.test(p)){toast("A PIN is 4 to 6 digits");return}if(STF.some(x=>x.n.toLowerCase()===n.toLowerCase())){toast("That name is already taken");return}
-  const r=$("#ar").value,id=Math.max(...STF.map(x=>x.id))+1;STF.push({id,n,r,on:1,act:0,dev:"Not signed in yet",seen:"Never signed in"});sfs=id;sfm=null;alog("Created user",n+" ("+r+")","PIN set");toast(n+" can now sign in")}
- else if(k==="role"){const r=$("#rl").value;if(r===u.r){toast("Role unchanged");return}alog("Changed role",u.n,u.r+" to "+r);u.r=r;sfr();toast(u.n+" is now "+r)}
- else if(k==="pin"){sfp={id:u.id,pin:String(100000+Math.floor(Math.random()*900000)).slice(0,4)};alog("Reset PIN",u.n,"Old PIN no longer works");toast("PIN reset")}
- else if(k==="tog"){u.on=u.on?0:1;if(!u.on)u.act=0;sfp=null;alog(u.on?"Reactivated user":"Deactivated user",u.n,u.on?"Deactivated to active":"Active to deactivated");toast(u.n+(u.on?" can sign in again":" is signed out and blocked"))}};
+ else if(k==="sug"){const n=crypto.getRandomValues(new Uint32Array(1))[0]%10000;$("#sfdet [data-k=np]").value=String(n).padStart(4,"0")}
+ else if(k==="create"){const n=v("an"),p=v("ap");if(!n){Cake.toast("Enter a name.");return}if(!/^\d{4,6}$/.test(p)){Cake.toast("A PIN is 4 to 6 digits.");return}
+  guard(b,async()=>{const r=await Cake.send("staff/create",{name:n,role:v("ar"),pin:p},n+" can now sign in");if(r.ok){sfm=null;$$("#sfdet [data-k]").forEach(x=>x.value="");sfr()}})}
+ else if(!u)return;
+ else if(k==="role"){if(v("rl")===u.role){Cake.toast("Role unchanged.");return}guard(b,()=>Cake.send("staff/set_role",{userId:u.id,role:v("rl")},u.name+" is now "+ROLE_L[v("rl")]))}
+ else if(k==="pin"){if(!/^\d{4,6}$/.test(v("np"))){Cake.toast("A PIN is 4 to 6 digits.");return}guard(b,async()=>{const r=await Cake.send("staff/set_pin",{userId:u.id,pin:v("np")},"PIN changed. Tell "+u.name+" in person");if(r.ok)$("#sfdet [data-k=np]").value=""})}
+ else if(k==="tog")guard(b,()=>Cake.send("staff/set_active",{userId:u.id,active:!u.active},u.active?u.name+" is signed out and blocked":u.name+" can sign in again"))
+ else if(k==="contact")guard(b,()=>Cake.send("staff/set_contact",{userId:u.id,phone:v("ph")||null,sms:v("sm"),whatsapp:v("wa")},"Contact saved"))};
 
-/* reports */
-let rpd=7;
-const SH=[["Custom celebration cakes",.30],["Vanilla sponge cake",.24],["Chocolate drip cake",.21],["Cupcakes, box of 6",.12],["Red velvet slice",.08],["Everything else",.05]];
-const RUSE=[["Butter","kg",42,45],["Flour","kg",60,58],["Eggs","trays",14,17],["Sugar","kg",22,22],["Cocoa powder","kg",4,5.5]];
-const RCD=[[1,"Vanilla sponge 1 kg",6,5,"Sold one, not recorded"],[2,"Cupcakes box",14,12,"Possible waste, not logged"],[9,"Brownies",20,23,"Batch logged late"],[21,"Red velvet slice",10,8,"Dropped, not logged"]];
-const RWS=[[1,"Fruit tart","2 pieces",12000,"Dropped"],[3,"Raspberries","0.2 kg",6000,"Spoiled"],[6,"Fresh cream","1 L",7500,"Expired"],[18,"Butter croissant","6 pieces",21000,"Unsold, written off at closing"]];
-const RRF=[[1,"A-0071","Salma R.",8000,"Wrong flavour delivered"],[12,"A-0066","Peter N.",22000,"Delivery was two hours late"]];
-const hbar=(l,v,w,c,x="")=>`<div class="hb"><span>${l}</span><div class="bar"><i data-w="${w}" ${c?`style="background:${c}"`:""}></i></div><b class="num">${v}${x}</b></div>`;
-function rpt(){const data=rpd===7?d7:d30,tot=data.reduce((a,b)=>a+b,0),mx=Math.max(...data),f=rpd===7?1:4.3,labs=lab(rpd);
- count($("#rst"),tot);$("#rsd").textContent="Last "+rpd+" days · "+T(tot/rpd)+" a day";
- const W=640,H=200,n=data.length,bw=(W-10)/n;
- $("#rsv").innerHTML=[0,1,2].map(i=>`<line x1="0" x2="${W}" y1="${10+i*80}" y2="${10+i*80}" stroke="var(--line)"/>`).join("")+data.map((v,i)=>{const h=v/mx*165;return `<rect x="${5+i*bw+bw*.12}" y="${180-h}" width="${bw*.76}" height="${h}" rx="${Math.min(6,bw*.2)}" fill="var(--cop)" style="animation-delay:${i*25}ms"><title>${labs[i]} · ${T(v)}</title></rect>`}).join("")+labs.map((l,i)=>(i%Math.ceil(n/6)===0||i===n-1)?`<text x="${5+i*bw+bw/2}" y="197" font-size="11" fill="var(--mute)" text-anchor="middle">${l}</text>`:"").join("");
- const sh=[.36,.51,.13];$("#rmb").innerHTML=sh.map((p,i)=>`<i data-w="${p*100}" style="background:${MC[i]}"></i>`).join("");
- $("#rml").innerHTML=MET.map((m,i)=>`<div class="row" style="padding:5px 0"><span><i class="dot" style="background:${MC[i]}"></i>${m}</span><span><b class="num">${T(tot*sh[i])}</b> <span class="mute">${Math.round(sh[i]*100)}%</span></span></div>`).join("");
- $("#rbs").innerHTML=SH.map(([l,p])=>hbar(l,T(tot*p),p*100/.3)).join("");
- $("#rds").innerHTML=S.slice().sort((a,b)=>a.dl-b.dl).slice(0,6).map(i=>hbar(i.n,i.dl+" d",Math.min(100,i.dl/10*100),i.dl<2?"var(--risk)":i.dl<4?"var(--cop)":"var(--sage)")).join("");
- $("#rus").innerHTML=RUSE.map(([nm,u,a,b])=>{const x=+(a*f).toFixed(1),y=+(b*f).toFixed(1),d=b/a-1,fl=Math.abs(d)>.1;return `<div class="hb2"><div class="row"><span>${nm}</span><span class="mute">${x} suggested · <b style="color:var(--ink)">${y}</b> confirmed ${u}${fl?` <span class="tag ${d>0?"risk":"cop"}">${d>0?"+":""}${Math.round(d*100)}%</span>`:""}</span></div><div class="bar"><i data-w="${a/Math.max(a,b)*100}" style="background:var(--line)"></i></div><div class="bar"><i data-w="${b/Math.max(a,b)*100}" style="background:${fl&&d>0?"var(--risk)":"var(--sage)"}"></i></div></div>`}).join("");
- const rf=RRF.filter(r=>r[0]<=rpd);$("#rfn").textContent=T(rf.reduce((s,r)=>s+r[3],0));$("#rfl").innerHTML=rf.map(r=>`<li class="item"><div class="row"><b>${r[1]} · ${r[2]}</b><b class="num">${T(r[3])}</b></div><small>${r[4]}</small></li>`).join("")||'<p class="empty">No refunds in this period.</p>';
- const cd=RCD.filter(r=>r[0]<=rpd);$("#rcd").innerHTML=cd.length?`<table class="tb"><tr><th>Item</th><th>Expected</th><th>Counted</th><th>Gap</th></tr>${cd.map(r=>`<tr><td>${r[1]}<div class="mute">${r[4]}</div></td><td>${r[2]}</td><td>${r[3]}</td><td><b style="color:var(--${r[3]<r[2]?"risk":"sage"})">${r[3]-r[2]>0?"+":"−"}${Math.abs(r[3]-r[2])}</b></td></tr>`).join("")}</table>`:'<p class="empty">Counts matched in this period.</p>';
- const ws=RWS.filter(r=>r[0]<=rpd);$("#rwn").textContent=T(ws.reduce((s,r)=>s+r[3],0));$("#rww").innerHTML=ws.length?`<table class="tb"><tr><th>Item</th><th>Amount</th><th>Why</th><th>Value</th></tr>${ws.map(r=>`<tr><td>${r[1]}</td><td>${r[2]}</td><td class="mute">${r[4]}</td><td>${T(r[3])}</td></tr>`).join("")}</table>`:'<p class="empty">Nothing wasted in this period.</p>';
- requestAnimationFrame(()=>setTimeout(()=>document.querySelectorAll("#v-reports .bar i,#rmb i").forEach(i=>i.style.width=i.dataset.w+"%"),40))}
-$("#rpr").onclick=e=>{const b=e.target.closest("button");if(!b)return;rpd=+b.dataset.r;document.querySelectorAll("#rpr button").forEach(x=>x.setAttribute("aria-pressed",x===b));rpt()};
+/* ---------- reports ---------- */
+const hbar=(l,v,w,c,x="")=>`<div class="hb"><span>${E(l)}</span><div class="bar"><i style="width:${w}%;${c?`background:${c}`:""}"></i></div><b class="num">${v}${x}</b></div>`;
+function rpt(){const r=D.reports;if(!r)return;const s=r.sales;
+ $("#rst").textContent=s.totalLabel;$("#rsd").textContent="Last "+r.range.days+" days · "+s.perDayLabel+" a day"+(s.changePercent==null?"":" · "+(s.changePercent>0?"+":"")+s.changePercent+"% on the period before");
+ const W=640,H=200,n=s.series.length,bw=(W-10)/n,mx=Math.max(1,...s.series.map(x=>x.total));
+ $("#rsv").innerHTML=[0,1,2].map(i=>`<line x1="0" x2="${W}" y1="${10+i*80}" y2="${10+i*80}" stroke="var(--line)"/>`).join("")+s.series.map((d,i)=>{const h=d.total/mx*165;return`<rect x="${5+i*bw+bw*.12}" y="${180-h}" width="${bw*.76}" height="${h}" rx="${Math.min(6,bw*.2)}" fill="var(--cop)"><title>${E(d.label)} · ${E(d.totalLabel)}</title></rect>`}).join("")+s.series.map((d,i)=>(i%Math.ceil(n/6)===0||i===n-1)?`<text x="${5+i*bw+bw/2}" y="197" font-size="11" fill="var(--mute)" text-anchor="middle">${E(d.label)}</text>`:"").join("");
+ $("#rmb").innerHTML=r.methods.map((m,i)=>`<i style="width:${m.share*100}%;background:${MC[i%3]}"></i>`).join("");
+ $("#rml").innerHTML=r.methods.map((m,i)=>`<div class="row" style="padding:5px 0"><span><i class="dot" style="background:${MC[i%3]}"></i>${E(m.label)}</span><span><b class="num">${E(m.amountLabel)}</b> <span class="mute">${pct(m.share)}%</span></span></div>`).join("")||'<p class="empty">No payments in this period.</p>';
+ $("#rbs").innerHTML=r.bestSellers.map(b=>hbar(b.name,E(b.amountLabel),pct(b.share)/Math.max(1,pct(r.bestSellers[0].share))*100)).join("")||'<p class="empty">No orders in this period.</p>';
+ $("#rds").innerHTML=r.stockDays.rows.slice(0,6).map(i=>hbar(i.name,E(i.label),Math.min(100,i.daysLeft/10*100),i.level==="critical"?"var(--risk)":i.level==="low"?"var(--cop)":"var(--sage)")).join("")||'<p class="empty">Not enough confirmed usage yet.</p>';
+ $("#rus").innerHTML=r.usage.map(u=>{const m=Math.max(u.suggested,u.confirmed,1e-9);return`<div class="hb2"><div class="row"><span>${E(u.name)}</span><span class="mute">${E(u.suggestedText)} suggested · <b style="color:var(--ink)">${E(u.confirmedText)}</b> confirmed${u.flagged?` <span class="tag ${u.direction==="more"?"risk":"cop"}">${u.differencePercent>0?"+":""}${u.differencePercent}%</span>`:""}</span></div><div class="bar"><i style="width:${u.suggested/m*100}%;background:var(--line)"></i></div><div class="bar"><i style="width:${u.confirmed/m*100}%;background:${u.flagged&&u.direction==="more"?"var(--risk)":"var(--sage)"}"></i></div></div>`}).join("")||'<p class="empty">No usage was confirmed in this period.</p>';
+ $("#rfn").textContent=r.refunds.rows.length?r.refunds.totalLabel:"";$("#rfl").innerHTML=r.refunds.rows.map(x=>`<li class="item"><div class="row"><b>${E(x.orderNumber)} · ${E(x.customerName)}</b><b class="num">${E(x.amountLabel)}</b></div><small>${E(x.reason)}</small></li>`).join("")||'<p class="empty">No refunds in this period.</p>';
+ $("#rcd").innerHTML=r.countDifferences.length?`<table class="tb"><tr><th>Item</th><th>Expected</th><th>Counted</th><th>Gap</th></tr>${r.countDifferences.map(c=>`<tr><td>${E(c.name)}<div class="mute">${E(c.day)}${c.note?" · "+E(c.note):""}</div></td><td>${E(c.expectedText)}</td><td>${E(c.countedText)}</td><td><b style="color:var(--${c.gap<0?"risk":"sage"})">${E(c.gapText)}</b></td></tr>`).join("")}</table>`:'<p class="empty">Counts matched in this period.</p>';
+ $("#rwn").textContent=r.waste.count?r.waste.count+" write-off"+(r.waste.count===1?"":"s"):"";$("#rww").innerHTML=r.waste.rows.length?`<table class="tb"><tr><th>Item</th><th>Amount</th><th>Why</th><th>By</th></tr>${r.waste.rows.map(w=>`<tr><td>${E(w.name)}<div class="mute">${E(w.day)} ${E(w.time)}</div></td><td>${E(w.amountText)}</td><td class="mute">${E(w.why)}</td><td>${E(w.byName)}</td></tr>`).join("")}</table>`:'<p class="empty">Nothing wasted in this period.</p>'}
 $("#rgs").onclick=()=>go("stock");
-/* search palette */
-const idx=[["Vanilla sponge","Catalogue · "+C.find(x=>x.id===1).v.reduce((a,v)=>a+v.q,0)+" in stock","catalogue","Vanilla"],["Butter","Stock · "+S.find(x=>x.n==="Butter").dl+" days left","stock","Butter"],["Customer: Grace M.","Orders","orders","Grace"],["Customer: Hassan K.","Orders","orders","Hassan"]];
+
+/* ---------- settings (shop details and alert rules) ---------- */
+const ALERT_FIELDS=[["stockoutDays","Warn when stock will run out within (days)"],["reorderDays","Warn when stock will reach its reorder level within (days)"],["usageWaitHours","Remind if usage is still unconfirmed after (hours)"],["quoteWaitHours","Remind if a price request is unanswered after (hours)"],["dueSoonDays","Warn when an unstarted order is due within (days)"],["countDifference","Flag a count difference of at least"],["urgentRequestMinutes","Send an urgent request up to you after (minutes)"],["requestWaitHours","Send an unanswered request up to you after (hours)"]];
+function openSettings(){const s=D.shop,a=D.alertset;if(!s)return;drMode="settings";
+ drawer(`<div class="row"><h2>Settings</h2><button class="b" data-d="close">Close</button></div>
+ <h2 style="font-size:15px;margin-top:14px">Shop details (printed on receipts)</h2>
+ <label class="fl"><span>Shop name</span><input data-k="sn" maxlength="60" value="${E(s.shopName)}"></label><label class="fl"><span>Address</span><input data-k="sa" maxlength="160" value="${E(s.shopAddress||"")}"></label><label class="fl"><span>Phone</span><input data-k="sp" maxlength="40" value="${E(s.shopPhone||"")}"></label><label class="fl"><span>Receipt footer</span><input data-k="sf" maxlength="160" value="${E(s.receiptFooter||"")}"></label>
+ <label class="fl" style="grid-template-columns:auto 1fr;align-items:center;gap:10px"><input data-k="sd" type="checkbox" style="width:auto" ${s.decoratingStage?"checked":""}><span style="font-size:14px;color:var(--ink)">Custom cakes have a separate decorating step</span></label>
+ <div class="btns"><button class="b p" data-d="shop">Save shop details</button></div>
+ ${a?`<h2 style="font-size:15px;margin-top:24px">When to warn people</h2>${ALERT_FIELDS.map(f=>`<label class="fl"><span>${f[1]}</span><input data-k="a-${f[0]}" type="number" min="0" inputmode="numeric" value="${a[f[0]]}"></label>`).join("")}<div class="fl"><span>Treat these as critical (also sent to you)</span></div>${a.kinds.map(k=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="c-${E(k.kind)}" type="checkbox" ${k.critical?"checked":""}> ${E(k.label)}</label>`).join("")}<div class="btns"><button class="b p" data-d="alerts">Save warning rules</button></div>`:""}`)}
+async function saveSettings(k){const v=n=>($("#dpn").querySelector(`[data-k="${n}"]`)||{value:""}),t=n=>v(n).value.trim();
+ if(k==="shop"){if(!t("sn")){Cake.toast("The shop needs a name.");return}await Cake.send("settings/update",{shopName:t("sn"),shopAddress:t("sa")||null,shopPhone:t("sp")||null,receiptFooter:t("sf")||null,decoratingStage:v("sd").checked},"Shop details saved")}
+ else{const p={critical:{}};for(const f of ALERT_FIELDS){const x=t("a-"+f[0]);if(x==="")continue;p[f[0]]=+x}for(const kk of D.alertset.kinds)p.critical[kk.kind]=v("c-"+kk.kind).checked;await Cake.send("alerts/configure",p,"Warning rules saved")}}
+$("#xset").onclick=openSettings;
+
+/* ---------- search ---------- */
 const pal=$("#pal"),q=$("#q");
-function show(){const v=q.value.toLowerCase().replace(/\s/g,""),all=O.filter(o=>o.st!=="cancelled").map(o=>[tk(o)+" "+o.what,o.cust+" · "+OF[o.st],o.id]).concat(idx);$("#res").innerHTML=all.filter(i=>i.slice(0,2).join("").toLowerCase().replace(/\s/g,"").includes(v)).map(i=>`<li><button ${typeof i[2]==="number"?`data-o="${i[2]}"`:`data-g="${i[2]}" data-s="${esc(i[3])}"`}>${esc(i[0])}<span class="mute">${esc(i[1])}</span></button></li>`).join("")||`<li class="empty" style="padding:12px">Nothing matches "${esc(q.value)}". Try an order number or a customer name.</li>`}
-function open(){pal.classList.add("on");q.value="";show();q.focus()}
-$("#open").onclick=open;q.oninput=show;pal.onclick=e=>{const b=e.target.closest("li button");if(b&&b.dataset.o){go("orders");oopen(+b.dataset.o)}else if(b&&b.dataset.g){const g=b.dataset.g,v=b.dataset.s;go(g);if(g==="catalogue"){$("#cq").value=v;cr()}else if(g==="stock"){ss=v;$("#sq").value="";sr(1)}else if(g==="orders"){$("#zq").value=v;orr()}}if(e.target===pal||b)pal.classList.remove("on")};
-addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();open()}if(e.key==="Escape")pal.classList.remove("on")});
+function show(){const v=q.value.toLowerCase().replace(/\s/g,""),all=[].concat(
+  zlive().map(o=>[o.number+" · "+o.customerName,"Order · "+o.statusLabel,"o",o.orderId]),
+  (D.cat||[]).map(p=>[p.name,"Catalogue · "+(p.priceFromLabel||"no price"),"c",p.name]),
+  (D.ingr||[]).filter(i=>i.active).map(i=>[i.name,"Stock · "+i.onHandText,"s",i.ingredientId]));
+ $("#res").innerHTML=all.filter(i=>(i[0]+i[1]).toLowerCase().replace(/\s/g,"").includes(v)).slice(0,30).map(i=>`<li><button data-t="${i[2]}" data-v="${E(i[3])}">${E(i[0])}<span class="mute">${E(i[1])}</span></button></li>`).join("")||`<li class="empty" style="padding:12px">Nothing matches "${E(q.value)}". Try an order number or a customer name.</li>`}
+function openPal(){pal.classList.add("on");q.value="";show();q.focus()}
+$("#open").onclick=openPal;$("#xsearch").onclick=openPal;q.oninput=show;
+pal.onclick=e=>{const b=e.target.closest("li button");if(b){const t=b.dataset.t,v=b.dataset.v;
+  if(t==="o"){go("orders");oopen(v)}else if(t==="c"){go("catalogue");$("#cq").value=v;cr()}else{go("stock");ss=v;$("#sq").value="";sr()}}
+ if(e.target===pal||b)pal.classList.remove("on")};
+addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();openPal()}
+ if(e.key==="Escape"){pal.classList.remove("on");if(!$("#dr").hidden)dclose();if(!$("#od").hidden)oclose()}});
 
-/* start */
-draw();rd();ob();count($("#today"),780000);
-$("#delta").textContent="+19%";
-requestAnimationFrame(()=>setTimeout(()=>document.querySelectorAll(".bar i").forEach(i=>i.style.width=i.dataset.w+"%"),120));
-
-/* shared header (matches the Cashier) */
-const xroot=document.documentElement,xhd=$(".xhead");
+/* ---------- shared header ---------- */
+const xroot=document.documentElement,xhd=$(".xhead");let SHOP="Cake shop";
 try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
 const xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
-function xclock(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
-xclock();setInterval(xclock,30000);
-function xbadge(){const n=R.filter(needs).length;$("#xbn").textContent=n||"";$("#xbell").title=n?n+" need you":"Requests and alerts"}
-xbadge();document.addEventListener("click",()=>setTimeout(xbadge,0));
-$("#xsearch").onclick=open;$("#xbell").onclick=()=>go("requests");
+function xclock(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});$("#date").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
+$("#xbell").onclick=()=>go("requests");
 $("#xtheme").onclick=()=>{const dark=xroot.dataset.theme?xroot.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;xroot.dataset.theme=dark?"light":"dark";try{localStorage.setItem("theme",xroot.dataset.theme)}catch(e){}};
-$("#xout").onclick=()=>$("#xlock").hidden=false;$("#xin").onclick=()=>$("#xlock").hidden=true;
+$("#xout").onclick=()=>Cake.signOut();
 
-/* staff requests */
-const CATS=["Maintenance","System error","Stock and supplies","Order issue","Money","Approval","Staffing","Safety and hygiene","Other"];
-const ESCMIN=15,nmn=x=>x==="Owner"||x==="Amina"?"Amina":ROLE[x]||x;let nc="";
-const nm=document.createElement("div");nm.className="nov";nm.hidden=true;document.body.appendChild(nm);
-const closeN=()=>{nm.hidden=true;nm.innerHTML=""};
-function sact(r){const a=r.s<3?r.to:r.from;
- if(nmn(a)==="Amina")return r.s===3?'<div class="btns"><button class="b p" data-a="sadv">Confirm it is fixed</button><button class="b" data-a="sreo">Reopen</button></div>':r.s?`<div class="btns"><button class="b p" data-a="sadv">${r.s===1?"Acknowledge":"Mark done"}</button></div>`:"";
- return `<div class="btns"><button class="b" data-a="sadv">Demo: ${nmn(a)} ${["sees it","acknowledges it","marks it done","confirms it"][r.s]}</button></div>`}
-function sstep(r,a){const w=nmn(r.s<3?r.to:r.from);
- if(a==="sreo"){r.s=2;delete r.outcome;r.tl.push([now(),w+" reopened it"]);toast("Reopened. "+nmn(r.to)+" is notified")}
- else{if(r.s===0)r.seen.push(w);r.tl.push([now(),w+" "+["saw it","acknowledged it","marked it done","confirmed it is fixed"][r.s]]);r.s++;if(r.s===4)r.outcome="Confirmed by "+w;toast(r.s===4?"Closed. "+nmn(r.to)+" is notified":"Moved to "+SL[r.s])}
- rr()}
-function nsend(){const t=$("#nti").value.trim();if(!nc)return toast("Pick a category");if(!t)return toast("Say what the issue is");
- const to=$("#nto").value,tag=esc(nc==="Other"?($("#nog2").value.trim()||"Other"):nc),u=$("#nur").checked;
- R.unshift({id:Math.max(...R.map(x=>x.id))+1,k:"staff",cat:tag,urg:u,ttl:esc(t),from:"Amina",to,link:"Category: "+tag+(u?" · Urgent":""),body:esc($("#nbd").value.trim()),s:0,seen:[],tl:[[now(),"Amina sent the request"]]});
- closeN();flt="all";document.querySelectorAll("#flt button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f==="all"));sel=R[0].id;rr();toast("Request sent to "+to)}
-$("#nrq").onclick=()=>{nc="";const ROLES=["Cashier","Baker","Inventory"],PEOPLE=[["Moses","Cashier"],["Zawadi","Baker"],["Neema","Inventory"]];nm.innerHTML=`<div class="ndl" role="dialog" aria-modal="true"><div class="row"><h2>New request</h2><button class="b" data-n="x">Close</button></div><label class="nlab" for="nto">To</label><select id="nto"><optgroup label="Role">${["Cashier","Baker","Inventory"].map(r=>`<option>${r}</option>`).join("")}</optgroup><optgroup label="Person">${[["Moses","Cashier"],["Zawadi","Baker"],["Neema","Inventory"]].map(p=>`<option value="${p[0]}">${p[0]} (${p[1]})</option>`).join("")}</optgroup></select><span class="nlab">Category</span><div class="ncat" id="ncat">${CATS.map(c=>`<button class="b" aria-pressed="false" data-n="c" data-c="${c}">${c}</button>`).join("")}</div><div id="nog" hidden><label class="nlab" for="nog2">Short tag</label><input id="nog2" maxlength="24" placeholder="e.g. Parking"></div><label class="nlab" for="nti">What is the issue?</label><input id="nti" maxlength="80"><label class="nlab" for="nbd">Details (optional)</label><textarea id="nbd"></textarea><label class="nlab" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="nur" style="width:auto;min-height:0"> Urgent: sorted to the top, escalates to the Owner if nobody sees it in time</label><div class="btns" style="margin-top:14px"><button class="b p" data-n="s">Send request</button></div></div>`;nm.hidden=false;$("#nto").focus()};
-nm.onclick=e=>{if(e.target===nm)return closeN();const b=e.target.closest("button");if(!b)return;const n=b.dataset.n;if(n==="x")closeN();else if(n==="s")nsend();else if(n==="c"){nc=b.dataset.c;nm.querySelectorAll("#ncat button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#nog").hidden=nc!=="Other"}};
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!nm.hidden)closeN()});
-R.push({id:8,k:"staff",cat:"Maintenance",urg:true,ttl:"Display fridge is not cooling",from:"Moses",to:"Inventory",link:"Category: Maintenance · Urgent",body:"The front display fridge reads 9°C.",esc:"Escalates to you in "+ESCMIN+" min if not acknowledged",s:1,seen:["Neema"],tl:[["14:55","Moses sent the request"],["14:57","Neema saw it"]]});rr();
+/* ---------- start ---------- */
+(async()=>{const me=await Cake.boot("owner");$(".xnm").textContent=me.name;
+ const h=new Date().getHours();$("#hello").textContent=(h<12?"Good morning":h<18?"Good afternoon":"Good evening")+", "+me.name.replace(/\s*\(.*\)\s*$/,"");
+ xclock();setInterval(xclock,30000);
+ Cake.client.onConnection(s=>{const up=s!=="offline";$(".xst").className="xst"+(up?"":" off");$(".xst .xsl").textContent=up?"Server connected":"Server unreachable"});
+ Cake.mountNotice($("#ntc"));
+ RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="requests",onCounts:c=>{RC=c;badge()}});
+ Cake.feed("order_list",{},d=>{D.orders=d;ov();orr()});
+ Cake.feed("request_inbox",{},d=>{D.inbox=d;ov();su()});
+ Cake.feed("quote_inbox",{},d=>{D.quotes=d;qr()});
+ Cake.feed("announcements",{},d=>{D.ann=d;ann()});
+ Cake.feed("catalogue_grid",{},d=>{D.cat=d;cr()});
+ Cake.feed("ingredient_list",{},d=>{D.ingr=d;sr()});
+ Cake.feed("stock_forecast",{},d=>{D.forecast=d;ov();sr()});
+ Cake.feed("usage_inbox",{},d=>{D.usage=d;ov();su()});
+ Cake.feed("staff_list",{},d=>{D.staff=d;sfr()});
+ Cake.feed("audit_view",{},d=>{D.audit=d;ov();cr();sfr()});
+ Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr()});
+ Cake.feed("alert_settings",{},d=>{D.alertset=d});
+ subReports();subLedger();go("overview")})();
 </script>
 </body>
 </html>
