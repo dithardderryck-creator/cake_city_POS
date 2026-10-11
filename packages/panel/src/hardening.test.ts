@@ -176,9 +176,9 @@ describe('retry safety (request ids)', () => {
 
   it('does not remember failures, so a corrected retry can succeed', async () => {
     const { cashier, orderId } = await orderReadyToPay();
-    const bad = await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 999 }, cashier, { requestId: 'req-x' });
+    const bad = await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 99999 }, cashier, { requestId: 'req-x' });
     expect(bad.ok).toBe(false);
-    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 20 }, cashier, { requestId: 'req-x' }));
+    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 14000 }, cashier, { requestId: 'req-x' }));
   });
 
   it('does not let one person replay another person’s request id', async () => {

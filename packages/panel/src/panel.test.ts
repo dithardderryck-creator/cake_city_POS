@@ -187,7 +187,7 @@ describe('orders and stock (BR-03, BR-11)', () => {
     ok(await panel.dispatch('catalogue/set_price', { combinationId: c.combinationId, price: 99 }, owner));
     const card = await panel.feed('order_card', { orderId }, cashier);
     if (!card.ok) throw new Error('card failed');
-    expect(card.data.total).toBe(10); // still 2 x 5
+    expect(card.data.total).toBe(7000); // still 2 x 3500
   });
 
   it('drops stock only when the order is completed, and shows committed stock until then (BR-03)', async () => {
@@ -270,10 +270,10 @@ describe('orders and stock (BR-03, BR-11)', () => {
 });
 
 describe('payments (BR-06, BR-07, BR-08)', () => {
-  async function orderWithTotal20() {
+  async function orderWithTotal() {
     const owner = await signIn('owner');
     const cashier = await signIn('cashier');
-    const c = await combo(owner, 'Chocolate Fudge Cake', 'Slice, Vanilla cream, Standard'); // price 5
+    const c = await combo(owner, 'Chocolate Fudge Cake', 'Slice, Vanilla cream, Standard'); // price 3500, so 4 of them come to 14,000
     const orderId = await newOrder(cashier);
     ok(await panel.dispatch('orders/add_catalogue_line', { orderId, combinationId: c.combinationId, qty: 4 }, cashier));
     return { owner, cashier, orderId };
@@ -285,46 +285,53 @@ describe('payments (BR-06, BR-07, BR-08)', () => {
   };
 
   it('takes full payment in cash and marks the order paid', async () => {
-    const { cashier, orderId } = await orderWithTotal20();
-    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 20 }, cashier));
+    const { cashier, orderId } = await orderWithTotal();
+    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 14000 }, cashier));
     const c = await card(cashier, orderId);
     expect(c.paymentStatus).toBe('paid');
     expect(c.canRecordPayment).toBe(false);
   });
 
   it('needs an explicit exception for a partial payment, then remembers it', async () => {
-    const { cashier, orderId } = await orderWithTotal20();
-    const blocked = await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 8 }, cashier);
+    const { cashier, orderId } = await orderWithTotal();
+    const blocked = await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 8000 }, cashier);
     expect(blocked.ok).toBe(false);
-    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 8, allowPartial: true }, cashier));
+    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 8000, allowPartial: true }, cashier));
     expect((await card(cashier, orderId)).paymentStatus).toBe('partial');
     // Later part-payments on the same order no longer need the exception.
-    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'mobile_money', amount: 5, reference: 'TX123' }, cashier));
-    expect((await card(cashier, orderId)).balance).toBe(7);
+    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'mobile_money', amount: 5000, reference: 'TX123' }, cashier));
+    expect((await card(cashier, orderId)).balance).toBe(1000);
+  });
+
+  it('takes whole shillings only', async () => {
+    const { cashier, orderId } = await orderWithTotal();
+    const cents = await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 100.5, allowPartial: true }, cashier);
+    expect(!cents.ok && cents.error.messages.join(' ')).toMatch(/whole number of shillings/);
+    expect((await card(cashier, orderId)).totalLabel).toBe('TSh 14,000');
   });
 
   it('refuses a payment above the balance', async () => {
-    const { cashier, orderId } = await orderWithTotal20();
-    const r = await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 25 }, cashier);
+    const { cashier, orderId } = await orderWithTotal();
+    const r = await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 15000 }, cashier);
     expect(r.ok).toBe(false);
   });
 
   it('only the owner can refund, and a reason is required (BR-08)', async () => {
-    const { owner, cashier, orderId } = await orderWithTotal20();
-    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 20 }, cashier));
-    const denied = await panel.dispatch('payments/approve_refund', { orderId, amount: 5, reason: 'x', method: 'cash' }, cashier);
+    const { owner, cashier, orderId } = await orderWithTotal();
+    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 14000 }, cashier));
+    const denied = await panel.dispatch('payments/approve_refund', { orderId, amount: 5000, reason: 'x', method: 'cash' }, cashier);
     expect(denied.ok).toBe(false);
-    const noReason = await panel.dispatch('payments/approve_refund', { orderId, amount: 5, reason: ' ', method: 'cash' }, owner);
+    const noReason = await panel.dispatch('payments/approve_refund', { orderId, amount: 5000, reason: ' ', method: 'cash' }, owner);
     expect(noReason.ok).toBe(false);
-    ok(await panel.dispatch('payments/approve_refund', { orderId, amount: 5, reason: 'Customer changed date', method: 'cash' }, owner));
+    ok(await panel.dispatch('payments/approve_refund', { orderId, amount: 5000, reason: 'Customer changed date', method: 'cash' }, owner));
     const c = await card(owner, orderId);
-    expect(c.refundedLabel).toBe('TSh 5');
-    expect(c.balance).toBe(5);
+    expect(c.refundedLabel).toBe('TSh 5,000');
+    expect(c.balance).toBe(5000);
   });
 
   it('a paid order can only be cancelled by the owner', async () => {
-    const { owner, cashier, orderId } = await orderWithTotal20();
-    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 20 }, cashier));
+    const { owner, cashier, orderId } = await orderWithTotal();
+    ok(await panel.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 14000 }, cashier));
     const denied = await panel.dispatch('orders/cancel_order', { orderId }, cashier);
     expect(denied.ok).toBe(false);
     ok(await panel.dispatch('orders/cancel_order', { orderId }, owner));
@@ -332,12 +339,12 @@ describe('payments (BR-06, BR-07, BR-08)', () => {
   });
 
   it('warns when an order is handed over with a balance (open question Q-01)', async () => {
-    const { cashier, orderId } = await orderWithTotal20();
+    const { cashier, orderId } = await orderWithTotal();
     const c = await card(cashier, orderId);
     const line = c.lines[0]!;
     ok(await panel.dispatch('orders/advance_line', { orderId, lineId: line.lineId, to: 'ready' }, cashier));
     const r = await panel.dispatch('orders/advance_line', { orderId, lineId: line.lineId, to: 'completed' }, cashier);
-    expect(r.ok && r.warnings.join(' ')).toMatch(/still has TSh 20 unpaid/);
+    expect(r.ok && r.warnings.join(' ')).toMatch(/still has TSh 14,000 unpaid/);
   });
 });
 

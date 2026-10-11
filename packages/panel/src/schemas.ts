@@ -10,7 +10,8 @@ import { REQUEST_CATEGORIES } from './domain';
  */
 const id = z.string().min(1).max(64);
 const pin = z.string().min(1).max(12);
-const money = z.number().finite().min(0).max(1_000_000_000);
+/** Money is whole shillings (TSh has no cents in daily use). */
+const money = z.number().finite().int('be a whole number of shillings, with no cents').min(0).max(1_000_000_000);
 const name = z.string().max(120);
 const longText = z.string().max(500);
 const method = z.enum(['cash', 'card', 'bank_transfer', 'mobile_money']);
@@ -97,10 +98,10 @@ export const schemas = {
 
   'quotes/request': z.strictObject({ orderId: id, lineId: id, note: longText.optional() }),
   'quotes/mark_seen': z.strictObject({ quoteId: id }),
-  'quotes/provide': z.strictObject({ quoteId: id, price: z.number().finite().min(0).max(1_000_000_000), note: longText.optional() }),
+  'quotes/provide': z.strictObject({ quoteId: id, price: money, note: longText.optional() }),
   'quotes/decline': z.strictObject({ quoteId: id, reason: longText }),
   'quotes/withdraw': z.strictObject({ quoteId: id }),
-  'quotes/revise': z.strictObject({ quoteId: id, price: z.number().finite().min(0).max(1_000_000_000), reason: longText }),
+  'quotes/revise': z.strictObject({ quoteId: id, price: money, reason: longText }),
 
   'settings/update': z.strictObject({
     decoratingStage: z.boolean().optional(),
@@ -113,7 +114,7 @@ export const schemas = {
   'payments/record_payment': z.strictObject({
     orderId: id,
     method,
-    amount: z.number().finite().min(0).max(1_000_000_000),
+    amount: money,
     reference: name.optional(),
     allowPartial: z.boolean().optional(),
   }),

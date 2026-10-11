@@ -99,7 +99,7 @@ describe('selling a cake through the real server', () => {
     if (!line.ok) throw new Error(line.error.messages.join(' '));
     const { lineId } = line.data as { lineId: string };
 
-    const paid = await cashier.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 10 });
+    const paid = await cashier.dispatch('payments/record_payment', { orderId, method: 'cash', amount: 7000 });
     expect(paid.ok && paid.summary).toMatch(/Paid in full/);
 
     for (const to of ['ready', 'out_for_delivery', 'completed'] as const) {

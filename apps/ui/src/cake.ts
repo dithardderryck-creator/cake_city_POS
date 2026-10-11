@@ -174,7 +174,12 @@ export { client };
 
 /** Formats an amount the way the server's own labels do, for the few places a page shows a figure it just added up. */
 export function money(n: number): string {
-  return `TSh ${new Intl.NumberFormat('en', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n)}`;
+  return `TSh ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(n)}`;
+}
+
+/** Formats a plain quantity (not money). */
+export function num(n: number): string {
+  return new Intl.NumberFormat('en', { maximumFractionDigits: 2 }).format(n);
 }
 
 /* ---------- Parts every role page shares: announcements notice, requests and alerts ---------- */

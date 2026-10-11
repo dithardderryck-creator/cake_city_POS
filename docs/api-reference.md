@@ -127,7 +127,7 @@ Allowed: **owner**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `combinationId` | string | yes | min length 1, max length 64 |
-| `price` | number | yes | min 0, max 1000000000 |
+| `price` | integer | yes | min 0, max 1000000000 |
 
 #### `catalogue/fill_price`
 
@@ -137,7 +137,7 @@ Allowed: **owner**
 | --- | --- | --- | --- |
 | `productId` | string | yes | min length 1, max length 64 |
 | `valueId` | string | yes | min length 1, max length 64 |
-| `price` | number | yes | min 0, max 1000000000 |
+| `price` | integer | yes | min 0, max 1000000000 |
 
 #### `catalogue/mark_unavailable`
 
@@ -326,7 +326,7 @@ Allowed: **owner**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `quoteId` | string | yes | min length 1, max length 64 |
-| `price` | number | yes | min 0, max 1000000000 |
+| `price` | integer | yes | min 0, max 1000000000 |
 | `note` | string | no | max length 500 |
 
 #### `quotes/decline`
@@ -353,7 +353,7 @@ Allowed: **owner**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `quoteId` | string | yes | min length 1, max length 64 |
-| `price` | number | yes | min 0, max 1000000000 |
+| `price` | integer | yes | min 0, max 1000000000 |
 | `reason` | string | yes | max length 500 |
 
 ### Settings
@@ -750,7 +750,7 @@ Allowed: **owner, cashier**
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
 | `method` | "cash" \| "card" \| "bank_transfer" \| "mobile_money" | yes |  |
-| `amount` | number | yes | min 0, max 1000000000 |
+| `amount` | integer | yes | min 0, max 1000000000 |
 | `reference` | string | no | max length 120 |
 | `allowPartial` | boolean | no |  |
 
@@ -761,7 +761,7 @@ Allowed: **owner**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
-| `amount` | number | yes | min 0, max 1000000000 |
+| `amount` | integer | yes | min 0, max 1000000000 |
 | `reason` | string | yes | max length 500 |
 | `method` | "cash" \| "card" \| "bank_transfer" \| "mobile_money" | yes |  |
 

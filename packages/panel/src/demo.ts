@@ -69,9 +69,9 @@ export async function seedDemo(store: Store, panel: Panel, hasher: PinHasher = c
     }
   };
 
-  await build('Chocolate Fudge Cake', 'Dark chocolate sponge with a fudge finish.', ['egg', 'gluten', 'dairy'], 5, 4);
-  await build('Red Velvet Cake', 'Soft red sponge with cream cheese frosting.', ['egg', 'gluten', 'dairy'], 6, 3);
-  await build('Lemon Drizzle Cake', 'Zesty sponge soaked in lemon syrup.', ['egg', 'gluten'], 4, 5);
+  await build('Chocolate Fudge Cake', 'Dark chocolate sponge with a fudge finish.', ['egg', 'gluten', 'dairy'], 3500, 4);
+  await build('Red Velvet Cake', 'Soft red sponge with cream cheese frosting.', ['egg', 'gluten', 'dairy'], 4000, 3);
+  await build('Lemon Drizzle Cake', 'Zesty sponge soaked in lemon syrup.', ['egg', 'gluten'], 3000, 5);
 
   await panel.dispatch('auth/sign_out', {}, sid);
 }
