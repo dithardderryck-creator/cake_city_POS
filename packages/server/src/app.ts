@@ -6,6 +6,7 @@ import { createPushTerminal, loadOrCreateVapid } from './push';
 import { createPanel, type Panel, type PinHasher, type Terminals } from '@cake-pos/panel';
 import { createArchiveService, type ArchiveService } from './archive';
 import { createBackupService, createDriveUploader, createFolderUploader, type BackupService, type BackupUploader } from './backup';
+import { createHttpSyncTerminal } from './online-sync';
 import { loadCloud, type Cloud } from './cloud';
 import type { DriveDeps } from './google-drive';
 import type { ServerConfig } from './config';
@@ -93,6 +94,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       log,
     });
     terminals.backup = backup;
+    if (config.onlineDb) terminals.sync = createHttpSyncTerminal({ ...config.onlineDb, deviceId: config.devicePrefix });
 
     const archive = createArchiveService({
       store: db,
@@ -165,6 +167,19 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
         .catch((err) => log.error('Sending notifications failed', errorFields(err)));
     const deliverTimer = setInterval(deliver, 10_000);
     deliverTimer.unref();
+    // Changes go to the online database every few seconds. If it is down they wait here, in order, and nothing is lost.
+    let lastSyncError = '';
+    const syncOnline = () =>
+      panel
+        .syncNow()
+        .then((r) => {
+          if (r.state === 'sent') log.info('Online database', { sent: r.sent });
+          if (r.state === 'failed' && r.error !== lastSyncError) log.warn('Online database did not accept changes', { error: r.error, waiting: r.pending });
+          lastSyncError = r.state === 'failed' ? (r.error ?? '') : '';
+        })
+        .catch((err) => log.error('Online sync failed', errorFields(err)));
+    const syncTimer = config.onlineDb ? setInterval(syncOnline, 10_000) : null;
+    syncTimer?.unref();
 
     const addresses = lanAddresses();
     log.info('Server started', { port, host: config.host, dataDir: config.dataDir, version: VERSION });
@@ -184,6 +199,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
           clearInterval(timer);
           clearInterval(alertTimer);
           clearInterval(deliverTimer);
+          if (syncTimer) clearInterval(syncTimer);
           backup.stop();
           archive.stop();
           await http.close(); // stop taking new requests

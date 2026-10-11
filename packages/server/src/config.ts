@@ -34,6 +34,8 @@ export interface ServerConfig {
   messaging: MessagingConfig;
   /** An email address (or https address) that phone makers' push services can reach if our messages misbehave. Null turns phone notifications off. */
   pushContact: string | null;
+  /** The live online database. Null means the shop runs on this computer alone, with backups. */
+  onlineDb: { url: string; token: string } | null;
 }
 
 export class ConfigError extends Error {}
@@ -99,6 +101,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     logLevel: level,
     messaging: loadMessaging(env),
     pushContact: loadPushContact(env),
+    onlineDb: loadOnlineDb(env),
   };
 }
 
@@ -146,6 +149,13 @@ function webhookUrl(env: NodeJS.ProcessEnv): string {
     throw new ConfigError('MESSAGE_WEBHOOK_URL must be a web address starting with https:// (or http:// for a service on this network).');
   }
   return url;
+}
+
+function loadOnlineDb(env: NodeJS.ProcessEnv): { url: string; token: string } | null {
+  const url = env.ONLINE_DB_URL?.trim();
+  if (!url) return null;
+  if (!/^https:\/\//i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(url)) throw new ConfigError('ONLINE_DB_URL must start with https:// (http:// is only allowed for localhost).');
+  return { url, token: need(env, 'ONLINE_DB_TOKEN', 'ONLINE_DB_URL (the secret the online database expects)') };
 }
 
 function loadPushContact(env: NodeJS.ProcessEnv): string | null {
