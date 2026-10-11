@@ -7,7 +7,7 @@ Things deliberately left out for now. Nothing here blocks the screens that exist
 - **Owner: "what each role can do" table**: the first design had a fixed one. Left out because a fixed table would drift from the server's real rules. If wanted, it should come from the server.
 - **Owner: per-ingredient movement history** (received, used, counted): there is no feed for it yet. The Stock tab shows the forecast line instead.
 ## Change requests from the owner (11 Oct 2026), to be broken down before building
-1. **Currency**: the whole system takes and shows money in TSh (Tanzanian shillings). Today amounts have no currency and the demo prices are tiny.
+1. **Currency**: **PARTLY DONE (11 Oct 2026).** Every money label the server makes and the screens' own totals now read "TSh 12,000". Still to do: the demo prices are tiny (make them realistic shillings); check receipts, exports and spreadsheets (xlsx archive) and any screen that shows a bare number.
 2. ~~**Cashier: sales vs orders**~~ **DONE (11 Oct 2026, backend and cashier page).** New instruction `orders/quick_sale`: walk-in pickup sales of ready-made products are one all-or-nothing step (order, completed lines, stock drop, full payment, receipt). Phone, delivery and part-payment orders still use tickets. Browser test for the cashier page not re-run yet (Playwright not available where this was built); run `npm run ui:test` on a machine that has it.
 3. **Login page**: redesign the page and the flow. Today it lists staff names before anyone signs in and is not professional.
 4. **Nothing hard-coded**: the system should be a pipe for live data. Audit for baked-in names, labels, categories, prices, thresholds, demo data.

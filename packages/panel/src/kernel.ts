@@ -174,7 +174,8 @@ export function describeFeeds() {
   return (Object.keys(feeds) as FeedName[]).map((name) => ({ name, roles: feeds[name].roles }));
 }
 
-const defaultMoney = (n: number) => new Intl.NumberFormat('en', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
+/** Money is Tanzanian shillings (TSh). Shillings have no everyday minor unit, so no decimals unless an amount really has them. */
+const defaultMoney = (n: number) => `TSh ${new Intl.NumberFormat('en', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n)}`;
 
 const HOUR = 3_600_000;
 

@@ -318,7 +318,7 @@ describe('payments (BR-06, BR-07, BR-08)', () => {
     expect(noReason.ok).toBe(false);
     ok(await panel.dispatch('payments/approve_refund', { orderId, amount: 5, reason: 'Customer changed date', method: 'cash' }, owner));
     const c = await card(owner, orderId);
-    expect(c.refundedLabel).toBe('5');
+    expect(c.refundedLabel).toBe('TSh 5');
     expect(c.balance).toBe(5);
   });
 
@@ -337,7 +337,7 @@ describe('payments (BR-06, BR-07, BR-08)', () => {
     const line = c.lines[0]!;
     ok(await panel.dispatch('orders/advance_line', { orderId, lineId: line.lineId, to: 'ready' }, cashier));
     const r = await panel.dispatch('orders/advance_line', { orderId, lineId: line.lineId, to: 'completed' }, cashier);
-    expect(r.ok && r.warnings.join(' ')).toMatch(/still has 20 unpaid/);
+    expect(r.ok && r.warnings.join(' ')).toMatch(/still has TSh 20 unpaid/);
   });
 });
 

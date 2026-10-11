@@ -103,7 +103,7 @@ describe('a custom cake from request to handover', () => {
     ok(await send('owner', 'quotes/provide', { quoteId, price: 120, note: 'Includes the roses' }));
     c = await card('cashier', orderId);
     expect(c).toMatchObject({ status: 'new', total: 120, quotePending: false, canRecordPayment: true });
-    expect(c.lines[0]).toMatchObject({ totalLabel: '120', quote: { status: 'quoted', priceLabel: '120', answer: 'Includes the roses' } });
+    expect(c.lines[0]).toMatchObject({ totalLabel: 'TSh 120', quote: { status: 'quoted', priceLabel: 'TSh 120', answer: 'Includes the roses' } });
 
     ok(await send('cashier', 'payments/record_payment', { orderId, method: 'cash', amount: 120 }));
 
@@ -270,13 +270,13 @@ describe('the quote conversation', () => {
     expect(errOf(await send('owner', 'quotes/revise', { quoteId, price: 150, reason: '' }))).toMatch(/Say why/);
     expect(errOf(await send('owner', 'quotes/revise', { quoteId, price: 100, reason: 'same' }))).toMatch(/same as the current/);
     const r = await send('owner', 'quotes/revise', { quoteId, price: 150, reason: 'Customer added a tier' });
-    expect(r.ok && r.warnings.join(' ')).toMatch(/50 is now due/);
+    expect(r.ok && r.warnings.join(' ')).toMatch(/TSh 50 is now due/);
     expect(await card('owner', orderId)).toMatchObject({ total: 150, balance: 50, paymentStatus: 'partial' });
 
     ok(await send('baker', 'orders/advance_line', { orderId, lineId, to: 'in_production' }));
     expect(errOf(await send('owner', 'quotes/revise', { quoteId, price: 200, reason: 'late change' }))).toMatch(/Baking has started/);
     const audit = await panel.feed('audit_view', {}, sid.owner);
-    expect(audit.ok && audit.data.some((a) => a.summary.includes('from 100 to 150') && a.summary.includes('Customer added a tier'))).toBe(true);
+    expect(audit.ok && audit.data.some((a) => a.summary.includes('from TSh 100 to TSh 150') && a.summary.includes('Customer added a tier'))).toBe(true);
   });
 });
 
