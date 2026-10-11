@@ -1,6 +1,6 @@
 import type { UnitCode } from './units';
 import type { AlertKind, MessageLevel, REQUEST_CATEGORIES } from './domain';
-import type { CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
+import type { Device, CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
 /**
@@ -11,6 +11,15 @@ export interface IntentMap {
   'auth/sign_in': { userId: Id; pin: string };
   'auth/sign_out': Record<string, never>;
   'auth/change_pin': { currentPin: string; newPin: string };
+
+  /** Owner or IT: make a one-time code (valid about 10 minutes) that registers one device under the given name. */
+  'devices/create_code': { name: string };
+  'devices/cancel_code': { codeId: string };
+  /** Public on purpose: a device that is not registered yet has nothing else to prove itself with. Uses up the code. */
+  'devices/pair': { code: string };
+  'devices/rename': { deviceId: Id; name: string };
+  /** The device can no longer reach sign-in, and everyone signed in on it is signed out. */
+  'devices/revoke': { deviceId: Id };
 
   'staff/create': { name: string; role: Role; pin: string };
   'staff/set_pin': { userId: Id; pin: string };
@@ -205,7 +214,7 @@ export interface IntentMap {
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync';
+export type CircuitName = 'Auth' | 'Devices' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [
@@ -226,6 +235,10 @@ export interface PanelConfig {
   sessionIdleMs: number;
   /** A session ends this long after sign-in, however busy. */
   sessionMaxMs: number;
+  /** Only registered devices may sign in or see the staff names. */
+  requireDevice: boolean;
+  /** How long a pairing code works. */
+  pairingCodeMs: number;
 }
 
 export interface HandlerCtx {
@@ -237,10 +250,16 @@ export interface HandlerCtx {
   hasher: PinHasher;
   secrets: Secrets;
   session: Session | null;
+  /** The registered device this request came from, if it sent a valid secret and was not revoked. */
+  device: Device | null;
+  /** The secret the device sent, so a handler can tell "none" from "unknown". */
+  deviceToken: string | undefined;
   now(): string;
   /** Returns the bearer token. Only its hash is stored. */
-  issueSession(s: Session): Promise<string>;
+  issueSession(s: Session, deviceId?: string): Promise<string>;
   endSession(token: string | undefined): Promise<void>;
+  /** End every sign-in made on one device. */
+  revokeDeviceSessions(deviceId: string): Promise<void>;
   /** End every session of a person, optionally keeping the one they are using now. */
   revokeSessions(userId: string, exceptToken?: string): Promise<void>;
   /** The bearer token of the current request, if any. */

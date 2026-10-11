@@ -34,6 +34,49 @@ Allowed: **owner, cashier, baker, inventory, it**
 | `currentPin` | string | yes | min length 1, max length 12 |
 | `newPin` | string | yes | min length 1, max length 12 |
 
+### Devices
+
+#### `devices/create_code`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `name` | string | yes | max length 120 |
+
+#### `devices/cancel_code`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `codeId` | string | yes | min length 1, max length 64 |
+
+#### `devices/pair`
+
+Allowed: **anyone (no sign-in)**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `code` | string | yes | min length 1, max length 40 |
+
+#### `devices/rename`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `deviceId` | string | yes | min length 1, max length 64 |
+| `name` | string | yes | max length 120 |
+
+#### `devices/revoke`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `deviceId` | string | yes | min length 1, max length 64 |
+
 ### Staff
 
 #### `staff/create`
@@ -840,6 +883,12 @@ _No fields. Send an empty object `{}`._
 #### `staff_signin`
 
 Allowed: **anyone (no sign-in)**
+
+_No fields. Send an empty object `{}`._
+
+#### `device_list`
+
+Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 

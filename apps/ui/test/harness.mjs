@@ -14,7 +14,7 @@ const adminJs = path.join(root, 'packages/server/dist/cake-pos-admin.mjs');
 
 export const PINS = { owner: '1111', cashier: '2222', baker: '3333', inventory: '4444', it: '9999' };
 
-export async function startShop({ seed = true } = {}) {
+export async function startShop({ seed = true, requireDevice = false } = {}) {
   if (!fs.existsSync(serverJs)) throw new Error('Build the server first: npm run build -w @cake-pos/server');
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'cakepos-ui-'));
   const port = await new Promise((resolve) => {
@@ -30,6 +30,8 @@ export async function startShop({ seed = true } = {}) {
     HOST: '127.0.0.1',
     STATIC_DIR: process.env.UI_DIST ? path.resolve(process.env.UI_DIST) : path.join(root, 'apps/ui/dist'),
     LOG_LEVEL: 'warn',
+    // Most browser checks are not about devices, so the device check is off unless a test asks for it.
+    REQUIRE_DEVICE: requireDevice ? '1' : '0',
   };
   if (seed) execFileSync(process.execPath, [adminJs, 'seed-demo', '--yes'], { env, encoding: 'utf8' });
   const child = spawn(process.execPath, [serverJs], { env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -46,6 +48,11 @@ export async function startShop({ seed = true } = {}) {
     base: `http://127.0.0.1:${port}`,
     port,
     env,
+    /** A one-time pairing code, made the way a person at the shop computer would (admin tool). */
+    deviceCode: (name) => {
+      const out = execFileSync(process.execPath, [adminJs, 'device-code', '--name', name], { env, encoding: 'utf8' });
+      return /([A-Z0-9]{4}-[A-Z0-9]{4})/.exec(out)[1];
+    },
     stop: () =>
       new Promise((resolve) => {
         child.once('exit', () => {

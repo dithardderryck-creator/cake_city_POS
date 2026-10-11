@@ -22,6 +22,30 @@ export type LineStatus =
 export type OrderStatus = LineStatus | 'empty';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
 
+/** A phone, tablet or computer the owner or IT has allowed to use the system. Only a hash of its secret is kept. */
+export interface Device {
+  id: Id;
+  name: string;
+  tokenHash: string;
+  createdAt: string;
+  createdByName: string;
+  lastSeenAt?: string;
+  revokedAt?: string;
+  revokedByName?: string;
+}
+
+/** A one-time code that lets one device register itself. Only a hash of the code is kept. */
+export interface PairingCode {
+  id: string;
+  /** The name the device will get, such as "Counter tablet". */
+  name: string;
+  createdAt: string;
+  expiresAt: string;
+  createdByName: string;
+  usedAt?: string;
+  cancelledAt?: string;
+}
+
 export interface Session {
   userId: Id;
   name: string;

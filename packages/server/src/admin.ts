@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createIds, type AuditEntry, type PinHasher, type Role, type Staff, type Store } from '@cake-pos/panel';
+import { codeHash, createIds, createSecrets, newPairingCode, showCode, type AuditEntry, type PairingCode, type PinHasher, type Role, type Staff, type Store } from '@cake-pos/panel';
 import { stamp, verifyBackupFile } from './backup';
 import { serverRunning } from './lock';
 
@@ -17,6 +17,26 @@ async function audit(store: Store, summary: string, intent: string, target?: str
     summary,
     outcome: 'ok',
   });
+}
+
+/**
+ * A one-time code that registers one device, made on the server itself. This is how the very first device (the owner's) gets in,
+ * before anyone can sign in to make codes from the owner page. Valid for 10 minutes.
+ */
+export async function makePairingCode(store: Store, o: { name: string; minutes?: number }): Promise<{ code: string; name: string; expiresAt: string }> {
+  const name = o.name.trim() || 'First device';
+  const code = newPairingCode(createSecrets().token());
+  const at = Date.now();
+  const rec: PairingCode = {
+    id: await codeHash(code),
+    name,
+    createdAt: new Date(at).toISOString(),
+    expiresAt: new Date(at + (o.minutes ?? 10) * 60_000).toISOString(),
+    createdByName: 'Admin tool on the server',
+  };
+  await store.put('pairingCodes', rec);
+  await audit(store, `Made a pairing code for "${name}"`, 'admin/device_code', rec.id);
+  return { code: showCode(code), name, expiresAt: rec.expiresAt };
 }
 
 export async function listStaff(store: Store) {

@@ -21,7 +21,7 @@ async function boot(google: FakeGoogle | null) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cakepos-online-'));
   cleanups.push(() => fs.rmSync(dataDir, { recursive: true, force: true }));
   if (google) saveDriveCredentials(path.join(dataDir, 'google-drive.json'), { clientId: 'i', clientSecret: 's', refreshToken: 'r', folderName: 'Cake POS', account: 'owner@example.com' });
-  const config = loadConfig({ DATA_DIR: dataDir, PORT: '0', HOST: '127.0.0.1' });
+  const config = loadConfig({ DATA_DIR: dataDir, PORT: '0', HOST: '127.0.0.1', REQUIRE_DEVICE: '0' });
   const log = createLogger({ level: 'error', stdout: false });
   const server = await startServer({ config, log, driveDeps: google ? { endpoints: google.endpoints } : undefined });
   cleanups.push(async () => {

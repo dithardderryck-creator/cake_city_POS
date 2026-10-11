@@ -20,7 +20,7 @@ export interface Change {
 }
 
 /** Things that belong to one machine or are only housekeeping. They are never copied online. */
-const LOCAL_ONLY: ReadonlySet<string> = new Set(['changes', 'outbox', 'sessions', 'loginState', 'pushSubscriptions', 'photoData']);
+const LOCAL_ONLY: ReadonlySet<string> = new Set(['changes', 'outbox', 'sessions', 'loginState', 'pushSubscriptions', 'photoData', 'devices', 'pairingCodes']);
 export const isSynced = (c: string) => !LOCAL_ONLY.has(c);
 
 interface Counter {

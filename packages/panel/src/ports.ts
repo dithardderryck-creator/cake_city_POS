@@ -35,6 +35,8 @@ export const COLLECTIONS = [
   'countSessions',
   'batches',
   'changes',
+  'devices',
+  'pairingCodes',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

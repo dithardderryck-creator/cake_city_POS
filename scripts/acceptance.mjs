@@ -52,10 +52,12 @@ const stop = (signal = 'SIGTERM') =>
     server.kill(signal);
   });
 
+// The secret this "browser" got when it was registered. Every request carries it, as the real pages do.
+let deviceToken = '';
 async function api(p, body, token) {
   const res = await fetch(base + p, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    headers: { 'content-type': 'application/json', ...(deviceToken ? { 'x-device-token': deviceToken } : {}), ...(token ? { authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify(body ?? {}),
   });
   return { status: res.status, ...(await res.json()) };
@@ -71,7 +73,7 @@ const feed = async (token, name, params = {}) => {
   return r.data;
 };
 async function signIn(role, pin) {
-  const staff = await (await fetch(base + '/api/staff')).json();
+  const staff = await (await fetch(base + '/api/staff', { headers: deviceToken ? { 'x-device-token': deviceToken } : {} })).json();
   const who = staff.data.find((s) => s.role === role);
   const r = await api('/api/sign-in', { userId: who.id, pin });
   assert.ok(r.ok, `sign-in failed: ${JSON.stringify(r.error)}`);
@@ -93,6 +95,19 @@ try {
   }
   ok('the server serves the sign-in page, the four role pages and the shared script');
   assert.equal((await (await fetch(base + '/api/health')).json()).ok, true);
+
+  // ---- Only a registered device gets in ----
+  const stranger = await fetch(base + '/api/staff');
+  assert.equal(stranger.status, 403, 'an unregistered device is shown no staff');
+  const refused = await api('/api/sign-in', { userId: 'x', pin: '2468' });
+  assert.equal(refused.status, 403, 'an unregistered device cannot sign in');
+  const made = admin('device-code', '--name', 'Shop laptop');
+  const code = /([A-Z0-9]{4}-[A-Z0-9]{4})/.exec(made)[1];
+  const paired = await api('/api/pair', { code });
+  assert.ok(paired.ok && paired.deviceToken, 'the one-time code registers a device');
+  assert.equal((await api('/api/pair', { code })).ok, false, 'the code works only once');
+  deviceToken = paired.deviceToken;
+  ok('an unregistered device is turned away; a one-time code registers the first one');
 
   // ---- The owner builds the shop through the API alone ----
   const owner = await signIn('owner', '2468');

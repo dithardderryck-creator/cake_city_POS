@@ -25,7 +25,7 @@ afterEach(async () => {
 const dirs = new WeakMap<RunningServer, string>();
 async function boot(): Promise<RunningServer> {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cakepos-react-'));
-  const config = loadConfig({ DATA_DIR: dataDir, PORT: '0', HOST: '127.0.0.1' });
+  const config = loadConfig({ DATA_DIR: dataDir, PORT: '0', HOST: '127.0.0.1', REQUIRE_DEVICE: '0' });
   const log = createLogger({ level: 'error', dir: path.join(dataDir, 'logs'), stdout: false });
   const server = await startServer({ config, log });
   cleanups.push(async () => {
@@ -155,7 +155,7 @@ describe('React hooks against a real server', () => {
 
     // restart on the same data and port
     const dataDir = dirs.get(server)!;
-    const config = loadConfig({ DATA_DIR: dataDir, PORT: String(port), HOST: '127.0.0.1' });
+    const config = loadConfig({ DATA_DIR: dataDir, PORT: String(port), HOST: '127.0.0.1', REQUIRE_DEVICE: '0' });
     const log = createLogger({ level: 'error', dir: path.join(dataDir, 'logs'), stdout: false });
     const again = await startServer({ config, log });
     cleanups.push(async () => {

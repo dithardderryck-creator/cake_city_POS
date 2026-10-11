@@ -37,6 +37,7 @@ npm run build && npm run acceptance   # plays the owner against the built server
 # Run the real thing:
 npm run build
 npm run admin -- create-owner --name "Amina"     # asks for a PIN
+npm run admin -- device-code --name "Office laptop"   # a one-time code that registers the first browser
 npm run start                                    # serves the pages too; prints the addresses to open on other devices
 ```
 

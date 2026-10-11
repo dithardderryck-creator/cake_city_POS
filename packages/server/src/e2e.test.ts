@@ -8,7 +8,8 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WebSocket } from 'ws';
 import { CLIENT_DEFAULTS, createClient, type Client, type ClientOptions } from '@cake-pos/client';
-import { seedDemo } from '@cake-pos/panel';
+import { createPanel, seedDemo } from '@cake-pos/panel';
+import { makePairingCode } from './admin';
 import { startServer, type RunningServer } from './app';
 import { loadConfig } from './config';
 import { LockedError } from './lock';
@@ -36,7 +37,7 @@ interface Booted {
 
 async function boot(o: { dataDir?: string; env?: Record<string, string>; seed?: boolean } = {}): Promise<Booted> {
   const dataDir = o.dataDir ?? tmpDir();
-  const config = loadConfig({ DATA_DIR: dataDir, PORT: '0', HOST: '127.0.0.1', ALLOWED_ORIGINS: 'http://allowed.test', ...o.env });
+  const config = loadConfig({ DATA_DIR: dataDir, PORT: '0', HOST: '127.0.0.1', ALLOWED_ORIGINS: 'http://allowed.test', REQUIRE_DEVICE: '0', ...o.env });
   const logDir = path.join(dataDir, 'logs');
   const log = createLogger({ level: 'debug', dir: logDir, stdout: false });
   const server = await startServer({ config, log });
@@ -44,7 +45,11 @@ async function boot(o: { dataDir?: string; env?: Record<string, string>; seed?: 
     await server.close();
     log.close();
   });
-  if (o.seed !== false) await seedDemo(server.store, server.panel, createScryptHasher());
+  if (o.seed !== false) {
+    // Seeding signs in as the owner, which a device-checking panel would refuse, so it uses its own open panel on the same data.
+    const hasher = createScryptHasher();
+    await seedDemo(server.store, createPanel({ store: server.store, hasher }), hasher);
+  }
   return { server, dataDir, logDir };
 }
 
@@ -790,5 +795,86 @@ describe('ingredient usage through the real server', () => {
     await cleanups.pop()!(); // stop the first server
     const second = await key();
     expect(second).toBe(first);
+  });
+});
+
+/* ---------- registered devices ---------- */
+
+describe('registered devices', () => {
+  const memoryStore = () => {
+    let v: string | null = null;
+    return { get: () => v, set: (t: string | null) => void (v = t) };
+  };
+
+  it('shuts out an unregistered browser, registers it with a one-time code, and revokes it for good', async () => {
+    const { server } = await boot({ env: { REQUIRE_DEVICE: '1' } });
+    const stranger = clientFor(server, { deviceStore: memoryStore() });
+
+    // Nothing to see: no names, no sign-in.
+    expect(await stranger.deviceStatus()).toEqual({ required: true, registered: false });
+    expect(await stranger.staff()).toEqual([]);
+    const raw = await fetch(server.url + '/api/staff');
+    expect(raw.status).toBe(403);
+    expect(JSON.stringify(await raw.json())).not.toMatch(/Amina|Baraka|Neema/);
+    const refused = await fetch(server.url + '/api/sign-in', { method: 'POST', headers: json, body: JSON.stringify({ userId: 'x', pin: '1111' }) });
+    expect(refused.status).toBe(403);
+
+    // A wrong code is refused.
+    const wrong = await stranger.pairDevice('AAAA-AAAA');
+    expect(wrong.ok).toBe(false);
+
+    // The server computer makes the first code (admin tool), the browser uses it.
+    const { code } = await makePairingCode(server.store, { name: 'Office laptop' });
+    const paired = await stranger.pairDevice(code);
+    expect(paired).toEqual({ ok: true, name: 'Office laptop' });
+    expect(await stranger.deviceStatus()).toEqual({ required: true, registered: true, name: 'Office laptop' });
+    expect((await stranger.pairDevice(code)).ok).toBe(false); // one use only
+
+    // Now the names show and the owner can sign in, over the live connection too.
+    const staff = await stranger.staff();
+    expect(staff.length).toBeGreaterThan(0);
+    const owner = staff.find((s) => s.role === 'owner')!;
+    expect((await stranger.signIn(owner.id, PINS.owner)).ok).toBe(true);
+    let live: unknown;
+    stranger.subscribe('device_list', {}, (r) => (live = r.ok ? r.data : undefined));
+    const seen = await waitFor(() => live as { devices: Array<{ name: string; isThis: boolean }> } | undefined);
+    expect(seen.devices.find((d) => d.isThis)?.name).toBe('Office laptop');
+
+    // The owner makes a code from the screen for a second browser (a tablet).
+    const made = await stranger.dispatch('devices/create_code', { name: 'Counter tablet' });
+    expect(made.ok).toBe(true);
+    const tabletCode = (made as { data: { code: string } }).data.code;
+    const tablet = clientFor(server, { deviceStore: memoryStore() });
+    expect((await tablet.pairDevice(tabletCode)).ok).toBe(true);
+    const cashier = (await tablet.staff()).find((s) => s.role === 'cashier')!;
+    expect((await tablet.signIn(cashier.id, PINS.cashier)).ok).toBe(true);
+    expect((await tablet.feed('me', {})).ok).toBe(true);
+
+    // Revoke the tablet: its cashier is signed out at once and it cannot come back.
+    const list = await stranger.feed('device_list', {});
+    const row = list.ok && list.data.devices.find((d) => d.name === 'Counter tablet');
+    expect(row).toBeTruthy();
+    expect((await stranger.dispatch('devices/revoke', { deviceId: (row as { id: string }).id })).ok).toBe(true);
+    const after = await tablet.feed('me', {});
+    expect(after.ok).toBe(false);
+    expect(await tablet.deviceStatus()).toEqual({ required: true, registered: false });
+    expect(await tablet.staff()).toEqual([]);
+  });
+
+  it('slows down someone guessing pairing codes', async () => {
+    const { server } = await boot({ env: { REQUIRE_DEVICE: '1' } });
+    let limited = 0;
+    for (let i = 0; i < 14; i++) {
+      const r = await fetch(server.url + '/api/pair', { method: 'POST', headers: json, body: JSON.stringify({ code: `AAAA-AAA${i % 10}` }) });
+      if (r.status === 429) limited++;
+    }
+    expect(limited).toBeGreaterThan(0);
+  });
+
+  it('lets everyone in when the host switches the check off', async () => {
+    const { server } = await boot({ env: { REQUIRE_DEVICE: '0' } });
+    const c = clientFor(server);
+    expect(await c.deviceStatus()).toEqual({ required: false, registered: false });
+    expect((await c.staff()).length).toBeGreaterThan(0);
   });
 });

@@ -79,6 +79,8 @@ export interface ClientOptions {
   fetch?: typeof fetch;
   WebSocket?: SocketCtor;
   tokenStore?: TokenStore;
+  /** Keeps the secret this browser got when it was registered. Use `localStorageTokenStore('cake-pos-device')` in a page. */
+  deviceStore?: TokenStore;
   /** How many times to retry when the network fails. The same request id is reused, so nothing runs twice. */
   retries?: number;
   /** How long one attempt may take before it is abandoned. */
@@ -91,9 +93,16 @@ export interface ClientOptions {
   onSignedOut?: () => void;
 }
 
+export type DeviceStatus = { required: boolean; registered: boolean; name?: string };
+export type PairResult = { ok: true; name: string } | { ok: false; code: string; messages: string[] };
+
 export type SignInResult = { ok: true; session: SessionInfo } | { ok: false; code: string; messages: string[] };
 
 export interface Client {
+  /** Is this browser registered? Null when the server cannot be reached. Forgets a saved secret the server no longer knows (revoked). */
+  deviceStatus(): Promise<DeviceStatus | null>;
+  /** Register this browser with a one-time code from the owner or IT. Saves the secret it gets back. */
+  pairDevice(code: string): Promise<PairResult>;
   staff(): Promise<StaffSigninRow[]>;
   signIn(userId: string, pin: string): Promise<SignInResult>;
   /** Use a saved token. Returns who is signed in, or null if there is no valid sign-in. */
@@ -144,6 +153,11 @@ export function createClient(options: ClientOptions = {}): Client {
   const signedOutListeners = new Set<() => void>();
   const base = (options.baseUrl ?? '').replace(/\/$/, '');
   let token: string | null = options.tokenStore?.get() ?? null;
+  const deviceToken = () => options.deviceStore?.get() ?? null;
+  const deviceHeader = (): Record<string, string> => {
+    const d = deviceToken();
+    return d ? { 'x-device-token': d } : {};
+  };
 
   const setToken = (t: string | null) => {
     token = t;
@@ -193,7 +207,7 @@ export function createClient(options: ClientOptions = {}): Client {
       path,
       (t) => ({
         method: 'POST',
-        headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) },
+        headers: { 'content-type': 'application/json', ...deviceHeader(), ...(t ? { authorization: `Bearer ${t}` } : {}) },
         body: JSON.stringify(body),
       }),
       (res) => res.json().catch(() => null) as Promise<unknown>,
@@ -243,7 +257,7 @@ export function createClient(options: ClientOptions = {}): Client {
     const ws = new Ctor(wsUrl());
     socket = ws;
     authed = false;
-    ws.onopen = () => ws.send(JSON.stringify({ op: 'auth', token }));
+    ws.onopen = () => ws.send(JSON.stringify({ op: 'auth', token, deviceToken: deviceToken() ?? undefined }));
     ws.onmessage = (ev) => {
       let msg: { op: string; id?: string; ok?: boolean; result?: FeedResult<never>; error?: { code: string } };
       try {
@@ -261,7 +275,7 @@ export function createClient(options: ClientOptions = {}): Client {
         failures = 0;
         setState('online');
         // On every (re)connection the server sends the current state of each feed straight away.
-        for (const s of subs.values()) ws.send(JSON.stringify({ op: 'subscribe', id: s.id, name: s.name, params: s.params }));
+        for (const s of subs.values()) ws.send(JSON.stringify({ op: 'subscribe', id: s.id, name: s.name, params: s.params, deviceToken: deviceToken() ?? undefined }));
       } else if (msg.op === 'feed' && msg.id && msg.result) {
         if (!msg.result.ok && msg.result.error.code === 'unauthenticated') lostSignIn();
         subs.get(msg.id)?.listener(msg.result);
@@ -301,9 +315,32 @@ export function createClient(options: ClientOptions = {}): Client {
       return token !== null;
     },
 
+    async deviceStatus() {
+      try {
+        const res = await f(base + '/api/device', { headers: deviceHeader(), signal: AbortSignal.timeout(timeoutMs) });
+        const j = (await res.json()) as { ok?: boolean } & DeviceStatus;
+        if (!j?.ok) return null;
+        if (j.required && !j.registered && deviceToken()) options.deviceStore?.set(null);
+        return { required: j.required, registered: j.registered, ...(j.name ? { name: j.name } : {}) };
+      } catch {
+        return null;
+      }
+    },
+
+    async pairDevice(code) {
+      const r = await post('/api/pair', { code }, null);
+      if (r === 'offline') return { ok: false, code: 'offline', messages: offlineResult().error.messages };
+      const j = r.json as { ok: boolean; deviceToken?: string; deviceName?: string; error?: { code: string; messages: string[] } } | null;
+      if (j?.ok && j.deviceToken) {
+        options.deviceStore?.set(j.deviceToken);
+        return { ok: true, name: j.deviceName ?? 'This device' };
+      }
+      return { ok: false, code: j?.error?.code ?? 'error', messages: j?.error?.messages ?? ['Could not register this device.'] };
+    },
+
     async staff() {
       try {
-        const res = await f(base + '/api/staff', { signal: AbortSignal.timeout(timeoutMs) });
+        const res = await f(base + '/api/staff', { headers: deviceHeader(), signal: AbortSignal.timeout(timeoutMs) });
         const json = (await res.json()) as FeedResult<StaffSigninRow[]>;
         return json.ok ? json.data : [];
       } catch {

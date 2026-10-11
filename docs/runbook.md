@@ -23,9 +23,15 @@ npm run build            # builds the server and the web app
 # 3. Create the first owner. It asks for a PIN, and hides what you type.
 npm run admin -- create-owner --name "Amina"
 
-# 4. Start the server
+# 4. Register this computer's browser as the first device (the system only opens on registered devices)
+npm run admin -- device-code --name "Office laptop"
+#    It prints a code like 7QKX-2MPD. Valid 10 minutes, works once.
+
+# 5. Start the server
 npm run start
 ```
+
+Open the address on the computer, type the code on the first screen, then sign in with the owner's PIN. After that the owner registers every other phone, tablet and computer from **Staff → Devices** (Make a code, type it on the new device). Revoke a lost or stolen device there too: everyone signed in on it is signed out straight away.
 
 It prints the addresses, for example `http://192.168.1.20:8787`. Open that on any phone, tablet or computer on the shop wifi.
 
@@ -53,6 +59,7 @@ Set these as environment variables before starting. All are optional.
 | `ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Other web addresses allowed to call the API. Comma-separated, or `*` |
 | `STATIC_DIR` | `apps/ui/dist` when started with `npm start`, otherwise none | Folder of built pages to serve |
 | `TLS_CERT`, `TLS_KEY` | none | Paths to a certificate and key, to serve HTTPS. Set both or neither |
+| `REQUIRE_DEVICE` | on | Only registered devices can sign in or see staff names. Set `0` to switch it off (try-outs only) |
 | `DEVICE_PREFIX` | S | 1 to 3 letters at the start of order numbers (S-0001) |
 | `LOG_LEVEL` | info | debug, info, warn or error |
 | `SMS_PROVIDER` | none | `twilio`, `africastalking` or `webhook`. Needs the matching settings below |

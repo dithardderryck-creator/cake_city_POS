@@ -1,6 +1,7 @@
 import type { Staff } from '../domain';
 import type { Registry } from '../intents';
 import { checkPin } from './pin';
+import { NOT_REGISTERED } from './devices';
 
 const PIN = /^\d{4,6}$/;
 
@@ -14,6 +15,9 @@ export const authIntents = {
       return errors;
     },
     handle: async (p, ctx) => {
+      if (ctx.config.requireDevice && !ctx.device) {
+        return { summary: 'Sign-in refused: this device is not registered', failure: { code: 'forbidden', messages: [NOT_REGISTERED] }, skipSync: true };
+      }
       const staff = await ctx.store.get<Staff>('staff', p.userId);
       const check = await checkPin(ctx, staff, p.userId, p.pin);
       if (!check.ok || !staff) {
@@ -25,7 +29,7 @@ export const authIntents = {
         };
       }
       const session = { userId: staff.id, name: staff.name, role: staff.role };
-      const sessionId = await ctx.issueSession(session);
+      const sessionId = await ctx.issueSession(session, ctx.device?.id);
       return {
         summary: `${staff.name} signed in`,
         target: staff.id,

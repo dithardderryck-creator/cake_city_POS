@@ -66,6 +66,8 @@ export interface HttpOptions {
 export function createHttpServer(o: HttpOptions): HttpHandle {
   const { panel, log } = o;
   const signInLimit = rateLimiter(20, 60_000);
+  // Pairing codes are guessable only by trying many, so guessing is slowed hard: 10 tries a minute per address.
+  const pairLimit = rateLimiter(10, 60_000);
   const sockets = new Set<WebSocket>();
 
   const originAllowed = (origin: string | undefined) =>
@@ -131,6 +133,13 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
     return m?.[1];
   };
 
+  /** The secret a registered browser keeps and sends with every request. Not a login: it only says "this device was let in". */
+  const deviceOf = (req: http.IncomingMessage) => {
+    const v = req.headers['x-device-token'];
+    const t = Array.isArray(v) ? v[0] : v;
+    return t && t.length <= 200 ? t : undefined;
+  };
+
   // The socket is gone if the client hung up before we answered, so this must not assume it exists.
   const ipOf = (req: http.IncomingMessage) => req.socket?.remoteAddress ?? 'unknown';
 
@@ -170,7 +179,7 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
       res.writeHead(204, {
         ...baseHeaders(req, true),
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Device-Token',
         'Access-Control-Max-Age': '600',
       });
       res.end();
@@ -191,8 +200,13 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
     }
 
     if (req.method === 'GET' && p === '/api/staff') {
-      const r = await panel.feed('staff_signin', {});
+      const r = await panel.feed('staff_signin', {}, undefined, deviceOf(req));
       sendJson(req, res, r.ok ? 200 : statusFor(r.error.code), r);
+      return {};
+    }
+
+    if (req.method === 'GET' && p === '/api/device') {
+      sendJson(req, res, 200, { ok: true, ...(await panel.deviceStatus(deviceOf(req))) });
       return {};
     }
 
@@ -229,9 +243,21 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
     const body = await readJson(req);
     const token = bearer(req);
 
+    if (p === '/api/pair') {
+      if (!pairLimit(ipOf(req))) throw new HttpError(429, 'forbidden', 'Too many tries. Wait a minute and try again.');
+      const r = await panel.dispatch('devices/pair', { code: body.code as string }, undefined, { deviceToken: deviceOf(req) });
+      if (!r.ok) {
+        sendJson(req, res, statusFor(r.error.code), r);
+        return { note: 'pairing refused' };
+      }
+      const data = r.data as { deviceToken: string; deviceName: string };
+      sendJson(req, res, 200, { ok: true, deviceToken: data.deviceToken, deviceName: data.deviceName });
+      return { note: 'device paired' };
+    }
+
     if (p === '/api/sign-in') {
       if (!signInLimit(ipOf(req))) throw new HttpError(429, 'forbidden', 'Too many sign-in attempts. Wait a minute and try again.');
-      const r = await panel.dispatch('auth/sign_in', { userId: body.userId as string, pin: body.pin as string });
+      const r = await panel.dispatch('auth/sign_in', { userId: body.userId as string, pin: body.pin as string }, undefined, { deviceToken: deviceOf(req) });
       if (!r.ok) {
         sendJson(req, res, r.error.code === 'unauthenticated' ? 403 : statusFor(r.error.code), r);
         return { note: 'sign-in refused' };
@@ -250,14 +276,14 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
     if (p === '/api/dispatch') {
       if (typeof body.type !== 'string') throw new HttpError(422, 'invalid', 'Send { "type": "...", "payload": { ... } }.');
       const requestId = typeof body.requestId === 'string' && body.requestId.length <= 80 ? body.requestId : undefined;
-      const r: DispatchResult = await panel.dispatch(body.type as IntentName, (body.payload ?? {}) as never, token, { requestId });
+      const r: DispatchResult = await panel.dispatch(body.type as IntentName, (body.payload ?? {}) as never, token, { requestId, deviceToken: deviceOf(req) });
       sendJson(req, res, r.ok ? 200 : statusFor(r.error.code), r);
       return { note: `${body.type}${r.ok ? '' : ` -> ${r.error.code}`}` };
     }
 
     if (p === '/api/feed') {
       if (typeof body.name !== 'string') throw new HttpError(422, 'invalid', 'Send { "name": "...", "params": { ... } }.');
-      const r: FeedResult<unknown> = await panel.feed(body.name as FeedName, (body.params ?? {}) as never, token);
+      const r: FeedResult<unknown> = await panel.feed(body.name as FeedName, (body.params ?? {}) as never, token, deviceOf(req));
       sendJson(req, res, r.ok ? 200 : statusFor(r.error.code), r);
       return { note: String(body.name) };
     }
@@ -306,6 +332,7 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
   wss.on('connection', (ws: WebSocket) => {
     sockets.add(ws);
     let token: string | undefined;
+    let deviceToken: string | undefined;
     let alive = true;
     const subs = new Map<string, () => void>();
     const send = (msg: unknown) => ws.readyState === ws.OPEN && ws.send(JSON.stringify(msg));
@@ -321,12 +348,14 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
     ws.on('pong', () => (alive = true));
 
     ws.on('message', async (raw) => {
-      let msg: { op?: string; id?: unknown; name?: unknown; params?: unknown; token?: unknown };
+      let msg: { op?: string; id?: unknown; name?: unknown; params?: unknown; token?: unknown; deviceToken?: unknown };
       try {
         msg = JSON.parse(raw.toString());
       } catch {
         return send({ op: 'error', error: { code: 'invalid', messages: ['That message was not valid JSON.'] } });
       }
+      // A browser cannot set headers on a WebSocket, so it sends its device secret in the messages instead.
+      if (typeof msg.deviceToken === 'string' && msg.deviceToken.length <= 200) deviceToken = msg.deviceToken;
       switch (msg.op) {
         case 'auth': {
           const r = await panel.feed('navigation', {}, typeof msg.token === 'string' ? msg.token : undefined);
@@ -340,7 +369,7 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
           if (subs.size >= 30 && !subs.has(msg.id)) return send({ op: 'error', id: msg.id, error: { code: 'invalid', messages: ['Too many live feeds on one connection.'] } });
           subs.get(msg.id)?.();
           const id = msg.id;
-          subs.set(id, panel.subscribe(msg.name as FeedName, (msg.params ?? {}) as never, token, (result) => send({ op: 'feed', id, result })));
+          subs.set(id, panel.subscribe(msg.name as FeedName, (msg.params ?? {}) as never, token, (result) => send({ op: 'feed', id, result }), deviceToken));
           return;
         }
         case 'unsubscribe':

@@ -39,6 +39,12 @@ export const schemas = {
   'auth/sign_out': empty,
   'auth/change_pin': z.strictObject({ currentPin: pin, newPin: pin }),
 
+  'devices/create_code': z.strictObject({ name }),
+  'devices/cancel_code': z.strictObject({ codeId: id }),
+  'devices/pair': z.strictObject({ code: z.string().min(1).max(40) }),
+  'devices/rename': z.strictObject({ deviceId: id, name }),
+  'devices/revoke': z.strictObject({ deviceId: id }),
+
   'staff/create': z.strictObject({ name, role, pin }),
   'staff/set_pin': z.strictObject({ userId: id, pin }),
   'staff/set_active': z.strictObject({ userId: id, active: z.boolean() }),
@@ -254,6 +260,7 @@ export const feedSchemas = {
   navigation: empty,
   staff_signin: empty,
   staff_list: empty,
+  device_list: empty,
   catalogue_grid: z.strictObject({ includeArchived: z.boolean().optional() }),
   order_list: empty,
   order_card: z.strictObject({ orderId: id }),

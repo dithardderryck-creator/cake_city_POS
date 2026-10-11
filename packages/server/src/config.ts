@@ -17,6 +17,8 @@ export interface ServerConfig {
   /** Paths to a certificate and key. Needed for installable-app features on other devices (see the runbook). */
   tls: { cert: string; key: string } | null;
   devicePrefix: string;
+  /** Only registered devices may sign in. On unless REQUIRE_DEVICE is 0, false, no or off. */
+  requireDevice: boolean;
   backupHour: number;
   backupMinute: number;
   backupKeep: number;
@@ -86,6 +88,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
             return null;
           })(),
     devicePrefix: prefix,
+    requireDevice: !/^(0|false|no|off)$/i.test((env.REQUIRE_DEVICE ?? '').trim()),
     backupHour: Number(match[1]),
     backupMinute: Number(match[2]),
     backupKeep: int(env, 'BACKUP_KEEP', 30, 1, 3650),

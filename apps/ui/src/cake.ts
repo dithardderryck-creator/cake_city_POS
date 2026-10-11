@@ -5,7 +5,7 @@
 import { createClient, localStorageTokenStore } from '@cake-pos/client';
 import type { ClientResult, FeedMap, FeedName, IntentMap, IntentName, Role, SessionInfo, StaffSigninRow } from '@cake-pos/client';
 
-const client = createClient({ tokenStore: localStorageTokenStore() });
+const client = createClient({ tokenStore: localStorageTokenStore(), deviceStore: localStorageTokenStore('cake-pos-device') });
 
 /** The page each role works in. */
 export const HOME: Record<Role, string> = {
@@ -140,6 +140,17 @@ export async function send<K extends IntentName>(type: K, payload: IntentMap[K],
   const note = r.warnings.length ? r.warnings.join(' ') : okMessage;
   if (note) toast(note);
   return { ok: true, data: r.data, message: note };
+}
+
+/** Is this browser registered? Null when the shop server cannot be reached. */
+export function deviceStatus() {
+  return client.deviceStatus();
+}
+
+/** Registers this browser with a one-time code. Returns the device's name, or the refusal in plain words. */
+export async function pairDevice(code: string): Promise<{ name: string } | { error: string }> {
+  const r = await client.pairDevice(code);
+  return r.ok ? { name: r.name } : { error: r.messages[0] ?? 'Could not register this device.' };
 }
 
 export async function staff(): Promise<StaffSigninRow[]> {

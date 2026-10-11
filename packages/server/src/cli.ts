@@ -5,7 +5,7 @@ import { createArchiveService } from './archive';
 import { createBackupService, createDriveUploader, createFolderUploader, type BackupUploader } from './backup';
 import { loadCloud } from './cloud';
 import { DriveError, loadDriveCredentials, requestDeviceCode, saveDriveCredentials, waitForDeviceApproval } from './google-drive';
-import { createStaff, listStaff, resetPin, restoreBackup } from './admin';
+import { createStaff, listStaff, makePairingCode, resetPin, restoreBackup } from './admin';
 import { loadConfig } from './config';
 import { serverRunning } from './lock';
 import { createLogger } from './log';
@@ -15,6 +15,7 @@ import { openSqliteStore } from './sqlite-store';
 const USAGE = `Cake POS admin tool. Run it on the shop server.
 
   create-owner [--name "Amina"]        Create an owner (asks for a PIN)
+  device-code [--name "Counter tablet"] Make a one-time code (10 minutes) that registers a device. Use it for the first one
   list-staff                           Show everyone and whether they are active
   reset-pin --name "Amina"             Set a new PIN for someone who forgot theirs
   backup                               Take a backup now (also uploads to the cloud folder if set)
@@ -82,6 +83,12 @@ async function main() {
         const pin = flag(args, 'pin') ?? (await askPin());
         const s = await createStaff(store, hasher, { name, pin, role: 'owner' as Role });
         console.log(`Created owner "${s.name}". They can sign in with that PIN.`);
+        break;
+      }
+      case 'device-code': {
+        const name = flag(args, 'name') ?? (await ask('What should this device be called (for example "Counter tablet")? '));
+        const r = await makePairingCode(store, { name });
+        console.log(`Pairing code for "${r.name}":\n\n    ${r.code}\n\nOpen the shop address on that device and type it in. It works once, for 10 minutes.`);
         break;
       }
       case 'list-staff': {

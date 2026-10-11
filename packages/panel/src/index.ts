@@ -7,6 +7,7 @@ export * from './units';
 export * from './forecast';
 export { moneySummary, deriveOrderStatus, activeLines } from './circuits/order-logic';
 export { todayLocal } from './circuits/dates';
+export { newPairingCode, codeHash, showCode } from './circuits/devices';
 export { ALERT_KINDS, ALERT_KIND_LABEL, DEFAULT_ALERT_SETTINGS } from './circuits/alerts';
 export { MAX_PHOTO_BYTES, sniffImage } from './circuits/photos';
 export { MAX_PHOTOS_PER_CAKE } from './circuits/custom';

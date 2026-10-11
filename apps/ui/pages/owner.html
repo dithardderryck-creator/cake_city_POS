@@ -277,6 +277,7 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 <section id="v-staff" hidden>
 <header><div><h1>Staff</h1><p class="sub">Everyone signs in with a PIN, so every action is tied to a named person. Only you manage staff and PINs.</p></div><button class="b p" id="sfnew">Add staff</button></header>
 <div class="split"><div class="rl" id="sflist"></div><div class="card" id="sfdet"></div></div>
+<section class="card" id="dvc" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Devices</h2><span class="tag" id="dvn"></span></div><p class="mute" style="margin:2px 0 10px">Only devices registered here can open the system. Make a one-time code, then type it on the new device's sign-in page.</p><div id="dvb"></div></section>
 <section class="card" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Audit log</h2><select class="pr" id="auf" aria-label="Filter by person" style="width:auto"></select></div><ul class="tl" id="aul" style="margin-top:10px"></ul></section>
 </section>
 <section id="v-reports" hidden>
@@ -580,6 +581,27 @@ $("#sfdet").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const 
  else if(k==="tog")guard(b,()=>Cake.send("staff/set_active",{userId:u.id,active:!u.active},u.active?u.name+" is signed out and blocked":u.name+" can sign in again"))
  else if(k==="contact")guard(b,()=>Cake.send("staff/set_contact",{userId:u.id,phone:v("ph")||null,sms:v("sm"),whatsapp:v("wa")},"Contact saved"))};
 
+/* ---------- devices ---------- */
+let dvcode=null;
+function dvr(){const d=D.dev;if(!d){$("#dvb").innerHTML='<p class="mute">Loading…</p>';return}
+ if(dvcode&&(Date.parse(dvcode.expiresAt)<Date.now()||d.devices.some(x=>x.name===dvcode.name)))dvcode=null;
+ $("#dvn").textContent=d.devices.length+" registered";
+ keep($("#dvb"),()=>{
+  $("#dvb").innerHTML=(d.required?"":'<p class="tag risk" style="white-space:normal">The device check is switched off on this server, so any device can sign in. Turn it on with REQUIRE_DEVICE=1.</p>')
+  +(d.devices.length?'<ul class="list">'+d.devices.map(x=>`<li><div class="row" style="flex-wrap:wrap;gap:8px"><div><b>${E(x.name)}</b>${x.isThis?' <span class="tag cop">This device</span>':""}<br><span class="mute">Added by ${E(x.createdByName)} · ${E(when(x.createdAt))} · ${x.lastSeenAt?"last used "+E(when(x.lastSeenAt)):"not used yet"}</span></div><div class="btns" style="margin:0"><button class="b" data-v="ren" data-id="${E(x.id)}">Rename</button>${x.isThis?"":`<button class="b" data-v="rev" data-id="${E(x.id)}">Revoke</button>`}</div></div></li>`).join("")+"</ul>":'<p class="empty">No devices are registered yet. Make a code below, then register the first one.</p>')
+  +(dvcode?`<div class="card" style="margin:12px 0;background:var(--cop-s);text-align:center"><p class="mute" style="margin:0">Code for ${E(dvcode.name)}. Type it on that device. It works once, until ${E(hhmm(dvcode.expiresAt))}.</p><div class="big num" style="letter-spacing:.2em" id="dvcode">${E(dvcode.code)}</div><div class="btns" style="justify-content:center"><button class="b" data-v="done">Done</button></div></div>`:"")
+  +(d.openCodes.length?'<h2 style="font-size:15px;margin-top:14px">Waiting for a device</h2><ul class="list">'+d.openCodes.map(c=>`<li><div class="row"><span><b>${E(c.name)}</b> <span class="mute">· expires ${E(hhmm(c.expiresAt))}</span></span><button class="b" data-v="cx" data-id="${E(c.id)}">Cancel code</button></div></li>`).join("")+"</ul>":"")
+  +'<div class="row" style="flex-wrap:wrap;gap:8px;margin-top:14px;align-items:flex-end"><label class="fl" style="flex:1;min-width:200px;margin:0"><span>New device name</span><input data-k="dn" maxlength="40" placeholder="For example, Counter tablet" autocomplete="off"></label><button class="b p" data-v="mk">Make a code</button></div>'
+  +(d.revoked.length?'<details style="margin-top:14px"><summary class="mute">Revoked devices ('+d.revoked.length+')</summary><ul class="list">'+d.revoked.map(x=>`<li><span><b>${E(x.name)}</b> <span class="mute">· revoked ${E(when(x.revokedAt))} by ${E(x.revokedByName)}</span></span></li>`).join("")+"</ul></details>":"")});
+}
+$("#dvc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=b.dataset.v,d=D.dev||{devices:[]},x=d.devices.find(y=>y.id===b.dataset.id);
+ if(k==="mk"){const n=($("#dvb [data-k=dn]").value||"").trim();if(!n){Cake.toast("Name the device first, for example Counter tablet.");return}
+  guard(b,async()=>{const r=await Cake.send("devices/create_code",{name:n});if(r.ok){dvcode=r.data;$("#dvb [data-k=dn]").value="";dvr()}})}
+ else if(k==="done"){dvcode=null;dvr()}
+ else if(k==="cx")guard(b,()=>Cake.send("devices/cancel_code",{codeId:b.dataset.id},"Code cancelled"))
+ else if(k==="ren"&&x){const n=prompt("New name for "+x.name,x.name);if(n===null)return;if(!n.trim()){Cake.toast("Give the device a name.");return}guard(b,()=>Cake.send("devices/rename",{deviceId:x.id,name:n.trim()},"Renamed"))}
+ else if(k==="rev"&&x){if(!confirm("Revoke "+x.name+"? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code."))return;guard(b,()=>Cake.send("devices/revoke",{deviceId:x.id},x.name+" was revoked"))}};
+
 /* ---------- reports ---------- */
 const hbar=(l,v,w,c,x="")=>`<div class="hb"><span>${E(l)}</span><div class="bar"><i style="width:${w}%;${c?`background:${c}`:""}"></i></div><b class="num">${v}${x}</b></div>`;
 function rpt(){const r=D.reports;if(!r)return;const s=r.sales;
@@ -650,6 +672,7 @@ $("#xout").onclick=()=>Cake.signOut();
  Cake.feed("stock_forecast",{},d=>{D.forecast=d;ov();sr()});
  Cake.feed("usage_inbox",{},d=>{D.usage=d;ov();su()});
  Cake.feed("staff_list",{},d=>{D.staff=d;sfr()});
+ Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
  Cake.feed("audit_view",{},d=>{D.audit=d;ov();cr();sfr()});
  Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr()});
  Cake.feed("alert_settings",{},d=>{D.alertset=d});

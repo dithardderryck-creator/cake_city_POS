@@ -14,7 +14,7 @@ Decisions from the owner: keep them as plain HTML (no React), build the missing 
 
 One small script every page loads, built from `@cake-pos/client`:
 
-- sign-in and sign-out, token kept in `localStorage`, redirect to the page for the person's role;
+- device registration (a one-time code, then a secret kept in `localStorage`), sign-in and sign-out, token kept in `localStorage`, redirect to the page for the person's role;
 - `feed(name, params, render)` subscribes over the WebSocket, falls back to polling, and calls `render(data)` after every change;
 - `send(intent, input)` returns `{ok, error}`, shows the server's plain-language message in the toast, and never retries by itself on a refusal;
 - connection state ("Server unreachable") drives the offline banner, and writes are blocked while offline (no hidden queue, see D-24);

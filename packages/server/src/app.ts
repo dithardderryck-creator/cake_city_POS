@@ -67,6 +67,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       store: db,
       hasher: hasher ?? createScryptHasher(),
       devicePrefix: config.devicePrefix,
+      requireDevice: config.requireDevice,
       terminals,
       onError: (err, info) => log.error('Unexpected failure inside the panel', { ...info, ...errorFields(err) }),
     });

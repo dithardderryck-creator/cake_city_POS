@@ -15,7 +15,8 @@ const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { stdio: 'inherit'
 if (!fs.existsSync(serverJs)) run('npm', ['run', 'build', '-w', '@cake-pos/server']);
 run('node', ['apps/ui/build.mjs']);
 if (process.argv.includes('--fresh')) fs.rmSync(data, { recursive: true, force: true });
-const env = { ...process.env, DATA_DIR: data, PORT: process.env.PORT || '8787', HOST: '0.0.0.0', STATIC_DIR: path.join(root, 'apps/ui/dist') };
+// A local try-out: no device check, so any browser on the wifi can open it. The real server turns the check on.
+const env = { ...process.env, REQUIRE_DEVICE: process.env.REQUIRE_DEVICE ?? '0', DATA_DIR: data, PORT: process.env.PORT || '8787', HOST: '0.0.0.0', STATIC_DIR: path.join(root, 'apps/ui/dist') };
 if (!fs.existsSync(data)) execFileSync(process.execPath, [adminJs, 'seed-demo', '--yes'], { env, stdio: 'inherit' });
 
 const lan = Object.values(os.networkInterfaces()).flat().find((n) => n && n.family === 'IPv4' && !n.internal)?.address;

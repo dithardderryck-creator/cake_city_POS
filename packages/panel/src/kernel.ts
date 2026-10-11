@@ -1,5 +1,5 @@
 import { flushChanges, withChangeLog, type Change, type FlushResult } from './changelog';
-import type { Alert, AuditEntry, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
+import type { Alert, AuditEntry, Device, PairingCode, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
 import { feeds, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } from './feeds';
 import {
   DomainError,
@@ -13,6 +13,7 @@ import {
   type Registry,
 } from './intents';
 import { authIntents } from './circuits/auth';
+import { NOT_REGISTERED, deviceIntents, deviceTokenHash } from './circuits/devices';
 import { catalogueIntents } from './circuits/catalogue';
 import { customIntents } from './circuits/custom';
 import { orderIntents } from './circuits/orders';
@@ -65,6 +66,10 @@ export interface PanelOptions {
   lockoutMinutes?: number[];
   sessionIdleMs?: number;
   sessionMaxMs?: number;
+  /** Only registered devices may sign in. Off by default in the panel; the server turns it on unless told not to. */
+  requireDevice?: boolean;
+  /** How long a pairing code works. Default 10 minutes. */
+  pairingCodeMs?: number;
   /** How long a request id is remembered for retry safety. */
   requestTtlMs?: number;
   /** Called for failures nobody expected, so the host can log them with a stack trace. */
@@ -81,6 +86,8 @@ export type PhotoReadResult =
 export interface DispatchOptions {
   /** Send the same id when retrying. If it already succeeded, you get the same answer and nothing runs twice. */
   requestId?: string;
+  /** The secret this browser was given when it was registered. */
+  deviceToken?: string;
 }
 
 export type FeedResult<D> =
@@ -91,14 +98,17 @@ export interface Panel {
   /** Send an instruction. Passes the breakers, then the circuit, all-or-nothing. */
   dispatch<K extends IntentName>(type: K, payload: IntentMap[K], token?: string, options?: DispatchOptions): Promise<DispatchResult>;
   /** Read display-ready data once. */
-  feed<K extends FeedName>(name: K, params: FeedMap[K]['params'], token?: string): Promise<FeedResult<FeedMap[K]['data']>>;
+  feed<K extends FeedName>(name: K, params: FeedMap[K]['params'], token?: string, deviceToken?: string): Promise<FeedResult<FeedMap[K]['data']>>;
   /** Read a feed and get it again after every change. Returns an unsubscribe function. */
   subscribe<K extends FeedName>(
     name: K,
     params: FeedMap[K]['params'],
     token: string | undefined,
     listener: (r: FeedResult<FeedMap[K]['data']>) => void,
+    deviceToken?: string,
   ): () => void;
+  /** Is this device allowed in? Used by the server to decide which page to show before anyone signs in. */
+  deviceStatus(deviceToken: string | undefined): Promise<{ required: boolean; registered: boolean; name?: string }>;
   onEvent(listener: (e: PanelEvent) => void): () => void;
   /**
    * Store a picture (jpeg, png or webp, up to 5 MB) for a custom cake. Returns an id to pass to
@@ -132,6 +142,8 @@ interface SessionRecord {
   createdAt: string;
   lastSeenAt: string;
   expiresAt: string;
+  /** The registered device this sign-in was made on. */
+  deviceId?: string;
 }
 
 interface RequestRecord {
@@ -142,6 +154,7 @@ interface RequestRecord {
 
 const registry = {
   ...authIntents,
+  ...deviceIntents,
   ...staffIntents,
   ...catalogueIntents,
   ...stockIntents,
@@ -202,6 +215,8 @@ export function createPanel(options: PanelOptions = {}): Panel {
     lockoutMinutes: options.lockoutMinutes ?? [1, 5, 15, 60],
     sessionIdleMs: options.sessionIdleMs ?? 10 * HOUR,
     sessionMaxMs: options.sessionMaxMs ?? 24 * HOUR,
+    requireDevice: options.requireDevice ?? false,
+    pairingCodeMs: options.pairingCodeMs ?? 10 * 60_000,
   };
   const requestTtlMs = options.requestTtlMs ?? 7 * 24 * HOUR;
 
@@ -275,11 +290,27 @@ export function createPanel(options: PanelOptions = {}): Panel {
     }
     const staff = await store.get<Staff>('staff', rec.userId);
     if (!staff || !staff.active) return null;
+    // A sign-in belongs to the device it was made on. Revoke the device and the sign-in stops working at once.
+    if (rec.deviceId) {
+      const dev = await store.get<Device>('devices', rec.deviceId);
+      if (!dev || dev.revokedAt) return null;
+    } else if (config.requireDevice) return null;
     if (nowMs - Date.parse(rec.lastSeenAt) > TOUCH_EVERY_MS) await store.put('sessions', { ...rec, lastSeenAt: now() });
     return { userId: staff.id, name: staff.name, role: staff.role };
   }
 
-  const makeCtx = (session: Session | null, token: string | undefined): HandlerCtx => ({
+  /** The registered device behind a secret, or null when it is missing, unknown or revoked. */
+  async function resolveDevice(deviceToken: string | undefined): Promise<Device | null> {
+    if (!deviceToken || deviceToken.length > 200) return null;
+    const hash = await deviceTokenHash(deviceToken);
+    const [dev] = await store.find<Device>('devices', { where: { tokenHash: hash }, limit: 1 });
+    if (!dev || dev.revokedAt) return null;
+    const nowMs = clock.now().getTime();
+    if (!dev.lastSeenAt || nowMs - Date.parse(dev.lastSeenAt) > TOUCH_EVERY_MS) await store.put<Device>('devices', { ...dev, lastSeenAt: now() });
+    return dev;
+  }
+
+  const makeCtx = (session: Session | null, token: string | undefined, device: Device | null = null, deviceToken?: string): HandlerCtx => ({
     store,
     clock,
     ids,
@@ -289,8 +320,10 @@ export function createPanel(options: PanelOptions = {}): Panel {
     secrets,
     session,
     sessionId: token,
+    device,
+    deviceToken,
     now,
-    issueSession: async (s) => {
+    issueSession: async (s, deviceId) => {
       const issued = secrets.token();
       const at = clock.now().getTime();
       await store.put<SessionRecord>('sessions', {
@@ -299,11 +332,15 @@ export function createPanel(options: PanelOptions = {}): Panel {
         createdAt: new Date(at).toISOString(),
         lastSeenAt: new Date(at).toISOString(),
         expiresAt: new Date(at + config.sessionMaxMs).toISOString(),
+        ...(deviceId ? { deviceId } : {}),
       });
       return issued;
     },
     endSession: async (t) => {
       if (t) await store.delete('sessions', await sha256Hex(t));
+    },
+    revokeDeviceSessions: async (deviceId) => {
+      for (const s of await store.find<SessionRecord>('sessions', { where: { deviceId } })) await store.delete('sessions', s.id);
     },
     revokeSessions: async (userId, exceptToken) => {
       const keep = exceptToken ? await sha256Hex(exceptToken) : null;
@@ -357,7 +394,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
     const stat = stats.get(def.circuit)!;
     const session = await resolveSession(token);
     const actor = session ? { actorId: session.userId, actorName: session.name, role: session.role } : {};
-    const ctx = makeCtx(session, token);
+    const ctx = makeCtx(session, token, await resolveDevice(opts.deviceToken), opts.deviceToken);
 
     // Breaker 1: PIN and role.
     if (def.roles !== 'public') {
@@ -458,7 +495,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
 
   /* ---------- feeds ---------- */
 
-  async function feedInner<K extends FeedName>(name: K, params: FeedMap[K]['params'], token: string | undefined): Promise<FeedResult<FeedMap[K]['data']>> {
+  async function feedInner<K extends FeedName>(name: K, params: FeedMap[K]['params'], token: string | undefined, deviceToken?: string): Promise<FeedResult<FeedMap[K]['data']>> {
     const def = feeds[name];
     if (!def) return { ok: false, error: { code: 'invalid', messages: [`Unknown feed ${String(name)}.`] } };
     const parsed = feedSchemas[name].safeParse(params ?? {});
@@ -469,7 +506,9 @@ export function createPanel(options: PanelOptions = {}): Panel {
       if (!session) return { ok: false, error: { code: 'unauthenticated', messages: ['Sign in with your PIN to continue.'] } };
       if (!def.roles.includes(session.role)) return { ok: false, error: { code: 'forbidden', messages: ['Your role cannot see this.'] } };
     }
-    const ctx: FeedCtx = { store, config, clock, terminals, session, stats: () => stats };
+    const device = await resolveDevice(deviceToken);
+    if (def.device === 'required' && config.requireDevice && !device) return { ok: false, error: { code: 'forbidden', messages: [NOT_REGISTERED] } };
+    const ctx: FeedCtx = { store, config, clock, terminals, session, device, stats: () => stats };
     try {
       const built = await (def.build as (c: FeedCtx, p: FeedMap[K]['params']) => Promise<FeedMap[K]['data']>)(ctx, parsed.data as FeedMap[K]['params']);
       return { ok: true, data: built };
@@ -480,7 +519,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
     }
   }
 
-  const feed: Panel['feed'] = (name, params, token) => serial(() => feedInner(name, params, token));
+  const feed: Panel['feed'] = (name, params, token, deviceToken) => serial(() => feedInner(name, params, token, deviceToken));
 
   /* ---------- pictures (binary, so they do not travel as intents) ---------- */
 
@@ -519,10 +558,10 @@ export function createPanel(options: PanelOptions = {}): Panel {
     return { ok: true, mime: meta.mime, bytes: base64ToBytes(data.data) };
   }
 
-  const subscribe: Panel['subscribe'] = (name, params, token, listener) => {
+  const subscribe: Panel['subscribe'] = (name, params, token, listener, deviceToken) => {
     let alive = true;
     const run = () => {
-      void feed(name, params, token).then((r) => {
+      void feed(name, params, token, deviceToken).then((r) => {
         if (alive) listener(r);
       });
     };
@@ -538,6 +577,11 @@ export function createPanel(options: PanelOptions = {}): Panel {
     dispatch: (type, payload, token, opts = {}) => serial(() => dispatchInner(type, payload, token, opts)),
     feed,
     subscribe,
+    deviceStatus: (deviceToken) =>
+      serial(async () => {
+        const device = await resolveDevice(deviceToken);
+        return { required: config.requireDevice, registered: !!device, ...(device ? { name: device.name } : {}) };
+      }),
     uploadPhoto: (bytes, token) => serial(() => uploadPhotoInner(bytes, token)),
     readPhoto: (photoId, token) => serial(() => readPhotoInner(photoId, token)),
     onEvent: (l) => {
@@ -593,6 +637,9 @@ export function createPanel(options: PanelOptions = {}): Panel {
               await store.delete('sessions', s.id);
               sessionsPruned++;
             }
+          }
+          for (const c of await store.list<PairingCode>('pairingCodes')) {
+            if (nowMs - Date.parse(c.expiresAt) > 24 * HOUR) await store.delete('pairingCodes', c.id);
           }
           let requestsPruned = 0;
           for (const r of await store.list<RequestRecord>('requests')) {

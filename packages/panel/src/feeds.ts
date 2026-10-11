@@ -1,4 +1,6 @@
 import type {
+  Device,
+  PairingCode,
   Alert,
   AlertKind,
   AuditEntry,
@@ -202,6 +204,30 @@ export interface AuditRow {
   intent: string;
   summary: string;
   outcome: AuditEntry['outcome'];
+}
+
+export interface DeviceRow {
+  id: string;
+  name: string;
+  createdAt: string;
+  createdByName: string;
+  lastSeenAt: string | null;
+  /** True for the device this person is using right now. */
+  isThis: boolean;
+}
+export interface DeviceCodeRow {
+  id: string;
+  name: string;
+  createdByName: string;
+  expiresAt: string;
+}
+export interface DeviceListData {
+  /** False when the host runs without the device check (a local demo). Then every device can sign in. */
+  required: boolean;
+  devices: DeviceRow[];
+  revoked: { id: string; name: string; revokedAt: string; revokedByName: string }[];
+  /** Codes that were made and not used yet. The code itself is never shown again. */
+  openCodes: DeviceCodeRow[];
 }
 
 export interface StaffListRow {
@@ -564,6 +590,7 @@ export interface FeedMap {
   navigation: { params: Record<string, never>; data: NavItem[] };
   staff_signin: { params: Record<string, never>; data: StaffSigninRow[] };
   staff_list: { params: Record<string, never>; data: StaffListRow[] };
+  device_list: { params: Record<string, never>; data: DeviceListData };
   catalogue_grid: { params: { includeArchived?: boolean }; data: CatalogueGridItem[] };
   order_list: { params: Record<string, never>; data: OrderListItem[] };
   order_card: { params: { orderId: string }; data: OrderCardData };
@@ -606,11 +633,14 @@ export interface FeedCtx {
   clock: Clock;
   terminals: Terminals;
   session: Session | null;
+  device: Device | null;
   stats: () => Map<CircuitName, CircuitStat>;
 }
 
 export interface FeedDef<K extends FeedName> {
   roles: Role[] | 'public';
+  /** Only answer devices that were registered (when the host requires it). */
+  device?: 'required';
   build: (ctx: FeedCtx, params: FeedMap[K]['params']) => Promise<FeedMap[K]['data']>;
 }
 export type FeedRegistry = { [K in FeedName]: FeedDef<K> };
@@ -805,11 +835,36 @@ export const feeds: FeedRegistry = {
 
   staff_signin: {
     roles: 'public',
+    device: 'required',
     build: async ({ store }) =>
       (await store.list<Staff>('staff'))
         .filter((s) => s.active)
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((s) => ({ id: s.id, name: s.name, role: s.role })),
+  },
+
+  device_list: {
+    roles: ['owner', 'it'],
+    build: async ({ store, clock, config, device }) => {
+      const nowMs = clock.now().getTime();
+      const [devices, codes] = await Promise.all([store.list<Device>('devices'), store.list<PairingCode>('pairingCodes')]);
+      return {
+        required: config.requireDevice,
+        devices: devices
+          .filter((d) => !d.revokedAt)
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((d) => ({ id: d.id, name: d.name, createdAt: d.createdAt, createdByName: d.createdByName, lastSeenAt: d.lastSeenAt ?? null, isThis: device?.id === d.id })),
+        revoked: devices
+          .filter((d) => d.revokedAt)
+          .sort((a, b) => b.revokedAt!.localeCompare(a.revokedAt!))
+          .slice(0, 20)
+          .map((d) => ({ id: d.id, name: d.name, revokedAt: d.revokedAt!, revokedByName: d.revokedByName ?? '' })),
+        openCodes: codes
+          .filter((c) => !c.usedAt && !c.cancelledAt && Date.parse(c.expiresAt) > nowMs)
+          .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt))
+          .map((c) => ({ id: c.id, name: c.name, createdByName: c.createdByName, expiresAt: c.expiresAt })),
+      };
+    },
   },
 
   staff_list: {
