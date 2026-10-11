@@ -18,7 +18,6 @@ Every wire runs into one place, the **panel**, and the UI is pure I/O.
 packages/panel          The rules. Pure TypeScript, no UI, no network.
 packages/server         The shop server: HTTP + WebSocket, SQLite, backups, admin tool.
 packages/client         Client library for UIs (framework-agnostic core + React hooks).
-packages/design-system  Tokens (CSS variables), React components, living docs page (not used by the shop pages).
 apps/ui                 The shop's screens: plain HTML pages for cashier, baker, inventory and owner, one shared script, and browser tests.
 docs/                   blueprint.md (the plan), api.md + api-reference.md (build a UI), runbook.md (run the server), known-issues.md (open bugs and gaps)
 deploy/                 Start-up files for macOS and Windows (not yet tested on those systems)

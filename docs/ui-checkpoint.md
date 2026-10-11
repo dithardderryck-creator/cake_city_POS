@@ -82,6 +82,8 @@ Tick these on the demo shop. "Second screen" means a second browser window signe
 
 ## Left to do
 
+See also `docs/later.md` (parked items and open decisions).
+
 1. **IT screen** (later): "Panel map" (`panel_map`) and Requests (`request_inbox`). IT can read only these.
 2. Hand-test everything above on real devices, and decide the open questions in `docs/blueprint.md` (Google account, archive folder, live online database or Drive copies, alert thresholds and recipients, SMS and WhatsApp provider, HTTPS on the shop network).
 
@@ -97,4 +99,3 @@ Done: inventory test, owner screen and its test, old React app removed, `npm run
 - The inventory screen shows quantities in each item's base unit (kg, l, pcs), as the design did; receive and write-off accept smaller units.
 - Google Drive, SMS, WhatsApp and push alerts have not been tried against real accounts.
 - The owner page has no table of what each role can do, and no movement history per ingredient (no feed for it).
-- The old `packages/design-system` (React tokens and components) is not used by the shop pages. It is kept for now; delete it if you do not want it.

@@ -17,7 +17,7 @@
     "admin": "npm run admin -w @cake-pos/server --",
     "docs:api": "tsx scripts/gen-api-reference.ts",
     "test": "npm run test -w @cake-pos/panel && npm run test -w @cake-pos/server",
-    "typecheck": "npm run typecheck -w @cake-pos/panel && npm run typecheck -w @cake-pos/client && npm run typecheck -w @cake-pos/server && npm run typecheck -w @cake-pos/design-system && npm run typecheck -w @cake-pos/ui",
+    "typecheck": "npm run typecheck -w @cake-pos/panel && npm run typecheck -w @cake-pos/client && npm run typecheck -w @cake-pos/server && npm run typecheck -w @cake-pos/ui",
     "acceptance": "node scripts/acceptance.mjs"
   },
   "engines": {

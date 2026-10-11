@@ -524,7 +524,7 @@ Newest entries go at the bottom. A decision that changes an earlier one marks it
 | **D-38** | Delivered first as an installable web app, with native apps as a later option |
 | **D-39** | Architecture is the **panel**: the UI is pure I/O, reading feeds and sending intents |
 | **D-40** | Alerts reach people in-app, and critical ones also go to the owner by WhatsApp/SMS |
-| **D-41** | The build is a monorepo: `packages/panel` (pure TypeScript, no UI), `packages/design-system` (tokens, React components, living docs page), `apps/ui` (plain HTML pages and one shared script; replaced the first React app, `apps/web`). Stack: TypeScript, esbuild. Local storage is IndexedDB behind the `Store` interface |
+| **D-41** | The build is a monorepo: `packages/panel` (pure TypeScript, no UI), `apps/ui` (plain HTML pages and one shared script; replaced the first React app, `apps/web`). Stack: TypeScript, esbuild. Local storage is IndexedDB behind the `Store` interface |
 | **D-42** | The UI gets navigation and permissions from the panel (the `navigation` feed and the per-product `can` flags), so it holds no permission logic (BR-22) |
 | **D-43** | Until Q-01 is answered, completing an order with an unpaid balance is **allowed with a warning**, not blocked |
 | **D-44** | Design system palette: meringue, icing, raspberry, cocoa, pistachio, butter. Fonts: Young Serif for names and totals, Nunito for everything else, both bundled so the app works offline. Signature detail: the icing drip along the top of each product tile |
