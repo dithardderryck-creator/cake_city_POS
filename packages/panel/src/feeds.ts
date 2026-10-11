@@ -819,6 +819,7 @@ export const feeds: FeedRegistry = {
       const nowMs = clock.now().getTime();
       const locked = new Set(states.filter((s) => s.lockedUntil && Date.parse(s.lockedUntil) > nowMs).map((s) => s.id));
       return staff
+        .filter((s) => !s.removedAt)
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((s) => ({
           id: s.id,

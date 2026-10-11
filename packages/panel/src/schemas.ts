@@ -41,6 +41,7 @@ export const schemas = {
   'staff/create': z.strictObject({ name, role, pin }),
   'staff/set_pin': z.strictObject({ userId: id, pin }),
   'staff/set_active': z.strictObject({ userId: id, active: z.boolean() }),
+  'staff/delete': z.strictObject({ userId: id }),
   'staff/set_role': z.strictObject({ userId: id, role: z.enum(['cashier', 'baker', 'inventory', 'it']) }),
 
   'catalogue/create_option_group': z.strictObject({

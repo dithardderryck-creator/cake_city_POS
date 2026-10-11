@@ -20,7 +20,7 @@ async function audit(store: Store, summary: string, intent: string, target?: str
 }
 
 export async function listStaff(store: Store) {
-  return (await store.list<Staff>('staff')).sort((a, b) => a.name.localeCompare(b.name));
+  return (await store.list<Staff>('staff')).filter((s) => !s.removedAt).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Make a new active staff member. Used to create the first owner, or a new one if every owner is locked out. */

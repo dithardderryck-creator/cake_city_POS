@@ -64,6 +64,14 @@ Allowed: **owner**
 | `userId` | string | yes | min length 1, max length 64 |
 | `active` | boolean | yes |  |
 
+#### `staff/delete`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `userId` | string | yes | min length 1, max length 64 |
+
 #### `staff/set_role`
 
 Allowed: **owner**

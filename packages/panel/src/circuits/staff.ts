@@ -1,4 +1,4 @@
-import type { Staff } from '../domain';
+import type { PushSubscriptionRecord, Staff } from '../domain';
 import { DomainError, type Registry } from '../intents';
 
 const PIN = /^\d{4,6}$/;
@@ -55,6 +55,29 @@ export const staffIntents = {
       await ctx.store.put('staff', { ...staff, active: p.active });
       if (!p.active) await ctx.revokeSessions(staff.id);
       return { summary: `${staff.name} ${p.active ? 'can sign in again' : 'can no longer sign in'}`, target: staff.id };
+    },
+  },
+
+  'staff/delete': {
+    circuit: 'Staff',
+    roles: ['owner'],
+    validate: async (p, ctx) => {
+      const target = await ctx.store.get<Staff>('staff', p.userId);
+      if (!target || target.removedAt) return ['That person is already removed.'];
+      if (target.id === ctx.session!.userId) return ['You cannot remove your own account.'];
+      if (target.role === 'owner') return ['An owner account cannot be removed.'];
+      return [];
+    },
+    handle: async (p, ctx) => {
+      const staff = (await ctx.store.get<Staff>('staff', p.userId))!;
+      // The record stays as a name only, so history (orders, payments, audit) still says who did what.
+      // Nothing that lets them in or reaches them is kept: PIN, contact, sessions, lock state, phone notifications.
+      const { contact: _contact, ...rest } = staff;
+      await ctx.store.put<Staff>('staff', { ...rest, pinHash: '', active: false, removedAt: ctx.now() });
+      await ctx.revokeSessions(staff.id);
+      await ctx.store.delete('loginState', staff.id);
+      for (const sub of await ctx.store.find<PushSubscriptionRecord>('pushSubscriptions', { where: { userId: staff.id } })) await ctx.store.delete('pushSubscriptions', sub.id);
+      return { summary: `Removed ${staff.name}`, target: staff.id, events: [{ type: 'StaffRemoved', payload: { userId: staff.id } }] };
     },
   },
 

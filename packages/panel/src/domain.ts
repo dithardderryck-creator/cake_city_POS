@@ -44,6 +44,8 @@ export interface Staff {
   role: Role;
   pinHash: string;
   active: boolean;
+  /** Set when the owner removed this person. The record stays only so past orders, payments and audit entries still show who did them; they cannot sign in and are hidden from every list. */
+  removedAt?: string;
   /** Where alerts reach this person outside the app. Absent until set. */
   contact?: StaffContact;
 }

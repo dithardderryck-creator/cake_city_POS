@@ -329,6 +329,33 @@ describe('staff management', () => {
     expect(errOf(await panel.dispatch('staff/set_active', { userId, active: false }, second))).toMatch(/own account/);
   });
 
+  it('removing a person is permanent: no sign-in, gone from lists, history keeps the name', async () => {
+    const owner = await signIn('owner');
+    const cashierId = await staffId('cashier');
+    const cashier = await signIn('cashier');
+    expect(errOf(await panel.dispatch('staff/delete', { userId: cashierId }, cashier))).toMatch(/not allowed|owner/i);
+    ok(await panel.dispatch('staff/delete', { userId: cashierId }, owner));
+    // Signed out at once, cannot come back, and nothing about them is listed.
+    const r = await panel.feed('navigation', {}, cashier);
+    expect(!r.ok && r.error.code).toBe('unauthenticated');
+    expect(errOf(await panel.dispatch('auth/sign_in', { userId: cashierId, pin: '2222' }))).toMatch(/does not match|cannot/i);
+    const list = await panel.feed('staff_list', {}, owner);
+    expect(list.ok && list.data.some((s) => s.id === cashierId)).toBe(false);
+    expect(list.ok).toBe(true);
+    const signinList = await panel.feed('staff_signin', {});
+    expect(signinList.ok && signinList.data.some((s) => s.id === cashierId)).toBe(false);
+    expect(signinList.ok).toBe(true);
+    // The record stays as a bare name so old orders and audit lines still say who did them.
+    const kept = (await store.get<{ id: string; name: string; pinHash: string; removedAt?: string }>('staff', cashierId))!;
+    expect(kept.name).toBeTruthy();
+    expect(kept.pinHash).toBe('');
+    expect(kept.removedAt).toBeTruthy();
+    // Cannot be removed twice, the owner cannot remove themselves or an owner, and the name can be used again.
+    expect(errOf(await panel.dispatch('staff/delete', { userId: cashierId }, owner))).toMatch(/already removed/);
+    expect(errOf(await panel.dispatch('staff/delete', { userId: await staffId('owner') }, owner))).toMatch(/own account/);
+    ok(await panel.dispatch('staff/create', { name: kept.name, role: 'cashier', pin: '5555' }, owner));
+  });
+
   it('changing your own PIN needs the current one and signs out your other devices', async () => {
     const phone = await signIn('cashier');
     const tablet = await signIn('cashier');

@@ -15,6 +15,7 @@ export interface IntentMap {
   'staff/create': { name: string; role: Role; pin: string };
   'staff/set_pin': { userId: Id; pin: string };
   'staff/set_active': { userId: Id; active: boolean };
+  'staff/delete': { userId: Id };
   /** Change what someone does in the shop. Not for the owner, and nobody can be made owner this way. Ends their sign-ins. */
   'staff/set_role': { userId: Id; role: Exclude<Role, 'owner'> };
 
