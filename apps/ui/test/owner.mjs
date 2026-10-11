@@ -87,6 +87,20 @@ try {
   await until(async () => (await page.locator('#qbox [data-q]').count()) === 1, 'answered request leaves the list');
   const qi = await cashier.read('quote_inbox');
   assert.ok(qi.recent.some((q) => q.customerName === 'Grace M.' && /120/.test(q.priceLabel ?? '')), 'price reached the order');
+  // changing a price that was already given: from the order, with a reason
+  await tab(page, 'orders');
+  await until(async () => /Grace M\./.test(await txt(page, '#zboard')), 'Grace on the board');
+  await page.click('#zboard .ztw:has-text("Grace M.") [data-det]');
+  await page.waitForSelector('#odp [data-x="price"]');
+  await page.click('#odp [data-x="price"]');
+  await page.fill('#odp [data-k="np"]', '110000');
+  await page.click('#odp [data-x="priceok"]');
+  assert.ok(await page.locator('#odp [data-k="nr"]').count(), 'refused without a reason, form stays open');
+  await page.fill('#odp [data-k="nr"]', 'Fewer flowers');
+  await page.click('#odp [data-x="priceok"]');
+  await until(async () => /110/.test(await txt(page, '#odp')), 'new price on the order');
+  await page.click('#odp [data-x="close"]');
+  await tab(page, 'requests');
   // declining needs a reason
   await page.click('#qbox [data-qa="no"]');
   assert.equal(await page.locator('#qbox [data-q]').count(), 1, 'refused without a reason');
@@ -128,6 +142,7 @@ try {
   await until(async () => /Lemon loaf/.test(await txt(page, '#ctab')), 'new item in the list');
   assert.match(await txt(page, '#ctab .ci:has-text("Lemon loaf")'), /Draft|No price|10/);
   assert.match(await txt(page, '#ctab .ci:has-text("Lemon loaf")'), /Draft/, 'one size has no price, so it is a draft');
+  await until(async () => /\b10\b/.test(await txt(page, '#ctab .ci:has-text("Lemon loaf")')), 'the small size price to arrive');
   await page.click('#ctab .ci:has-text("Lemon loaf") [data-edit]');
   await page.fill('#dpn .vr[data-was=""] .vp', '25');
   await page.screenshot({ path: `${shots}/catalogue-editor.png` });
