@@ -121,7 +121,7 @@ try {
   assert.ok(await page.locator('#oc-form #bamt').count(), 'form stays open after a refusal');
   await page.fill('#bamt', '');
   await page.click('#oc-form [data-a="bok"]');
-  await until(async () => /Balance\s*0\b/.test(await txt(page, '#oc-main')), 'balance cleared in the open ticket');
+  await until(async () => /Balance\s*(?:TSh\s*)?0\b/.test(await txt(page, '#oc-main')), 'balance cleared in the open ticket');
   await page.screenshot({ path: `${shots}/ticket.png` });
   // advance a line using whatever the server offers
   const adv = page.locator('#oc-main [data-a="adv"]').first();
