@@ -46,6 +46,8 @@ export interface IntentMap {
     /** With the country code, such as +255712345678. */
     customerPhone?: string;
   };
+  /** A ready-made sale handed over now: creates the order, completes its lines, drops stock and records full payment in one step. No ticket. Custom cakes still use orders. */
+  'orders/quick_sale': { items: Array<{ combinationId: Id; qty: number }>; method: PaymentMethod; reference?: string; customerName?: string };
   'orders/set_delivery': { orderId: Id; fulfilment?: 'pickup' | 'delivery'; deliveryDate?: string; deliveryAddress?: string; customerPhone?: string | null };
   'orders/add_catalogue_line': { orderId: Id; combinationId: Id; qty: number };
   'orders/add_custom_line': { orderId: Id; spec: CakeSpecInput };

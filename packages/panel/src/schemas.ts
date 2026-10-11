@@ -80,6 +80,12 @@ export const schemas = {
     deliveryAddress: z.string().max(300).optional(),
     customerPhone: z.string().max(30).nullable().optional(),
   }),
+  'orders/quick_sale': z.strictObject({
+    items: z.array(z.strictObject({ combinationId: id, qty: z.number().int().min(1).max(10_000) })).min(1).max(50),
+    method,
+    reference: name.optional(),
+    customerName: name.optional(),
+  }),
   'orders/add_catalogue_line': z.strictObject({ orderId: id, combinationId: id, qty: z.number().int().min(1).max(10_000) }),
   'orders/add_custom_line': z.strictObject({ orderId: id, spec: cakeSpec }),
   'orders/update_custom_line': z.strictObject({ orderId: id, lineId: id, spec: cakeSpec }),

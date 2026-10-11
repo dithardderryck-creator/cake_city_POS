@@ -12,7 +12,7 @@ import type {
 } from '../domain';
 import { DomainError, type HandlerCtx, type Registry } from '../intents';
 import { isIsoDate, todayLocal } from './dates';
-import { canAdvance, canRemoveLine, moneySummary, deriveOrderStatus, activeLines, isCustom } from './order-logic';
+import { canAdvance, canRemoveLine, moneySummary, deriveOrderStatus, activeLines, isCustom, round2 } from './order-logic';
 import { normalisePhone } from './notify';
 import { closeOpenQuote } from './quote-util';
 import { ensureSuggestion } from './recipes';
@@ -47,6 +47,49 @@ function dateProblems(date: string | undefined, ctx: Pick<HandlerCtx, 'clock'>):
   if (!isIsoDate(date)) return ['Choose a valid delivery date.'];
   if (date < todayLocal(ctx.clock.now())) return ['Choose today or a later date.'];
   return [];
+}
+
+/** Why a catalogue item cannot be sold right now. Empty means it can. Shared by order lines and instant sales. */
+async function catalogueProblems(ctx: Pick<HandlerCtx, 'store'>, combinationId: string): Promise<string[]> {
+  const combo = await ctx.store.get<Combination>('combinations', combinationId);
+  if (!combo) return ['That item is no longer in the catalogue.'];
+  const product = await ctx.store.get<Product>('products', combo.productId);
+  if (!product || product.status === 'archived') return ['That product has been archived.'];
+  if (product.hidden) return [`${product.name} is hidden from the counter.`];
+  if (!product.availableToday) return [`${product.name} is off the menu today.`];
+  if (combo.status !== 'available') return ['That version is not available.'];
+  if (combo.price === null) return ['That version has no price yet. Ask the owner to set one.'];
+  return [];
+}
+
+/** A catalogue line with its price and options frozen at the moment of sale. */
+async function buildCatalogueLine(ctx: HandlerCtx, orderId: string, combo: Combination, product: Product, qty: number, status: OrderLine['status']): Promise<OrderLine> {
+  const [groups, values] = await Promise.all([ctx.store.list<OptionGroup>('optionGroups'), ctx.store.list<OptionValue>('optionValues')]);
+  const chosen = values.filter((v) => combo.valueIds.includes(v.id));
+  const options: Record<string, string> = {};
+  for (const g of groups.sort((a, b) => a.order - b.order)) {
+    const v = chosen.find((x) => x.groupId === g.id);
+    if (v) options[g.name] = v.label;
+  }
+  const allergens = [...new Set([...product.allergens, ...chosen.flatMap((v) => v.allergens)])];
+  return { id: ctx.ids.next('lin'), orderId, type: 'catalogue', combinationId: combo.id, qty, snapshot: { productName: product.name, options, unitPrice: combo.price!, allergens }, status };
+}
+
+/** BR-03: stock drops only at completion. A shortfall is allowed but recorded, never silently lost. */
+async function dropStock(ctx: HandlerCtx, o: { combo: Combination; qty: number; productName: string; orderId: string; warnings: string[]; events: Array<{ type: string; payload?: Record<string, unknown> }> }) {
+  const { combo, qty, orderId } = o;
+  const taken = Math.min(combo.stockCount, qty);
+  const shortfall = qty - taken;
+  await ctx.store.put('combinations', { ...combo, stockCount: combo.stockCount - taken });
+  const movement: StockMovement = { id: ctx.ids.next('mov'), combinationId: combo.id, qty: -taken, reason: 'sale', orderId, by: ctx.session!.userId, at: ctx.now() };
+  await ctx.store.put('stockMovements', movement);
+  o.events.push({ type: 'StockMoved', payload: { combinationId: combo.id, delta: -taken } });
+  if (shortfall > 0) {
+    const diff: CountDifference = { id: ctx.ids.next('dif'), combinationId: combo.id, expected: -shortfall, counted: 0, difference: -shortfall, reason: 'shortfall_at_completion', orderId, at: ctx.now() };
+    await ctx.store.put('countDifferences', diff);
+    o.events.push({ type: 'CountDifferenceRecorded', payload: { combinationId: combo.id, shortfall } });
+    o.warnings.push(`Stock was short by ${shortfall} for ${o.productName}. It has been logged for the daily count.`);
+  }
 }
 
 export const orderIntents = {
@@ -133,15 +176,7 @@ export const orderIntents = {
       const status = deriveOrderStatus(lines);
       if (status === 'completed' || status === 'cancelled')
         return [`Order ${order.number} is ${status}. Start a new order instead.`];
-      const combo = await ctx.store.get<Combination>('combinations', p.combinationId);
-      if (!combo) return ['That item is no longer in the catalogue.'];
-      const product = await ctx.store.get<Product>('products', combo.productId);
-      if (!product || product.status === 'archived') return ['That product has been archived.'];
-      if (product.hidden) return [`${product.name} is hidden from the counter.`];
-      if (!product.availableToday) return [`${product.name} is off the menu today.`];
-      if (combo.status !== 'available') return ['That version is not available.'];
-      if (combo.price === null) return ['That version has no price yet. Ask the owner to set one.'];
-      return [];
+      return catalogueProblems(ctx, p.combinationId);
     },
     handle: async (p, ctx) => {
       const { lines } = await loadOrderBundle(ctx, p.orderId);
@@ -160,32 +195,64 @@ export const orderIntents = {
         };
       }
 
-      const [groups, values] = await Promise.all([
-        ctx.store.list<OptionGroup>('optionGroups'),
-        ctx.store.list<OptionValue>('optionValues'),
-      ]);
-      const chosen = values.filter((v) => combo.valueIds.includes(v.id));
-      const options: Record<string, string> = {};
-      for (const g of groups.sort((a, b) => a.order - b.order)) {
-        const v = chosen.find((x) => x.groupId === g.id);
-        if (v) options[g.name] = v.label;
-      }
-      const allergens = [...new Set([...product.allergens, ...chosen.flatMap((v) => v.allergens)])];
-      const line: OrderLine = {
-        id: ctx.ids.next('lin'),
-        orderId: p.orderId,
-        type: 'catalogue',
-        combinationId: combo.id,
-        qty: p.qty,
-        snapshot: { productName: product.name, options, unitPrice: combo.price!, allergens },
-        status: 'new',
-      };
+      const line = await buildCatalogueLine(ctx, p.orderId, combo, product, p.qty, 'new');
       await ctx.store.put('orderLines', line);
       return {
         summary: `Added ${p.qty} ${product.name}`,
         target: line.id,
         data: { lineId: line.id },
         events: [{ type: 'LineAdded', payload: { orderId: p.orderId, lineId: line.id } }],
+      };
+    },
+  },
+
+  'orders/quick_sale': {
+    circuit: 'Orders',
+    roles: ['owner', 'cashier'],
+    validate: async (p, ctx) => {
+      if (p.items.length === 0) return ['Add at least one item to the sale.'];
+      const errors: string[] = [];
+      const seen = new Set<string>();
+      for (const it of p.items) {
+        if (seen.has(it.combinationId)) errors.push('The same item appears twice in this sale.');
+        seen.add(it.combinationId);
+        errors.push(...(await catalogueProblems(ctx, it.combinationId)));
+      }
+      return [...new Set(errors)];
+    },
+    handle: async (p, ctx) => {
+      const order: Order = {
+        id: ctx.ids.next('ord'),
+        number: await nextOrderNumber(ctx),
+        customerName: p.customerName?.trim() || 'Walk-in customer',
+        source: 'walk_in',
+        fulfilment: 'pickup',
+        partialAllowed: false,
+        createdBy: ctx.session!.userId,
+        createdAt: ctx.now(),
+      };
+      await ctx.store.put('orders', order);
+      const warnings: string[] = [];
+      const events: Array<{ type: string; payload?: Record<string, unknown> }> = [{ type: 'OrderCreated', payload: { orderId: order.id } }];
+      let total = 0;
+      for (const it of p.items) {
+        const combo = (await ctx.store.get<Combination>('combinations', it.combinationId))!;
+        const product = (await ctx.store.get<Product>('products', combo.productId))!;
+        // Straight to completed: there is no ticket to walk through for something handed over now.
+        const line = await buildCatalogueLine(ctx, order.id, combo, product, it.qty, 'completed');
+        await ctx.store.put('orderLines', line);
+        total = round2(total + combo.price! * it.qty);
+        await dropStock(ctx, { combo, qty: it.qty, productName: product.name, orderId: order.id, warnings, events });
+      }
+      const payment: Payment = { id: ctx.ids.next('pay'), orderId: order.id, method: p.method, amount: total, reference: p.reference?.trim() || undefined, receivedBy: ctx.session!.userId, receivedAt: ctx.now() };
+      await ctx.store.put('payments', payment);
+      events.push({ type: 'PaymentRecorded', payload: { orderId: order.id, amount: total, method: p.method } });
+      return {
+        summary: `Sold order ${order.number} for ${ctx.config.formatMoney(total)}`,
+        target: order.id,
+        data: { orderId: order.id, number: order.number, total, paymentId: payment.id },
+        warnings,
+        events,
       };
     },
   },
@@ -249,39 +316,7 @@ export const orderIntents = {
         // BR-03: stock drops only now. A shortfall is allowed but recorded, never silently lost.
         // Custom cakes use ingredients, not counter stock; their usage is handled by the production circuits later.
         const combo = line.combinationId ? await ctx.store.get<Combination>('combinations', line.combinationId) : undefined;
-        if (combo) {
-          const taken = Math.min(combo.stockCount, line.qty);
-          const shortfall = line.qty - taken;
-          await ctx.store.put('combinations', { ...combo, stockCount: combo.stockCount - taken });
-          const movement: StockMovement = {
-            id: ctx.ids.next('mov'),
-            combinationId: combo.id,
-            qty: -taken,
-            reason: 'sale',
-            orderId: p.orderId,
-            by: ctx.session!.userId,
-            at: ctx.now(),
-          };
-          await ctx.store.put('stockMovements', movement);
-          events.push({ type: 'StockMoved', payload: { combinationId: combo.id, delta: -taken } });
-          if (shortfall > 0) {
-            const diff: CountDifference = {
-              id: ctx.ids.next('dif'),
-              combinationId: combo.id,
-              expected: -shortfall,
-              counted: 0,
-              difference: -shortfall,
-              reason: 'shortfall_at_completion',
-              orderId: p.orderId,
-              at: ctx.now(),
-            };
-            await ctx.store.put('countDifferences', diff);
-            events.push({ type: 'CountDifferenceRecorded', payload: { combinationId: combo.id, shortfall } });
-            warnings.push(
-              `Stock was short by ${shortfall} for ${line.snapshot.productName}. It has been logged for the daily count.`,
-            );
-          }
-        }
+        if (combo) await dropStock(ctx, { combo, qty: line.qty, productName: line.snapshot.productName, orderId: p.orderId, warnings, events });
         // Open question Q-01: allowed for now, but flagged.
         const money = moneySummary(bundle.lines, bundle.payments, bundle.refunds);
         if (money.balance > 0) {

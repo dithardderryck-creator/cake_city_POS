@@ -222,6 +222,17 @@ Allowed: **owner, cashier**
 | `combinationId` | string | yes | min length 1, max length 64 |
 | `qty` | integer | yes | min 1, max 10000 |
 
+#### `orders/quick_sale`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `items` | { combinationId: string, qty: integer }[] | yes | max 50 items |
+| `method` | "cash" \| "card" \| "bank_transfer" \| "mobile_money" | yes |  |
+| `reference` | string | no | max length 120 |
+| `customerName` | string | no | max length 120 |
+
 #### `orders/cancel_line`
 
 Allowed: **owner, cashier**
