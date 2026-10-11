@@ -8,16 +8,16 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @cake-pos/web",
+    "dev": "node apps/ui/try.mjs",
     "dev:server": "npm run dev -w @cake-pos/server",
-    "build": "npm run build -w @cake-pos/web && npm run build -w @cake-pos/server",
-    "start": "npm run start -w @cake-pos/server",
+    "build": "npm run build -w @cake-pos/ui && npm run build -w @cake-pos/server",
+    "start": "node scripts/start.mjs",
     "ui:try": "node apps/ui/try.mjs",
     "ui:test": "cd apps/ui && for t in cashier baker inventory inventory-edge owner; do UI_DIST=/tmp/ui-dist-$t node build.mjs >/dev/null && UI_DIST=/tmp/ui-dist-$t node test/$t.mjs || exit 1; done",
     "admin": "npm run admin -w @cake-pos/server --",
     "docs:api": "tsx scripts/gen-api-reference.ts",
-    "test": "npm run test -w @cake-pos/panel && npm run test -w @cake-pos/server && npm run test -w @cake-pos/web",
-    "typecheck": "npm run typecheck -w @cake-pos/panel && npm run typecheck -w @cake-pos/client && npm run typecheck -w @cake-pos/server && npm run typecheck -w @cake-pos/design-system && npm run typecheck -w @cake-pos/web",
+    "test": "npm run test -w @cake-pos/panel && npm run test -w @cake-pos/server",
+    "typecheck": "npm run typecheck -w @cake-pos/panel && npm run typecheck -w @cake-pos/client && npm run typecheck -w @cake-pos/server && npm run typecheck -w @cake-pos/design-system && npm run typecheck -w @cake-pos/ui",
     "acceptance": "node scripts/acceptance.mjs"
   },
   "engines": {

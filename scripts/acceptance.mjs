@@ -25,7 +25,7 @@ const port = await new Promise((resolve) => {
     s.close(() => resolve(p));
   });
 });
-const env = { ...process.env, DATA_DIR: path.join(work, 'data'), PORT: String(port), HOST: '127.0.0.1', CLOUD_BACKUP_DIR: cloud, LOG_LEVEL: 'warn' };
+const env = { ...process.env, DATA_DIR: path.join(work, 'data'), PORT: String(port), HOST: '127.0.0.1', CLOUD_BACKUP_DIR: cloud, LOG_LEVEL: 'warn', STATIC_DIR: path.join(root, 'apps/ui/dist') };
 const base = `http://127.0.0.1:${port}`;
 
 let step = 0;
@@ -87,6 +87,11 @@ try {
   ok('admin tool created the owner');
   await start();
   ok('server started');
+  for (const page of ['/', '/cashier.html', '/baker.html', '/inventory.html', '/owner.html', '/cake.js', '/fonts.css']) {
+    const res = await fetch(base + page);
+    assert.equal(res.status, 200, `${page} is served`);
+  }
+  ok('the server serves the sign-in page, the four role pages and the shared script');
   assert.equal((await (await fetch(base + '/api/health')).json()).ok, true);
 
   // ---- The owner builds the shop through the API alone ----

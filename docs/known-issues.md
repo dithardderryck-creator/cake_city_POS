@@ -16,19 +16,19 @@ Last updated after the alerts, forecast, metric-units and phone-notification wor
 
 ## Open
 
-### O-1. Undeclared dependencies in `apps/web`
-`apps/web/src/server-mode.test.tsx` imports `@cake-pos/server`, `ws` and Node built-ins. None of these (nor `@types/node`) is declared in `apps/web/package.json`. It works only because npm hoists them to the root. Declare them as devDependencies, or move that test next to the server's tests (where `client-react.test.tsx` now lives).
+### O-1. (closed) Undeclared dependencies in the old React app
+The old React app (`apps/web`) was removed when the new pages replaced it.
 
-### O-2. `apps/web` does not use the client React hooks
-`apps/web/src/lib/panel.tsx` has its own bridge and only imports `createClient` and `localStorageTokenStore`. The hooks are covered by tests (F-4) but no UI uses them. `docs/api.md` previously called `apps/web` "a complete working example" of the hooks; that sentence is corrected. Either move `apps/web` onto the hooks or leave the docs as they now read.
+### O-2. Nothing uses the client React hooks
+The new pages are plain HTML and use the core client only (through `apps/ui/src/cake.ts`). The React hooks are covered by tests (F-4) but no screen uses them.
 
 Related gap in the hooks: `useSession` reports `signedOut` when the server cannot be reached at page load, because `restore()` returns `null` in that case. The saved sign-in is kept, but the UI cannot tell "nobody signed in" from "server not reachable yet". It needs a third state (for example `unreachable`).
 
-### O-3. Demo PINs shown on the sign-in screen in server mode
-`apps/web/src/screens/SignIn.tsx` (the "Demo mode. PINs: ..." note) prints the demo PINs unconditionally. Gate it on standalone/demo mode only (`!SERVER_MODE` in `lib/panel.tsx`).
+### O-3. (closed) Demo PINs on the sign-in screen
+Gone with the old React app. The new sign-in page (`apps/ui/pages/index.html`) lists staff by name and shows no PINs.
 
-### O-4. "Offline, saving here" chip uses `navigator.onLine`
-`apps/web/src/App.tsx` shows the chip from `useOnline()` (`navigator.onLine`) in `lib/panel.tsx`. Under D-54 the app is offline when it cannot reach the shop server, which `navigator.onLine` does not tell it (wifi can be up with the server down). In server mode the chip should follow the client's connection state; the "saving here" wording is only true in standalone mode.
+### O-4. (closed) "Offline" chip used `navigator.onLine`
+Gone with the old React app. The new pages show "Server unreachable" from the real connection to the shop server and block changes while it is down.
 
 ### O-5. (closed) The `sync` outbox rows
 Every instruction still writes a small `sync` row, but nothing reads them (the online copy works from backups, D-67), so housekeeping now deletes them after 7 days. The table no longer grows without limit. The `sync/flush` instruction and `SyncTerminal` remain in the code unused; removing them is a tidy-up for later.
@@ -38,8 +38,8 @@ The only checks are `npm test`, `npm run typecheck` and the generated-docs stale
 - GitHub Actions: install, typecheck, lint, test, `npm run docs:api` followed by a diff check, build, `npm run acceptance`. Linux required; Windows and macOS allowed to fail at first (the start-up files have never been run on them).
 - ESLint with typescript-eslint, `import-x/no-extraneous-dependencies` (this catches O-1 automatically) and `react-hooks`.
 
-### O-7. The reference UI has no custom cake screens
-`apps/web` was built before custom cakes. It still compiles and passes its tests, but it cannot create custom cakes, send or answer quotes, attach photos, or show the baker's queue. The server, the feeds and the client library all support them (see "Custom cakes" in `docs/api.md`). This is expected while the real UI is being built separately.
+### O-7. (closed) The reference UI had no custom cake screens
+Gone with the old React app. The cashier, baker, inventory and owner pages all handle custom cakes, quotes and photos.
 
 ### O-8. Dates and time zones
 Delivery dates are plain calendar dates, and "today", "tomorrow" and "late" in `bake_queue` are worked out in the **server computer's time zone**. If the server computer is set to the wrong time zone, those labels are off by a day near midnight. Check the computer's time zone when installing.
@@ -90,3 +90,9 @@ Writing the spreadsheet, the extra backup and the Drive upload all happen before
 
 - `docs/blueprint.md` said the client library was "tested through the reference UI against a real server". It was not. It is now tested directly (F-4), and the build-status table says so, and has a row for the outbox that points at O-5.
 - `docs/api.md` said `apps/web` is a complete working example of the hooks. See O-2.
+
+### O-11. Screens still to build or check
+- There is no IT page yet. Signing in as IT goes to `/it.html`, which does not exist. The server side (panel map, requests) is ready.
+- The owner page has no "what each role can do" table (the old mock-up had a fixed one; it would drift from the server's real rules).
+- The owner page has no per-ingredient movement history (no feed for it), only the forecast line.
+- Browser tests (`npm run ui:test`) cover the happy paths, refusals, live updates and phone width. The hand-test lists in `docs/ui-checkpoint.md` still need a person with real devices.

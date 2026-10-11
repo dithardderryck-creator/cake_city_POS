@@ -33,9 +33,9 @@ It prints the addresses, for example `http://192.168.1.20:8787`. Open that on an
 
 **Firewall:** the first start may ask to allow incoming connections. Allow it on **private networks only** (Windows) or "Allow" (macOS). Without that, other devices cannot connect.
 
-### Serving your own UI from the server
+### The screens
 
-Build your UI, then point the server at the folder: `STATIC_DIR=path/to/dist`. Devices then just open the server's address, with no separate hosting.
+`npm run build` builds the pages into `apps/ui/dist`, and `npm start` serves them from the same address as the server, so devices just open the server's address (no separate hosting). To serve a different folder, set `STATIC_DIR=path/to/folder`.
 
 ## Settings
 
@@ -51,7 +51,7 @@ Set these as environment variables before starting. All are optional.
 | `BACKUP_TIME` | 02:00 | Nightly backup time, 24-hour, shop local time |
 | `BACKUP_KEEP` | 30 | How many local backups to keep |
 | `ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Other web addresses allowed to call the API. Comma-separated, or `*` |
-| `STATIC_DIR` | none | Folder of a built UI to serve |
+| `STATIC_DIR` | `apps/ui/dist` when started with `npm start`, otherwise none | Folder of built pages to serve |
 | `TLS_CERT`, `TLS_KEY` | none | Paths to a certificate and key, to serve HTTPS. Set both or neither |
 | `DEVICE_PREFIX` | S | 1 to 3 letters at the start of order numbers (S-0001) |
 | `LOG_LEVEL` | info | debug, info, warn or error |

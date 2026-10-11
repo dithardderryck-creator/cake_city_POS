@@ -1,6 +1,6 @@
 # New UI: how the four mockups connect to the server
 
-Status: plan, written 6 Oct 2026. The four HTML mockups in `apps/ui/mockups/` replace the old React app (`apps/web`).
+Status: plan, written 6 Oct 2026. The four HTML mockups were wired into `apps/ui/pages/` and replaced the old React app (`apps/web`, removed 11 Oct 2026).
 Decisions from the owner: keep them as plain HTML (no React), build the missing server parts first, remove the old UI now.
 
 ## Rules that do not change

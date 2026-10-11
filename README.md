@@ -18,8 +18,8 @@ Every wire runs into one place, the **panel**, and the UI is pure I/O.
 packages/panel          The rules. Pure TypeScript, no UI, no network.
 packages/server         The shop server: HTTP + WebSocket, SQLite, backups, admin tool.
 packages/client         Client library for UIs (framework-agnostic core + React hooks).
-packages/design-system  Tokens (CSS variables), React components, living docs page.
-apps/web                A working reference UI. Runs standalone, or against the server.
+packages/design-system  Tokens (CSS variables), React components, living docs page (not used by the shop pages).
+apps/ui                 The shop's screens: plain HTML pages for cashier, baker, inventory and owner, one shared script, and browser tests.
 docs/                   blueprint.md (the plan), api.md + api-reference.md (build a UI), runbook.md (run the server), known-issues.md (open bugs and gaps)
 deploy/                 Start-up files for macOS and Windows (not yet tested on those systems)
 ```
@@ -30,26 +30,24 @@ Needs **Node 20 or newer**.
 
 ```bash
 npm ci
-npm test                 # panel rules, server (HTTP, backups, crash tests), and UI tests
+npm test                 # panel rules and server (HTTP, backups, crash tests)
+npm run ui:test          # the screens, in a real browser against a real server (needs Playwright's Chromium)
 npm run typecheck
 npm run build && npm run acceptance   # plays the owner against the built server: set up, sell, back up, crash, recover, restore
 
 # Run the real thing:
 npm run build
 npm run admin -- create-owner --name "Amina"     # asks for a PIN
-npm run start                                    # prints the addresses to open on other devices
+npm run start                                    # serves the pages too; prints the addresses to open on other devices
 ```
 
-To try the reference UI against the server:
+To try the screens with demo data (throwaway database, demo PINs printed, **never on a real shop**):
 
 ```bash
-# terminal 1
-npm run dev:server
-# terminal 2  (allowed by default: http://localhost:5173)
-VITE_SERVER_URL=http://localhost:8787 npm run dev
+npm run dev              # builds the pages, seeds demo data, serves on http://localhost:8787
 ```
 
-Without `VITE_SERVER_URL`, `apps/web` runs standalone with demo data in the browser (open `#/design` for the design system). For a throwaway demo database on the server: `npm run admin -- seed-demo --yes` (owner PIN 1111, **never on a real shop**).
+The pages are in `apps/ui/pages/`; see `docs/ui-checkpoint.md` for what is done and what to check by hand.
 
 ## If you are building the UI
 

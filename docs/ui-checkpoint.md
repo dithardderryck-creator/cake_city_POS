@@ -1,12 +1,12 @@
 # New screens: checkpoint
 
-Where the new screens (from the four HTML designs) stand, how to try them, and what is left. Written 10 Oct 2026.
+Where the new screens (from the four HTML designs) stand, how to try them, and what is left. Updated 11 Oct 2026.
 
 ## Try it
 
 ```
 npm install
-npm run ui:try            # builds the screens, fills a demo shop, starts it
+npm run dev               # (same as npm run ui:try) builds the screens, fills a demo shop, starts it
 npm run ui:try -- --fresh # same, from clean demo data
 ```
 
@@ -22,9 +22,9 @@ Automated browser tests: `npm run ui:test` (cashier, baker, inventory, inventory
 | Cashier | yes | passes | |
 | Baker | yes | passes | |
 | Inventory | yes | passes (`inventory.mjs` and `inventory-edge.mjs`) | Edge test covers real stock numbers after confirming, accept-as-reported, double-click safety, refused receive and write-off, new packaging, count Edit/Resume/Discard, theme, role redirect. |
-| Owner | **partly** | passes (`owner.mjs`) | Requests tab is real: price custom cakes (set, decline, change price), staff requests, announcements with who has read them. The other tabs are still the design, hidden until wired. |
+| Owner | yes | passes (`owner.mjs`) | All eight tabs real: overview, requests (price custom cakes, staff requests, announcements), catalogue, orders (with refunds and price changes), stock, payments, staff, reports; settings drawer (shop details, warning rules). |
 | IT | not started | none | Set aside for now. Until it exists, an IT sign-in goes to `/it.html`, which is missing. |
-| Old React app (`apps/web`) | still there | | Keep until the Owner screen is done. |
+| Old React app (`apps/web`) | removed | | `npm run build` and `npm start` now use `apps/ui`. |
 
 ## Hand-test checklist
 
@@ -62,6 +62,19 @@ Tick these on the demo shop. "Second screen" means a second browser window signe
 - [ ] Daily count: Matches system, type a number, Skip, Edit from the review, Submit. A difference of 10% or more reaches the owner as a request. Close the screen mid-count and Resume.
 - [ ] Requests, announcements, search, phone width.
 
+### Owner
+- [ ] Overview: revenue and chart (7 and 30 days), due soon, running low, needs your decision, staff activity.
+- [ ] Requests: a cashier's custom cake price request appears with photos; send a price, decline (reason needed). The cashier's ticket updates by itself.
+- [ ] Announcements: post one needing acknowledgement; see who has read it; take it down.
+- [ ] Catalogue: New item with sizes and prices; a size without a price keeps it a draft; Hidden removes it from the cashier's Sell screen; switch it off for today; archive.
+- [ ] Orders: board, search, select several and cancel; open an order: change a price you gave (reason needed), refund (reason and amount), cancel.
+- [ ] Payments: pick another day; filter refunds; outstanding balances open the order.
+- [ ] Stock: list, filters, forecast line, usage waiting, stock requests.
+- [ ] Staff: add someone, change role, set a PIN, deactivate and reactivate, alert contact details, audit log filter.
+- [ ] Settings (sliders icon): shop name appears on tickets and receipts; warning rules save.
+- [ ] Reports: 7 and 30 days; usage compared with suggestions; refunds, count differences, write-offs.
+- [ ] Phone width: every tab.
+
 ### Both roles, always
 - [ ] Sign out returns to sign-in; signing in as another role lands on that role's page; opening another role's page redirects.
 - [ ] Light and dark theme.
@@ -69,23 +82,10 @@ Tick these on the demo shop. "Second screen" means a second browser window signe
 
 ## Left to do
 
-1. ~~Inventory test~~ done 10 Oct 2026 (also fixed: new item landing on the wrong tab, and a stale count review after Save/Edit).
-2. **Owner screen** (`apps/ui/pages/owner.html`, 700 lines of design). Screens and the server feeds to use:
-   - Reports: `reports` (7 and 30 days).
-   - Orders: `order_list`, `order_card`.
-   - Quotes to price: `quote_inbox`, `quotes/provide`, `quotes/decline`, `quotes/revise`.
-   - Refunds and payments: `payments/approve_refund`, `payments_ledger`.
-   - Stock forecast: `stock_forecast`.
-   - Catalogue: `catalogue_grid` and the `catalogue/*` intents (published or hidden is `catalogue/set_hidden`).
-   - Staff: `staff_list`, `staff/*`.
-   - Activity log: `audit_view`.
-   - Announcements: `announcements`, `announcements/post`, `announcements/retire` (owner sees who has read each).
-   - Alerts and settings: `alert_inbox`, `alert_settings` and `alerts/configure`, `shop_settings` and `settings/update`.
-   - Requests: the shared list (`Cake.mountRequests`).
-   Same rules as the other pages: no shop logic in the page, one intent per action, server labels shown as given, nothing faked. Then write `apps/ui/test/owner.mjs` in the style of `cashier.mjs`.
-3. **IT screen** (later): "Panel map" (`panel_map`) and Requests (`request_inbox`). IT can read only these.
-4. **Remove the old React app**: `apps/web`, the `@cake-pos/web` entries in the root `package.json` scripts (`dev`, `build`, `test`, `typecheck`), `apps/ui/mockups/`. Update `scripts/acceptance.mjs`, `docs/runbook.md` (build and start steps), `docs/blueprint.md`, `docs/known-issues.md`, then typecheck, all tests and acceptance.
-5. Serve the new screens in the real start path: today `npm run start` serves whatever `STATIC_DIR` points at, and `npm run build` still builds the old app. Point both at `apps/ui/dist` when the old app goes.
+1. **IT screen** (later): "Panel map" (`panel_map`) and Requests (`request_inbox`). IT can read only these.
+2. Hand-test everything above on real devices, and decide the open questions in `docs/blueprint.md` (Google account, archive folder, live online database or Drive copies, alert thresholds and recipients, SMS and WhatsApp provider, HTTPS on the shop network).
+
+Done: inventory test, owner screen and its test, old React app removed, `npm run build` and `npm start` serve `apps/ui`.
 
 ## Known gaps (honest list)
 
@@ -96,3 +96,5 @@ Tick these on the demo shop. "Second screen" means a second browser window signe
 - Packaging has no recipes or usage amounts.
 - The inventory screen shows quantities in each item's base unit (kg, l, pcs), as the design did; receive and write-off accept smaller units.
 - Google Drive, SMS, WhatsApp and push alerts have not been tried against real accounts.
+- The owner page has no table of what each role can do, and no movement history per ingredient (no feed for it).
+- The old `packages/design-system` (React tokens and components) is not used by the shop pages. It is kept for now; delete it if you do not want it.
