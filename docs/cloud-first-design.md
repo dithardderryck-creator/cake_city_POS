@@ -51,7 +51,42 @@ Wifi gives the strongest and cheapest signal, so it is the first check. A device
 
 Off the shop wifi and on mobile data, there is no free local-network proof, so the device falls back to GPS: its coordinates must sit inside a radius around the shop. Location permission is requested once, at account set-up, with a plain explanation of why ("needed to confirm you're at the shop when off wifi"); once granted it persists at the OS level and later checks run quietly in the background with no repeat prompts. A worker who declines the permission can still use the system, but only while on the shop's own wifi.
 
-While signed in, the device is checked periodically. Shop wifi lost but GPS still shows the shop's radius: treated as a wifi hiccup, the session stays live and queues changes offline. Shop wifi lost and the device has also left the radius: the session locks immediately.
+While signed in, the device is checked periodically. Shop wifi lost but GPS still shows the shop's radius: treated as a wifi hiccup, the session stays live and queues changes offline. Shop wifi lost and the device has also left the radius: the session drops to the **staff lobby** (next section) instead of locking.
+
+## Staff lobby: what staff can do away from the shop
+
+*Added 12 Oct 2026 at the owner's request.* A cashier, baker or inventory person who is outside the shop (off wifi and outside the GPS radius, or who never gave location permission) is not locked out. They land in a **lobby**: they stay signed in, but only for simple tasks that cannot cost the shop money or corrupt stock. Anything serious waits until they are back at the shop. The owner and IT are exempt as before and never see the lobby.
+
+**Principle.** The lobby may read and communicate. It may not change money, stock, orders or prices. Back at the shop (wifi or GPS inside the radius), full access returns on its own.
+
+**Proposed split, to be confirmed by the owner.** Nothing is built; this is the starting list, based on what the system can do today.
+
+| In the lobby (allowed away from the shop) | Shop only (blocked in the lobby) |
+| --- | --- |
+| Read announcements and acknowledge them | Any sale, quick sale or payment |
+| Send and answer staff requests, see alerts addressed to them | Refunds (owner only anyway) |
+| Change their own PIN, sign out | Creating, editing or cancelling orders and tickets |
+| See their own past actions and shifts (when shifts exist) | Quotes and prices, catalogue changes |
+| Baker: view the bake queue and tickets read-only | Moving a ticket along (in production, ready, handed over) |
+| Inventory: view stock levels and forecasts read-only | Receive stock, write off, usage confirmation, daily count |
+| Cashier: view today's orders read-only (no totals of money collected) | Anything that opens the cash drawer or changes a total |
+
+Whether a baker may *report* usage from home is a judgement call: it only creates a suggestion that Inventory must confirm, so it could be allowed. Left to the owner.
+
+**How it would work, on top of what exists.**
+
+- Every instruction already has a role list. Add one more property: whether it needs the person to be at the shop. The default is **needs presence**, and only a short allowlist is open to the lobby. Forgetting to classify a new instruction then fails safe (blocked), not open.
+- This must be enforced by the server, not the page. A page that hides the Sell button is not protection. The server decides what "at the shop" means for each session and checks it on every instruction.
+- Feeds work the same way: lobby feeds are read-only and trimmed (no money totals).
+- Offline queued changes: when a session drops to the lobby, anything it queued while it was still inside the shop is **kept and held for the owner to review**, not discarded. This answers the open question below about queued changes. It also means a lobby session can never create new queued sales.
+
+**Things to settle.**
+
+1. How "at the shop" is proven to the server. Wifi proof (the device reached the local server) is reasonably trustworthy. A GPS position that the phone reports is easy to fake, so on mobile data it is a deterrent rather than a guarantee. If this matters, the shop computer (or a code shown only on a shop screen) could issue short-lived "present" tokens.
+2. Whether coming back to the shop restores full access silently, or asks for the PIN again. Asking again is safer and cheap.
+3. Whether the lobby has its own, shorter idle timeout than the normal session.
+4. Whether the lobby is shown for someone who declined location permission and is off wifi. The design above says yes: they can still use the system, but only the lobby until they are on shop wifi.
+5. How this interacts with registered devices (done): a staff member's own phone would be a registered device, and the lobby works per sign-in, not per device.
 
 ## Refund cooldown
 
@@ -60,7 +95,7 @@ A universal cooldown of roughly 90 seconds to two minutes applies after any sale
 ## Open questions and next steps
 
 - Choice of cloud database and hosting (this supersedes the repo's existing Q-16, which assumed the shop computer stayed primary; see `docs/later.md`).
-- What happens to a cashier, baker or inventory device's queued offline changes if its session locks because it left the shop radius mid-queue: discard, hold for the owner to review, or something else.
+- What happens to a cashier, baker or inventory device's queued offline changes if its session leaves the shop radius mid-queue: proposed answer in the staff lobby section (hold for the owner to review, never discard). To confirm.
 - Exact geofencing radius around the shop, and how directly browsers can read wifi network identity versus relying on reaching the local server's address as the proof.
 - Whether a small UPS for the shop desktop is feasible to source and maintain for this shop.
 - This builds on, rather than replaces, the existing change-log and retry-safe sync work (`docs/later.md`, item 6); part two (reading back from a remote copy) is the piece this design finally completes.
