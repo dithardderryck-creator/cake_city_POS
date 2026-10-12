@@ -84,7 +84,7 @@ While signed in, the device is checked periodically. Shop wifi lost but GPS stil
 
 1. How "at the shop" is proven to the server. Wifi proof (the device reached the local server) is reasonably trustworthy. A GPS position that the phone reports is easy to fake, so on mobile data it is a deterrent rather than a guarantee. If this matters, the shop computer (or a code shown only on a shop screen) could issue short-lived "present" tokens.
 2. **Decided (owner, 12 Oct 2026):** coming back to the shop asks for the PIN again before full access returns.
-3. Whether the lobby signs people out sooner when they stop using it than a normal sign-in does (a normal one lasts 10 hours of no use). Proposed: 30 minutes. Not decided.
+3. Whether the lobby signs people out sooner when they stop using it than a normal sign-in does (a normal one lasts 10 hours of no use). **Decided (owner, 12 Oct 2026):** 30 minutes.
 4. Whether the lobby is shown for someone who declined location permission and is off wifi. The design above says yes: they can still use the system, but only the lobby until they are on shop wifi.
 5. How this interacts with registered devices (done): a staff member's own phone would be a registered device, and the lobby works per sign-in, not per device.
 
