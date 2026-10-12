@@ -99,3 +99,30 @@ A universal cooldown of roughly 90 seconds to two minutes applies after any sale
 - Exact geofencing radius around the shop, and how directly browsers can read wifi network identity versus relying on reaching the local server's address as the proof.
 - Whether a small UPS for the shop desktop is feasible to source and maintain for this shop.
 - This builds on, rather than replaces, the existing change-log and retry-safe sync work (`docs/later.md`, item 6); part two (reading back from a remote copy) is the piece this design finally completes.
+
+## Build plan (drafted 12 Oct 2026, for the owner to approve before any code)
+
+*Nothing here is built. It turns the agreed design into an order of work, based on what the code does today.*
+
+**Starting point.** The server is one process with a SQLite file. It already has: a change log written in the same transaction as every save (`panel/src/changelog.ts`), a retry-safe push to an online endpoint (`server/src/online-sync.ts`), order numbers with a per-device prefix (so two servers cannot make the same number), registered devices, and a role check on every instruction.
+
+**Recommended hosting shape: run the same server in the cloud, not a rewrite.** The cloud copy is this same server on a small always-on host with its disk kept safe (continuous copy of the SQLite file to storage). The shop computer runs the same program as the fallback. This avoids porting every circuit to a different database, and it keeps the owner's pages, the tests and the audit trail identical in both places. A hosted database (Postgres) stays possible later if the shop grows; it is a bigger job and nothing in the design needs it yet. (Choice of host is still open: see question 1 below.)
+
+**Stages.** Each ends with all suites green and can be stopped there.
+
+1. **Two-way sync between two servers.** Finish the part that is missing: the cloud server accepts changes (ignoring ids it already has), and the shop server pulls what the cloud has. Rules: money and stock movements are only ever added; plain records (catalogue, prices, staff) last write wins by time; two devices selling the last unit is flagged for the owner, not auto-fixed. Known gap to close here: a product's stock count is stored as a number, so after a merge it must be recomputed from the movements instead of trusting either copy. Test: two servers, both sell offline, reconnect, both end identical.
+2. **Which server do the shop devices use.** Devices try the cloud first and fall over to the shop computer after a short failure, and move back when the cloud returns. Also: sign-in and sessions must work on whichever server is up (sessions are local to a server today, so a failover means signing in again with the PIN). Test: stop the cloud server mid-sale and prove the sale completes on the shop computer exactly once.
+3. **Refund cooldown.** Small and independent: refuse a refund for about 2 minutes after the sale. Can be done at any point, even before the rest.
+4. **Staff lobby, server side first.** Add "needs presence" to every instruction (default: needs it), a short allowlist for the lobby, trimmed read-only feeds, 30-minute idle sign-out, PIN again on return. The server decides presence; pages only show it.
+5. **Proving presence.** Wifi proof first (device reached the shop server). GPS as a second signal. If the owner wants more than a deterrent, the shop computer issues short-lived "present" tokens. See question 3.
+6. **Owner and IT remote screens**, sync state (waiting, last sent, last error) and the "held for review" list for queued changes from a session that left the shop.
+
+**What I would do first if you approve:** stage 3 (it is tiny and safe), then stage 1, because every other stage depends on two servers agreeing.
+
+**Questions only the owner can answer.**
+1. Where the cloud server lives (a small monthly host in a region near Dar es Salaam, or a free tier to start) and who pays and holds the account. This replaces Q-16.
+2. Whether a refund cooldown of 2 minutes is right, or longer.
+3. How strict "at the shop" must be: is a GPS check that a determined person could fake acceptable, or do you want the shop screen to show a code that must be typed in?
+4. Whether the shop computer is allowed to keep selling when it cannot reach the cloud for many hours (my assumption: yes, it is the whole point of the fallback).
+
+**Effect on the error-handling pass (item 5 of the change requests).** The bad-input checks (very long names, huge numbers) do not depend on any of this, but "stop the server part-way through an action" does, because what the user should see depends on which server they fall back to. So that part waits for stage 2.
