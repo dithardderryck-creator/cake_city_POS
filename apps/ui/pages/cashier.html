@@ -378,7 +378,7 @@ function tick(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("e
  Cake.client.onConnection(s=>{const up=s!=="offline";$("#net").className="xst"+(up?"":" off");$("#net span").textContent=up?"Server connected":"Server unreachable";rTick();rCs()});
  Cake.mountNotice($("#ntc"));
  Cake.feed("catalogue_grid",{},d=>{G=d;rTiles();rTick()});
- Cake.feed("order_list",{},d=>{OL=d;rOrd();rDw()});
+ Cake.feed("order_list",{},d=>{OL=d.filter(o=>!(o.instant&&o.status==="completed"));rOrd();rDw()});
  Cake.feed("payments_ledger",{},d=>{LG=d;rSales()});
  RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="req",onCounts:c=>{$("#bn").textContent=(c.unseen+c.needsYou)||""}});
  A.tab({v:"sell"});rCs();rTick()})();

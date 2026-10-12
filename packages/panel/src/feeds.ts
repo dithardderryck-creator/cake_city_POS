@@ -122,6 +122,8 @@ export interface OrderListItem {
   /** The total is not final yet because a custom cake has no price. */
   quotePending: boolean;
   hasCustomCake: boolean;
+  /** Sold at the counter in one step. */
+  instant: boolean;
 }
 
 /** What the customer asked for in a custom cake, ready to display. */
@@ -763,6 +765,7 @@ function listItem(
     needsQuote: lines.some((l) => l.status === 'awaiting_quote'),
     quotePending: money.quotePending,
     hasCustomCake: lines.some((l) => isCustom(l) && l.status !== 'cancelled'),
+    instant: !!order.instant,
   };
 }
 

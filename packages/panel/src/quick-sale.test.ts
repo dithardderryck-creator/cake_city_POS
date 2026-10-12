@@ -55,6 +55,14 @@ describe('instant sale of ready-made products', () => {
     expect((await store.find<StockMovement>('stockMovements', { where: { orderId: r.orderId } }))).toHaveLength(1);
   });
 
+  it('is flagged instant in the order list, so the boards can keep finished ones off', async () => {
+    const c = await sellable('Red Velvet Cake');
+    const r = ok<{ orderId: string }>(await send('cashier', 'orders/quick_sale', { items: [{ combinationId: c.combinationId, qty: 1 }], method: 'cash' }));
+    const list = await feed<Array<{ orderId: string; instant: boolean; status: string }>>('cashier', 'order_list');
+    expect(list.find((o) => o.orderId === r.orderId)).toMatchObject({ instant: true, status: 'completed' });
+    expect(list.filter((o) => o.orderId !== r.orderId).every((o) => o.instant === false)).toBe(true);
+  });
+
   it('is all or nothing: one unsellable item cancels the whole sale and leaves no order, payment or stock change', async () => {
     const c = await sellable('Red Velvet Cake');
     const orders = (await store.list('orders')).length;

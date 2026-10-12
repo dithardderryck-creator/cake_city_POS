@@ -164,6 +164,8 @@ export interface Order {
   /** Digits with country code, for sending a receipt. Optional. */
   customerPhone?: string;
   partialAllowed: boolean;
+  /** Rung up at the counter in one step (quick sale). Finished ones stay off the boards. */
+  instant?: boolean;
   createdBy: Id;
   createdAt: string;
 }

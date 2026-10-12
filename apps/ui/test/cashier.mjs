@@ -83,7 +83,12 @@ try {
   await page.screenshot({ path: `${shots}/receipt.png` });
   assert.equal((await page.locator('#lines .ln').count()), 0, 'ticket cleared after the sale');
   await page.click('#mod [data-a="mc"]');
-  await until(async () => (await countOn(watcher)) === before + 1, 'the other screen to show the new ticket without reloading');
+  // a finished instant sale is not a ticket: it stays off the board (its receipt and the ledger still have it)
+  await new Promise((r) => setTimeout(r, 600));
+  assert.equal(await countOn(watcher), before, 'a finished instant sale stays off the Orders board');
+  await watcher.click('#of [data-k="done"]');
+  assert.equal(await watcher.locator('#ol .ztt').count(), 0, 'and out of the Closed column');
+  await watcher.click('#of [data-k="all"]');
 
   // ---- phone order, delivery, part payment ----
   await page.locator('#tiles .tile:not([disabled])').nth(1).click();
@@ -102,6 +107,7 @@ try {
   await page.waitForSelector('#mod .dlg h2');
   assert.match(await txt(page, '#mod'), /Balance due|Grace Mushi/);
   await page.click('#mod [data-a="mc"]');
+  await until(async () => (await countOn(watcher)) === before + 1, 'the other screen to show the new phone order without reloading');
 
   // ---- orders board and the ticket ----
   await page.click('#tabs [data-v="orders"]');

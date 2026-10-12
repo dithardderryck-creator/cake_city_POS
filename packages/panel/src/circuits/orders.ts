@@ -228,6 +228,7 @@ export const orderIntents = {
         source: 'walk_in',
         fulfilment: 'pickup',
         partialAllowed: false,
+        instant: true,
         createdBy: ctx.session!.userId,
         createdAt: ctx.now(),
       };
