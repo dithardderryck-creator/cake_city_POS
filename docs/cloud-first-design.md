@@ -71,7 +71,7 @@ While signed in, the device is checked periodically. Shop wifi lost but GPS stil
 | Inventory: view stock levels and forecasts read-only | Receive stock, write off, usage confirmation, daily count |
 | Cashier: view today's orders read-only (no totals of money collected) | Anything that opens the cash drawer or changes a total |
 
-Whether a baker may *report* usage from home is a judgement call: it only creates a suggestion that Inventory must confirm, so it could be allowed. Left to the owner.
+**Decided (owner, 12 Oct 2026):** a baker may report ingredient usage from the lobby. It only creates a suggestion that Inventory must confirm at the shop, so it cannot change stock by itself.
 
 **How it would work, on top of what exists.**
 
@@ -83,8 +83,8 @@ Whether a baker may *report* usage from home is a judgement call: it only create
 **Things to settle.**
 
 1. How "at the shop" is proven to the server. Wifi proof (the device reached the local server) is reasonably trustworthy. A GPS position that the phone reports is easy to fake, so on mobile data it is a deterrent rather than a guarantee. If this matters, the shop computer (or a code shown only on a shop screen) could issue short-lived "present" tokens.
-2. Whether coming back to the shop restores full access silently, or asks for the PIN again. Asking again is safer and cheap.
-3. Whether the lobby has its own, shorter idle timeout than the normal session.
+2. **Decided (owner, 12 Oct 2026):** coming back to the shop asks for the PIN again before full access returns.
+3. Whether the lobby signs people out sooner when they stop using it than a normal sign-in does (a normal one lasts 10 hours of no use). Proposed: 30 minutes. Not decided.
 4. Whether the lobby is shown for someone who declined location permission and is off wifi. The design above says yes: they can still use the system, but only the lobby until they are on shop wifi.
 5. How this interacts with registered devices (done): a staff member's own phone would be a registered device, and the lobby works per sign-in, not per device.
 
