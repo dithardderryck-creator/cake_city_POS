@@ -60,6 +60,8 @@ Set these as environment variables before starting. All are optional.
 | `STATIC_DIR` | `apps/ui/dist` when started with `npm start`, otherwise none | Folder of built pages to serve |
 | `TLS_CERT`, `TLS_KEY` | none | Paths to a certificate and key, to serve HTTPS. Set both or neither |
 | `REQUIRE_DEVICE` | on | Only registered devices can sign in or see staff names. Set `0` to switch it off (try-outs only) |
+| `CURRENCY_LABEL` | TSh | The word in front of every amount |
+| `TZ` | the computer's own | The shop's time zone, for example `Africa/Dar_es_Salaam`. Today's date, due dates and reports follow it, so set it if the computer is on UTC |
 | `DEVICE_PREFIX` | S | 1 to 3 letters at the start of order numbers (S-0001) |
 | `LOG_LEVEL` | info | debug, info, warn or error |
 | `SMS_PROVIDER` | none | `twilio`, `africastalking` or `webhook`. Needs the matching settings below |

@@ -2,6 +2,7 @@ import type { Payment, Refund } from '../domain';
 import { DomainError, type Registry } from '../intents';
 import { deriveOrderStatus, moneySummary, round2 } from './order-logic';
 import { loadOrderBundle } from './orders';
+import { methodProblem } from './settings';
 
 export const paymentIntents = {
   'payments/record_payment': {
@@ -9,6 +10,8 @@ export const paymentIntents = {
     roles: ['owner', 'cashier'],
     validate: async (p, ctx) => {
       if (!Number.isFinite(p.amount) || p.amount <= 0) return ['Enter an amount greater than zero.'];
+      const notTaken = await methodProblem(ctx.store, p.method);
+      if (notTaken.length) return notTaken;
       const { order, lines, payments, refunds } = await loadOrderBundle(ctx, p.orderId);
       if (deriveOrderStatus(lines) === 'cancelled') return [`Order ${order.number} is cancelled.`];
       const money = moneySummary(lines, payments, refunds);

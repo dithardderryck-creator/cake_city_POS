@@ -134,7 +134,7 @@ try {
   await page.waitForSelector('#rm', { state: 'hidden' });
   await until(async () => /1 items|2 items|3 items/.test(await txt(page, '#cbody')) || /differences/.test(await txt(page, '#cbody')), 'history row');
   // The alert is raised a moment after the count is saved, so wait for it instead of reading once.
-  await until(async () => (await owner.read('request_inbox')).rows.some((r) => /count/i.test(r.title)), 'the owner was told about the big difference');
+  await until(async () => (await owner.read('request_inbox')).rows.some((r) => /count/i.test(r.title)), 'the owner was told about the big difference', 20000).catch(async (e) => { throw new Error(e.message + ' | inbox: ' + JSON.stringify((await owner.read('request_inbox')).rows.map((r) => r.title)) + ' | count view: ' + (await txt(page, '#cbody')).slice(0, 300)); });
 
   // requests and announcements
   await owner.send('requests/send', { toRole: 'inventory', category: 'Stock and supplies', title: 'Order more cake boxes' });

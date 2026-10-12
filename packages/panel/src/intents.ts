@@ -74,7 +74,16 @@ export interface IntentMap {
   'quotes/withdraw': { quoteId: Id };
   'quotes/revise': { quoteId: Id; price: number; reason: string };
 
-  'settings/update': { decoratingStage?: boolean; shopName?: string; shopAddress?: string | null; shopPhone?: string | null; receiptFooter?: string | null };
+  'settings/update': {
+    decoratingStage?: boolean;
+    shopName?: string;
+    shopAddress?: string | null;
+    shopPhone?: string | null;
+    receiptFooter?: string | null;
+    paymentMethods?: PaymentMethod[];
+    lowStockUnits?: number;
+    bigDifferencePercent?: number;
+  };
 
   'payments/record_payment': {
     orderId: Id;
@@ -227,6 +236,8 @@ export const PLANNED_CIRCUITS = [
 export interface PanelConfig {
   devicePrefix: string;
   formatMoney: (n: number) => string;
+  /** The word in front of amounts, such as "TSh". */
+  currencyLabel: string;
   /** Wrong PINs allowed before a lock. */
   lockoutMaxFailures: number;
   /** Lock length in minutes for the 1st, 2nd, 3rd... lock. The last value repeats. */

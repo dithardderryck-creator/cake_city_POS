@@ -5,10 +5,11 @@ import { formatQty } from '../units';
 import { hhmm, localDay, todayLocal } from './dates';
 import { applyCount, qtyFor, round3, unitProblem } from './inventory';
 import { buildRequest } from './requests';
+import { loadSettings } from './settings';
 
 /** A difference this big (a tenth of what was expected, or more) is flagged and goes to the owner. */
-export const BIG_DIFFERENCE = 0.1;
-export const isBig = (expected: number, counted: number) => Math.abs(counted - expected) / Math.max(expected, 1e-4) >= BIG_DIFFERENCE;
+/** A count off by at least this share of what was expected is "big". The share is the owner's setting (percent). */
+export const isBig = (expected: number, counted: number, percent: number) => Math.abs(counted - expected) / Math.max(expected, 1e-4) >= percent / 100;
 
 const kindOf = (i: Pick<Ingredient, 'kind'>) => i.kind ?? 'ingredient';
 /** Ingredients first, then packaging, each in name order. */
@@ -77,6 +78,7 @@ export const countIntents = {
       const me = ctx.session!;
       const s = (await ctx.store.get<CountSession>('countSessions', p.sessionId))!;
       const results: CountResult[] = [];
+      const bigPercent = (await loadSettings(ctx.store)).bigDifferencePercent;
       const events: Array<{ type: string; payload?: Record<string, unknown> }> = [];
       for (const [id, counted] of Object.entries(s.counts)) {
         const ing = await ctx.store.get<Ingredient>('ingredients', id);
@@ -84,7 +86,7 @@ export const countIntents = {
         const expected = ing.onHand;
         const r = await applyCount(ctx, ing, counted, 'Daily count');
         events.push(...r.events);
-        results.push({ ingredientId: ing.id, name: ing.name, unit: ing.unit, expected, counted, difference: r.delta, big: isBig(expected, counted) });
+        results.push({ ingredientId: ing.id, name: ing.name, unit: ing.unit, expected, counted, difference: r.delta, big: isBig(expected, counted, bigPercent) });
       }
       await ctx.store.put('countSessions', { ...s, status: 'submitted', submittedAt: ctx.now(), results });
       const differences = results.filter((r) => r.difference !== 0).length;
@@ -171,7 +173,8 @@ export const countFeeds = {
     build: async ({ store, clock }) => {
       const now = clock.now();
       const today = todayLocal(now);
-      const [ingredients, sessions] = await Promise.all([store.list<Ingredient>('ingredients'), store.list<CountSession>('countSessions')]);
+      const [ingredients, sessions, settings] = await Promise.all([store.list<Ingredient>('ingredients'), store.list<CountSession>('countSessions'), loadSettings(store)]);
+      const bigPercent = settings.bigDifferencePercent;
       const submitted = sessions.filter((s) => s.status === 'submitted' && s.submittedAt).sort((a, b) => b.submittedAt!.localeCompare(a.submittedAt!));
       const lastToday = submitted.find((s) => localDay(s.submittedAt!) === today);
       const open = sessions.find((s) => s.status === 'open');
@@ -194,7 +197,7 @@ export const countFeeds = {
             countedText: has ? formatQty(counted, i.unit) : null,
             difference: has ? round3(counted - i.onHand) : null,
             differenceText: has ? signed(round3(counted - i.onHand), i.unit) : null,
-            big: has && isBig(i.onHand, counted),
+            big: has && isBig(i.onHand, counted, bigPercent),
             lastCountedText: i.countedAt ? (localDay(i.countedAt) === today ? `today ${hhmm(i.countedAt)}` : localDay(i.countedAt)) : null,
           };
         });
@@ -222,7 +225,7 @@ export const countFeeds = {
           differences: (s.results ?? []).filter((r) => r.difference !== 0).length,
           big: (s.results ?? []).filter((r) => r.big).length,
         })),
-        bigDifferencePercent: BIG_DIFFERENCE * 100,
+        bigDifferencePercent: bigPercent,
         can: { start: true },
       };
     },

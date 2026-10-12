@@ -1,4 +1,5 @@
 import type {
+  PaymentMethod,
   Device,
   PairingCode,
   Alert,
@@ -36,7 +37,7 @@ import type {
 } from './domain';
 import { REQUEST_CATEGORIES } from './domain';
 import { daysBetween, todayLocal } from './circuits/dates';
-import { loadSettings } from './circuits/settings';
+import { ALL_PAYMENT_METHODS, loadSettings } from './circuits/settings';
 import { DomainError } from './intents';
 import { BASE_UNIT_FOR, formatQty, unitTable } from './units';
 import { ALERT_KINDS, ALERT_KIND_LABEL, canSeeAlert, loadAlertSettings } from './circuits/alerts';
@@ -582,6 +583,14 @@ export interface ShopSettingsData {
   shopAddress: string | null;
   shopPhone: string | null;
   receiptFooter: string | null;
+  /** What amounts are written in, such as "TSh". Set on the server. */
+  currencyLabel: string;
+  /** The payment methods the counter takes now. */
+  paymentMethods: { key: PaymentMethod; label: string }[];
+  /** Every method the system knows, so the owner can switch each on or off. */
+  allPaymentMethods: { key: PaymentMethod; label: string; on: boolean }[];
+  lowStockUnits: number;
+  bigDifferencePercent: number;
   can: { edit: boolean };
 }
 
@@ -1217,7 +1226,7 @@ export const feeds: FeedRegistry = {
 
   shop_settings: {
     roles: ['owner', 'cashier', 'baker', 'inventory'],
-    build: async ({ store, session }) => {
+    build: async ({ store, session, config }) => {
       const s = await loadSettings(store);
       return {
         decoratingStage: s.decoratingStage,
@@ -1225,6 +1234,11 @@ export const feeds: FeedRegistry = {
         shopAddress: s.shopAddress ?? null,
         shopPhone: s.shopPhone ?? null,
         receiptFooter: s.receiptFooter ?? null,
+        currencyLabel: config.currencyLabel,
+        paymentMethods: ALL_PAYMENT_METHODS.filter((m) => s.paymentMethods.includes(m)).map((m) => ({ key: m, label: METHOD_LABEL[m] ?? m })),
+        allPaymentMethods: ALL_PAYMENT_METHODS.map((m) => ({ key: m, label: METHOD_LABEL[m] ?? m, on: s.paymentMethods.includes(m) })),
+        lowStockUnits: s.lowStockUnits,
+        bigDifferencePercent: s.bigDifferencePercent,
         can: { edit: session?.role === 'owner' },
       };
     },

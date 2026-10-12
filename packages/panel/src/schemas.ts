@@ -115,6 +115,9 @@ export const schemas = {
     shopAddress: z.string().max(160).nullable().optional(),
     shopPhone: z.string().max(40).nullable().optional(),
     receiptFooter: z.string().max(160).nullable().optional(),
+    paymentMethods: z.array(method).max(4).optional(),
+    lowStockUnits: z.number().int().min(0).max(1000).optional(),
+    bigDifferencePercent: z.number().min(1).max(100).optional(),
   }),
 
   'payments/record_payment': z.strictObject({

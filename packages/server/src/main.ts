@@ -40,10 +40,13 @@ async function main() {
     '  Cake POS server is running',
     `  On this computer:  ${scheme}://localhost:${server.port}`,
     ...lanAddresses().map((a) => `  On other devices:  ${scheme}://${a}:${server.port}`),
+    `  Time zone:         ${Intl.DateTimeFormat().resolvedOptions().timeZone} (today's date, due dates and reports follow this)`,
+    `  Currency:          ${config.currencyLabel}`,
     `  Data folder:       ${config.dataDir}`,
     `  Backups:           ${config.backupDir}${config.cloudBackupDir ? `  (copied to ${config.cloudBackupDir})` : '  (no cloud folder set)'}`,
     '',
   ];
+  if (Intl.DateTimeFormat().resolvedOptions().timeZone === 'UTC') lines.push("  This computer's time zone is UTC. If the shop is not on UTC, set TZ to the shop's time zone before starting (for example TZ=Africa/Dar_es_Salaam), or dates will be off.", '');
   if (staff === 0) lines.push('  No staff yet. Create the owner first:', '    npm run admin -- create-owner', '');
   console.log(lines.join('\n'));
 

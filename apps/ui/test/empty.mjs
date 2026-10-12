@@ -60,6 +60,22 @@ try {
   await until(async () => /No ingredients yet/i.test(await text(own, '#stab')), 'empty stock');
   await own.click('nav.xtabs [data-v="transactions"]');
   await until(async () => /No payments or refunds have been recorded yet/i.test(await text(own, '#trl')), 'empty ledger');
+  /* The counter's rules are the owner's to change, and the cashier sees the change at once. */
+  assert.equal(await cash.locator('#pay button').count(), 4, 'all four ways of paying at first');
+  await own.click('#xset');
+  await own.waitForSelector('#dpn [data-k="pm-card"]');
+  await own.uncheck('#dpn [data-k="pm-card"]');
+  await own.fill('#dpn [data-k="lo"]', '5');
+  await own.click('#dpn [data-d="counter"]');
+  await until(async () => (await cash.locator('#pay button').count()) === 3, 'cashier loses the Card button without a reload');
+  assert.doesNotMatch(await text(cash, '#pay'), /Card/);
+  // The server enforces it too, not just the page.
+  const cardRefused = await cash.evaluate(async () => (await Cake.send('orders/quick_sale', { items: [{ combinationId: 'x', qty: 1 }], method: 'card' })).message);
+  assert.match(cardRefused, /does not take that kind of payment/i);
+  // At least one way of paying must stay on.
+  await own.click('#dpn [data-k="pm-cash"]'); await own.click('#dpn [data-k="pm-mobile_money"]'); await own.click('#dpn [data-k="pm-bank_transfer"]');
+  await own.click('#dpn [data-d="counter"]');
+  assert.match(await text(own, '.toast'), /at least one way of paying/i);
   for (const p of [inv, cash, own]) assert.doesNotMatch(await p.innerText('body'), /undefined|NaN|\[object Object\]/);
 
   assert.deepEqual(errs, []);

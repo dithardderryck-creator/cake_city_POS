@@ -185,7 +185,7 @@ button.xst{border:0;cursor:pointer}.xst.off{background:var(--risk-s);color:var(-
     <div class="det" id="det" hidden><div><label for="dn">Customer name</label><input id="dn"></div><div><label for="dp">Phone</label><input id="dp" inputmode="tel"></div><div class="w" id="duef"><label for="dd">Due date</label><input id="dd" type="date"></div><div class="w" id="adr"><label for="da">Delivery address</label><input id="da"></div></div>
     <div id="lines"></div>
     <div class="tot num" id="tot">0</div>
-    <div class="pay" id="pay"><button data-a="pm" data-i="cash">Cash</button><button data-a="pm" data-i="mobile_money">Mobile money</button><button data-a="pm" data-i="card">Card</button><button data-a="pm" data-i="bank_transfer">Bank transfer</button></div>
+    <div class="pay" id="pay"></div>
     <div class="cash" id="cash" hidden><label for="rcv" id="rl">Amount received</label><input id="rcv" inputmode="numeric" autocomplete="off" placeholder="0"><div class="cs"><div><small>Paid</small><b id="pd">0</b></div><div id="cgb"><small id="cgl"></small><b id="cg"></b></div></div></div>
     <div class="row" style="margin:8px 0"><button class="b" id="pt" data-a="part" style="min-height:38px;font-size:13px">Part payment: off</button></div>
     <button class="b p" id="go" data-a="go" style="width:100%" disabled>Take payment</button>
@@ -221,7 +221,7 @@ button.xst{border:0;cursor:pointer}.xst.off{background:var(--risk-s);color:var(-
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=Cake.esc,M=Cake.money,toast=Cake.toast;
 const root=document.documentElement;try{const s=localStorage.getItem("theme");if(s)root.dataset.theme=s}catch(e){}
-const MT=[["cash","Cash"],["mobile_money","Mobile money"],["card","Card"],["bank_transfer","Bank transfer"]];
+let MT=[],SH=null;const firstM=()=>MT.length?MT[0][0]:"cash";  // the methods this shop takes come from its settings
 const SRC=[["walk_in","Walk-in"],["phone","Phone"]],FUL=[["pickup","Pickup"],["delivery","Delivery"]];
 const TONE={neutral:"",attention:"",ready:"ok",done:"gr",muted:"gr",danger:"risk"},CHIP={neutral:"",attention:"cop",ready:"ok",done:"ok",muted:"",danger:"risk"};
 let view="sell",cat="All",qs="",cart={},meth="cash",paid=0,part=false,m={src:"walk_in",ful:"pickup"},ofl="all",cs={src:"walk_in",ful:"pickup"},photos=[],busy=false,G=[],OL=[],LG=null,RQ=null,grow=0;
@@ -234,7 +234,7 @@ const free=c=>Math.max(0,c.onHand-c.committed);
 function rTiles(){const L=combos(),cats=["All",...new Set(L.map(c=>c.cat))];if(!cats.includes(cat))cat="All";
  $("#cats").innerHTML=cats.map(c=>`<button aria-pressed="${c===cat}" data-a="cat" data-c="${esc(c)}">${esc(c)}</button>`).join("");const q=qs.toLowerCase();
  $("#tiles").innerHTML=L.filter(c=>(cat==="All"||c.cat===cat)&&(c.name+" "+c.label).toLowerCase().includes(q)).map(c=>{const f=free(c),why=c.reason||c.warning||"";
-  return`<button class="tile" data-a="add" data-id="${esc(c.combinationId)}" ${c.sellable?"":"disabled"} title="${esc(why)}"><span class="nm">${esc(c.name)}</span><span class="op">${esc(c.label||"Plain")}</span><span class="row"><b class="num pr">${esc(c.priceLabel||"")}</b><span class="chip ${!c.sellable?"risk":f<=3?"cop":"ok"}">${c.sellable?f+" free":esc(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable"))}</span></span></button>`}).join("")||(L.length?'<p class="mute">Nothing matches. Clear the search or pick All.</p>':'<p class="mute">There is nothing to sell yet. The owner adds products and prices in Catalogue.</p>')}
+  return`<button class="tile" data-a="add" data-id="${esc(c.combinationId)}" ${c.sellable?"":"disabled"} title="${esc(why)}"><span class="nm">${esc(c.name)}</span><span class="op">${esc(c.label||"Plain")}</span><span class="row"><b class="num pr">${esc(c.priceLabel||"")}</b><span class="chip ${!c.sellable?"risk":f<=(SH?SH.lowStockUnits:0)?"cop":"ok"}">${c.sellable?f+" free":esc(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable"))}</span></span></button>`}).join("")||(L.length?'<p class="mute">Nothing matches. Clear the search or pick All.</p>':'<p class="mute">There is nothing to sell yet. The owner adds products and prices in Catalogue.</p>')}
 
 /* ---------- the ticket being built ---------- */
 const byId=id=>combos().find(c=>c.combinationId===id);
@@ -317,7 +317,7 @@ ${l.quote?`<div class="mute sm">Quote: ${esc(l.quote.statusLabel)}${l.quote.pric
 <div class="row" style="margin-top:4px"><span>Balance</span><b class="num">${esc(c.balanceLabel)}</b></div>${c.payments.map(p=>`<div class="row mute sm"><span>${esc(p.methodLabel)}${p.reference?" · "+esc(p.reference):""}</span><span>${esc(p.amountLabel)}</span></div>`).join("")}
 <div class="row" style="margin-top:14px;justify-content:flex-end;flex-wrap:wrap">${c.canRecordPayment?'<button class="b p" data-a="pay1">Take payment</button>':""}${c.canEditDelivery?'<button class="b" data-a="edd">Change delivery</button>':""}<button class="b" data-a="rc" data-id="${esc(c.orderId)}">Receipt</button>${c.canCancel?'<button class="b r" data-a="cxo">Cancel order</button>':""}<button class="b" data-a="mc">Close</button></div>`};
  stopCard=Cake.feed("order_card",{orderId},rend)}
-const PAYFORM=c=>`<hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><h2>Take payment</h2><p class="mute">Balance <b class="num">${esc(c.balanceLabel)}</b></p><div class="pay" id="bpm">${MT.map(([k,l])=>`<button data-a="bpm" data-i="${k}" aria-pressed="${k==="cash"}">${l}</button>`).join("")}</div><label for="bamt">Amount received (leave empty for the whole balance)</label><input id="bamt" inputmode="numeric" autocomplete="off" placeholder="0"><label for="bref" style="margin-top:8px">Reference (optional)</label><input id="bref" placeholder="Mobile money or card reference"><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="b" data-a="fx">Cancel</button><button class="b p" data-a="bok">Record payment</button></div>`;
+const PAYFORM=c=>`<hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><h2>Take payment</h2><p class="mute">Balance <b class="num">${esc(c.balanceLabel)}</b></p><div class="pay" id="bpm">${MT.map(([k,l])=>`<button data-a="bpm" data-i="${k}" aria-pressed="${k===firstM()}">${l}</button>`).join("")}</div><label for="bamt">Amount received (leave empty for the whole balance)</label><input id="bamt" inputmode="numeric" autocomplete="off" placeholder="0"><label for="bref" style="margin-top:8px">Reference (optional)</label><input id="bref" placeholder="Mobile money or card reference"><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="b" data-a="fx">Cancel</button><button class="b p" data-a="bok">Record payment</button></div>`;
 const DELFORM=c=>`<hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><h2>Change delivery</h2><div class="seg" id="df" style="margin:8px 0">${FUL.map(([k,l])=>`<button data-a="dff" data-v="${k}" aria-pressed="${k===c.fulfilment}">${l}</button>`).join("")}</div><label for="dd2">Due date</label><input id="dd2" type="date" value="${esc(c.deliveryDate||"")}"><label for="da2" style="margin-top:8px">Delivery address</label><input id="da2" value="${esc(c.deliveryAddress||"")}"><label for="dp2" style="margin-top:8px">Phone</label><input id="dp2" inputmode="tel" value="${esc(c.customerPhone||"")}"><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="b" data-a="fx">Cancel</button><button class="b p" data-a="dsave">Save</button></div>`;
 const cur=()=>FLOW.card,guard=async(b,fn)=>{if(b.disabled)return;b.disabled=true;try{return await fn()}finally{b.disabled=false}};
 
@@ -335,7 +335,7 @@ const A={tab(d){view=d.v;$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#
  qwd(d,b){guard(b,()=>Cake.send("quotes/withdraw",{quoteId:d.q},"Price request withdrawn."))},
  rml(d,b){const c=cur();guard(b,()=>Cake.send("orders/cancel_line",{orderId:c.orderId,lineId:d.l}))},
  cxo(d,b){const c=cur();if(!confirm("Cancel ticket "+c.number+"? This cannot be undone."))return;guard(b,()=>Cake.send("orders/cancel_order",{orderId:c.orderId},"Ticket cancelled."))},
- pay1(){$("#oc-form").innerHTML=PAYFORM(cur());FLOW.meth="cash";$("#bamt").focus()},edd(){FLOW.ful=cur().fulfilment;$("#oc-form").innerHTML=DELFORM(cur())},fx(){$("#oc-form").innerHTML=""},
+ pay1(){$("#oc-form").innerHTML=PAYFORM(cur());FLOW.meth=firstM();$("#bamt").focus()},edd(){FLOW.ful=cur().fulfilment;$("#oc-form").innerHTML=DELFORM(cur())},fx(){$("#oc-form").innerHTML=""},
  bpm(d){FLOW.meth=d.i;$$("#bpm button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.i===d.i))},dff(d){FLOW.ful=d.v;$$("#df button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===d.v))},
  bok(d,b){const c=cur(),n=+($("#bamt").value.replace(/\D/g,"")||0),ref=$("#bref").value.trim();guard(b,async()=>{const r=await Cake.send("payments/record_payment",{orderId:c.orderId,method:FLOW.meth||"cash",amount:n||c.balance,allowPartial:!!n,...(ref&&{reference:ref})},"Payment recorded.");if(r.ok)$("#oc-form").innerHTML=""})},
  dsave(d,b){const c=cur(),v=k=>$(k).value.trim();guard(b,async()=>{const r=await Cake.send("orders/set_delivery",{orderId:c.orderId,fulfilment:FLOW.ful,...(v("#dd2")&&{deliveryDate:v("#dd2")}),deliveryAddress:v("#da2"),customerPhone:v("#dp2")||null},"Delivery updated.");if(r.ok)$("#oc-form").innerHTML=""})},
@@ -374,6 +374,7 @@ document.addEventListener("input",e=>{const t=e.target,n=t.value&&t.value.replac
 function tick(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=clock12(d)}
 
 (async()=>{const me=await Cake.boot("cashier");$("#who").textContent=me.name;tick();setInterval(tick,30000);
+ Cake.onShop(s=>{SH=s;MT=s.paymentMethods.map(x=>[x.key,x.label]);if(!MT.some(x=>x[0]===meth))meth=firstM();$("#pay").innerHTML=MT.map(([k,l])=>`<button data-a="pm" data-i="${esc(k)}">${esc(l)}</button>`).join("")||'<p class="mute">No payment methods are switched on. Ask the owner.</p>';rTiles();rTick()});
  Cake.client.onConnection(s=>{const up=s!=="offline";$("#net").className="xst"+(up?"":" off");$("#net span").textContent=up?"Server connected":"Server unreachable";rTick();rCs()});
  Cake.mountNotice($("#ntc"));
  Cake.feed("catalogue_grid",{},d=>{G=d;rTiles();rTick()});

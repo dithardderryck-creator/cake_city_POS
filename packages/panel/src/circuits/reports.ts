@@ -5,6 +5,7 @@ import { formatQty } from '../units';
 import { hhmm, localDay, todayLocal } from './dates';
 import { METHOD_NAME } from './money-feeds';
 import { activeLines, lineTotal, round2 } from './order-logic';
+import { loadSettings } from './settings';
 
 /* ---------- Types ---------- */
 
@@ -76,7 +77,6 @@ const daysBack = (now: Date, n: number) => {
   return todayLocal(d);
 };
 const dayLabel = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
-const FLAG = 0.1;
 
 /* ---------- Feed ---------- */
 
@@ -84,6 +84,8 @@ export const reportFeeds = {
   reports: {
     roles: ['owner'],
     build: async ({ store, clock, config }, params) => {
+      // A usage or count gap this big (the owner's setting, as a share) is flagged.
+      const FLAG = (await loadSettings(store)).bigDifferencePercent / 100;
       const fmt = config.formatMoney;
       const n = params.days === 30 ? 30 : 7;
       const now = clock.now();

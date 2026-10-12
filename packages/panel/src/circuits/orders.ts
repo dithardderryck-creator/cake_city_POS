@@ -16,7 +16,7 @@ import { canAdvance, canRemoveLine, moneySummary, deriveOrderStatus, activeLines
 import { normalisePhone } from './notify';
 import { closeOpenQuote } from './quote-util';
 import { ensureSuggestion } from './recipes';
-import { loadSettings } from './settings';
+import { loadSettings, methodProblem } from './settings';
 
 export async function loadOrderBundle(ctx: Pick<HandlerCtx, 'store'>, orderId: string) {
   const order = await ctx.store.get<Order>('orders', orderId);
@@ -211,7 +211,7 @@ export const orderIntents = {
     roles: ['owner', 'cashier'],
     validate: async (p, ctx) => {
       if (p.items.length === 0) return ['Add at least one item to the sale.'];
-      const errors: string[] = [];
+      const errors: string[] = [...(await methodProblem(ctx.store, p.method))];
       const seen = new Set<string>();
       for (const it of p.items) {
         if (seen.has(it.combinationId)) errors.push('The same item appears twice in this sale.');

@@ -537,6 +537,12 @@ export interface ShopSettings {
   shopPhone?: string;
   /** A line at the bottom of every receipt, such as "Thank you!". */
   receiptFooter?: string;
+  /** Payment methods the counter takes. Loaded with every method when the owner has not chosen. */
+  paymentMethods: PaymentMethod[];
+  /** At the counter a size with this many or fewer left is shown as running low. */
+  lowStockUnits: number;
+  /** A stock count off by this percent or more is flagged as a big difference. */
+  bigDifferencePercent: number;
 }
 
 export interface Payment {

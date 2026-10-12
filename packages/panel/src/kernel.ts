@@ -62,6 +62,8 @@ export interface PanelOptions {
   /** Short prefix that keeps order numbers unique across devices. */
   devicePrefix?: string;
   formatMoney?: (n: number) => string;
+  /** What amounts are written in. Default "TSh". Ignored when `formatMoney` is given. */
+  currencyLabel?: string;
   lockoutMaxFailures?: number;
   lockoutMinutes?: number[];
   sessionIdleMs?: number;
@@ -192,7 +194,7 @@ export function describeFeeds() {
 
 /** Money is Tanzanian shillings (TSh). Shillings have no everyday minor unit, so no decimals unless an amount really has them. */
 // `n + 0` turns -0 into 0, so a refund total of nothing never reads "TSh -0".
-const defaultMoney = (n: number) => `TSh ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(Math.round(n) + 0)}`;
+const moneyIn = (label: string) => (n: number) => `${label} ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(Math.round(n) + 0)}`;
 
 const HOUR = 3_600_000;
 
@@ -211,7 +213,8 @@ export function createPanel(options: PanelOptions = {}): Panel {
   const terminals = options.terminals ?? {};
   const config: PanelConfig = {
     devicePrefix: options.devicePrefix ?? 'A',
-    formatMoney: options.formatMoney ?? defaultMoney,
+    currencyLabel: options.currencyLabel?.trim() || 'TSh',
+    formatMoney: options.formatMoney ?? moneyIn(options.currencyLabel?.trim() || 'TSh'),
     lockoutMaxFailures: options.lockoutMaxFailures ?? 5,
     lockoutMinutes: options.lockoutMinutes ?? [1, 5, 15, 60],
     sessionIdleMs: options.sessionIdleMs ?? 10 * HOUR,

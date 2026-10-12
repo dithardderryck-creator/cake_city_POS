@@ -85,7 +85,35 @@ export async function boot(allowed: Role | Role[]): Promise<SessionInfo> {
   session = s;
   client.onSignedOut(goSignIn);
   watchConnection();
+  // The shop's own settings (currency, accepted payment methods, thresholds) come from the server, never from the page.
+  if (s.role !== 'it') {
+    await new Promise<void>((done) => {
+      feed('shop_settings', {}, (d) => {
+        shop = d;
+        currency = d.currencyLabel;
+        for (const l of shopListeners) l(d);
+        done();
+      });
+      setTimeout(done, 4000);
+    });
+  }
   return s;
+}
+
+type ShopData = FeedMap['shop_settings']['data'];
+let shop: ShopData | null = null;
+let currency = '';
+const shopListeners = new Set<(s: ShopData) => void>();
+
+/** The shop's settings as last heard from the server, or null before they arrive. */
+export function shopSettings(): ShopData | null {
+  return shop;
+}
+
+/** Calls `fn` now (if the settings are known) and again whenever the owner changes them. */
+export function onShop(fn: (s: ShopData) => void): void {
+  shopListeners.add(fn);
+  if (shop) fn(shop);
 }
 
 export function me(): SessionInfo | null {
@@ -214,7 +242,7 @@ export { client };
 
 /** Formats an amount the way the server's own labels do, for the few places a page shows a figure it just added up. */
 export function money(n: number): string {
-  return `TSh ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(Math.round(n) + 0)}`;
+  return `${currency ? currency + ' ' : ''}${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(Math.round(n) + 0)}`;
 }
 
 /** Formats a plain quantity (not money). */
