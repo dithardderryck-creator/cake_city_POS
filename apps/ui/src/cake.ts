@@ -98,16 +98,45 @@ export function me(): SessionInfo | null {
  */
 export function feed<K extends FeedName>(name: K, params: FeedMap[K]['params'], render: (data: FeedMap[K]['data']) => void): () => void {
   let lastError = '';
+  const key = `${name}:${Math.random()}`;
   return client.subscribe(name, params, (r) => {
     if (r.ok) {
       lastError = '';
+      loadFailures.delete(key);
+      showLoadFailures();
       render(r.data);
     } else {
       const m = r.error.messages[0] ?? 'Something went wrong.';
       if (m !== lastError) toast(m);
       lastError = m;
+      // A screen that could not load must say so on the screen, not only in a message that disappears.
+      if (r.error.code !== 'unauthenticated') loadFailures.set(key, m);
+      showLoadFailures();
     }
   });
+}
+
+/** Feeds that are failing right now, with the reason. While any are, a bar says so and offers to try again. */
+const loadFailures = new Map<string, string>();
+function showLoadFailures(): void {
+  let el = document.getElementById('loaderr');
+  if (!loadFailures.size) {
+    if (el) el.hidden = true;
+    return;
+  }
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loaderr';
+    el.setAttribute('role', 'alert');
+    el.style.cssText =
+      'position:fixed;left:12px;right:12px;bottom:12px;z-index:59;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:12px;font:600 13px system-ui,sans-serif;background:var(--risk,#b4452f);color:#fff;box-shadow:0 8px 24px #0004';
+    el.innerHTML = '<span id="loaderr-t"></span><button id="loaderr-b" style="font:inherit;color:inherit;border:1px solid #fff8;border-radius:8px;padding:6px 12px;background:none;cursor:pointer">Try again</button>';
+    document.body.appendChild(el);
+    el.querySelector('#loaderr-b')!.addEventListener('click', () => location.reload());
+  }
+  el.hidden = false;
+  const first = [...loadFailures.values()][0]!;
+  el.querySelector('#loaderr-t')!.textContent = `Some information on this screen could not be loaded. ${first}`;
 }
 
 /** Reads a feed once. */
@@ -185,7 +214,7 @@ export { client };
 
 /** Formats an amount the way the server's own labels do, for the few places a page shows a figure it just added up. */
 export function money(n: number): string {
-  return `TSh ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(n)}`;
+  return `TSh ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(Math.round(n) + 0)}`;
 }
 
 /** Formats a plain quantity (not money). */

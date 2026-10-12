@@ -191,7 +191,8 @@ export function describeFeeds() {
 }
 
 /** Money is Tanzanian shillings (TSh). Shillings have no everyday minor unit, so no decimals unless an amount really has them. */
-const defaultMoney = (n: number) => `TSh ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(n)}`;
+// `n + 0` turns -0 into 0, so a refund total of nothing never reads "TSh -0".
+const defaultMoney = (n: number) => `TSh ${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(Math.round(n) + 0)}`;
 
 const HOUR = 3_600_000;
 

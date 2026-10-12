@@ -234,7 +234,7 @@ const free=c=>Math.max(0,c.onHand-c.committed);
 function rTiles(){const L=combos(),cats=["All",...new Set(L.map(c=>c.cat))];if(!cats.includes(cat))cat="All";
  $("#cats").innerHTML=cats.map(c=>`<button aria-pressed="${c===cat}" data-a="cat" data-c="${esc(c)}">${esc(c)}</button>`).join("");const q=qs.toLowerCase();
  $("#tiles").innerHTML=L.filter(c=>(cat==="All"||c.cat===cat)&&(c.name+" "+c.label).toLowerCase().includes(q)).map(c=>{const f=free(c),why=c.reason||c.warning||"";
-  return`<button class="tile" data-a="add" data-id="${esc(c.combinationId)}" ${c.sellable?"":"disabled"} title="${esc(why)}"><span class="nm">${esc(c.name)}</span><span class="op">${esc(c.label||"Plain")}</span><span class="row"><b class="num pr">${esc(c.priceLabel||"")}</b><span class="chip ${!c.sellable?"risk":f<=3?"cop":"ok"}">${c.sellable?f+" free":esc(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable"))}</span></span></button>`}).join("")||'<p class="mute">Nothing matches.</p>'}
+  return`<button class="tile" data-a="add" data-id="${esc(c.combinationId)}" ${c.sellable?"":"disabled"} title="${esc(why)}"><span class="nm">${esc(c.name)}</span><span class="op">${esc(c.label||"Plain")}</span><span class="row"><b class="num pr">${esc(c.priceLabel||"")}</b><span class="chip ${!c.sellable?"risk":f<=3?"cop":"ok"}">${c.sellable?f+" free":esc(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable"))}</span></span></button>`}).join("")||(L.length?'<p class="mute">Nothing matches. Clear the search or pick All.</p>':'<p class="mute">There is nothing to sell yet. The owner adds products and prices in Catalogue.</p>')}
 
 /* ---------- the ticket being built ---------- */
 const byId=id=>combos().find(c=>c.combinationId===id);

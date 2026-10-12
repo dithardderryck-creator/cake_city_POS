@@ -25,7 +25,11 @@ export const countIntents = {
   'count/start': {
     circuit: 'Inventory',
     roles: ['owner', 'inventory'],
-    validate: async () => [],
+    validate: async (_p, ctx) => {
+      if (await openSession(ctx)) return [];
+      const items = await ctx.store.list<Ingredient>('ingredients');
+      return items.some((i) => i.active) ? [] : ['There is nothing to count yet. Add ingredients or packaging in Stock first.'];
+    },
     handle: async (_p, ctx) => {
       const existing = await openSession(ctx);
       if (existing) return { summary: 'Picked up the daily count', target: existing.id, data: { sessionId: existing.id, resumed: true } };
