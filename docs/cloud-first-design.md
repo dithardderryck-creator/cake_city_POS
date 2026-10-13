@@ -187,3 +187,22 @@ The four questions from the build plan are answered:
 4. **Long outages:** **yes, the shop computer keeps selling** while it cannot reach the cloud, and the owner is alerted that it is running offline. Everything syncs when the cloud returns.
 
 **Future plan (not now):** the IT command centre (stage 7) and the AI monitor (stage 8) are parked as future plans. Their open questions stay recorded above.
+
+## Revision 13 Oct 2026: no shop computer assumed
+
+The owner said not to assume a shop computer will be there. The cloud is then the **only** server that can be counted on, and everything that leaned on a local fallback changes.
+
+**What changes**
+- **Failover.** There is nothing to fail over to. A device that cannot reach the cloud is either blocked from selling (with a clear message and a paper fallback) or sells on its own and catches up later (see the offline options below).
+- **Proving presence.** Wifi proof used to be "the device reached the shop computer". Instead the cloud compares the public internet address a request comes from with the address of the shop's own connection (set once by the owner or IT). A match means the device is on the shop's wifi. Mobile data comes from elsewhere, so GPS stays the backup. Weak spots: the shop's address can change (the owner or IT re-sets it, and the IT screen should warn when requests from known shop devices stop matching), and a phone on someone else's wifi never matches. Still a deterrent, not a guarantee, as already agreed.
+- **Long outages.** The earlier decision ("the shop computer keeps selling and the owner is alerted") now applies to **devices**, if offline selling is allowed at all.
+- **UPS.** No longer needed for the design. Mobile data on the staff phones is the real insurance against a Sunday power cut.
+
+**Why the sync work already in the repo is not enough for phones.** The change log copies whole records. Between two trusted servers that is fine. A staff phone is not trusted: copying raw records from it would let it skip the role checks (a cashier phone could push a price change). So records from phones must not be copied; their **actions** must be replayed and checked by the cloud under that person's role.
+
+**Offline options (the owner decides)**
+1. **No offline selling.** The cloud is required to sell. When the connection is gone the till says so and the shop writes sales on paper. Simplest and safest. Covers the likely cases, because phones have mobile data. Leaves "no wifi and no signal anywhere" as the one real gap.
+2. **Queued actions.** The phone keeps a queue of what the person did (sale, payment) and the cloud replays it later under that person's role, so the usual checks apply. The cloud assigns its own order numbers, so anything shown offline is provisional. Needs a clear "waiting to send" screen and a rule for sales that cannot be replayed (item gone, price changed): they are held for the owner, not dropped.
+3. **Copy records from phones.** Not recommended, for the reason above.
+
+**Build order that follows.** Because the cloud is the only server, the first stage is making the server **ready to run in the cloud** (container, health check, secure connection, storage that survives restarts, automatic backups, the shop-address presence check, monitoring of its own state). Sync between servers is only needed if a shop computer is kept, and can wait.
