@@ -78,7 +78,7 @@ describe('payments list', () => {
     ok(await send('cashier', 'payments/record_payment', { orderId: b.orderId, method: 'mobile_money', amount: b.price * QTY }));
     t += 60_000;
     ok(await send('cashier', 'payments/record_payment', { orderId: a.orderId, method: 'cash', amount: half }));
-    t += 60_000;
+    t += 6 * 60_000; // past the refund cooldown
     ok(await send('owner', 'payments/approve_refund', { orderId: b.orderId, amount: 1000, reason: 'Cracked base', method: 'mobile_money' }));
 
     const l = await feed<PaymentsLedgerData>('cashier', 'payments_ledger');

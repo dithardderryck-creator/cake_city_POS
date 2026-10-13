@@ -144,6 +144,12 @@ const offlineResult = (): OfflineError => ({
   error: { code: 'offline', messages: ['Cannot reach the shop server. Check the wifi. Nothing was changed, and it is safe to try again.'] },
 });
 
+/** For an action: the request may have reached the server before the answer was lost, so the wording must not claim otherwise. */
+const offlineActionResult = (): OfflineError => ({
+  ok: false,
+  error: { code: 'offline', messages: ['Cannot reach the shop server. Check the wifi. The last action may or may not have gone through. Tap it again when the wifi is back: it will not be done twice.'] },
+});
+
 export function createClient(options: ClientOptions = {}): Client {
   const f: typeof fetch = options.fetch ?? ((...a) => globalThis.fetch(...a));
   const retries = options.retries ?? CLIENT_DEFAULTS.retries;
@@ -176,6 +182,8 @@ export function createClient(options: ClientOptions = {}): Client {
     deadlineMs: number;
   }
   const normalLimits: Limits = { timeoutMs, deadlineMs };
+  /** Actions that got no answer, by what they were, with the request id they used. */
+  const unsure = new Map<string, string>();
 
   /** One call with retries inside an overall deadline. `read` turns the response into what the caller wants. */
   async function send<T>(
@@ -425,8 +433,18 @@ export function createClient(options: ClientOptions = {}): Client {
     },
 
     async dispatch(type, payload) {
-      const r = await post('/api/dispatch', { type, payload, requestId: randomId() });
-      if (r === 'offline') return offlineResult();
+      // An action whose answer never came back may still have run. Asking again with the same request id
+      // makes the server answer from memory instead of doing it twice, so a second tap is always safe.
+      const key = `${type}:${JSON.stringify(payload)}`;
+      const requestId = unsure.get(key) ?? randomId();
+      const r = await post('/api/dispatch', { type, payload, requestId });
+      if (r === 'offline') {
+        unsure.delete(key);
+        unsure.set(key, requestId);
+        if (unsure.size > 20) unsure.delete(unsure.keys().next().value as string);
+        return offlineActionResult();
+      }
+      unsure.delete(key);
       if (r.status === 401) lostSignIn();
       return (r.json as DispatchResult | null) ?? bad(r.status);
     },

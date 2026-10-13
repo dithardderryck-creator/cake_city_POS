@@ -2,7 +2,7 @@ import type { Payment, Refund } from '../domain';
 import { DomainError, type Registry } from '../intents';
 import { deriveOrderStatus, moneySummary, round2 } from './order-logic';
 import { loadOrderBundle } from './orders';
-import { methodProblem } from './settings';
+import { loadSettings, methodProblem } from './settings';
 
 export const paymentIntents = {
   'payments/record_payment': {
@@ -67,6 +67,14 @@ export const paymentIntents = {
       const money = moneySummary(lines, payments, refunds);
       if (round2(p.amount) > money.net + 0.005)
         return [`Only ${ctx.config.formatMoney(money.net)} is left to refund on this order.`];
+      // A refund waits a few minutes after the latest payment, so it cannot race the sale it undoes.
+      const waitMs = (await loadSettings(ctx.store)).refundCooldownMinutes * 60_000;
+      const latest = payments.reduce((t, x) => Math.max(t, Date.parse(x.receivedAt)), 0);
+      const left = latest + waitMs - ctx.clock.now().getTime();
+      if (waitMs > 0 && latest > 0 && left > 0) {
+        const mins = Math.ceil(left / 60_000);
+        return [`This sale is too recent to refund. Try again in about ${mins} minute${mins === 1 ? '' : 's'}.`];
+      }
       return [];
     },
     handle: async (p, ctx) => {

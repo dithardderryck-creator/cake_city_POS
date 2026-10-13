@@ -11,7 +11,7 @@ import { REQUEST_CATEGORIES } from './domain';
 const id = z.string().min(1).max(64);
 const pin = z.string().min(1).max(12);
 /** Money is whole shillings (TSh has no cents in daily use). */
-const money = z.number().finite().int('be a whole number of shillings, with no cents').min(0).max(1_000_000_000);
+const money = z.number().finite().int('enter a whole number of shillings, with no cents').min(0).max(1_000_000_000);
 const name = z.string().max(120);
 const longText = z.string().max(500);
 const method = z.enum(['cash', 'card', 'bank_transfer', 'mobile_money']);
@@ -118,6 +118,7 @@ export const schemas = {
     paymentMethods: z.array(method).max(4).optional(),
     lowStockUnits: z.number().int().min(0).max(1000).optional(),
     bigDifferencePercent: z.number().min(1).max(100).optional(),
+    refundCooldownMinutes: z.number().int().min(0).max(120).optional(),
   }),
 
   'payments/record_payment': z.strictObject({
@@ -300,10 +301,87 @@ export const _feedSchemasMatchFeedMap: { [K in FeedName]: FeedBoth<K> } = null a
   [K in FeedName]: true;
 };
 
-/** Turn schema problems into a short list a developer can act on. */
+const THOUSANDS = (n: unknown) => (typeof n === 'number' || typeof n === 'bigint' ? n.toLocaleString('en-US') : String(n));
+
+/** One schema problem in plain words. The field name stays so a developer can find it. */
+function plainProblem(i: z.core.$ZodIssue): string {
+  const field = [...i.path].reverse().find((p) => typeof p === 'string');
+  const where = field !== undefined ? `"${String(field)}"` : 'the request';
+  if (i.code === 'unrecognized_keys') return `Unexpected field in ${where}.`;
+  const issue = i as unknown as { origin?: string; maximum?: number | bigint; minimum?: number | bigint; expected?: string; input?: unknown; format?: string; values?: unknown[]; message: string };
+  let what: string;
+  if (i.code !== 'too_big' && i.code !== 'too_small' && !/^(Invalid|Too )/.test(issue.message)) {
+    what = issue.message.replace(/\.$/, ''); // a message written for people in the schema itself
+  } else if (i.code === 'too_big') {
+    what = issue.origin === 'string' ? `it is too long (at most ${THOUSANDS(issue.maximum)} characters)` : issue.origin === 'array' ? `it has too many entries (at most ${THOUSANDS(issue.maximum)})` : `it can be at most ${THOUSANDS(issue.maximum)}`;
+  } else if (i.code === 'too_small') {
+    what = issue.origin === 'string' ? (Number(issue.minimum) <= 1 ? 'it cannot be empty' : `it is too short (at least ${THOUSANDS(issue.minimum)} characters)`) : issue.origin === 'array' ? `it needs at least ${THOUSANDS(issue.minimum)} entr${Number(issue.minimum) === 1 ? 'y' : 'ies'}` : `it must be at least ${THOUSANDS(issue.minimum)}`;
+  } else if (i.code === 'invalid_type') {
+    what = issue.expected === 'int' ? 'enter a whole number' : issue.expected === 'number' ? 'enter a number' : issue.expected === 'string' ? 'enter text' : issue.expected === 'boolean' ? 'choose yes or no' : issue.expected === 'array' ? 'a list is needed' : 'the value is not the right kind';
+  } else if (i.code === 'invalid_value') {
+    what = 'it is not one of the allowed choices';
+  } else if (i.code === 'invalid_format') {
+    what = 'it is not in the right format';
+  } else if (/^Invalid input: expected int/.test(issue.message)) {
+    what = 'enter a whole number';
+  } else {
+    what = issue.message.replace(/\.$/, '');
+  }
+  return `Check ${where}: ${what}.`;
+}
+
+/** Turn schema problems into a short list of plain sentences (the screens show them as they are). */
 export function describeSchemaProblems(error: z.ZodError): string[] {
-  return error.issues.slice(0, 5).map((i) => {
-    const where = i.path.length ? `"${i.path.join('.')}"` : 'the request';
-    return i.code === 'unrecognized_keys' ? `Unexpected field in ${where}.` : `Check ${where}: ${i.message}.`;
-  });
+  const seen = new Set<string>(); // one problem per field is enough to act on
+  const out: string[] = [];
+  // when two limits are broken the tighter one is the useful one to report
+  const tightest = (i: z.core.$ZodIssue) => Number((i as unknown as { maximum?: number }).maximum ?? Infinity);
+  for (const i of [...error.issues].sort((a, b) => tightest(a) - tightest(b))) {
+    const key = i.path.join('.');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(plainProblem(i));
+  }
+  return out.slice(0, 5);
+}
+
+/* ---------- Text clean-up ---------- */
+
+/** Text fields that may run over several lines. Everything else is one line. */
+const MULTILINE_KEYS = new Set(['decorationNotes', 'allergyNotes', 'description', 'deliveryAddress', 'shopAddress', 'receiptFooter', 'body', 'note', 'reason', 'text']);
+/** Never touched: what the person typed is exactly what is checked. */
+const UNTOUCHED_KEYS = new Set(['pin', 'currentPin', 'newPin']);
+/** Control characters, zero-width spaces and the bidirectional overrides used to disguise text. Joiners and left/right marks stay, because emoji and Arabic, Persian and Indic scripts need them. */
+// eslint-disable-next-line no-control-regex
+const HIDDEN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B\u202A-\u202E\u2060\uFEFF]/g;
+
+/** One line: any run of spaces, tabs and line breaks becomes a single space; hidden characters are removed. */
+export function cleanLine(s: string): string {
+  return s.replace(/[\t\r\n\v\f\u2028\u2029]+/g, ' ').replace(HIDDEN, '').replace(/ {2,}/g, ' ').trim();
+}
+
+/** Several lines: line breaks are kept (at most one blank line in a row), other whitespace is tidied. */
+export function cleanLines(s: string): string {
+  return s
+    .replace(/\r\n?|\u2028|\u2029/g, '\n')
+    .replace(/[\t\v\f]+/g, ' ')
+    .replace(HIDDEN, (c) => (c === '\n' ? c : ''))
+    .replace(/ *\n */g, '\n')
+    .replace(/ {2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/**
+ * Tidies every piece of text in a request before it is checked, so a pasted line break, a tab or an invisible
+ * character can never end up in a name, on a receipt or in an export. Numbers and structure are left alone.
+ */
+export function cleanPayload(value: unknown, key = '', depth = 0): unknown {
+  if (typeof value === 'string') return UNTOUCHED_KEYS.has(key) ? value : MULTILINE_KEYS.has(key) ? cleanLines(value) : cleanLine(value);
+  if (depth > 6 || value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map((v) => cleanPayload(v, key, depth + 1));
+  const out: Record<string, unknown> = {};
+  // defineProperty so a key called "__proto__" stays an ordinary field and is refused like any other unknown one
+  for (const [k, v] of Object.entries(value)) Object.defineProperty(out, k, { value: cleanPayload(v, k, depth + 1), enumerable: true, writable: true, configurable: true });
+  return out;
 }

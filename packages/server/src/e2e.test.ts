@@ -199,7 +199,48 @@ describe('retries and outages', () => {
     const r = await down.dispatch('orders/create_order', { source: 'walk_in', fulfilment: 'pickup' });
     expect(!r.ok && r.error.code).toBe('offline');
     expect(!r.ok && r.error.messages[0]).toMatch(/Cannot reach the shop server/);
+    expect(!r.ok && r.error.messages[0]).toMatch(/may or may not have gone through/); // an action might have run: never promise it did not
     expect(await down.staff()).toEqual([]);
+  });
+
+  it('tapping again after "could not reach the server" never does the action twice, even when the first one did run', async () => {
+    const { server } = await boot();
+    const { client: cashier } = await login(server, 'cashier');
+    const grid = await cashier.feed('catalogue_grid', {});
+    if (!grid.ok) throw new Error('grid');
+    const combo = grid.data[0]!.combinations.find((c) => c.sellable)!;
+    // Every answer to the sale is lost on the way back, though the server does the work each time it is asked.
+    let lose = true;
+    let sent = 0;
+    const flaky: typeof fetch = async (input, init) => {
+      const res = await fetch(input, init);
+      const body = typeof init?.body === 'string' ? JSON.parse(init.body) : {};
+      if (lose && body.type === 'orders/quick_sale') {
+        sent++;
+        throw new TypeError('fetch failed');
+      }
+      return res;
+    };
+    const staff = (await cashier.staff()).find((s) => s.role === 'cashier')!;
+    const phone = clientFor(server, { fetch: flaky, retries: 1 });
+    expect((await phone.signIn(staff.id, PINS.cashier)).ok).toBe(true);
+    const sale = { items: [{ combinationId: combo.combinationId, qty: 1 }], method: 'cash' as const };
+    const before = (await server.store.list('orders')).length;
+
+    const first = await phone.dispatch('orders/quick_sale', sale);
+    expect(!first.ok && first.error.code).toBe('offline');
+    expect(sent).toBeGreaterThan(0);
+    expect((await server.store.list('orders')).length).toBe(before + 1); // it did run, though the app was told it could not reach the server
+
+    lose = false;
+    const second = await phone.dispatch('orders/quick_sale', sale); // the person taps again
+    expect(second.ok).toBe(true);
+    expect((await server.store.list('orders')).length).toBe(before + 1); // still one sale, not two
+
+    // A deliberately new sale (same items, after the answer was received) is a new request.
+    const third = await phone.dispatch('orders/quick_sale', sale);
+    expect(third.ok).toBe(true);
+    expect((await server.store.list('orders')).length).toBe(before + 2);
   });
 
   it('gives up on a server that accepts connections but never answers, within the deadline', async () => {

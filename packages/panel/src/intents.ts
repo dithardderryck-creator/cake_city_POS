@@ -83,6 +83,7 @@ export interface IntentMap {
     paymentMethods?: PaymentMethod[];
     lowStockUnits?: number;
     bigDifferencePercent?: number;
+    refundCooldownMinutes?: number;
   };
 
   'payments/record_payment': {

@@ -90,3 +90,13 @@ Foundation and sign-in, then Cashier sell and orders, Baker queue, Inventory sto
 ## Not in scope for the first release
 
 Live timers for escalation text (the server decides, the page shows what the feed says), and any change to how the server handles money, backups or archiving.
+
+## Awkward input and a lost connection (13 Oct 2026)
+
+- **Text is tidied before it is checked** (`cleanPayload` in the panel). Line breaks, tabs, control characters, zero-width spaces and the bidirectional overrides used to disguise text are removed from every text field; notes and reasons keep their line breaks. Emoji joiners and Arabic, Persian and Indic text are kept. A name made only of invisible characters is treated as empty. Pages need no code for this.
+- **Refusals are plain sentences.** A request that fails the shape check says what to fix (`Check "price": it can be at most 1,000,000,000.`). Show the message as given.
+- **Amounts are whole shillings.** The cashier's amount boxes read `1,000` as 1000, drop a decimal part (`1000.50` is 1000, never 100050), and refuse more than 9 digits instead of cutting them.
+- **Text always wraps.** All role pages and the sign-in page set `overflow-wrap:anywhere`, so a long word with no spaces cannot push the page sideways. Keep that rule when adding a page.
+- **A lost answer is not a failed action.** When the server cannot be reached the client says the action "may or may not have gone through". If the person taps again with the same details, the client reuses the same request id, so the server answers from memory and the action is never done twice. Pages need no code for this.
+- **Refund wait.** A refund is refused for `refundCooldownMinutes` (default 5, owner setting, 0 = no wait) after the latest payment on the order.
+- **Instant sales.** Order list rows carry `instant: true` for quick sales; the cashier and owner boards hide them once completed.

@@ -245,13 +245,18 @@ export const orderIntents = {
         total = round2(total + combo.price! * it.qty);
         await dropStock(ctx, { combo, qty: it.qty, productName: product.name, orderId: order.id, warnings, events });
       }
-      const payment: Payment = { id: ctx.ids.next('pay'), orderId: order.id, method: p.method, amount: total, reference: p.reference?.trim() || undefined, receivedBy: ctx.session!.userId, receivedAt: ctx.now() };
-      await ctx.store.put('payments', payment);
-      events.push({ type: 'PaymentRecorded', payload: { orderId: order.id, amount: total, method: p.method } });
+      // Something priced at 0 has nothing to collect, so no empty payment is recorded.
+      let paymentId: string | undefined;
+      if (total > 0) {
+        const payment: Payment = { id: ctx.ids.next('pay'), orderId: order.id, method: p.method, amount: total, reference: p.reference?.trim() || undefined, receivedBy: ctx.session!.userId, receivedAt: ctx.now() };
+        await ctx.store.put('payments', payment);
+        paymentId = payment.id;
+        events.push({ type: 'PaymentRecorded', payload: { orderId: order.id, amount: total, method: p.method } });
+      }
       return {
         summary: `Sold order ${order.number} for ${ctx.config.formatMoney(total)}`,
         target: order.id,
-        data: { orderId: order.id, number: order.number, total, paymentId: payment.id },
+        data: { orderId: order.id, number: order.number, total, paymentId },
         warnings,
         events,
       };

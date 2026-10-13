@@ -593,6 +593,7 @@ export interface ShopSettingsData {
   allPaymentMethods: { key: PaymentMethod; label: string; on: boolean }[];
   lowStockUnits: number;
   bigDifferencePercent: number;
+  refundCooldownMinutes: number;
   can: { edit: boolean };
 }
 
@@ -1242,6 +1243,7 @@ export const feeds: FeedRegistry = {
         allPaymentMethods: ALL_PAYMENT_METHODS.map((m) => ({ key: m, label: METHOD_LABEL[m] ?? m, on: s.paymentMethods.includes(m) })),
         lowStockUnits: s.lowStockUnits,
         bigDifferencePercent: s.bigDifferencePercent,
+        refundCooldownMinutes: s.refundCooldownMinutes,
         can: { edit: session?.role === 'owner' },
       };
     },

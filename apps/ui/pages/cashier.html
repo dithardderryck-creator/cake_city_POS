@@ -252,7 +252,7 @@ function rTick(){const ids=Object.keys(cart),t=total(),cn=Object.values(cart).re
  else{cb.className=paid?d>=0?"ok":"short":"";$("#cgl").textContent=paid&&d<0?"Still owed":"Change to return";$("#cg").textContent=M(paid?Math.abs(d):0)}
  $("#pt").textContent="Part payment: "+(part?"on":"off");$("#pt").setAttribute("aria-pressed",part);
  $("#go").disabled=!(ids.length&&!busy&&!Cake.offline&&(!part||paid>0));$("#go").textContent=busy?"Working…":part?"Take part payment":ph2?"Place order and take payment":"Take payment"}
-function rst(){cart={};paid=0;part=false;m={src:"walk_in",ful:"pickup"};["#rcv","#dn","#dp","#dd","#da"].forEach(k=>$(k).value="")}
+function rst(){cart={};paid=0;part=false;m={src:"walk_in",ful:"pickup"};["#rcv","#dn","#dp","#dd","#da"].forEach(k=>{$(k).value="";delete $(k).dataset.ok})}
 async function go(){if(busy)return;busy=true;rTick();const v=k=>$(k).value.trim(),t=total();
  if(!part&&m.src==="walk_in"&&m.ful==="pickup"){/* Ready-made walk-in sale: instant, no ticket to approve. */
   try{const nm=v("#dn"),r=await Cake.send("orders/quick_sale",{items:Object.entries(cart).map(([combinationId,qty])=>({combinationId,qty})),method:meth,...(nm&&{customerName:nm})});
@@ -327,7 +327,7 @@ const A={tab(d){view=d.v;$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#
  rc(d,b){guard(b,()=>receipt(d.id))},open(d){openOrder(d.id)},out(){Cake.signOut()},
  cpy(){const t=$("#mod").dataset.text||"";navigator.clipboard?.writeText(t).then(()=>toast("Receipt copied."),()=>toast("Could not copy. Select the text and copy it by hand."))},
  cat(d){cat=d.c;rTiles()},add(d){cart[d.id]=(cart[d.id]||0)+1;grow=1;rTick()},qty(d){cart[d.id]=(cart[d.id]||0)+(+d.d);if(cart[d.id]<1)delete cart[d.id];rTick()},
- clr(){rst();rTick()},src(d){m.src=d.v;rTick()},ful(d){m.ful=d.v;rTick()},pm(d){meth=d.i;paid=0;$("#rcv").value="";rTick()},part(){part=!part;paid=0;$("#rcv").value="";rTick()},go(){go()},
+ clr(){rst();rTick()},src(d){m.src=d.v;rTick()},ful(d){m.ful=d.v;rTick()},pm(d){meth=d.i;paid=0;$("#rcv").value="";delete $("#rcv").dataset.ok;rTick()},part(){part=!part;paid=0;$("#rcv").value="";delete $("#rcv").dataset.ok;rTick()},go(){go()},
  of(d){ofl=d.k;rOrd()},
  /* inside an open ticket */
  adv(d,b){const c=cur();guard(b,()=>Cake.send("orders/advance_line",{orderId:c.orderId,lineId:d.l,to:d.to}))},
@@ -337,7 +337,7 @@ const A={tab(d){view=d.v;$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#
  cxo(d,b){const c=cur();if(!confirm("Cancel ticket "+c.number+"? This cannot be undone."))return;guard(b,()=>Cake.send("orders/cancel_order",{orderId:c.orderId},"Ticket cancelled."))},
  pay1(){$("#oc-form").innerHTML=PAYFORM(cur());FLOW.meth=firstM();$("#bamt").focus()},edd(){FLOW.ful=cur().fulfilment;$("#oc-form").innerHTML=DELFORM(cur())},fx(){$("#oc-form").innerHTML=""},
  bpm(d){FLOW.meth=d.i;$$("#bpm button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.i===d.i))},dff(d){FLOW.ful=d.v;$$("#df button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===d.v))},
- bok(d,b){const c=cur(),n=+($("#bamt").value.replace(/\D/g,"")||0),ref=$("#bref").value.trim();guard(b,async()=>{const r=await Cake.send("payments/record_payment",{orderId:c.orderId,method:FLOW.meth||"cash",amount:n||c.balance,allowPartial:!!n,...(ref&&{reference:ref})},"Payment recorded.");if(r.ok)$("#oc-form").innerHTML=""})},
+ bok(d,b){const c=cur(),n=+(whole($("#bamt").value)||0),ref=$("#bref").value.trim();guard(b,async()=>{const r=await Cake.send("payments/record_payment",{orderId:c.orderId,method:FLOW.meth||"cash",amount:n||c.balance,allowPartial:!!n,...(ref&&{reference:ref})},"Payment recorded.");if(r.ok)$("#oc-form").innerHTML=""})},
  dsave(d,b){const c=cur(),v=k=>$(k).value.trim();guard(b,async()=>{const r=await Cake.send("orders/set_delivery",{orderId:c.orderId,fulfilment:FLOW.ful,...(v("#dd2")&&{deliveryDate:v("#dd2")}),deliveryAddress:v("#da2"),customerPhone:v("#dp2")||null},"Delivery updated.");if(r.ok)$("#oc-form").innerHTML=""})},
  /* custom cakes */
  csrc(d){cs.src=d.v;rCs()},cful(d){cs.ful=d.v;rCs()},rmph(d){URL.revokeObjectURL(photos[+d.i].url);photos.splice(+d.i,1);rTh()},
@@ -368,9 +368,15 @@ dz.ondragover=e=>{e.preventDefault();dz.classList.add("on")};dz.ondragleave=()=>
 dz.ondrop=e=>{e.preventDefault();dz.classList.remove("on");addFiles(e.dataTransfer.files)};
 $("#cph").onchange=e=>{addFiles(e.target.files);e.target.value=""};
 ["dragover","drop"].forEach(t=>addEventListener(t,e=>e.preventDefault()));
-document.addEventListener("input",e=>{const t=e.target,n=t.value&&t.value.replace(/\D/g,"").slice(0,9);
- if(t.id==="rcv"){paid=+n;t.value=n?(+n).toLocaleString("en-US"):"";rTick()}else if(t.id==="bamt")t.value=n?(+n).toLocaleString("en-US"):"";
+/* Whole shillings only: "1,000" is 1000, "1000.50" is 1000 (the cents part is dropped, never read as 100050), and an amount of more than 9 digits is refused, never silently cut. */
+function whole(s){return String(s||"").replace(/\.\d*\s*$/,"").replace(/\D/g,"")}
+const shown=d=>d?(+d).toLocaleString("en-US"):"";
+document.addEventListener("input",e=>{const t=e.target;
+ if(t.id==="rcv"||t.id==="bamt"){const raw=t.value,d=whole(raw);
+  if(d.length>9){Cake.toast("That amount is too large to take in one go.");t.value=t.dataset.ok||"";if(t.id==="rcv"){paid=+whole(t.value);rTick()}return}
+  t.dataset.ok=shown(d);if(!/\./.test(raw))t.value=t.dataset.ok;if(t.id==="rcv"){paid=+d;rTick()}}
  else if(t.id==="qs"){qs=t.value;rTiles()}else if(t.id==="oq")rOrd()});
+document.addEventListener("focusout",e=>{const t=e.target;if(t.id==="rcv"||t.id==="bamt")t.value=t.dataset.ok||""});
 function tick(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=clock12(d)}
 
 (async()=>{const me=await Cake.boot("cashier");$("#who").textContent=me.name;tick();setInterval(tick,30000);

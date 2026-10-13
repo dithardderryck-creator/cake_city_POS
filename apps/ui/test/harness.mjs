@@ -34,17 +34,32 @@ export async function startShop({ seed = true, requireDevice = false } = {}) {
     REQUIRE_DEVICE: requireDevice ? '1' : '0',
   };
   if (seed) execFileSync(process.execPath, [adminJs, 'seed-demo', '--yes'], { env, encoding: 'utf8' });
-  const child = spawn(process.execPath, [serverJs], { env, stdio: ['ignore', 'pipe', 'pipe'] });
-  let out = '';
-  child.stdout.on('data', (d) => (out += d));
-  child.stderr.on('data', (d) => (out += d));
-  for (let i = 0; i < 100; i++) {
-    if (out.includes('server is running')) break;
-    if (child.exitCode !== null) throw new Error(`server exited early:\n${out}`);
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  if (!out.includes('server is running')) throw new Error(`server did not start:\n${out}`);
+  let child;
+  const launch = async () => {
+    child = spawn(process.execPath, [serverJs], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    child.stdout.on('data', (d) => (out += d));
+    child.stderr.on('data', (d) => (out += d));
+    for (let i = 0; i < 100; i++) {
+      if (out.includes('server is running')) break;
+      if (child.exitCode !== null) throw new Error(`server exited early:\n${out}`);
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    if (!out.includes('server is running')) throw new Error(`server did not start:\n${out}`);
+  };
+  await launch();
   return {
+    /** The server stops answering but stays alive, like a machine that has hung. Requests wait in line. */
+    freeze: () => child.kill('SIGSTOP'),
+    thaw: () => child.kill('SIGCONT'),
+    /** The server dies at once, mid-anything (a crash or a power cut). */
+    crash: () =>
+      new Promise((resolve) => {
+        child.once('exit', resolve);
+        child.kill('SIGKILL');
+      }),
+    /** Starts it again on the same port with the same data, as after a reboot. */
+    restart: launch,
     base: `http://127.0.0.1:${port}`,
     port,
     env,
@@ -55,10 +70,13 @@ export async function startShop({ seed = true, requireDevice = false } = {}) {
     },
     stop: () =>
       new Promise((resolve) => {
-        child.once('exit', () => {
+        const done = () => {
           fs.rmSync(work, { recursive: true, force: true });
           resolve();
-        });
+        };
+        if (child.exitCode !== null || child.signalCode !== null) return done();
+        child.once('exit', done);
+        child.kill('SIGCONT'); // a frozen process cannot hear a polite stop
         child.kill('SIGTERM');
       }),
   };

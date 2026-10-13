@@ -253,9 +253,11 @@ export function num(n: number): string {
 /* ---------- Parts every role page shares: announcements notice, requests and alerts ---------- */
 
 const PART_CSS = `
+/* A long word with no spaces (a pasted link, a slip of the keyboard) wraps instead of pushing the page sideways. */
+body{overflow-wrap:anywhere}
 .cx-ntc{display:grid;gap:8px;margin:0 0 10px}.cx-ntc[hidden]{display:none}
 .cx-n{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:12px;background:var(--cop-s);border:1px solid var(--cop);color:var(--ink);font-size:14px}
-.cx-n small{display:block;color:var(--mute)}.cx-n button{flex:none;min-height:38px;padding:0 14px;border-radius:10px;background:var(--cop);color:var(--on,#fff);font-weight:600;border:0;cursor:pointer;font:inherit}
+.cx-ntc>*{min-width:0}.cx-n>div:first-child{min-width:0;overflow-wrap:anywhere}.cx-n small{display:block;color:var(--mute)}.cx-n button{flex:none;min-height:38px;padding:0 14px;border-radius:10px;background:var(--cop);color:var(--on,#fff);font-weight:600;border:0;cursor:pointer;font:inherit}
 .cx-r{display:grid;gap:10px}.cx-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .cx-c{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:6px}.cx-c.me{border-left:3px solid var(--cop)}.cx-c.dim{opacity:.65}
 .cx-t{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.cx-t b{font-weight:600}.cx-m{color:var(--mute);font-size:12px}

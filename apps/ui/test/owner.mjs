@@ -51,6 +51,12 @@ try {
   assert.ok(await page.locator('#odp [data-k="rr"]').count(), 'form still open');
   await page.fill('#odp [data-k="rr"]', 'Customer changed their mind');
   await page.click('#odp [data-x="refundok"]');
+  // just paid: the refund cooldown refuses it in plain words and the form stays open
+  await page.waitForSelector('#toast.on');
+  assert.match(await txt(page, '#toast'), /too recent to refund/i);
+  assert.ok(await page.locator('#odp [data-k="rr"]').count(), 'form stays open after the cooldown refusal');
+  assert.ok((await owner.send('settings/update', { refundCooldownMinutes: 0 })).ok);
+  await page.click('#odp [data-x="refundok"]');
   await until(async () => /Refunded/.test(await txt(page, '#odp')), 'refund shown in the order card');
   await page.screenshot({ path: `${shots}/order-drawer.png` });
   await page.click('#odp [data-x="close"]');
@@ -193,6 +199,15 @@ try {
   await page.fill('#dpn [data-k="sn"]', 'Cake City Test');
   await page.click('#dpn [data-d="shop"]');
   await until(async () => (await owner.read('shop_settings')).shopName === 'Cake City Test', 'shop name saved');
+  assert.equal(await page.inputValue('#dpn [data-k="rc"]'), '0', 'the refund wait field shows the saved value');
+  await page.fill('#dpn [data-k="rc"]', '7');
+  await page.click('#dpn [data-d="counter"]');
+  await until(async () => (await owner.read('shop_settings')).refundCooldownMinutes === 7, 'refund wait saved');
+  await page.fill('#dpn [data-k="rc"]', '500');
+  await page.click('#dpn [data-d="counter"]');
+  await page.waitForSelector('#toast.on');
+  assert.match(await txt(page, '#toast'), /0 to 120/, 'out of range refused in the page');
+  assert.equal((await owner.read('shop_settings')).refundCooldownMinutes, 7);
   await page.fill('#dpn [data-k="a-quoteWaitHours"]', '5');
   await page.click('#dpn [data-d="alerts"]');
   await until(async () => (await owner.read('alert_settings')).quoteWaitHours === 5, 'alert rule saved');

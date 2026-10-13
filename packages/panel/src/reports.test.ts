@@ -81,6 +81,7 @@ describe('sales', () => {
     await onDay(0);
     const d = await order('Chocolate Fudge Cake', 10_000);
     ok(await pay(d.orderId, 'cash', 25000));
+    t += 6 * 60_000; // past the refund cooldown
     ok(await send('owner', 'payments/approve_refund', { orderId: b.orderId, amount: 5000, reason: 'Cracked base', method: 'mobile_money' }));
     return { a, b, c, d };
   }
@@ -171,6 +172,7 @@ describe('refunds', () => {
     await onDay(2);
     const a = await order('Red Velvet Cake', 10_000, { customerName: 'Salma R.' });
     ok(await pay(a.orderId, 'cash', 30000));
+    t += 6 * 60_000; // past the refund cooldown
     ok(await send('owner', 'payments/approve_refund', { orderId: a.orderId, amount: 8000, reason: 'Wrong flavour delivered', method: 'cash' }));
     await onDay(0);
     ok(await send('owner', 'payments/approve_refund', { orderId: a.orderId, amount: 2000, reason: 'Late', method: 'cash' }));

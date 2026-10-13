@@ -114,7 +114,7 @@ describe('the daily count', () => {
     ok(await record(sessionId, 'Flour', 13500, 'g'));
     expect((await feed()).session!.items.find((i) => i.name === 'Flour')!.counted).toBe(13.5);
     expect(errOf(await record(sessionId, 'Flour', 3, 'l'))).toBeTruthy();
-    expect(errOf(await record(sessionId, 'Flour', -1))).toMatch(/Too small|negative/);
+    expect(errOf(await record(sessionId, 'Flour', -1))).toMatch(/at least 0|negative/);
   });
 
   it('skipping clears a count already written', async () => {

@@ -17,7 +17,7 @@ export type { BatchLogData, BatchOption, BatchRow } from './circuits/batches';
 export type { CountItemRow, CountSessionData } from './circuits/count';
 export type { AnnouncementRow, AnnouncementsData } from './circuits/announcements';
 export type { LedgerRow, PaymentsLedgerData, ReceiptData } from './circuits/money-feeds';
-export { schemas, feedSchemas } from './schemas';
+export { schemas, feedSchemas, cleanPayload } from './schemas';
 export {
   createMemoryStore,
   createIds,

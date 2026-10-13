@@ -545,6 +545,8 @@ export interface ShopSettings {
   lowStockUnits: number;
   /** A stock count off by this percent or more is flagged as a big difference. */
   bigDifferencePercent: number;
+  /** Minutes after the latest payment on an order before any refund on it is allowed. 0 switches the wait off. */
+  refundCooldownMinutes: number;
 }
 
 export interface Payment {

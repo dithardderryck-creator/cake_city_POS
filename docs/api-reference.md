@@ -415,6 +415,7 @@ Allowed: **owner**
 | `paymentMethods` | "cash" \| "card" \| "bank_transfer" \| "mobile_money"[] | no | max 4 items |
 | `lowStockUnits` | integer | no | min 0, max 1000 |
 | `bigDifferencePercent` | number | no | min 1, max 100 |
+| `refundCooldownMinutes` | integer | no | min 0, max 120 |
 
 ### Inventory
 

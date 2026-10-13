@@ -33,7 +33,7 @@ import { paymentIntents } from './circuits/payments';
 import { staffIntents } from './circuits/staff';
 import { stockIntents } from './circuits/stock';
 import { syncIntents } from './circuits/sync';
-import { describeSchemaProblems, feedSchemas, schemas } from './schemas';
+import { cleanPayload, describeSchemaProblems, feedSchemas, schemas } from './schemas';
 import {
   base64ToBytes,
   bytesToBase64,
@@ -415,7 +415,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
     }
 
     // Shape check: what actually arrived, not what the types promise.
-    const parsed = schemas[type].safeParse(payload ?? {});
+    const parsed = schemas[type].safeParse(cleanPayload(payload ?? {}));
     if (!parsed.success) {
       bump(stat, 'invalid');
       await writeAudit({ ...actor, intent: type, summary: 'Rejected: the request was malformed', outcome: 'invalid' });

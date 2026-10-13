@@ -301,7 +301,7 @@ describe('changing a custom cake', () => {
 
   it('rejects incomplete details in plain words', async () => {
     const { orderId } = ok<{ orderId: string }>(await send('cashier', 'orders/create_order', { source: 'walk_in', fulfilment: 'pickup' }));
-    expect(errOf(await send('cashier', 'orders/add_custom_line', { orderId, spec: { ...SPEC, flavor: '   ' } }))).toMatch(/Choose a flavor/);
+    expect(errOf(await send('cashier', 'orders/add_custom_line', { orderId, spec: { ...SPEC, flavor: '   ' } }))).toMatch(/Choose a flavor|"flavor": it cannot be empty/);
     expect(errOf(await send('cashier', 'orders/add_custom_line', { orderId, spec: { ...SPEC, servings: 0 } }))).toMatch(/invalid/);
     expect(errOf(await send('cashier', 'orders/add_custom_line', { orderId, spec: { ...SPEC, colour: 'pink' } as never }))).toMatch(/Unexpected field/);
     expect((await card('cashier', orderId)).lines).toHaveLength(0);

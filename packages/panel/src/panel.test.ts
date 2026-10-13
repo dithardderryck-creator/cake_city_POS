@@ -323,6 +323,7 @@ describe('payments (BR-06, BR-07, BR-08)', () => {
     expect(denied.ok).toBe(false);
     const noReason = await panel.dispatch('payments/approve_refund', { orderId, amount: 5000, reason: ' ', method: 'cash' }, owner);
     expect(noReason.ok).toBe(false);
+    tick += 6 * 60; // past the refund cooldown
     ok(await panel.dispatch('payments/approve_refund', { orderId, amount: 5000, reason: 'Customer changed date', method: 'cash' }, owner));
     const c = await card(owner, orderId);
     expect(c.refundedLabel).toBe('TSh 5,000');

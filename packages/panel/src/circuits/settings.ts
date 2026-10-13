@@ -8,6 +8,7 @@ export const DEFAULT_SHOP_NAME = 'Cake shop';
 export const ALL_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'mobile_money', 'card', 'bank_transfer'];
 export const DEFAULT_LOW_STOCK_UNITS = 3;
 export const DEFAULT_BIG_DIFFERENCE_PERCENT = 10;
+export const DEFAULT_REFUND_COOLDOWN_MINUTES = 5;
 
 /** What is saved, with a sensible value for anything the owner has not chosen yet. */
 export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSettings> {
@@ -20,6 +21,7 @@ export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSetti
     paymentMethods: saved?.paymentMethods?.length ? saved.paymentMethods : ALL_PAYMENT_METHODS,
     lowStockUnits: saved?.lowStockUnits ?? DEFAULT_LOW_STOCK_UNITS,
     bigDifferencePercent: saved?.bigDifferencePercent ?? DEFAULT_BIG_DIFFERENCE_PERCENT,
+    refundCooldownMinutes: saved?.refundCooldownMinutes ?? DEFAULT_REFUND_COOLDOWN_MINUTES,
   };
 }
 
@@ -55,6 +57,7 @@ export const settingsIntents = {
         paymentMethods: p.paymentMethods !== undefined ? ALL_PAYMENT_METHODS.filter((m) => p.paymentMethods!.includes(m)) : current.paymentMethods,
         lowStockUnits: p.lowStockUnits ?? current.lowStockUnits,
         bigDifferencePercent: p.bigDifferencePercent ?? current.bigDifferencePercent,
+        refundCooldownMinutes: p.refundCooldownMinutes ?? current.refundCooldownMinutes,
       };
       await ctx.store.put('settings', next);
       const receipt = p.shopName !== undefined || p.shopAddress !== undefined || p.shopPhone !== undefined || p.receiptFooter !== undefined;
@@ -64,7 +67,7 @@ export const settingsIntents = {
             ? next.decoratingStage
               ? 'Turned on the Decorating stage for custom cakes'
               : 'Turned off the Decorating stage for custom cakes'
-            : receipt && p.decoratingStage === undefined && p.paymentMethods === undefined && p.lowStockUnits === undefined && p.bigDifferencePercent === undefined
+            : receipt && p.decoratingStage === undefined && p.paymentMethods === undefined && p.lowStockUnits === undefined && p.bigDifferencePercent === undefined && p.refundCooldownMinutes === undefined
               ? 'Changed the shop details printed on receipts'
               : 'Changed the shop settings',
         target: 'shop',
