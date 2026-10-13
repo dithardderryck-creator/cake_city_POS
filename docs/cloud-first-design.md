@@ -126,3 +126,53 @@ A universal cooldown of roughly 90 seconds to two minutes applies after any sale
 4. Whether the shop computer is allowed to keep selling when it cannot reach the cloud for many hours (my assumption: yes, it is the whole point of the fallback).
 
 **Effect on the error-handling pass (item 5 of the change requests).** The bad-input checks (very long names, huge numbers) do not depend on any of this, but "stop the server part-way through an action" does, because what the user should see depends on which server they fall back to. So that part waits for stage 2.
+
+## Hosting options (researched 12–13 Oct 2026)
+
+*Prices and limits come from third-party pages and change often. Check each provider's own page before paying. "Unverified" means I could not confirm it.*
+
+| Option | What it is | Fit for this shop |
+| --- | --- | --- |
+| Render free plan | Sleeps after 15 minutes without traffic, no persistent disk, may restart at any time. Free database is deleted after 30 days. | **No.** Cannot hold a SQLite file or serve a till. |
+| Google Cloud free small server | Free only in three US regions (none in Africa). The disk must be the "standard" type, and a public address costs about $3.65 a month anyway. | **Testing only.** US round trips make the till feel slow. |
+| Oracle Always Free | 2026 reports say the free ARM allowance fell to about 2 CPUs and 12 GB, can be reclaimed when idle, may fail with "out of capacity", has no guarantee, and can start charging past the limit if a card is on file. Region and sign-up rules unverified. | **Testing only**, with a budget alert. Not for the live copy. |
+| Fly.io | No free plan. Smallest always-on machine plus a small disk is about $2.34 a month in the US, about $6.85 with 1 GB of memory. Has a Johannesburg region (price unverified). Data going out of Africa is $0.12 per GB. | **Good candidate.** Same server in a container, disk kept, small cost. |
+| AFRICLOUD (Johannesburg VPS) | African host, eight plan sizes, no price found. About 43 ms to Arusha. | **Good candidate**, once the price is checked. |
+
+**Recommendation.** Pay for a small always-on server in Johannesburg for the live copy. The expected cost is a few dollars a month (to be confirmed with the real price pages). Use a free tier only as a throw-away test copy while the two-way sync is built. Distance matters: Johannesburg is about 43 ms from Tanzania, while a US server is several times slower, and the tills will use the cloud first. A card that works for foreign payments is needed; ask the owner whether a virtual Visa or Mastercard is available.
+
+## IT command centre (idea from the owner, 12 Oct 2026)
+
+One screen where IT sees what is happening in the whole system, and the owner can see the same status in plain words. **Not built.**
+
+Panels:
+1. **Health.** Is the cloud copy up, is the shop computer up, when did each last answer, which devices are online, how far behind is sync (waiting, last sent, last error). Disk space, backup age, clock drift.
+2. **Failures and interruptions.** A timeline: server restarts, failovers to the shop computer, failed syncs, failed messages, refused instructions that repeat. Each item says what happened, since when, and the usual first step.
+3. **Security.** Failed PIN attempts, lockouts, new device pairings and revoked devices, sign-ins at odd hours, refunds and write-offs outside normal patterns, lobby sessions that tried shop-only actions.
+4. **Accounts and subscriptions.** A register, not a password vault: service, what it is for, who owns the account, monthly cost, renewal date, status, link to its own dashboard. Covers the host, domain, Google account used for copies, message provider, backup storage, the AI monitor's provider. An alert goes out before a renewal and when a payment fails. **No passwords or keys are stored here**; those stay in a password manager held by the owner.
+5. **Runbook.** For each alert, a short "what to do" written by us, so a failure never leaves IT guessing.
+
+Most of the signals exist already (the audit log, alerts, sync state, device list, `panel_map`). The work is mainly a read-only IT feed that gathers them, plus the accounts register.
+
+## AI monitor (idea from the owner, 12 Oct 2026)
+
+A helper that watches the system next to IT. **Not built; the safety rules below come first.**
+
+**What it does.** Reads the health and security signals, notices unusual patterns, writes a short plain-language summary ("Sync has been 40 minutes behind since 14:10; the cloud answered slowly; likely cause X; try Y"), ranks alerts by urgency and drafts the runbook step. It can also draft the daily and weekly status for the owner.
+
+**Rules that keep it safe.**
+- **Checks first, AI second.** Fixed rules (a number over a limit, a service not answering) raise the alert. The AI only explains and prioritises. A free service being slow or down must never mean the shop loses its alarms.
+- **Read-only.** It gets a read-only feed. It cannot send any instruction, change money, stock, staff or settings, restart anything, or see passwords and keys. At most it suggests, and a person acts.
+- **Minimal data.** It is given counts, timings, error messages and trimmed log lines. Not customer names, phone numbers, addresses or receipts.
+- **Everything it says is logged**, with the data it was shown, so IT can check it.
+- **Free tiers are unreliable.** Free AI plans have small daily limits and their terms change (one 2026 report says Gemini's free plan became Flash-only on 1 April 2026; unverified). Design for a switchable provider and for working with no AI at all.
+- **Not a replacement for security basics** (updates, backups, device approval, PIN limits). It is an extra pair of eyes.
+
+**Decisions for the owner.**
+1. Does the AI monitor only advise (my recommendation), or may it ever take a safe action itself, such as restarting a stuck sync?
+2. Which provider and who pays if the free plan is not enough.
+3. Who receives its alerts and how: the IT screen only, or also a phone message.
+
+## Updated build plan
+
+The IT command centre and the AI monitor are **stage 7 and stage 8**, after the lobby and two-way sync. The accounts register and a basic health screen can be built earlier because they do not depend on the cloud move.
