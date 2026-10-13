@@ -176,3 +176,14 @@ A helper that watches the system next to IT. **Not built; the safety rules below
 ## Updated build plan
 
 The IT command centre and the AI monitor are **stage 7 and stage 8**, after the lobby and two-way sync. The accounts register and a basic health screen can be built earlier because they do not depend on the cloud move.
+
+## Decisions (owner, 13 Oct 2026)
+
+The four questions from the build plan are answered:
+
+1. **Cloud host:** start with a **free test copy** to build and test the two-way sync. The paid host is chosen before going live (shortlist: Fly.io or AFRICLOUD in Johannesburg; prices still to be checked). Nothing live depends on a free tier.
+2. **Refund cooldown:** **5 minutes** after a sale, for everyone including the owner. Following the "nothing hard-coded" rule it is a shop setting (default 5 minutes), not a number in the code.
+3. **Proving "at the shop":** **shop wifi first, GPS as a backup.** It is accepted that GPS from a phone can be faked, so it is a deterrent. A code from a shop screen stays an option if this proves too weak.
+4. **Long outages:** **yes, the shop computer keeps selling** while it cannot reach the cloud, and the owner is alerted that it is running offline. Everything syncs when the cloud returns.
+
+**Future plan (not now):** the IT command centre (stage 7) and the AI monitor (stage 8) are parked as future plans. Their open questions stay recorded above.
