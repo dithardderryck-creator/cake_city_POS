@@ -643,3 +643,30 @@ describe('the sale reads the same as any other', () => {
     expect(card.payments.length).toBe(1);
   });
 });
+
+describe('the signing code', () => {
+  it('gives the published SHA-256 and HMAC-SHA-256 test values', async () => {
+    const { sha256Bytes, hmacSha256Bytes } = await import('./offline-proof');
+    const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+    const enc = (s: string) => new TextEncoder().encode(s);
+    expect(hex(sha256Bytes(enc('')))).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+    expect(hex(sha256Bytes(enc('abc')))).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+    expect(hex(sha256Bytes(enc('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq')))).toBe('248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1');
+    // RFC 4231 test case 2
+    expect(hex(hmacSha256Bytes(enc('Jefe'), enc('what do ya want for nothing?')))).toBe('5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843');
+    // RFC 4231 test case 6: a key longer than one block
+    expect(hex(hmacSha256Bytes(new Uint8Array(131).fill(0xaa), enc('Test Using Larger Than Block-Size Key - Hash Key First')))).toBe('60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54');
+  });
+
+  it('agrees with the platform on random inputs, including every length around a block boundary', async () => {
+    const { hmacHexSync, bytesToBase64Local } = await import('./offline-proof');
+    const subtle = globalThis.crypto.subtle;
+    for (const n of [0, 1, 54, 55, 56, 57, 63, 64, 65, 119, 120, 127, 128, 1000]) {
+      const key = globalThis.crypto.getRandomValues(new Uint8Array(1 + (n % 97)));
+      const msg = Array.from(globalThis.crypto.getRandomValues(new Uint8Array(n)), (b) => String.fromCharCode(b)).join('') + 'é€😀';
+      const k = await subtle.importKey('raw', key as BufferSource, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const expected = Array.from(new Uint8Array(await subtle.sign('HMAC', k, new TextEncoder().encode(msg))), (b) => b.toString(16).padStart(2, '0')).join('');
+      expect(hmacHexSync(bytesToBase64Local(key), msg)).toBe(expected);
+    }
+  });
+});

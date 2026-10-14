@@ -69,6 +69,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       devicePrefix: config.devicePrefix,
       currencyLabel: config.currencyLabel,
       requireDevice: config.requireDevice,
+      offlineMasterKey: config.offlineMasterKey ?? undefined,
       terminals,
       onError: (err, info) => log.error('Unexpected failure inside the panel', { ...info, ...errorFields(err) }),
     });

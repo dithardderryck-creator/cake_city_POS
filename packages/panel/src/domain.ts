@@ -559,7 +559,7 @@ export interface ShopSettings {
 
 /**
  * Permission for one registered device and one person to sell offline for a while. The pass key itself is never stored:
- * it is worked out from the server's master key, so a copy of the database alone cannot forge a sale.
+ * it is worked out from the server's master key. Sending a queue also needs the device's own secret, which is only kept as a hash.
  */
 export interface OfflinePass {
   id: Id;

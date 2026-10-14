@@ -5,6 +5,7 @@
  * browsers switch those off on plain http:// addresses, which is how a shop server is usually reached.
  */
 import type { DispatchResult, FeedMap, FeedName, FeedResult, IntentMap, IntentName, Role, StaffSigninRow } from '@cake-pos/panel';
+import { createOfflineTill, type OfflineStore, type OfflineTill } from './offline';
 
 export type { DispatchResult, FeedMap, FeedName, FeedResult, IntentMap, IntentName, Role, StaffSigninRow };
 
@@ -79,6 +80,8 @@ export interface ClientOptions {
   fetch?: typeof fetch;
   WebSocket?: SocketCtor;
   tokenStore?: TokenStore;
+  /** Keeps the sales saved while offline, so they survive a reload. Use `localStorageTokenStore('cake-pos-offline')` in a page. Without it they live only until the page closes. */
+  offlineStore?: OfflineStore;
   /** Keeps the secret this browser got when it was registered. Use `localStorageTokenStore('cake-pos-device')` in a page. */
   deviceStore?: TokenStore;
   /** How many times to retry when the network fails. The same request id is reused, so nothing runs twice. */
@@ -126,6 +129,8 @@ export interface Client {
   onConnection(listener: (s: ConnectionState) => void): () => void;
   /** Fires when the sign-in ends without the user asking: expired, signed out elsewhere, or switched off. */
   onSignedOut(listener: () => void): () => void;
+  /** Selling when the shop server cannot be reached: saved on this device and sent later. */
+  readonly offline: OfflineTill;
   readonly connection: ConnectionState;
   readonly signedIn: boolean;
   close(): void;
@@ -159,6 +164,7 @@ export function createClient(options: ClientOptions = {}): Client {
   const signedOutListeners = new Set<() => void>();
   const base = (options.baseUrl ?? '').replace(/\/$/, '');
   let token: string | null = options.tokenStore?.get() ?? null;
+  let me: SessionInfo | null = null;
   const deviceToken = () => options.deviceStore?.get() ?? null;
   const deviceHeader = (): Record<string, string> => {
     const d = deviceToken();
@@ -172,6 +178,7 @@ export function createClient(options: ClientOptions = {}): Client {
   const lostSignIn = () => {
     if (token === null) return;
     setToken(null);
+    signedOutNow();
     socket?.close();
     options.onSignedOut?.();
     for (const l of signedOutListeners) l();
@@ -224,6 +231,42 @@ export function createClient(options: ClientOptions = {}): Client {
     return r === 'offline' ? r : { status: r.status, json: r.value };
   }
 
+  /* ---------- selling offline (see offline.ts) ---------- */
+
+  let memoryOffline: string | null = null;
+  const till = createOfflineTill({
+    store: options.offlineStore ?? { get: () => memoryOffline, set: (v) => void (memoryOffline = v) },
+    me: () => me,
+    dispatchNow: async (type, payload, requestId, quick) => {
+      // A till that can sell offline does not make the person wait out the full retry time before it saves the sale.
+      const limits: Limits = quick ? { timeoutMs: state === 'offline' ? 2_000 : 4_000, deadlineMs: state === 'offline' ? 3_000 : 6_000 } : normalLimits;
+      const r = await send(
+        '/api/dispatch',
+        (t) => ({ method: 'POST', headers: { 'content-type': 'application/json', ...deviceHeader(), ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify({ type, payload, requestId }) }),
+        (res) => res.json().catch(() => null) as Promise<unknown>,
+        token,
+        limits,
+      );
+      return r === 'offline' ? r : { status: r.status, json: r.value };
+    },
+    replay: (body) => post('/api/offline/replay', body, null),
+    connection: () => state,
+    randomId,
+    lostSignIn: () => lostSignIn(),
+  });
+  let renewTimer: ReturnType<typeof setInterval> | null = null;
+  const signedInNow = (who: SessionInfo) => {
+    me = who;
+    void till.refreshPass().catch(() => undefined);
+    if (!renewTimer) renewTimer = setInterval(() => void till.refreshPass().catch(() => undefined), 5 * 60_000);
+  };
+  const signedOutNow = () => {
+    me = null;
+    till.forgetKeys();
+    if (renewTimer) clearInterval(renewTimer);
+    renewTimer = null;
+  };
+
   const bad = (status: number): DispatchResult => ({
     ok: false,
     error: { code: status === 401 ? 'unauthenticated' : 'error', messages: ['The server gave an answer this app does not understand.'] },
@@ -250,6 +293,7 @@ export function createClient(options: ClientOptions = {}): Client {
     if (s === state) return;
     state = s;
     for (const l of connListeners) l(s);
+    till.connectionChanged();
   };
 
   const wsUrl = () => {
@@ -316,6 +360,7 @@ export function createClient(options: ClientOptions = {}): Client {
   }
 
   return {
+    offline: till,
     get connection() {
       return state;
     },
@@ -363,6 +408,7 @@ export function createClient(options: ClientOptions = {}): Client {
       if (j?.ok && j.token && j.session) {
         setToken(j.token);
         connect();
+        signedInNow(j.session);
         return { ok: true, session: j.session };
       }
       return { ok: false, code: j?.error?.code ?? 'error', messages: j?.error?.messages ?? ['Could not sign in.'] };
@@ -375,6 +421,7 @@ export function createClient(options: ClientOptions = {}): Client {
       const j = r.json as FeedResult<SessionInfo> | null;
       if (j?.ok) {
         connect();
+        signedInNow(j.data);
         return j.data;
       }
       if (r.status === 401) lostSignIn();
@@ -385,6 +432,7 @@ export function createClient(options: ClientOptions = {}): Client {
       // Sign out on this device first so the next person at the till can never inherit it, whatever the network does.
       const old = token;
       setToken(null);
+      signedOutNow();
       socket?.close();
       if (!old) return { serverEnded: true };
       const tryRevoke = async () => {
@@ -483,6 +531,8 @@ export function createClient(options: ClientOptions = {}): Client {
 
     close() {
       closed = true;
+      till.stop();
+      if (renewTimer) clearInterval(renewTimer);
       for (const t of pendingRevokes) clearTimeout(t);
       pendingRevokes.clear();
       if (retryTimer) clearTimeout(retryTimer);
@@ -493,3 +543,4 @@ export function createClient(options: ClientOptions = {}): Client {
 }
 
 export * from './alerts';
+export * from './offline';

@@ -273,6 +273,13 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
       return {};
     }
 
+    if (p === '/api/offline/replay') {
+      // No sign-in needed: the person may be signed out by now. The device secret and the proof on every sale are what is checked.
+      const r = await panel.replayOffline(body, deviceOf(req));
+      sendJson(req, res, r.ok ? 200 : statusFor(r.error.code), r);
+      return { note: r.ok ? `offline replay (${r.results.map((x) => x.status).join(', ')})` : `offline replay -> ${r.error.code}` };
+    }
+
     if (p === '/api/dispatch') {
       if (typeof body.type !== 'string') throw new HttpError(422, 'invalid', 'Send { "type": "...", "payload": { ... } }.');
       const requestId = typeof body.requestId === 'string' && body.requestId.length <= 80 ? body.requestId : undefined;

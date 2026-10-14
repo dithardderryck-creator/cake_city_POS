@@ -40,6 +40,8 @@ export interface ServerConfig {
   pushContact: string | null;
   /** The live online database. Null means the shop runs on this computer alone, with backups. */
   onlineDb: { url: string; token: string } | null;
+  /** OFFLINE_MASTER_KEY: the secret offline passes are made from. Optional; when missing, one is made and kept in the database. */
+  offlineMasterKey: string | null;
 }
 
 export class ConfigError extends Error {}
@@ -108,6 +110,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     messaging: loadMessaging(env),
     pushContact: loadPushContact(env),
     onlineDb: loadOnlineDb(env),
+    offlineMasterKey: loadMasterKey(env),
   };
 }
 
@@ -155,6 +158,13 @@ function webhookUrl(env: NodeJS.ProcessEnv): string {
     throw new ConfigError('MESSAGE_WEBHOOK_URL must be a web address starting with https:// (or http:// for a service on this network).');
   }
   return url;
+}
+
+function loadMasterKey(env: NodeJS.ProcessEnv): string | null {
+  const v = env.OFFLINE_MASTER_KEY?.trim();
+  if (!v) return null;
+  if (!/^[A-Za-z0-9_-]{32,200}={0,2}$/.test(v)) throw new ConfigError('OFFLINE_MASTER_KEY must be at least 32 letters and digits (base64). Make one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64url\'))"');
+  return v;
 }
 
 function loadOnlineDb(env: NodeJS.ProcessEnv): { url: string; token: string } | null {

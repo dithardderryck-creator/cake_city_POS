@@ -292,6 +292,19 @@ await watcher.markAllSeen(); // "Stop"
 
 Old finished orders are moved out of the database into spreadsheets (see the runbook). After that they are **not in any feed** and instructions on them answer "That order no longer exists". The panel map (IT role) shows Google Drive status and archive progress. Order numbers are never reused. Nothing in the API changes: your UI does not need to know about archiving.
 
+## Selling when the connection is gone
+
+Only instant sales (`orders/quick_sale`) can be saved on a till and sent later. Use `client.offline`:
+
+- `client.offline.status()`: whether a sale can be saved here (`canSell`), how many are waiting, what is left of the limits, and `notices` (sales that were held for the owner, refused, or could not be sent). Notices stay until `clearNotices()`.
+- `client.offline.quickSale({ items, method, expectedTotal })`: sells now; if the server cannot be reached it saves the sale on the device and returns `{ ok: true, queued: true, seq, madeAt }`. Always pass `expectedTotal`, the total the customer was shown.
+- `client.offline.flush()`: sends what is waiting. The client also does this by itself when the connection returns and every 15 seconds while something waits.
+- Pass `offlineStore: localStorageTokenStore('cake-pos-offline')` to `createClient` so the queue survives reloads.
+
+The client asks for an offline pass after every sign-in. The owner switches the feature on in the shop settings (`offlineEnabled`, `offlinePassHours`, `offlineMaxSales`, `offlineMaxTotal`); it is off by default. The pass key is removed from the device at sign-out; sales already saved can still be sent.
+
+`POST /api/offline/replay` with `{ passId, actions: [{ seq, requestId, type, payload, queuedAt, tag }] }` and the `X-Device-Token` header sends a queue. No sign-in is needed. The answer is `{ ok: true, results: [{ seq, status, message, ... }] }` where `status` is `done`, `duplicate`, `held`, `rejected` or `retry`. See `docs/offline-queue-design.md` for what is checked.
+
 ## Things that will bite you on a shop network
 
 - **Plain `http://` addresses are "insecure" to browsers.** On `http://192.168.x.x` a browser disables `crypto.subtle`, `crypto.randomUUID()` and **service workers** (so no installable-app offline shell). The client library avoids the first two. For the third, run the server with HTTPS (see the runbook), or accept that each device loads the app from the server when it opens (fine, because nothing works without the server anyway).

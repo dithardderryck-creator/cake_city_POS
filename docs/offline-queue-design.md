@@ -50,10 +50,18 @@ A held sale that the owner approves runs again as the person who made it (or und
 | **Not protected:** the last sales in a queue never being sent (device lost, never reconnects) | The cloud cannot know about them. The IT screen should show passes whose device has not synced for a long time |
 | **Not protected:** a pass key stolen from an unlocked, signed-in device while offline | Limits and expiry bound it; revoke the device |
 
+## Decisions made while building
+
+- The signing code (SHA-256 and HMAC) is plain code, not the browser's crypto, because browsers switch that off on `http://` addresses. It is checked against the published test values and the platform's own HMAC.
+- A queued sale keeps the request id of the online attempt that failed. If that attempt had in fact reached the server, replay gets the stored answer back and nothing is sold twice.
+- The pass key is deleted from the device at sign-out. Signing in needs the server, so only the person who was signed in when the connection dropped can keep selling.
+- Sales are stamped with the shop's time (device clock plus the difference measured when the pass was given), so an honest slow or fast clock does not cause held sales.
+- A queue the server refuses as a whole (device revoked, person switched off) is kept on the till as a notice with the sale details, never silently dropped.
+
 ## Build stages
 
 1. **Server (panel), done 14 Oct:** pass, tag, replay, held list, owner review, settings, `expectedTotal`. Tested on its own, including every row of the tables above.
-2. **Client and server transport:** the queue in the browser (kept across reloads), the replay request, the device header.
+2. **Client and server transport, done 14 Oct:** the queue in the browser (kept across reloads), the replay request, the device header.
 3. **Cashier screen:** what the person sees offline (a clear "offline, sales will be sent later" bar, a provisional receipt, a count of sales waiting), and what happens when a sale was held.
 4. **Owner screen:** the "needs review" list.
 5. **Real-world pieces:** keeping the page itself available offline (a service worker), and alerts about old unsent queues.
