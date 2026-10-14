@@ -37,6 +37,8 @@ const cakeSpec = z.strictObject({
 export const schemas = {
   'auth/sign_in': z.strictObject({ userId: id, pin }),
   'auth/sign_out': empty,
+  'offline/get_pass': empty,
+  'offline/review': z.strictObject({ heldId: id, action: z.enum(['approve', 'dismiss']), note: longText.optional() }),
   'auth/change_pin': z.strictObject({ currentPin: pin, newPin: pin }),
 
   'devices/create_code': z.strictObject({ name }),
@@ -92,6 +94,7 @@ export const schemas = {
     method,
     reference: name.optional(),
     customerName: name.optional(),
+    expectedTotal: money.optional(),
   }),
   'orders/add_catalogue_line': z.strictObject({ orderId: id, combinationId: id, qty: z.number().int().min(1).max(10_000) }),
   'orders/add_custom_line': z.strictObject({ orderId: id, spec: cakeSpec }),
@@ -119,6 +122,10 @@ export const schemas = {
     lowStockUnits: z.number().int().min(0).max(1000).optional(),
     bigDifferencePercent: z.number().min(1).max(100).optional(),
     refundCooldownMinutes: z.number().int().min(0).max(120).optional(),
+    offlineEnabled: z.boolean().optional(),
+    offlinePassHours: z.number().int().min(1).max(72).optional(),
+    offlineMaxSales: z.number().int().min(1).max(1000).optional(),
+    offlineMaxTotal: money.optional(),
   }),
 
   'payments/record_payment': z.strictObject({
@@ -271,6 +278,7 @@ export const feedSchemas = {
   quote_inbox: empty,
   bake_queue: empty,
   shop_settings: empty,
+  offline_review: empty,
   ingredient_list: z.strictObject({ includeInactive: z.boolean().optional() }),
   recipe_rules: empty,
   usage_form: z.strictObject({ orderId: id, lineId: id }),

@@ -2,6 +2,8 @@ export * from './domain';
 export * from './intents';
 export { createPanel, INTENT_NAMES, describeIntents, describeFeeds } from './kernel';
 export { renderApiReference } from './api-reference';
+export type { ReplayInput, ReplayItemResult, ReplayResult, ReplayStatus } from './offline-replay';
+export * from './offline-proof';
 export type { Panel, PanelOptions, FeedResult, DispatchOptions, PhotoUploadResult, PhotoReadResult } from './kernel';
 export * from './units';
 export * from './forecast';

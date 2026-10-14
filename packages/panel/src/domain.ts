@@ -547,6 +547,81 @@ export interface ShopSettings {
   bigDifferencePercent: number;
   /** Minutes after the latest payment on an order before any refund on it is allowed. 0 switches the wait off. */
   refundCooldownMinutes: number;
+  /** Tills may keep selling when the connection is gone, and send the sales later. Off until the owner switches it on. */
+  offlineEnabled: boolean;
+  /** How long an offline pass lasts. */
+  offlinePassHours: number;
+  /** Most sales one pass may carry. */
+  offlineMaxSales: number;
+  /** Most money one pass may carry, in shillings. */
+  offlineMaxTotal: number;
+}
+
+/**
+ * Permission for one registered device and one person to sell offline for a while. The pass key itself is never stored:
+ * it is worked out from the server's master key, so a copy of the database alone cannot forge a sale.
+ */
+export interface OfflinePass {
+  id: Id;
+  userId: Id;
+  userName: string;
+  deviceId: Id;
+  deviceName: string;
+  issuedAt: string;
+  expiresAt: string;
+  maxSales: number;
+  maxTotal: number;
+  /** A newer pass replaced this one: only sales made before this moment still count. */
+  closedAt?: string;
+  /** The next sequence number the server will accept. */
+  nextSeq: number;
+  /** The tag of the last accepted sale, which the next one must be chained to. */
+  lastTag: string;
+  /** Device time of the last accepted sale. Time never goes backwards along the chain. */
+  lastAt?: string;
+  /** Sales that went through, and their total. */
+  sales: number;
+  total: number;
+}
+
+/** A queued sale that arrived but could not be replayed honestly. It waits for the owner. */
+export interface HeldAction {
+  id: Id;
+  passId: Id;
+  userId: Id;
+  userName: string;
+  deviceId: Id;
+  deviceName: string;
+  requestId: string;
+  type: string;
+  payload: unknown;
+  /** When the sale was made, by the device's clock. */
+  queuedAt: string;
+  receivedAt: string;
+  reasons: string[];
+  status: 'held' | 'approved' | 'dismissed';
+  resolvedAt?: string;
+  resolvedByName?: string;
+  note?: string;
+  /** The order made when the owner approved it. */
+  orderId?: Id;
+}
+
+/** What happened to one queued sale when it arrived. Lets a repeated send be answered without running anything twice. */
+export interface OfflineSeen {
+  id: Id; // `${passId}:${seq}`
+  passId: Id;
+  seq: number;
+  tag: string;
+  requestId: string;
+  status: 'done' | 'held';
+  receivedAt: string;
+  /** Plain-language line shown to the till. */
+  message: string;
+  orderId?: Id;
+  number?: string;
+  total?: number;
+  heldId?: Id;
 }
 
 export interface Payment {

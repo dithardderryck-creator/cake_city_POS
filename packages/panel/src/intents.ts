@@ -10,6 +10,8 @@ import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 export interface IntentMap {
   'auth/sign_in': { userId: Id; pin: string };
   'auth/sign_out': Record<string, never>;
+  'offline/get_pass': Record<string, never>;
+  'offline/review': { heldId: Id; action: 'approve' | 'dismiss'; note?: string };
   'auth/change_pin': { currentPin: string; newPin: string };
 
   /** Owner or IT: make a one-time code (valid about 10 minutes) that registers one device under the given name. */
@@ -56,7 +58,7 @@ export interface IntentMap {
     customerPhone?: string;
   };
   /** A ready-made sale handed over now: creates the order, completes its lines, drops stock and records full payment in one step. No ticket. Custom cakes still use orders. */
-  'orders/quick_sale': { items: Array<{ combinationId: Id; qty: number }>; method: PaymentMethod; reference?: string; customerName?: string };
+  'orders/quick_sale': { items: Array<{ combinationId: Id; qty: number }>; method: PaymentMethod; reference?: string; customerName?: string; expectedTotal?: number };
   'orders/set_delivery': { orderId: Id; fulfilment?: 'pickup' | 'delivery'; deliveryDate?: string; deliveryAddress?: string; customerPhone?: string | null };
   'orders/add_catalogue_line': { orderId: Id; combinationId: Id; qty: number };
   'orders/add_custom_line': { orderId: Id; spec: CakeSpecInput };
@@ -84,6 +86,10 @@ export interface IntentMap {
     lowStockUnits?: number;
     bigDifferencePercent?: number;
     refundCooldownMinutes?: number;
+    offlineEnabled?: boolean;
+    offlinePassHours?: number;
+    offlineMaxSales?: number;
+    offlineMaxTotal?: number;
   };
 
   'payments/record_payment': {
@@ -224,7 +230,7 @@ export interface IntentMap {
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Devices' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync';
+export type CircuitName = 'Auth' | 'Devices' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync' | 'Offline';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [
@@ -276,6 +282,10 @@ export interface HandlerCtx {
   revokeSessions(userId: string, exceptToken?: string): Promise<void>;
   /** The bearer token of the current request, if any. */
   sessionId: string | undefined;
+  /** The secret for one offline pass, worked out from the server's master key. Never stored. */
+  passKey(passId: string, userId: string, deviceId: string): Promise<string>;
+  /** Runs another instruction as someone else, at a given time, inside the current step. Used to approve a held offline sale. */
+  runAs(session: Session, at: string, type: IntentName, payload: unknown): Promise<HandlerResult>;
 }
 
 export interface HandlerResult {
@@ -300,6 +310,8 @@ export interface IntentDef<P> {
   roles: Role[] | 'public';
   validate?: (payload: P, ctx: HandlerCtx) => Promise<string[]> | string[];
   handle: (payload: P, ctx: HandlerCtx) => Promise<HandlerResult>;
+  /** The answer holds a secret, so it is never remembered for retries. */
+  skipRequestMemo?: boolean;
 }
 export type Registry = { [K in IntentName]: IntentDef<IntentMap[K]> };
 

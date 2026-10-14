@@ -4,6 +4,7 @@ import { feeds, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } fr
 import {
   DomainError,
   type CircuitName,
+  type HandlerResult,
   type DispatchResult,
   type HandlerCtx,
   type IntentDef,
@@ -33,6 +34,9 @@ import { paymentIntents } from './circuits/payments';
 import { staffIntents } from './circuits/staff';
 import { stockIntents } from './circuits/stock';
 import { syncIntents } from './circuits/sync';
+import { offlineIntents } from './circuits/offline';
+import { createReplayer, type ReplayResult } from './offline-replay';
+import { derivePassKey } from './offline-proof';
 import { cleanPayload, describeSchemaProblems, feedSchemas, schemas } from './schemas';
 import {
   base64ToBytes,
@@ -74,6 +78,8 @@ export interface PanelOptions {
   pairingCodeMs?: number;
   /** How long a request id is remembered for retry safety. */
   requestTtlMs?: number;
+  /** The secret all offline pass keys come from (base64). Keep it outside the database, such as in a file with tight permissions. When missing, one is made and kept in the database. */
+  offlineMasterKey?: string;
   /** Called for failures nobody expected, so the host can log them with a stack trace. */
   onError?: (err: unknown, info: { intent?: string; feed?: string }) => void;
 }
@@ -99,6 +105,11 @@ export type FeedResult<D> =
 export interface Panel {
   /** Send an instruction. Passes the breakers, then the circuit, all-or-nothing. */
   dispatch<K extends IntentName>(type: K, payload: IntentMap[K], token?: string, options?: DispatchOptions): Promise<DispatchResult>;
+  /**
+   * Send the sales a till queued while offline. The request is proved by the device secret and by the tag on every sale
+   * (see offline-proof.ts), not by a sign-in, because the person may be signed out by now. Safe to send again.
+   */
+  replayOffline(input: unknown, deviceToken?: string): Promise<ReplayResult>;
   /** Read display-ready data once. */
   feed<K extends FeedName>(name: K, params: FeedMap[K]['params'], token?: string, deviceToken?: string): Promise<FeedResult<FeedMap[K]['data']>>;
   /** Read a feed and get it again after every change. Returns an unsubscribe function. */
@@ -175,6 +186,7 @@ const registry = {
   ...notifyIntents,
   ...paymentIntents,
   ...syncIntents,
+  ...offlineIntents,
 } as Registry;
 
 export const INTENT_NAMES = Object.keys(registry) as IntentName[];
@@ -199,7 +211,7 @@ const moneyIn = (label: string) => (n: number) => `${label} ${new Intl.NumberFor
 const HOUR = 3_600_000;
 
 /** Changes in these circuits can start or clear an alert, so alerts are re-checked straight after them. */
-const REACTING_CIRCUITS = new Set<CircuitName>(['Orders', 'Quotes', 'Inventory', 'Usage', 'Stock', 'Recipes', 'Messages']);
+const REACTING_CIRCUITS = new Set<CircuitName>(['Orders', 'Quotes', 'Inventory', 'Usage', 'Stock', 'Recipes', 'Messages', 'Offline']);
 const TOUCH_EVERY_MS = 60_000;
 const SYNC_ITEM_TTL_MS = 7 * 24 * 3_600_000;
 
@@ -314,9 +326,20 @@ export function createPanel(options: PanelOptions = {}): Panel {
     return dev;
   }
 
-  const makeCtx = (session: Session | null, token: string | undefined, device: Device | null = null, deviceToken?: string): HandlerCtx => ({
+  let masterKeyCache: string | undefined = options.offlineMasterKey;
+  async function masterKey(): Promise<string> {
+    if (masterKeyCache) return masterKeyCache;
+    const saved = await store.get<{ id: string; key: string }>('serverKeys', 'offline-master');
+    if (saved) return (masterKeyCache = saved.key);
+    const key = secrets.token();
+    await store.put('serverKeys', { id: 'offline-master', key });
+    return (masterKeyCache = key);
+  }
+
+  /** `at` makes the instruction run as if it were that moment (a replayed offline sale keeps the time it really happened). */
+  const makeCtx = (session: Session | null, token: string | undefined, device: Device | null = null, deviceToken?: string, at?: string): HandlerCtx => ({
     store,
-    clock,
+    clock: at ? { now: () => new Date(at) } : clock,
     ids,
     config,
     terminals,
@@ -326,7 +349,9 @@ export function createPanel(options: PanelOptions = {}): Panel {
     sessionId: token,
     device,
     deviceToken,
-    now,
+    now: at ? () => at : now,
+    passKey: async (passId, userId, deviceId) => derivePassKey(await masterKey(), passId, userId, deviceId),
+    runAs: (as, when, type, payload) => runInline(as, when, type, payload),
     issueSession: async (s, deviceId) => {
       const issued = secrets.token();
       const at = clock.now().getTime();
@@ -382,6 +407,28 @@ export function createPanel(options: PanelOptions = {}): Panel {
     stat.lastActivityAt = now();
   };
 
+  /**
+   * Runs one instruction as another person, at another time, inside the step already in progress. Used when the owner approves a held
+   * offline sale: the sale goes through the same role check, shape check, rules and audit as if that person had made it.
+   */
+  async function runInline(as: Session, at: string, type: IntentName, payload: unknown): Promise<HandlerResult> {
+    const def = registry[type] as IntentDef<unknown> | undefined;
+    if (!def || def.roles === 'public' || !def.roles.includes(as.role)) return { summary: `Blocked: ${as.role} cannot do this`, failure: { code: 'forbidden', messages: ['That person cannot do this.'] } };
+    const parsed = schemas[type].safeParse(cleanPayload(payload ?? {}));
+    if (!parsed.success) return { summary: 'Rejected: the request was malformed', failure: { code: 'invalid', messages: describeSchemaProblems(parsed.error) } };
+    const ctx = makeCtx(as, undefined, null, undefined, at);
+    if (def.validate) {
+      const errors = await def.validate(parsed.data, ctx);
+      if (errors.length) return { summary: `Rejected: ${errors[0]}`, failure: { code: 'invalid', messages: errors } };
+    }
+    const res = await def.handle(parsed.data, ctx);
+    if (!res.failure) {
+      await writeAudit({ actorId: as.userId, actorName: as.name, role: as.role, intent: type, target: res.target, summary: res.summary, outcome: 'ok' });
+      if (!res.skipSync) await enqueueSync(type, res.target);
+    }
+    return res;
+  }
+
   /* ---------- dispatch ---------- */
 
   interface Outcome {
@@ -392,13 +439,20 @@ export function createPanel(options: PanelOptions = {}): Panel {
     changed: boolean;
   }
 
-  async function dispatchInner<K extends IntentName>(type: K, payload: IntentMap[K], token: string | undefined, opts: DispatchOptions): Promise<DispatchResult> {
+  /** A replayed offline sale: already proved by its tag, so it runs as the person who made it, at the time it was made. */
+  interface Internal {
+    session: Session;
+    at: string;
+    device: Device;
+  }
+
+  async function dispatchInner<K extends IntentName>(type: K, payload: IntentMap[K], token: string | undefined, opts: DispatchOptions, internal?: Internal): Promise<DispatchResult> {
     const def = registry[type] as IntentDef<IntentMap[K]> | undefined;
     if (!def) return fail('invalid', [`Unknown instruction ${String(type)}.`]);
     const stat = stats.get(def.circuit)!;
-    const session = await resolveSession(token);
+    const session = internal ? internal.session : await resolveSession(token);
     const actor = session ? { actorId: session.userId, actorName: session.name, role: session.role } : {};
-    const ctx = makeCtx(session, token, await resolveDevice(opts.deviceToken), opts.deviceToken);
+    const ctx = internal ? makeCtx(session, undefined, internal.device, undefined, internal.at) : makeCtx(session, token, await resolveDevice(opts.deviceToken), opts.deviceToken);
 
     // Breaker 1: PIN and role.
     if (def.roles !== 'public') {
@@ -424,7 +478,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
     const data = parsed.data as IntentMap[K];
 
     // Retry safety: the same request id from the same person is answered, not run again.
-    const requestKey = opts.requestId && session ? `${session.userId}:${opts.requestId.slice(0, 80)}` : null;
+    const requestKey = opts.requestId && session && !def.skipRequestMemo ? `${session.userId}:${opts.requestId.slice(0, 80)}` : null;
     if (requestKey) {
       const prior = await store.get<RequestRecord>('requests', requestKey);
       if (prior) return prior.result;
@@ -562,6 +616,18 @@ export function createPanel(options: PanelOptions = {}): Panel {
     return { ok: true, mime: meta.mime, bytes: base64ToBytes(data.data) };
   }
 
+  const replayOffline = createReplayer({
+    store,
+    clock,
+    ids,
+    passKey: async (passId, userId, deviceId) => derivePassKey(await masterKey(), passId, userId, deviceId),
+    runAs: (session, at, type, payload, requestId, device) => dispatchInner(type, payload, undefined, { requestId }, { session, at, device }),
+    serial,
+    resolveDevice,
+    changed: scheduleRefresh,
+    onError: (err) => options.onError?.(err, { intent: 'offline/replay' }),
+  });
+
   const subscribe: Panel['subscribe'] = (name, params, token, listener, deviceToken) => {
     let alive = true;
     const run = () => {
@@ -579,6 +645,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
 
   return {
     dispatch: (type, payload, token, opts = {}) => serial(() => dispatchInner(type, payload, token, opts)),
+    replayOffline: (input, deviceToken) => replayOffline(input, deviceToken),
     feed,
     subscribe,
     deviceStatus: (deviceToken) =>

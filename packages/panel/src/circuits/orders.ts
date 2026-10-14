@@ -49,6 +49,17 @@ function dateProblems(date: string | undefined, ctx: Pick<HandlerCtx, 'clock'>):
   return [];
 }
 
+/** What an instant sale of these items costs at today's prices, or null when an item cannot be priced (it no longer exists or has no price). */
+export async function quickSaleTotal(ctx: Pick<HandlerCtx, 'store'>, items: Array<{ combinationId: string; qty: number }>): Promise<number | null> {
+  let total = 0;
+  for (const it of items) {
+    const combo = await ctx.store.get<Combination>('combinations', it.combinationId);
+    if (!combo || combo.price === undefined || combo.price === null) return null;
+    total = round2(total + combo.price * it.qty);
+  }
+  return total;
+}
+
 /** Why a catalogue item cannot be sold right now. Empty means it can. Shared by order lines and instant sales. */
 async function catalogueProblems(ctx: Pick<HandlerCtx, 'store'>, combinationId: string): Promise<string[]> {
   const combo = await ctx.store.get<Combination>('combinations', combinationId);
@@ -217,6 +228,12 @@ export const orderIntents = {
         if (seen.has(it.combinationId)) errors.push('The same item appears twice in this sale.');
         seen.add(it.combinationId);
         errors.push(...(await catalogueProblems(ctx, it.combinationId)));
+      }
+      // The till says what total the customer was shown. If prices moved since, the sale does not go through at a different price.
+      if (p.expectedTotal !== undefined && errors.length === 0) {
+        const total = await quickSaleTotal(ctx, p.items);
+        if (total !== null && Math.abs(total - p.expectedTotal) > 0.005)
+          errors.push(`The total is now ${ctx.config.formatMoney(total)}, not the ${ctx.config.formatMoney(p.expectedTotal)} the customer was shown. Prices changed.`);
       }
       return [...new Set(errors)];
     },

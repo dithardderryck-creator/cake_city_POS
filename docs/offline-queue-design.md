@@ -15,25 +15,29 @@ Only `orders/quick_sale` (an instant sale of ready-made products: order, items, 
 
 ## What the server checks on replay
 
-| Check | If it fails |
-| --- | --- |
-| The pass exists, is not for another device, and the request comes from that registered device | Rejected, logged as a security event |
-| The person is still active and still allowed to sell | Rejected, logged |
-| The tag is valid (so the content was not altered or invented) | Rejected, logged |
-| The sequence number is the next expected one (no gaps, no reordering, no repeats). A repeat of a finished sale returns its stored result | Rejected, logged |
-| The device time is not before the pass was issued, not after it expired, not in the future (small allowance), and never goes backwards along the chain | Rejected, logged |
-| The sale is an allowed intent | Rejected, logged |
-| The pass was replaced by a newer one: only sales made before the replacement count | Rejected, logged |
-| Count and money limits of the pass | Held for the owner |
-| `expectedTotal` equals the total at replay | Held for the owner |
-| The sale's own rules (item exists, payment method allowed, amounts) | Held for the owner |
+Two kinds of failure, treated differently on purpose. **Proof failures** mean the sale may not be genuine: it is refused, logged as a security event, and nothing is sold. **Policy failures** mean the sale is genuine (its tag proves it came from that person on that till) but should not simply go through: it is **held** for the owner. Cash was taken for a held sale, so it is never silently dropped, and a held sale never blocks the sales after it.
+
+| Check | Kind | If it fails |
+| --- | --- | --- |
+| The request comes from a registered, not revoked device, and the pass is that device's (same answer for "no such pass" and "someone else's pass") | Proof | Refused, logged |
+| The person is still active and still allowed to sell (checked again for every sale) | Proof | Refused, logged |
+| The sequence number is the next expected one (no gaps, no reordering). A repeat of a finished sale returns its stored answer; a different sale under a used number is refused | Proof | Refused, logged |
+| The tag is valid (the content was not altered or invented) | Proof | Refused, logged |
+| The sale is an allowed intent (`orders/quick_sale` only) | Policy | Held, cannot be approved |
+| The device time is not before the pass was issued, not after it expired, not in the future, and never goes backwards along the chain (5 minutes of clock difference allowed) | Policy | Held |
+| The pass was replaced by a newer one: only sales made before the replacement count | Policy | Held |
+| Count and money limits of the pass (held sales do not use them up) | Policy | Held |
+| The sale says what total the customer was shown, and it equals the total at replay | Policy | Held |
+| The sale's own rules (item exists, payment method allowed, amounts) | Policy | Held |
+
+A held sale that the owner approves runs again as the person who made it (or under the owner's name if that person can no longer sell), at today's prices, stamped with the time it really happened.
 
 ## Threat model: what is and is not protected
 
 | Threat | Protection |
 | --- | --- |
 | Someone invents sales for a till | Needs the pass key; without it the tag cannot be made |
-| Someone edits a queued sale (price, items, method) | The tag no longer matches |
+| Someone edits a queued sale (price, items, method, time, request id) | The tag no longer matches |
 | Removing or reordering sales in the middle of the queue | The chain and sequence numbers break |
 | Replaying the same queue twice | Sequence numbers and request ids: the second time changes nothing |
 | A stolen or lost device | The owner revokes the device: its passes stop working at once. Sales queued on it after that are rejected, not paid |
@@ -48,7 +52,7 @@ Only `orders/quick_sale` (an instant sale of ready-made products: order, items, 
 
 ## Build stages
 
-1. **Server (panel):** pass, tag, replay, held list, owner review, settings, `expectedTotal`. Tested on its own, including every row of the tables above.
+1. **Server (panel), done 14 Oct:** pass, tag, replay, held list, owner review, settings, `expectedTotal`. Tested on its own, including every row of the tables above.
 2. **Client and server transport:** the queue in the browser (kept across reloads), the replay request, the device header.
 3. **Cashier screen:** what the person sees offline (a clear "offline, sales will be sent later" bar, a provisional receipt, a count of sales waiting), and what happens when a sale was held.
 4. **Owner screen:** the "needs review" list.

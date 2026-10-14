@@ -37,6 +37,10 @@ export const COLLECTIONS = [
   'changes',
   'devices',
   'pairingCodes',
+  'offlinePasses',
+  'heldActions',
+  'serverKeys',
+  'offlineLog',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

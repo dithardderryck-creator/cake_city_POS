@@ -275,6 +275,7 @@ Allowed: **owner, cashier**
 | `method` | "cash" \| "card" \| "bank_transfer" \| "mobile_money" | yes |  |
 | `reference` | string | no | max length 120 |
 | `customerName` | string | no | max length 120 |
+| `expectedTotal` | integer | no | min 0, max 1000000000 |
 
 #### `orders/cancel_line`
 
@@ -416,6 +417,10 @@ Allowed: **owner**
 | `lowStockUnits` | integer | no | min 0, max 1000 |
 | `bigDifferencePercent` | number | no | min 1, max 100 |
 | `refundCooldownMinutes` | integer | no | min 0, max 120 |
+| `offlineEnabled` | boolean | no |  |
+| `offlinePassHours` | integer | no | min 1, max 72 |
+| `offlineMaxSales` | integer | no | min 1, max 1000 |
+| `offlineMaxTotal` | integer | no | min 0, max 1000000000 |
 
 ### Inventory
 
@@ -826,6 +831,24 @@ Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 
+### Offline
+
+#### `offline/get_pass`
+
+Allowed: **owner, cashier**
+
+_No fields. Send an empty object `{}`._
+
+#### `offline/review`
+
+Allowed: **owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `heldId` | string | yes | min length 1, max length 64 |
+| `action` | "approve" \| "dismiss" | yes |  |
+| `note` | string | no | max length 500 |
+
 ## Feeds
 
 Read with `POST /api/feed` as `{ "name": "<name>", "params": { ... } }`, or subscribe over the live connection to get the same data again after every change.
@@ -939,6 +962,12 @@ _No fields. Send an empty object `{}`._
 #### `shop_settings`
 
 Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `offline_review`
+
+Allowed: **owner**
 
 _No fields. Send an empty object `{}`._
 

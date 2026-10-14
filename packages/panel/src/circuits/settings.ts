@@ -9,6 +9,9 @@ export const ALL_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'mobile_money', 'ca
 export const DEFAULT_LOW_STOCK_UNITS = 3;
 export const DEFAULT_BIG_DIFFERENCE_PERCENT = 10;
 export const DEFAULT_REFUND_COOLDOWN_MINUTES = 5;
+export const DEFAULT_OFFLINE_PASS_HOURS = 12;
+export const DEFAULT_OFFLINE_MAX_SALES = 50;
+export const DEFAULT_OFFLINE_MAX_TOTAL = 1_000_000;
 
 /** What is saved, with a sensible value for anything the owner has not chosen yet. */
 export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSettings> {
@@ -22,6 +25,10 @@ export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSetti
     lowStockUnits: saved?.lowStockUnits ?? DEFAULT_LOW_STOCK_UNITS,
     bigDifferencePercent: saved?.bigDifferencePercent ?? DEFAULT_BIG_DIFFERENCE_PERCENT,
     refundCooldownMinutes: saved?.refundCooldownMinutes ?? DEFAULT_REFUND_COOLDOWN_MINUTES,
+    offlineEnabled: saved?.offlineEnabled ?? false,
+    offlinePassHours: saved?.offlinePassHours ?? DEFAULT_OFFLINE_PASS_HOURS,
+    offlineMaxSales: saved?.offlineMaxSales ?? DEFAULT_OFFLINE_MAX_SALES,
+    offlineMaxTotal: saved?.offlineMaxTotal ?? DEFAULT_OFFLINE_MAX_TOTAL,
   };
 }
 
@@ -58,6 +65,10 @@ export const settingsIntents = {
         lowStockUnits: p.lowStockUnits ?? current.lowStockUnits,
         bigDifferencePercent: p.bigDifferencePercent ?? current.bigDifferencePercent,
         refundCooldownMinutes: p.refundCooldownMinutes ?? current.refundCooldownMinutes,
+        offlineEnabled: p.offlineEnabled ?? current.offlineEnabled,
+        offlinePassHours: p.offlinePassHours ?? current.offlinePassHours,
+        offlineMaxSales: p.offlineMaxSales ?? current.offlineMaxSales,
+        offlineMaxTotal: p.offlineMaxTotal ?? current.offlineMaxTotal,
       };
       await ctx.store.put('settings', next);
       const receipt = p.shopName !== undefined || p.shopAddress !== undefined || p.shopPhone !== undefined || p.receiptFooter !== undefined;
@@ -67,7 +78,7 @@ export const settingsIntents = {
             ? next.decoratingStage
               ? 'Turned on the Decorating stage for custom cakes'
               : 'Turned off the Decorating stage for custom cakes'
-            : receipt && p.decoratingStage === undefined && p.paymentMethods === undefined && p.lowStockUnits === undefined && p.bigDifferencePercent === undefined && p.refundCooldownMinutes === undefined
+            : receipt && p.decoratingStage === undefined && p.paymentMethods === undefined && p.lowStockUnits === undefined && p.bigDifferencePercent === undefined && p.refundCooldownMinutes === undefined && p.offlineEnabled === undefined && p.offlinePassHours === undefined && p.offlineMaxSales === undefined && p.offlineMaxTotal === undefined
               ? 'Changed the shop details printed on receipts'
               : 'Changed the shop settings',
         target: 'shop',

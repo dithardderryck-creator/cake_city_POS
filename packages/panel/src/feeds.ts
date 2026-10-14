@@ -1,6 +1,8 @@
 import type {
   PaymentMethod,
   Device,
+  HeldAction,
+  OfflinePass,
   PairingCode,
   Alert,
   AlertKind,
@@ -38,6 +40,7 @@ import type {
 import { REQUEST_CATEGORIES } from './domain';
 import { daysBetween, todayLocal } from './circuits/dates';
 import { ALL_PAYMENT_METHODS, loadSettings } from './circuits/settings';
+import { quickSaleTotal } from './circuits/orders';
 import { DomainError } from './intents';
 import { BASE_UNIT_FOR, formatQty, unitTable } from './units';
 import { ALERT_KINDS, ALERT_KIND_LABEL, canSeeAlert, loadAlertSettings } from './circuits/alerts';
@@ -594,7 +597,38 @@ export interface ShopSettingsData {
   lowStockUnits: number;
   bigDifferencePercent: number;
   refundCooldownMinutes: number;
+  offlineEnabled: boolean;
+  offlinePassHours: number;
+  offlineMaxSales: number;
+  offlineMaxTotal: number;
   can: { edit: boolean };
+}
+
+export interface HeldSaleRow {
+  id: string;
+  userName: string;
+  deviceName: string;
+  /** When the sale was made, by the till's clock. */
+  queuedAt: string;
+  receivedAt: string;
+  reasons: string[];
+  /** What was being sold, in words. */
+  items: string[];
+  method: string | null;
+  /** The total the customer was shown. */
+  expectedTotal: number | null;
+  /** The total at today's prices, when it can be worked out. */
+  totalNow: number | null;
+  canApprove: boolean;
+}
+
+export interface OfflineReviewData {
+  /** Waiting for the owner, oldest first. */
+  held: HeldSaleRow[];
+  recent: Array<{ id: string; userName: string; deviceName: string; queuedAt: string; status: 'approved' | 'dismissed'; resolvedByName: string; resolvedAt: string; note: string | null; orderId: string | null }>;
+  /** Offline permissions that are open now: who holds them and how much has been sold under each. */
+  passes: Array<{ id: string; userName: string; deviceName: string; issuedAt: string; expiresAt: string; sales: number; total: number; maxSales: number; maxTotal: number }>;
+  can: { review: boolean };
 }
 
 export interface FeedMap {
@@ -609,6 +643,7 @@ export interface FeedMap {
   quote_inbox: { params: Record<string, never>; data: QuoteInboxData };
   bake_queue: { params: Record<string, never>; data: BakeQueueData };
   shop_settings: { params: Record<string, never>; data: ShopSettingsData };
+  offline_review: { params: Record<string, never>; data: OfflineReviewData };
   ingredient_list: { params: { includeInactive?: boolean }; data: IngredientRow[] };
   recipe_rules: { params: Record<string, never>; data: RecipeRuleRow[] };
   usage_form: { params: { orderId: string; lineId: string }; data: UsageFormData };
@@ -1244,8 +1279,55 @@ export const feeds: FeedRegistry = {
         lowStockUnits: s.lowStockUnits,
         bigDifferencePercent: s.bigDifferencePercent,
         refundCooldownMinutes: s.refundCooldownMinutes,
+        offlineEnabled: s.offlineEnabled,
+        offlinePassHours: s.offlinePassHours,
+        offlineMaxSales: s.offlineMaxSales,
+        offlineMaxTotal: s.offlineMaxTotal,
         can: { edit: session?.role === 'owner' },
       };
+    },
+  },
+
+  offline_review: {
+    roles: ['owner'],
+    build: async ({ store, clock }) => {
+      const nowMs = clock.now().getTime();
+      const all = await store.list<HeldAction>('heldActions');
+      const held: HeldSaleRow[] = [];
+      for (const h of all.filter((x) => x.status === 'held').sort((a, b) => a.receivedAt.localeCompare(b.receivedAt))) {
+        const sale = (h.payload ?? {}) as { items?: Array<{ combinationId?: string; qty?: number }>; method?: string; expectedTotal?: number };
+        const items: string[] = [];
+        const priced: Array<{ combinationId: string; qty: number }> = [];
+        for (const it of Array.isArray(sale.items) ? sale.items : []) {
+          const combo = it.combinationId ? await store.get<Combination>('combinations', it.combinationId) : undefined;
+          const product = combo ? await store.get<Product>('products', combo.productId) : undefined;
+          items.push(`${it.qty ?? '?'} × ${product?.name ?? 'an item that is no longer in the catalogue'}`);
+          if (it.combinationId && typeof it.qty === 'number') priced.push({ combinationId: it.combinationId, qty: it.qty });
+        }
+        held.push({
+          id: h.id,
+          userName: h.userName,
+          deviceName: h.deviceName,
+          queuedAt: h.queuedAt,
+          receivedAt: h.receivedAt,
+          reasons: h.reasons,
+          items,
+          method: typeof sale.method === 'string' ? (METHOD_LABEL[sale.method as PaymentMethod] ?? sale.method) : null,
+          expectedTotal: typeof sale.expectedTotal === 'number' ? sale.expectedTotal : null,
+          totalNow: priced.length ? await quickSaleTotal({ store }, priced) : null,
+          canApprove: h.type === 'orders/quick_sale',
+        });
+      }
+      const recent = all
+        .filter((x) => x.status !== 'held')
+        .sort((a, b) => (b.resolvedAt ?? '').localeCompare(a.resolvedAt ?? ''))
+        .slice(0, 20)
+        .map((h) => ({ id: h.id, userName: h.userName, deviceName: h.deviceName, queuedAt: h.queuedAt, status: h.status as 'approved' | 'dismissed', resolvedByName: h.resolvedByName ?? '', resolvedAt: h.resolvedAt ?? '', note: h.note ?? null, orderId: h.orderId ?? null }));
+      const passes = (await store.list<OfflinePass>('offlinePasses'))
+        .filter((p) => !p.closedAt && Date.parse(p.expiresAt) > nowMs)
+        .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt))
+        .map((p) => ({ id: p.id, userName: p.userName, deviceName: p.deviceName, issuedAt: p.issuedAt, expiresAt: p.expiresAt, sales: p.sales, total: p.total, maxSales: p.maxSales, maxTotal: p.maxTotal }));
+      return { held, recent, passes, can: { review: true } };
     },
   },
 
