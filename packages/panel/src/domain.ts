@@ -419,7 +419,7 @@ export interface UsageReport {
 
 /* ---------- Alerts (BR-23, BR-24) ---------- */
 
-export type AlertKind = 'low_stock' | 'stockout' | 'usage_waiting' | 'order_not_started' | 'quote_waiting' | 'overdue_delivery' | 'count_difference' | 'request_waiting';
+export type AlertKind = 'low_stock' | 'stockout' | 'usage_waiting' | 'order_not_started' | 'quote_waiting' | 'overdue_delivery' | 'count_difference' | 'request_waiting' | 'offline_held';
 export type AlertSeverity = 'warning' | 'critical';
 
 /**

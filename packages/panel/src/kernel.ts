@@ -616,6 +616,22 @@ export function createPanel(options: PanelOptions = {}): Panel {
     return { ok: true, mime: meta.mime, bytes: base64ToBytes(data.data) };
   }
 
+  const tick: Panel['tick'] = () =>
+    serial(async () => {
+      try {
+        const r = await store.transaction(() => reconcileAlerts({ store, ids, clock }));
+        for (const e of alertEvents(r)) {
+          const event: PanelEvent = { type: e.type, at: now(), payload: e.payload ?? {} };
+          for (const l of eventListeners) l(event);
+        }
+        if (r.changed) scheduleRefresh();
+        return { raised: r.raised.length, resolved: r.resolved.length };
+      } catch (err) {
+        options.onError?.(err, { intent: 'alerts/tick' });
+        return { raised: 0, resolved: 0 };
+      }
+    });
+
   const replayOffline = createReplayer({
     store,
     clock,
@@ -645,7 +661,12 @@ export function createPanel(options: PanelOptions = {}): Panel {
 
   return {
     dispatch: (type, payload, token, opts = {}) => serial(() => dispatchInner(type, payload, token, opts)),
-    replayOffline: (input, deviceToken) => replayOffline(input, deviceToken),
+    replayOffline: async (input, deviceToken) => {
+      const r = await replayOffline(input, deviceToken);
+      // A held sale is an alert for the owner straight away, not at the next minute's check.
+      if (r.ok && r.results.some((x) => x.status === 'held')) await tick();
+      return r;
+    },
     feed,
     subscribe,
     deviceStatus: (deviceToken) =>
@@ -683,21 +704,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
         delivering = false;
       }
     },
-    tick: () =>
-      serial(async () => {
-        try {
-          const r = await store.transaction(() => reconcileAlerts({ store, ids, clock }));
-          for (const e of alertEvents(r)) {
-            const event: PanelEvent = { type: e.type, at: now(), payload: e.payload ?? {} };
-            for (const l of eventListeners) l(event);
-          }
-          if (r.changed) scheduleRefresh();
-          return { raised: r.raised.length, resolved: r.resolved.length };
-        } catch (err) {
-          options.onError?.(err, { intent: 'alerts/tick' });
-          return { raised: 0, resolved: 0 };
-        }
-      }),
+    tick,
     maintain: () =>
       serial(() =>
         store.transaction(async () => {

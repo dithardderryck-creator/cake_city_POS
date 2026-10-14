@@ -213,6 +213,7 @@ export const schemas = {
         overdue_delivery: z.boolean().optional(),
         count_difference: z.boolean().optional(),
         request_waiting: z.boolean().optional(),
+        offline_held: z.boolean().optional(),
       })
       .optional(),
   }),

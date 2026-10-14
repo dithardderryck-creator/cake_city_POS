@@ -69,8 +69,11 @@ function refreshBanner(): void {
       ? `Cannot reach the shop server. You can keep selling ready-made items: each sale is saved on this till and sent when the server is back.${st.waiting ? ` ${plural(st.waiting, 'sale is', 'sales are')} waiting.` : ''}`
       : 'Cannot reach the shop server. Check the wifi. Changes are paused until it is back.';
   } else if (st.waiting) {
-    text = `${plural(st.waiting, 'offline sale', 'offline sales')} saved on this till, sending now.`;
-    colour = 'var(--cop,#a8602a)';
+    const old = st.oldestWaitingAt && Date.now() - Date.parse(st.oldestWaitingAt) > 2 * 3_600_000;
+    text = old
+      ? `${plural(st.waiting, 'offline sale has', 'offline sales have')} been waiting since ${clock(st.oldestWaitingAt!)}. Keep this till connected to the shop wifi until they are sent.`
+      : `${plural(st.waiting, 'offline sale', 'offline sales')} saved on this till, sending now.`;
+    colour = old ? 'var(--risk,#b4452f)' : 'var(--cop,#a8602a)';
   } else if (needs) {
     text = `${plural(needs, 'offline sale needs', 'offline sales need')} a look.`;
   }
@@ -150,9 +153,33 @@ export async function quickSale(sale: { items: Array<{ combinationId: string; qt
   return { ok: true, data: r.data, message: r.warnings.join(' ') || undefined };
 }
 
+const ME_KEY = 'cake-pos-me';
+function saveMe(who: SessionInfo | null): void {
+  try {
+    if (who) localStorage.setItem(ME_KEY, JSON.stringify(who));
+    else localStorage.removeItem(ME_KEY);
+  } catch {
+    /* storage blocked: a page opened with no server just goes to sign-in */
+  }
+}
+function cachedMe(): SessionInfo | null {
+  try {
+    const j = JSON.parse(localStorage.getItem(ME_KEY) ?? 'null') as SessionInfo | null;
+    return j && typeof j.userId === 'string' && typeof j.role === 'string' ? j : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Goes to the sign-in page. */
 export function goSignIn(): void {
+  saveMe(null);
   location.replace('/');
+}
+
+// The pages are kept on the device so they still open when the shop server cannot be reached (see sw.js).
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  addEventListener('load', () => void navigator.serviceWorker.register('/sw.js').catch(() => undefined));
 }
 
 /**
@@ -161,7 +188,17 @@ export function goSignIn(): void {
  */
 export async function boot(allowed: Role | Role[]): Promise<SessionInfo> {
   const roles = Array.isArray(allowed) ? allowed : [allowed];
-  const s = await client.restore();
+  let s = await client.restore();
+  // The page was opened while the server cannot be reached (a tablet that woke up, a browser that restarted). If this device
+  // is still signed in, carry on as the same person: they can keep selling offline. The server checks the sign-in again
+  // as soon as it can be reached, and ends it then if it is no longer good.
+  if (!s && client.signedIn) {
+    const c = cachedMe();
+    if (c) {
+      client.assume(c);
+      s = c;
+    }
+  } else if (s) saveMe(s);
   if (!s) {
     goSignIn();
     return new Promise<SessionInfo>(() => undefined);
@@ -215,7 +252,30 @@ export function me(): SessionInfo | null {
 export function feed<K extends FeedName>(name: K, params: FeedMap[K]['params'], render: (data: FeedMap[K]['data']) => void): () => void {
   let lastError = '';
   const key = `${name}:${Math.random()}`;
-  return client.subscribe(name, params, (r) => {
+  const saved = `cake-pos-feed:${name}:${JSON.stringify(params)}`;
+  let heard = false;
+  // What a till needs to keep selling (the catalogue and the shop's settings) is kept on the device. It is only shown when
+  // the server has not answered within a moment, so a till that is online never works from a saved copy.
+  const fallback = FEED_SAVED.has(name)
+    ? setTimeout(() => {
+        if (heard) return;
+        try {
+          const raw = localStorage.getItem(saved);
+          if (raw) render(JSON.parse(raw) as FeedMap[K]['data']);
+        } catch {
+          /* nothing saved, or unreadable: the screen waits for the server */
+        }
+      }, 1500)
+    : undefined;
+  const stop = client.subscribe(name, params, (r) => {
+    heard = heard || r.ok;
+    if (r.ok && FEED_SAVED.has(name)) {
+      try {
+        localStorage.setItem(saved, JSON.stringify(r.data));
+      } catch {
+        /* storage full or blocked */
+      }
+    }
     if (r.ok) {
       lastError = '';
       loadFailures.delete(key);
@@ -230,7 +290,13 @@ export function feed<K extends FeedName>(name: K, params: FeedMap[K]['params'], 
       showLoadFailures();
     }
   });
+  return () => {
+    clearTimeout(fallback);
+    stop();
+  };
 }
+
+const FEED_SAVED = new Set<FeedName>(['catalogue_grid', 'shop_settings']);
 
 /** Feeds that are failing right now, with the reason. While any are, a bar says so and offers to try again. */
 const loadFailures = new Map<string, string>();
@@ -306,6 +372,7 @@ export async function staff(): Promise<StaffSigninRow[]> {
 export async function signIn(userId: string, pin: string): Promise<string | null> {
   const r = await client.signIn(userId, pin);
   if (!r.ok) return r.messages[0] ?? 'Could not sign in.';
+  saveMe(r.session);
   location.assign(HOME[r.session.role]);
   return null;
 }

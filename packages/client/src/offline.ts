@@ -49,6 +49,8 @@ export interface OfflineStatus {
   expiresAt: string | null;
   /** Sales saved on this device and not yet confirmed by the server. */
   waiting: number;
+  /** When the oldest waiting sale was made, or null. */
+  oldestWaitingAt: string | null;
   salesLeft: number | null;
   moneyLeft: number | null;
   notices: OfflineNotice[];
@@ -198,6 +200,7 @@ export function createOfflineTill(d: OfflineDeps) {
       reason: usable ? null : lastReason,
       expiresAt: p?.expiresAt ?? null,
       waiting: waitingOf(s),
+      oldestWaitingAt: Object.values(s.passes).flatMap((p) => p.queue.map((q) => q.queuedAt)).sort()[0] ?? null,
       salesLeft: p ? Math.max(0, p.maxSales - p.sales) : null,
       moneyLeft: p ? Math.max(0, p.maxTotal - p.total) : null,
       notices: s.notices,

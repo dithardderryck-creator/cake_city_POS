@@ -1,11 +1,11 @@
-import type { Alert, AlertKind, AlertSettings, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
+import type { HeldAction, Alert, AlertKind, AlertSettings, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
 import type { Registry } from '../intents';
 import { DomainError } from '../intents';
 import type { Clock, Ids, Store } from '../ports';
 import { buildForecasts } from '../forecast';
 import { daysBetween, todayLocal } from './dates';
 
-export const ALERT_KINDS: AlertKind[] = ['low_stock', 'stockout', 'usage_waiting', 'order_not_started', 'quote_waiting', 'overdue_delivery', 'count_difference', 'request_waiting'];
+export const ALERT_KINDS: AlertKind[] = ['low_stock', 'stockout', 'usage_waiting', 'order_not_started', 'quote_waiting', 'overdue_delivery', 'count_difference', 'request_waiting', 'offline_held'];
 
 export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   low_stock: 'Low stock',
@@ -16,6 +16,7 @@ export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   overdue_delivery: 'Overdue order',
   count_difference: 'Count difference',
   request_waiting: 'Request waiting',
+  offline_held: 'Offline sale to review',
 };
 
 /** Defaults proposed in blueprint section 8 (A-11). The owner can change every one. */
@@ -29,7 +30,7 @@ export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
   countDifference: 3,
   urgentRequestMinutes: 15,
   requestWaitHours: 4,
-  critical: { low_stock: false, stockout: true, usage_waiting: false, order_not_started: false, quote_waiting: false, overdue_delivery: false, count_difference: true, request_waiting: false },
+  critical: { low_stock: false, stockout: true, usage_waiting: false, order_not_started: false, quote_waiting: false, overdue_delivery: false, count_difference: true, request_waiting: false, offline_held: true },
 };
 
 export async function loadAlertSettings(store: Pick<Store, 'get'>): Promise<AlertSettings> {
@@ -190,6 +191,18 @@ export async function desiredAlerts(store: Store, now: Date, s: AlertSettings): 
         to: ['owner'],
         critical: r.urgent ? true : undefined,
       });
+  }
+  // Sales a till made while cut off that could not be recorded as they were. The owner decides; until then it is a standing alert.
+  for (const h of await store.find<HeldAction>('heldActions', { where: { status: 'held' } })) {
+    out.push({
+      dedupeKey: `offline_held:${h.id}`,
+      kind: 'offline_held',
+      title: `Offline sale from ${h.userName} on ${h.deviceName} needs your decision`,
+      body: h.reasons[0] ?? 'It could not be recorded as it was.',
+      to: ['owner'],
+      screen: 'overview',
+      targetId: h.id,
+    });
   }
   return out;
 }

@@ -45,4 +45,10 @@ for (const f of fs.existsSync(pages) ? fs.readdirSync(pages) : []) {
   // Every page uses the self-hosted fonts and the shared script.
   fs.copyFileSync(path.join(pages, f), path.join(dist, f));
 }
+// The offline copy of the pages (see src/sw.js). Its name changes with every build, so a new build replaces the old copy.
+const precache = ['/', '/cake.js', '/fonts.css', ...fs.readdirSync(pages).filter((f) => f.endsWith('.html')).map((f) => '/' + f), ...(fs.existsSync(path.join(dist, 'fonts')) ? fs.readdirSync(path.join(dist, 'fonts')).map((f) => '/fonts/' + f) : [])];
+fs.writeFileSync(
+  path.join(dist, 'sw.js'),
+  fs.readFileSync(path.join(here, 'src/sw.js'), 'utf8').replace('__VERSION__', String(Date.now())).replace('__PRECACHE__', JSON.stringify(precache)),
+);
 console.log('UI built into', dist);

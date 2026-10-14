@@ -53,6 +53,8 @@ try {
   await signInAs(page, shop.base, 'cashier');
   await page.waitForSelector('#tiles .tile:not([disabled])');
   await until(() => page.evaluate(() => Cake.offlineStatus().canSell), 'the till to be given its offline pass', 20000);
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+  await until(() => page.evaluate(async () => (await caches.keys()).length > 0 && !!(await caches.match('/cashier.html'))), 'the pages to be kept on the device', 20000);
   const before = await instant();
 
   const fillTicket = async () => {
@@ -89,6 +91,18 @@ try {
   assert.match(await txt(page, '#mod h2'), /sale 2/);
   await page.click('#mod [data-a="mc"]');
   assert.match(await txt(page, '#offline'), /2 sales are waiting/);
+
+  /* 1b. The tablet reloads the page while the server is still down. The page opens from the copy kept on the device,
+         the person is still signed in, the products are there, and the saved sales are still waiting. */
+  await page.reload();
+  await page.waitForSelector('#tiles .tile:not([disabled])', { timeout: 20000 });
+  assert.equal(await page.evaluate(() => Cake.offlineStatus().waiting), 2, 'the saved sales survived the reload');
+  assert.equal(await page.evaluate(() => Cake.offlineStatus().canSell), true, 'and the till can still sell offline');
+  await fillTicket();
+  assert.equal(await page.isDisabled('#go'), false, 'Pay works on the reloaded page');
+  await page.evaluate(() => Cake.offlineStatus());
+  await page.locator('#lines [data-a="qty"][data-d="-1"]').first().click(); // leave the ticket empty again
+  assert.equal(await page.locator('#lines .ln').count(), 0);
 
   /* 2. The server comes back. Both sales arrive, once. */
   await shop.restart();

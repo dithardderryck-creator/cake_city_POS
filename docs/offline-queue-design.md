@@ -59,10 +59,14 @@ A held sale that the owner approves runs again as the person who made it (or und
 - When the server refuses a sale as not genuine, the till stops signing with that pass and asks for a fresh one, because the chain cannot continue past a missing sale. Later sales on that pass are refused too and shown to the cashier with their details.
 - A queue the server refuses as a whole (device revoked, person switched off) is kept on the till as a notice with the sale details, never silently dropped.
 
+- Page copies (service worker) work on https and localhost only. A till on plain `http://` still queues and replays, but cannot reopen the page after a reload with no server. The cloud copy will be https.
+- A held sale raises an owner alert at once (kind `offline_held`, critical by default).
+- The server cannot tell when a till holds unsent sales and never reconnects. The till's own bar warns after 2 hours; a heartbeat from the till could close this later.
+
 ## Build stages
 
 1. **Server (panel), done 14 Oct:** pass, tag, replay, held list, owner review, settings, `expectedTotal`. Tested on its own, including every row of the tables above.
 2. **Client and server transport, done 14 Oct:** the queue in the browser (kept across reloads), the replay request, the device header.
 3. **Cashier screen, done 14 Oct:** what the person sees offline (a clear "offline, sales will be sent later" bar, a provisional receipt, a count of sales waiting), and what happens when a sale was held.
 4. **Owner screen, done 14 Oct:** the "needs review" list.
-5. **Real-world pieces:** keeping the page itself available offline (a service worker), and alerts about old unsent queues.
+5. **Real-world pieces, done 14 Oct:** keeping the page itself available offline (a service worker), and alerts about old unsent queues.

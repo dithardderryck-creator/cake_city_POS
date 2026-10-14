@@ -670,3 +670,18 @@ describe('the signing code', () => {
     }
   });
 });
+
+describe('alerts', () => {
+  it('a held sale alerts the owner at once, and the alert clears when the owner decides', async () => {
+    await enableOffline();
+    const till = await getPass();
+    const q = await queue(till, [{ payload: { ...sale(), expectedTotal: 1 } }]);
+    await replay(till, q);
+    const open = async () => (await feed<{ open: Array<{ kind: string; title: string }> }>('owner', 'alert_inbox')).open.filter((a) => a.kind === 'offline_held');
+    expect(await open()).toHaveLength(1);
+    expect((await open())[0]!.title).toMatch(/needs your decision/);
+    const h = (await store.list<HeldAction>('heldActions'))[0]!;
+    ok(await send('owner', 'offline/review', { heldId: h.id, action: 'dismiss', note: 'Not needed' }));
+    expect(await open()).toHaveLength(0);
+  });
+});

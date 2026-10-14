@@ -110,6 +110,8 @@ export interface Client {
   signIn(userId: string, pin: string): Promise<SignInResult>;
   /** Use a saved token. Returns who is signed in, or null if there is no valid sign-in. */
   restore(): Promise<SessionInfo | null>;
+  /** For a page opened while the server cannot be reached: carry on as this person (they were signed in when the page last had the server). The server still checks the sign-in when it can be reached. */
+  assume(session: SessionInfo): void;
   /**
    * Signs out on this device immediately. Then asks the server to end the sign-in too;
    * `serverEnded` is false when it could not be reached (it keeps trying in the background).
@@ -433,6 +435,10 @@ export function createClient(options: ClientOptions = {}): Client {
       }
       if (r.status === 401) lostSignIn();
       return null;
+    },
+
+    assume(who) {
+      if (token) me = who;
     },
 
     async signOut() {

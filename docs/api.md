@@ -301,7 +301,7 @@ Only instant sales (`orders/quick_sale`) can be saved on a till and sent later. 
 - `client.offline.flush()`: sends what is waiting. The client also does this by itself when the connection returns and every 15 seconds while something waits.
 - Pass `offlineStore: localStorageTokenStore('cake-pos-offline')` to `createClient` so the queue survives reloads.
 
-The client asks for an offline pass after every sign-in. The owner switches the feature on in the shop settings (`offlineEnabled`, `offlinePassHours`, `offlineMaxSales`, `offlineMaxTotal`); it is off by default. The pass key is removed from the device at sign-out; sales already saved can still be sent.
+The pages and the catalogue are also kept on the device, so a till that reloads while the server is down still opens and sells (the page copies need https or localhost). The client asks for an offline pass after every sign-in. The owner switches the feature on in the shop settings (`offlineEnabled`, `offlinePassHours`, `offlineMaxSales`, `offlineMaxTotal`); it is off by default. The pass key is removed from the device at sign-out; sales already saved can still be sent.
 
 `POST /api/offline/replay` with `{ passId, actions: [{ seq, requestId, type, payload, queuedAt, tag }] }` and the `X-Device-Token` header sends a queue. No sign-in is needed. The answer is `{ ok: true, results: [{ seq, status, message, ... }] }` where `status` is `done`, `duplicate`, `held`, `rejected` or `retry`. See `docs/offline-queue-design.md` for what is checked.
 
