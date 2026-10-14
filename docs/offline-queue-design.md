@@ -62,6 +62,6 @@ A held sale that the owner approves runs again as the person who made it (or und
 
 1. **Server (panel), done 14 Oct:** pass, tag, replay, held list, owner review, settings, `expectedTotal`. Tested on its own, including every row of the tables above.
 2. **Client and server transport, done 14 Oct:** the queue in the browser (kept across reloads), the replay request, the device header.
-3. **Cashier screen:** what the person sees offline (a clear "offline, sales will be sent later" bar, a provisional receipt, a count of sales waiting), and what happens when a sale was held.
+3. **Cashier screen, done 14 Oct:** what the person sees offline (a clear "offline, sales will be sent later" bar, a provisional receipt, a count of sales waiting), and what happens when a sale was held.
 4. **Owner screen:** the "needs review" list.
 5. **Real-world pieces:** keeping the page itself available offline (a service worker), and alerts about old unsent queues.

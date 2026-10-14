@@ -237,6 +237,12 @@ export function createClient(options: ClientOptions = {}): Client {
   const till = createOfflineTill({
     store: options.offlineStore ?? { get: () => memoryOffline, set: (v) => void (memoryOffline = v) },
     me: () => me,
+    offlineEnabled: async () => {
+      const r = await post('/api/feed', { name: 'shop_settings', params: {} });
+      if (r === 'offline') return null;
+      const j = r.json as FeedResult<{ offlineEnabled?: boolean }> | null;
+      return j?.ok ? !!j.data.offlineEnabled : null;
+    },
     dispatchNow: async (type, payload, requestId, quick) => {
       // A till that can sell offline does not make the person wait out the full retry time before it saves the sale.
       const limits: Limits = quick ? { timeoutMs: state === 'offline' ? 2_000 : 4_000, deadlineMs: state === 'offline' ? 3_000 : 6_000 } : normalLimits;
@@ -257,6 +263,7 @@ export function createClient(options: ClientOptions = {}): Client {
   let renewTimer: ReturnType<typeof setInterval> | null = null;
   const signedInNow = (who: SessionInfo) => {
     me = who;
+    till.resetBackoff();
     void till.refreshPass().catch(() => undefined);
     if (!renewTimer) renewTimer = setInterval(() => void till.refreshPass().catch(() => undefined), 5 * 60_000);
   };

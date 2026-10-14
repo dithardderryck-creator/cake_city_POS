@@ -117,7 +117,9 @@ const DISABLED_RETRY_MS = 10 * 60_000;
 export interface OfflineDeps {
   store: OfflineStore;
   /** Who is signed in now, or null. */
-  me(): { userId: string } | null;
+  me(): { userId: string; role: string } | null;
+  /** Whether the owner has switched offline selling on. A quiet read, so a till that cannot use it never makes a refused request. */
+  offlineEnabled(): Promise<boolean | null>;
   /** The ordinary online request, with short limits. Resolves 'offline' when the server could not be reached in time. */
   dispatchNow(type: string, payload: unknown, requestId: string, quick: boolean): Promise<{ status: number; json: unknown } | 'offline'>;
   /** Send a queue to the server. No sign-in needed. */
@@ -137,6 +139,8 @@ export function createOfflineTill(d: OfflineDeps) {
   let timer: ReturnType<typeof setInterval> | null = null;
   let noPassUntil = 0;
   let lastReason: string | null = null;
+  /** Sales that got no answer, with the request id they used, so tapping Pay again can never sell twice. */
+  const unsure = new Map<string, string>();
 
   function load(): Stored {
     try {
@@ -202,11 +206,18 @@ export function createOfflineTill(d: OfflineDeps) {
 
   async function refreshPass(force = false): Promise<boolean> {
     const me = d.me();
-    if (!me) return false;
+    if (!me || (me.role !== 'owner' && me.role !== 'cashier')) return false;
     const s = load();
     const have = current(s);
     if (!force && have && Date.parse(have.expiresAt) - (nowMs() + have.offset) > RENEW_WHEN_LEFT_MS && have.sales < have.maxSales) return true;
     if (!force && nowMs() < noPassUntil) return !!have;
+    const enabled = await d.offlineEnabled();
+    if (enabled === null) return !!have; // the server could not be reached: keep what is held
+    if (!enabled) {
+      lastReason = 'Offline selling is switched off. The owner can turn it on in the shop settings.';
+      noPassUntil = nowMs() + DISABLED_RETRY_MS;
+      return false;
+    }
     // Whatever the old pass still holds goes first, so nothing waits on a pass that is about to be closed.
     await flush();
     const r = await d.dispatchNow('offline/get_pass', {}, d.randomId(), false);
@@ -248,11 +259,13 @@ export function createOfflineTill(d: OfflineDeps) {
   }
 
   async function quickSale(sale: OfflineSale): Promise<QuickSaleResult> {
-    const requestId = d.randomId();
     const payload = { ...sale };
+    const key = JSON.stringify(payload);
+    const requestId = unsure.get(key) ?? d.randomId();
     const canTry = status().canSell;
     const r = await d.dispatchNow('orders/quick_sale', payload, requestId, canTry);
     if (r !== 'offline') {
+      unsure.delete(key);
       if (r.status === 401) d.lostSignIn();
       const j = r.json as { ok: boolean; data?: unknown; warnings?: string[]; summary?: string; error?: { code: 'unauthenticated' | 'forbidden' | 'invalid' | 'error'; messages: string[] } } | null;
       if (j?.ok) return { ok: true, queued: false, data: j.data, warnings: j.warnings ?? [], summary: j.summary ?? '' };
@@ -261,6 +274,9 @@ export function createOfflineTill(d: OfflineDeps) {
 
     // The server could not be reached. The request may still have arrived, so the queued sale keeps the same request id:
     // if the server already made the sale, replaying it just gets that answer back, and nothing is sold twice.
+    unsure.delete(key);
+    unsure.set(key, requestId);
+    if (unsure.size > 20) unsure.delete(unsure.keys().next().value as string);
     const queued = update((st): QuickSaleResult => {
       const p = current(st);
       const no = (message: string): QuickSaleResult => ({ ok: false, error: { code: 'offline', messages: [message] } });
@@ -276,6 +292,7 @@ export function createOfflineTill(d: OfflineDeps) {
       p.lastTag = tag;
       p.sales += 1;
       p.total += sale.expectedTotal;
+      unsure.delete(key); // it is in the queue now: a new tap on the same items is a new sale
       return { ok: true, queued: true, seq: a.seq, madeAt: a.queuedAt, total: sale.expectedTotal, waiting: waitingOf(st), message: 'Saved on this till. It will be sent when the wifi is back.' };
     });
     return queued;
@@ -361,6 +378,10 @@ export function createOfflineTill(d: OfflineDeps) {
     stop: () => {
       if (timer) clearInterval(timer);
       timer = null;
+    },
+    /** A new sign-in is a good moment to look again, even if the answer was no a minute ago. */
+    resetBackoff: () => {
+      noPassUntil = 0;
     },
     connectionChanged: () => {
       if (d.connection() === 'online') void flush();

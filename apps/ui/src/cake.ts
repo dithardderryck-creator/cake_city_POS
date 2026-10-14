@@ -5,7 +5,7 @@
 import { createClient, localStorageTokenStore } from '@cake-pos/client';
 import type { ClientResult, FeedMap, FeedName, IntentMap, IntentName, Role, SessionInfo, StaffSigninRow } from '@cake-pos/client';
 
-const client = createClient({ tokenStore: localStorageTokenStore(), deviceStore: localStorageTokenStore('cake-pos-device') });
+const client = createClient({ tokenStore: localStorageTokenStore(), deviceStore: localStorageTokenStore('cake-pos-device'), offlineStore: localStorageTokenStore('cake-pos-offline') });
 
 /** The page each role works in. */
 export const HOME: Record<Role, string> = {
@@ -43,9 +43,11 @@ function offlineBanner(): HTMLElement {
     el.setAttribute('role', 'alert');
     el.hidden = true;
     el.style.cssText =
-      'position:fixed;left:0;right:0;top:0;z-index:60;padding:8px 14px;text-align:center;font:600 13px system-ui,sans-serif;background:var(--risk,#b4452f);color:#fff';
-    el.textContent = 'Cannot reach the shop server. Check the wifi. Changes are paused until it is back.';
+      'position:fixed;left:0;right:0;top:0;z-index:60;padding:8px 14px;text-align:center;font:600 13px system-ui,sans-serif;background:var(--risk,#b4452f);color:#fff;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap';
+    el.innerHTML =
+      '<span id="offline-t"></span><button id="offline-b" hidden style="font:inherit;color:inherit;border:1px solid #fff8;border-radius:8px;padding:4px 12px;background:none;cursor:pointer">See them</button>';
     document.body.appendChild(el);
+    el.querySelector('#offline-b')!.addEventListener('click', showOfflineNotices);
   }
   return el;
 }
@@ -53,13 +55,99 @@ function offlineBanner(): HTMLElement {
 /** True while the server cannot be reached. Pages disable buttons that change things while this is set. */
 export let offline = false;
 
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** What the bar across the top says. Three things can be true at once: the server is gone, sales are waiting, sales need a person to look. */
+function refreshBanner(): void {
+  const el = offlineBanner();
+  const st = client.offline.status();
+  const needs = st.notices.length;
+  let text = '';
+  let colour = 'var(--risk,#b4452f)';
+  if (offline) {
+    text = st.canSell
+      ? `Cannot reach the shop server. You can keep selling ready-made items: each sale is saved on this till and sent when the server is back.${st.waiting ? ` ${plural(st.waiting, 'sale is', 'sales are')} waiting.` : ''}`
+      : 'Cannot reach the shop server. Check the wifi. Changes are paused until it is back.';
+  } else if (st.waiting) {
+    text = `${plural(st.waiting, 'offline sale', 'offline sales')} saved on this till, sending now.`;
+    colour = 'var(--cop,#a8602a)';
+  } else if (needs) {
+    text = `${plural(needs, 'offline sale needs', 'offline sales need')} a look.`;
+  }
+  el.hidden = !text;
+  el.style.background = colour;
+  el.querySelector('#offline-t')!.textContent = text;
+  (el.querySelector('#offline-b') as HTMLElement).hidden = !needs;
+  document.documentElement.toggleAttribute('data-offline', offline);
+}
+
+const KIND_LABEL = { held: 'Waiting for the owner to decide', refused: 'The server refused it', stuck: 'Could not be sent' } as const;
+
+/** The sales that were saved offline but did not simply go through. They stay here until someone has read them. */
+function showOfflineNotices(): void {
+  const st = client.offline.status();
+  if (!st.notices.length) return;
+  const rows = st.notices
+    .map((n) => {
+      const items = n.items.reduce((a, i) => a + i.qty, 0);
+      return `<div class="cx-c" style="margin:8px 0"><div class="cx-t"><b>Sale ${n.seq} · ${esc(money(n.total))}</b><span class="cx-k ${n.kind === 'held' ? 'cop' : 'risk'}">${esc(KIND_LABEL[n.kind])}</span></div><div class="cx-m">${esc(clock(n.madeAt))} · ${plural(items, 'item', 'items')} · ${esc(n.method.replace('_', ' '))}</div><div>${esc(n.message)}</div></div>`;
+    })
+    .join('');
+  const d = dialog(
+    `<h2>Offline sales that need a look</h2><p class="cx-e">These were sold while the server could not be reached. Write them down, and tell the owner. They are not lost: the owner can see the held ones and decide.</p>${rows}<div class="cx-a" style="justify-content:flex-end"><button class="cx-b p" id="off-ok">I have noted them</button></div>`,
+  );
+  d.el.querySelector('#off-ok')!.addEventListener('click', () => {
+    client.offline.clearNotices();
+    d.close();
+  });
+}
+
 function watchConnection(): void {
-  const banner = offlineBanner();
+  offlineBanner();
   client.onConnection((s) => {
     offline = s === 'offline';
-    banner.hidden = !offline;
-    document.documentElement.toggleAttribute('data-offline', offline);
+    refreshBanner();
+    for (const l of offlineListeners) l();
   });
+  client.offline.onChange(() => {
+    refreshBanner();
+    for (const l of offlineListeners) l();
+  });
+  refreshBanner();
+}
+
+const offlineListeners = new Set<() => void>();
+/** Calls `fn` whenever the server is lost or found, or the offline queue changes. */
+export function onOffline(fn: () => void): void {
+  offlineListeners.add(fn);
+}
+/** What the till can do offline right now, and what is waiting. */
+export function offlineStatus() {
+  return client.offline.status();
+}
+
+export interface SaleOutcome extends SendOutcome {
+  /** True when the sale was saved on this till because the server could not be reached. */
+  queued?: boolean;
+  /** The till's own number for a saved sale. */
+  seq?: number;
+  madeAt?: string;
+}
+
+/**
+ * Sells ready-made items now. If the server cannot be reached and this till holds an offline pass, the sale is saved on the
+ * till and sent later (`queued: true`); the page shows a provisional slip, not a receipt.
+ */
+export async function quickSale(sale: { items: Array<{ combinationId: string; qty: number }>; method: IntentMap['orders/quick_sale']['method']; customerName?: string; expectedTotal: number }): Promise<SaleOutcome> {
+  const r = await client.offline.quickSale(sale);
+  if (!r.ok) {
+    const m = r.error.messages.join(' ') || 'That did not work.';
+    toast(m);
+    return { ok: false, message: m };
+  }
+  if (r.queued) return { ok: true, queued: true, seq: r.seq, madeAt: r.madeAt, message: r.message };
+  if (r.warnings.length) toast(r.warnings.join(' '));
+  return { ok: true, data: r.data, message: r.warnings.join(' ') || undefined };
 }
 
 /** Goes to the sign-in page. */

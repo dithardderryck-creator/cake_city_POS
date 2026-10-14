@@ -251,12 +251,23 @@ function rTick(){const ids=Object.keys(cart),t=total(),cn=Object.values(cart).re
  if(part){cb.className=paid>0&&paid<t?"ok":paid?"short":"";$("#cgl").textContent=paid>=t&&paid?"That is the whole total":"Balance left";$("#cg").textContent=M(paid>=t&&paid?0:Math.max(0,t-paid))}
  else{cb.className=paid?d>=0?"ok":"short":"";$("#cgl").textContent=paid&&d<0?"Still owed":"Change to return";$("#cg").textContent=M(paid?Math.abs(d):0)}
  $("#pt").textContent="Part payment: "+(part?"on":"off");$("#pt").setAttribute("aria-pressed",part);
- $("#go").disabled=!(ids.length&&!busy&&!Cake.offline&&(!part||paid>0));$("#go").textContent=busy?"Working…":part?"Take part payment":ph2?"Place order and take payment":"Take payment"}
+ $("#go").disabled=!(ids.length&&!busy&&(!Cake.offline||canQ())&&(!part||paid>0));$("#go").textContent=busy?"Working…":part?"Take part payment":ph2?"Place order and take payment":"Take payment"}
+/* A ready-made walk-in sale can be saved on this till when the server is gone and the till holds an offline pass. */
+const canQ=()=>!part&&m.src==="walk_in"&&m.ful==="pickup"&&Cake.offlineStatus().canSell;
+function slip(q,lines,t,meth,nm){closeModal();modal(`<div class="row"><h2>Saved on this till · sale ${q.seq}</h2><span class="chip cop">Not sent yet</span></div>
+<div class="mute sm" style="margin:6px 0 10px">${esc(new Date(q.madeAt).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(nm||"Walk-in customer")} · paid by ${esc((MT.find(x=>x[0]===meth)||[0,meth])[1])}</div>
+<div style="margin:12px 0">${lines.map(l=>`<div class="row" style="padding:5px 0"><span>${esc(l.name)} × ${l.qty}<br><span class="mute sm">${esc(l.opt)}</span></span><b class="num">${M(l.amt)}</b></div>`).join("")}</div>
+<div class="row" style="margin-top:6px"><span>Total</span><b class="num">${M(t)}</b></div>
+<p class="mute sm" style="margin-top:10px">The shop server could not be reached, so this sale is saved on this till. It is sent by itself when the wifi is back, and the proper receipt and stock update then. If you give the customer a slip, write sale number ${q.seq} on it.</p>
+<div class="row" style="margin-top:14px;justify-content:flex-end"><button class="b p" data-a="mc">Done</button></div>`)}
 function rst(){cart={};paid=0;part=false;m={src:"walk_in",ful:"pickup"};["#rcv","#dn","#dp","#dd","#da"].forEach(k=>{$(k).value="";delete $(k).dataset.ok})}
 async function go(){if(busy)return;busy=true;rTick();const v=k=>$(k).value.trim(),t=total();
  if(!part&&m.src==="walk_in"&&m.ful==="pickup"){/* Ready-made walk-in sale: instant, no ticket to approve. */
-  try{const nm=v("#dn"),r=await Cake.send("orders/quick_sale",{items:Object.entries(cart).map(([combinationId,qty])=>({combinationId,qty})),method:meth,...(nm&&{customerName:nm})});
-   if(!r.ok)return;rst();$(".tk").classList.remove("open");receipt(r.data.orderId);return}
+  try{const nm=v("#dn"),items=Object.entries(cart).map(([combinationId,qty])=>({combinationId,qty})),lines=items.map(({combinationId:i,qty})=>{const c=byId(i);return{name:c?c.name:"Item",opt:c?c.label||"Plain":"",qty,amt:(c?c.price||0:0)*qty}}),
+    r=await Cake.quickSale({items,method:meth,expectedTotal:t,...(nm&&{customerName:nm})});
+   if(!r.ok)return;rst();$(".tk").classList.remove("open");
+   if(r.queued){slip(r,lines,t,meth,nm);return}
+   receipt(r.data.orderId);return}
   finally{busy=false;rTick()}}
  try{const o=await Cake.send("orders/create_order",{source:m.src,fulfilment:m.ful,...(v("#dn")&&{customerName:v("#dn")}),...(v("#dp")&&{customerPhone:v("#dp")}),...((m.src==="phone"||m.ful==="delivery")&&v("#dd")&&{deliveryDate:v("#dd")}),...(m.ful==="delivery"&&v("#da")&&{deliveryAddress:v("#da")})});
   if(!o.ok)return;const orderId=o.data.orderId;
@@ -381,7 +392,8 @@ function tick(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("e
 
 (async()=>{const me=await Cake.boot("cashier");$("#who").textContent=me.name;tick();setInterval(tick,30000);
  Cake.onShop(s=>{SH=s;MT=s.paymentMethods.map(x=>[x.key,x.label]);if(!MT.some(x=>x[0]===meth))meth=firstM();$("#pay").innerHTML=MT.map(([k,l])=>`<button data-a="pm" data-i="${esc(k)}">${esc(l)}</button>`).join("")||'<p class="mute">No payment methods are switched on. Ask the owner.</p>';rTiles();rTick()});
- Cake.client.onConnection(s=>{const up=s!=="offline";$("#net").className="xst"+(up?"":" off");$("#net span").textContent=up?"Server connected":"Server unreachable";rTick();rCs()});
+ const netBar=()=>{const up=!Cake.offline,o=Cake.offlineStatus();$("#net").className="xst"+(up?"":" off");$("#net span").textContent=up?"Server connected":o.canSell?"Server unreachable · selling offline":"Server unreachable";rTick();rCs()};
+ Cake.client.onConnection(netBar);Cake.onOffline(netBar);
  Cake.mountNotice($("#ntc"));
  Cake.feed("catalogue_grid",{},d=>{G=d;rTiles();rTick()});
  Cake.feed("order_list",{},d=>{OL=d.filter(o=>!(o.instant&&o.status==="completed"));rOrd();rDw()});
