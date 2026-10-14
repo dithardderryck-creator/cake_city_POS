@@ -127,6 +127,48 @@ try {
   assert.equal(await page.evaluate(() => Cake.offlineStatus().notices.length), 0, 'noted, and cleared');
   await until(async () => (await page.locator('#offline').isHidden()), 'the bar to go away', 20000);
 
+  /* 4. The price changes while the till is cut off. The sale is held for the owner, who approves it from the overview. */
+  await until(() => page.evaluate(() => Cake.offlineStatus().canSell), 'a fresh offline pass after the refused one', 60000);
+  const comboId = await page.locator('#tiles .tile:not([disabled])').first().getAttribute('data-id');
+  const grid = await read('catalogue_grid');
+  const price = grid.flatMap((g) => g.combinations).find((c) => c.combinationId === comboId).price;
+  await page.context().setOffline(true); // only this till loses the network; the server is fine
+  // (an already open live connection can stay up in the browser; the sale itself finds the network gone)
+  await fillTicket();
+  assert.equal((await send('catalogue/set_price', { combinationId: comboId, price: price + 700 })).ok, true);
+  await page.click('#go');
+  await page.waitForSelector('#mod .dlg h2');
+  assert.match(await txt(page, '#mod h2'), /Saved on this till/);
+  await page.click('#mod [data-a="mc"]');
+  await page.context().setOffline(false);
+  await until(() => page.evaluate(() => Cake.offlineStatus().notices.some((n) => n.kind === 'held')), 'the till to be told the sale is held', 90000);
+  assert.equal(await instant(), before + 2, 'the sale at the old price was not recorded');
+
+  await op.goto(shop.base + '/owner.html');
+  await op.waitForSelector('#ofc:not([hidden])', { timeout: 20000 });
+  const card = await txt(op, '#ofc');
+  assert.match(card, /Prices changed/, 'the owner is told why');
+  assert.match(card, /Counter/, 'and which till');
+  assert.match(card, /At today's prices/, 'and what it costs now');
+  op.on('dialog', (d) => d.accept());
+  await op.click('#ofc [data-o="approve"]');
+  await until(async () => (await instant()) === before + 3, 'the approved sale to be recorded', 20000);
+  await op.waitForSelector('#ofc', { state: 'hidden', timeout: 20000 });
+
+  /* 5. The owner switches the rules on the settings screen. */
+  await op.click('#xset');
+  await op.waitForSelector('#dpn [data-k="oh"]');
+  await op.fill('#dpn [data-k="oh"]', '6');
+  await op.fill('#dpn [data-k="os"]', '7');
+  await op.click('#dpn [data-d="offline"]');
+  await until(async () => {
+    const st = await read('shop_settings');
+    return st.offlinePassHours === 6 && st.offlineMaxSales === 7 && st.offlineEnabled === true;
+  }, 'the offline rules to be saved', 15000);
+  await op.fill('#dpn [data-k="oh"]', '99');
+  await op.click('#dpn [data-d="offline"]');
+  assert.equal((await read('shop_settings')).offlinePassHours, 6, 'a nonsense value is refused on the screen and changes nothing');
+
   assert.deepEqual(errs, [], 'no page errors: ' + errs.join(' | '));
   console.log('offline selling ok');
 } finally {

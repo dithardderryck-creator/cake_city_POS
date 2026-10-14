@@ -98,6 +98,8 @@ interface StoredPass {
   sales: number;
   total: number;
   queue: QueuedSale[];
+  /** The server refused a sale on this pass as not genuine. Nothing more is signed with it; a fresh pass is asked for. */
+  dead?: boolean;
 }
 
 interface Stored {
@@ -183,7 +185,7 @@ export function createOfflineTill(d: OfflineDeps) {
   function current(s: Stored): StoredPass | null {
     const me = d.me();
     const p = s.currentPassId ? s.passes[s.currentPassId] : undefined;
-    if (!p || !me || p.userId !== me.userId || !p.key) return null;
+    if (!p || !me || p.userId !== me.userId || !p.key || p.dead) return null;
     return p;
   }
 
@@ -301,6 +303,7 @@ export function createOfflineTill(d: OfflineDeps) {
   async function flush(): Promise<{ left: number }> {
     if (sending) return { left: waitingOf(load()) };
     sending = true;
+    let anyRefused = false;
     for (const l of listeners) l();
     try {
       for (;;) {
@@ -324,6 +327,7 @@ export function createOfflineTill(d: OfflineDeps) {
           continue;
         }
         let progressed = false;
+        let refused = false;
         update((st) => {
           const sp = st.passes[p.passId];
           if (!sp) return;
@@ -333,17 +337,25 @@ export function createOfflineTill(d: OfflineDeps) {
             progressed = true;
             sp.queue = sp.queue.filter((x) => x.seq !== q.seq);
             if (res.status === 'held') addNotice(st, 'held', res.message, q);
-            else if (res.status === 'rejected') addNotice(st, 'refused', res.message, q);
+            else if (res.status === 'rejected') {
+              addNotice(st, 'refused', res.message, q);
+              sp.dead = true;
+              delete sp.key;
+              refused = true;
+            }
             else rememberSent(st, q, res);
           }
           if (sp.queue.length === 0 && st.currentPassId !== sp.passId) delete st.passes[sp.passId];
         });
+        if (refused) anyRefused = true;
         if (!progressed) break; // a server failure: try again on the next round
       }
     } finally {
       sending = false;
       for (const l of listeners) l();
     }
+    // A pass the server did not trust is retired. Ask for a fresh one so this till can sell offline again.
+    if (anyRefused) void refreshPass(true).catch(() => undefined);
     return { left: waitingOf(load()) };
   }
 

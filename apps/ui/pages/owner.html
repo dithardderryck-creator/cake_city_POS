@@ -203,6 +203,7 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
     <div><h1 id="hello">Hello</h1><p class="sub" id="date"></p></div>
     <button class="find" id="open" aria-label="Search"><span>Search tickets, items, customers</span><kbd>Ctrl K</kbd></button>
   </header>
+  <section class="card" id="ofc" hidden style="margin-bottom:16px;border-left:3px solid var(--risk)"><div class="row" style="flex-wrap:wrap"><h2>Offline sales to review</h2><span class="tag risk" id="ofn"></span></div><p class="mute" style="margin:2px 0 10px">These were sold at a till while the shop server could not be reached, but could not be recorded as they were. Nothing is lost: decide on each one.</p><div id="ofb"></div></section>
   <div class="grid">
     <section class="card rev">
       <div class="row"><h2>Revenue</h2><div class="seg" role="group" aria-label="Range"><button aria-pressed="true" data-r="7">7 days</button><button aria-pressed="false" data-r="30">30 days</button></div></div>
@@ -446,7 +447,7 @@ $("#dr").onclick=async e=>{if(e.target.id==="dr"){dclose();return}
   const grid=await Cake.read("catalogue_grid",{}),np=grid&&grid.find(x=>x.productId===productId);
   for(let i=0;np&&i<rows.length;i++){if(rows[i].p==="")continue;const c=np.combinations.find(x=>x.valueIds.includes(valueIds[i]));if(c&&!(await Cake.send("catalogue/set_price",{combinationId:c.combinationId,price:+rows[i].p})).ok)return}
   Cake.toast(rows.some(r=>r.p==="")?"Added. Set a price on every size to sell it.":"Added to the catalogue");dclose()})}
- else if(k==="shop"||k==="alerts"||k==="counter")guard(b,()=>saveSettings(k))};
+ else if(k==="shop"||k==="alerts"||k==="counter"||k==="offline")guard(b,()=>saveSettings(k))};
 
 /* ---------- stock ---------- */
 let ss=null,sf="all";
@@ -632,12 +633,33 @@ function openSettings(){const s=D.shop,a=D.alertset;if(!s)return;drMode="setting
  <label class="fl"><span>Flag a stock count or usage that is off by this percent or more</span><input data-k="bg" type="number" min="1" max="100" inputmode="numeric" value="${s.bigDifferencePercent}"></label>
  <label class="fl"><span>Wait this many minutes after a payment before it can be refunded (0 = no wait)</span><input data-k="rc" type="number" min="0" max="120" inputmode="numeric" value="${s.refundCooldownMinutes}"></label>
  <div class="btns"><button class="b p" data-d="counter">Save counter rules</button></div>
+ <h2 style="font-size:15px;margin-top:24px">Selling when the connection is lost</h2>
+ <p class="mute" style="margin:2px 0 8px">A till that loses the shop server can keep selling ready-made items. The sales are saved on the till and checked again when it reconnects. Off until you switch it on.</p>
+ <label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="oe" type="checkbox" ${s.offlineEnabled?"checked":""}> Let tills keep selling when the server cannot be reached</label>
+ <label class="fl"><span>Permission lasts this many hours</span><input data-k="oh" type="number" min="1" max="72" inputmode="numeric" value="${s.offlinePassHours}"></label>
+ <label class="fl"><span>Most sales one till may save</span><input data-k="os" type="number" min="1" max="1000" inputmode="numeric" value="${s.offlineMaxSales}"></label>
+ <label class="fl"><span>Most money one till may take this way (${E(s.currencyLabel)})</span><input data-k="om" type="number" min="1" inputmode="numeric" value="${s.offlineMaxTotal}"></label>
+ <div class="btns"><button class="b p" data-d="offline">Save offline rules</button></div>
  ${a?`<h2 style="font-size:15px;margin-top:24px">When to warn people</h2>${ALERT_FIELDS.map(f=>`<label class="fl"><span>${f[1]}</span><input data-k="a-${f[0]}" type="number" min="0" inputmode="numeric" value="${a[f[0]]}"></label>`).join("")}<div class="fl"><span>Treat these as critical (also sent to you)</span></div>${a.kinds.map(k=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="c-${E(k.kind)}" type="checkbox" ${k.critical?"checked":""}> ${E(k.label)}</label>`).join("")}<div class="btns"><button class="b p" data-d="alerts">Save warning rules</button></div>`:""}`)}
 async function saveSettings(k){const v=n=>($("#dpn").querySelector(`[data-k="${n}"]`)||{value:""}),t=n=>v(n).value.trim();
  if(k==="shop"){if(!t("sn")){Cake.toast("The shop needs a name.");return}await Cake.send("settings/update",{shopName:t("sn"),shopAddress:t("sa")||null,shopPhone:t("sp")||null,receiptFooter:t("sf")||null,decoratingStage:v("sd").checked},"Shop details saved")}
  else if(k==="counter"){const on=(D.shop.allPaymentMethods||[]).filter(m=>v("pm-"+m.key).checked).map(m=>m.key);if(!on.length){Cake.toast("Keep at least one way of paying switched on.");return}const lo=t("lo"),bg=t("bg"),rc=t("rc");if(lo===""||!(+lo>=0)||!Number.isInteger(+lo)){Cake.toast("Low stock is a whole number, 0 or more.");return}if(bg===""||!(+bg>=1&&+bg<=100)){Cake.toast("The difference percent is between 1 and 100.");return}if(rc===""||!(+rc>=0&&+rc<=120)||!Number.isInteger(+rc)){Cake.toast("The refund wait is a whole number of minutes, 0 to 120.");return}await Cake.send("settings/update",{paymentMethods:on,lowStockUnits:+lo,bigDifferencePercent:+bg,refundCooldownMinutes:+rc},"Counter rules saved")}
+ else if(k==="offline"){const oh=t("oh"),os=t("os"),om=t("om");if(oh===""||!Number.isInteger(+oh)||+oh<1||+oh>72){Cake.toast("Permission lasts a whole number of hours, 1 to 72.");return}if(os===""||!Number.isInteger(+os)||+os<1||+os>1000){Cake.toast("The most sales is a whole number, 1 to 1000.");return}if(om===""||!Number.isInteger(+om)||+om<1){Cake.toast("The most money is a whole number of shillings, 1 or more.");return}await Cake.send("settings/update",{offlineEnabled:v("oe").checked,offlinePassHours:+oh,offlineMaxSales:+os,offlineMaxTotal:+om},"Offline rules saved")}
  else{const p={critical:{}};for(const f of ALERT_FIELDS){const x=t("a-"+f[0]);if(x==="")continue;p[f[0]]=+x}for(const kk of D.alertset.kinds)p.critical[kk.kind]=v("c-"+kk.kind).checked;await Cake.send("alerts/configure",p,"Warning rules saved")}}
 $("#xset").onclick=openSettings;
+
+/* ---------- offline sales waiting for the owner ---------- */
+function ofr(){const d=D.off,L=d?d.held:[];$("#ofc").hidden=!L.length;$("#ofn").textContent=L.length+(L.length===1?" waiting":" waiting");if(!L.length){$("#ofb").innerHTML="";return}
+ keep($("#ofb"),()=>{$("#ofb").innerHTML=L.map(h=>`<div class="card" style="margin:8px 0" data-h="${E(h.id)}"><div class="row" style="flex-wrap:wrap;gap:8px"><b>${E(h.userName)} · ${E(h.deviceName)}</b><span class="mute">sold ${E(when(h.queuedAt))} · arrived ${E(when(h.receivedAt))}</span></div>
+ <p style="margin:6px 0">${h.items.map(E).join(", ")||"No items listed"}${h.method?` · paid by ${E(h.method)}`:""}</p>
+ <p class="mute" style="margin:4px 0">${h.expectedTotal!==null?`The customer was shown ${E(M(h.expectedTotal))}.`:"No total was shown to the customer."}${h.totalNow!==null?` At today's prices it is ${E(M(h.totalNow))}.`:""}</p>
+ <ul style="margin:6px 0 8px 18px">${h.reasons.map(r=>`<li>${E(r)}</li>`).join("")}</ul>
+ <label class="fl"><span>Note (needed to dismiss, optional to approve)</span><input data-k="n-${E(h.id)}" maxlength="500" autocomplete="off"></label>
+ <div class="btns" style="margin:6px 0 0">${h.canApprove?`<button class="b p" data-o="approve" data-id="${E(h.id)}">Approve and record the sale</button>`:""}<button class="b" data-o="dismiss" data-id="${E(h.id)}">Dismiss</button></div></div>`).join("")})}
+$("#ofc").onclick=e=>{const b=e.target.closest("[data-o]");if(!b)return;const id=b.dataset.id,n=(($("#ofb").querySelector(`[data-k="n-${id}"]`)||{}).value||"").trim();
+ if(b.dataset.o==="dismiss"&&!n){Cake.toast("Write a short note saying why you are dismissing it.");return}
+ if(b.dataset.o==="approve"&&!confirm("Record this sale at today's prices, under the name of the person who sold it?"))return;
+ guard(b,()=>Cake.send("offline/review",{heldId:id,action:b.dataset.o,...(n&&{note:n})},b.dataset.o==="approve"?"Sale recorded":"Dismissed"))};
 
 /* ---------- search ---------- */
 const pal=$("#pal"),q=$("#q");
@@ -680,6 +702,7 @@ $("#xout").onclick=()=>Cake.signOut();
  Cake.feed("usage_inbox",{},d=>{D.usage=d;ov();su()});
  Cake.feed("staff_list",{},d=>{D.staff=d;sfr()});
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
+ Cake.feed("offline_review",{},d=>{D.off=d;ofr()});
  Cake.feed("audit_view",{},d=>{D.audit=d;ov();cr();sfr()});
  Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr()});
  Cake.feed("alert_settings",{},d=>{D.alertset=d});

@@ -265,6 +265,8 @@ describe('selling with the network gone, over the real server', () => {
     expect(st.notices).toHaveLength(1);
     expect(st.notices[0]).toMatchObject({ kind: 'refused', seq: 1 });
     expect(st.notices[0]!.message).toMatch(/changed after it was made/);
+    // the pass the server did not trust is retired, and the till asks for a fresh one so it can sell offline again
+    await waitFor(() => t.client.offline.status().canSell);
     const audit = (await server.store.list<{ id: string; intent: string; outcome: string }>('audit')).filter((x) => x.intent === 'offline/replay' && x.outcome === 'denied');
     expect(audit).toHaveLength(1);
   });
