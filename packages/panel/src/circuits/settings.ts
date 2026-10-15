@@ -29,6 +29,7 @@ export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSetti
     offlinePassHours: saved?.offlinePassHours ?? DEFAULT_OFFLINE_PASS_HOURS,
     offlineMaxSales: saved?.offlineMaxSales ?? DEFAULT_OFFLINE_MAX_SALES,
     offlineMaxTotal: saved?.offlineMaxTotal ?? DEFAULT_OFFLINE_MAX_TOTAL,
+    dayCloseBy: saved?.dayCloseBy ?? 'owner',
   };
 }
 
@@ -69,6 +70,7 @@ export const settingsIntents = {
         offlinePassHours: p.offlinePassHours ?? current.offlinePassHours,
         offlineMaxSales: p.offlineMaxSales ?? current.offlineMaxSales,
         offlineMaxTotal: p.offlineMaxTotal ?? current.offlineMaxTotal,
+        dayCloseBy: p.dayCloseBy ?? current.dayCloseBy,
       };
       await ctx.store.put('settings', next);
       const receipt = p.shopName !== undefined || p.shopAddress !== undefined || p.shopPhone !== undefined || p.receiptFooter !== undefined;
@@ -78,7 +80,7 @@ export const settingsIntents = {
             ? next.decoratingStage
               ? 'Turned on the Decorating stage for custom cakes'
               : 'Turned off the Decorating stage for custom cakes'
-            : receipt && p.decoratingStage === undefined && p.paymentMethods === undefined && p.lowStockUnits === undefined && p.bigDifferencePercent === undefined && p.refundCooldownMinutes === undefined && p.offlineEnabled === undefined && p.offlinePassHours === undefined && p.offlineMaxSales === undefined && p.offlineMaxTotal === undefined
+            : receipt && p.decoratingStage === undefined && p.paymentMethods === undefined && p.lowStockUnits === undefined && p.bigDifferencePercent === undefined && p.refundCooldownMinutes === undefined && p.offlineEnabled === undefined && p.offlinePassHours === undefined && p.offlineMaxSales === undefined && p.offlineMaxTotal === undefined && p.dayCloseBy === undefined
               ? 'Changed the shop details printed on receipts'
               : 'Changed the shop settings',
         target: 'shop',

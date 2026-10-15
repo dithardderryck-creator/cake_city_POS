@@ -11,6 +11,8 @@ export interface IntentMap {
   'auth/sign_in': { userId: Id; pin: string };
   'auth/sign_out': Record<string, never>;
   'offline/get_pass': Record<string, never>;
+  /** Count the cash drawer and close a day. Closing locks nothing; closing the same day again replaces the count. */
+  'day/close': { day?: string; countedCash: number; floatKept?: number; note?: string };
   'offline/review': { heldId: Id; action: 'approve' | 'dismiss'; note?: string };
   'auth/change_pin': { currentPin: string; newPin: string };
 
@@ -90,6 +92,7 @@ export interface IntentMap {
     offlinePassHours?: number;
     offlineMaxSales?: number;
     offlineMaxTotal?: number;
+    dayCloseBy?: 'owner' | 'cashier_and_owner';
   };
 
   'payments/record_payment': {

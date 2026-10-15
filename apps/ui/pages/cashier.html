@@ -212,7 +212,7 @@ button.xst{border:0;cursor:pointer}.xst.off{background:var(--risk-s);color:var(-
 
 <section class="view" id="v-req" hidden><div id="rq"></div></section>
 
-<section class="view" id="v-sales" hidden><div class="kp" id="kp"></div><h2 style="margin-bottom:10px">Payments today</h2><div class="lst" id="sl"></div><div id="ow"></div></section>
+<section class="view" id="v-sales" hidden><div class="kp" id="kp"></div><h2 style="margin-bottom:10px">Payments today</h2><div class="lst" id="sl"></div><div id="ow"></div><div id="cdc"></div></section>
 </main>
 <div class="ov" id="mod" hidden></div><div class="drw" id="dw" hidden></div>
 <div class="toast" id="toast" role="status"></div>
@@ -301,6 +301,22 @@ function rSales(){const d=LG;if(!d)return;
  $("#sl").innerHTML=d.rows.map(x=>`<button class="card row" data-a="rc" data-id="${esc(x.orderId)}" style="text-align:left"><span><b class="num">${esc(x.orderNumber)}</b> <span class="mute sm">${esc(x.methodLabel)} · ${esc(x.kindLabel)} · ${esc(x.time)} · ${esc(x.byName)}</span></span><b class="num">${esc(x.amountLabel)}</b></button>`).join("")||'<p class="mute">No payments yet today.</p>';
  $("#ow").innerHTML=d.can.seeOutstanding&&d.outstanding.length?`<h2 style="margin:18px 0 10px">Still owed · ${esc(d.outstandingTotalLabel)}</h2><div class="lst">${d.outstanding.map(x=>`<button class="card row" data-a="open" data-id="${esc(x.orderId)}" style="text-align:left"><span><b class="num">${esc(x.orderNumber)}</b> <span class="mute sm">${esc(x.customerName)} · ${esc(x.statusLabel)}${x.ready?" · ready to hand over":""}</span></span><b class="num">${esc(x.balanceLabel)}</b></button>`).join("")}</div>`:""}
 
+/* The owner chooses whether the cashier may count the drawer and close the day. */
+let CB="owner";
+function rClose(){$("#cdc").innerHTML=CB==="cashier_and_owner"?'<h2 style="margin:18px 0 10px">End of day</h2><button class="b p" data-a="dcnt">Count the drawer</button>':""}
+async function dayForm(){const r=await Cake.read("day_report",{});if(!r)return;const c=r.closed;
+ modal(`<div class="row"><h2>Count the drawer</h2><button class="b" data-a="mc">Close</button></div>
+<div class="mute sm" style="margin:6px 0 10px">${esc(r.dayLabel)}</div>
+<div class="row"><span>Taken today</span><b class="num">${esc(r.money.takenLabel)}</b></div>
+<div class="row"><span>Cash taken</span><b class="num">${esc(r.cash.cashInLabel)}</b></div>
+<div class="row"><span>Cash refunded</span><b class="num">${esc(r.cash.cashRefundedLabel)}</b></div>
+<div class="row"><span>Left from the last close</span><b class="num">${esc(r.cash.openingFloatLabel)}</b></div>
+<div class="row" style="margin-bottom:10px"><span><b>Should be in the drawer</b></span><b class="num">${esc(r.cash.expectedLabel)}</b></div>
+${c?`<div class="mute sm" style="margin-bottom:8px">Already counted: ${esc(c.countedLabel)} by ${esc(c.byName)}. ${esc(c.differenceWords)}${c.changedSince?" Money moved since, so count again.":""}</div>`:""}
+<label for="dcc">Cash counted now</label><input id="dcc" inputmode="numeric" autocomplete="off" placeholder="0">
+<label for="dcf" style="margin-top:8px">Cash left in the drawer for tomorrow</label><input id="dcf" inputmode="numeric" autocomplete="off" placeholder="0">
+<label for="dcn" style="margin-top:8px">Note (needed if the count is not what is expected)</label><input id="dcn" maxlength="500">
+<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="b" data-a="mc">Not now</button><button class="b p" data-a="dcsv" data-day="${esc(r.day)}">${c?"Save the new count":"Close the day"}</button></div>`)}
 /* ---------- dialogs ---------- */
 let stopCard=null;
 function modal(h){$("#mod").innerHTML=`<div class="dlg" role="dialog" aria-modal="true">${h}</div>`;$("#mod").hidden=false}
@@ -352,7 +368,11 @@ const A={tab(d){view=d.v;$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#
  dsave(d,b){const c=cur(),v=k=>$(k).value.trim();guard(b,async()=>{const r=await Cake.send("orders/set_delivery",{orderId:c.orderId,fulfilment:FLOW.ful,...(v("#dd2")&&{deliveryDate:v("#dd2")}),deliveryAddress:v("#da2"),customerPhone:v("#dp2")||null},"Delivery updated.");if(r.ok)$("#oc-form").innerHTML=""})},
  /* custom cakes */
  csrc(d){cs.src=d.v;rCs()},cful(d){cs.ful=d.v;rCs()},rmph(d){URL.revokeObjectURL(photos[+d.i].url);photos.splice(+d.i,1);rTh()},
- csub(d,b){csub()}};
+ csub(d,b){csub()},
+ /* end of day, only when the owner allows it */
+ dcnt(d,b){guard(b,dayForm)},
+ dcsv(d,b){const v=k=>$(k).value.trim(),cc=v("#dcc"),fk=v("#dcf");if(cc===""||!/^\d+$/.test(cc)){toast("Enter the cash you counted, in whole shillings.");return}if(fk!==""&&!/^\d+$/.test(fk)){toast("Cash left for tomorrow is a whole number.");return}
+  guard(b,async()=>{const r=await Cake.send("day/close",{day:d.day,countedCash:+cc,floatKept:fk===""?0:+fk,...(v("#dcn")&&{note:v("#dcn")})},"Day closed.");if(r.ok)closeModal()})}};
 document.addEventListener("click",e=>{if(e.target.id==="mod"){closeModal();return}const b=e.target.closest("[data-a]");if(b&&A[b.dataset.a])A[b.dataset.a](b.dataset,b)});
 function rCs(){$$("#cs1 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===cs.src));$$("#cs2 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===cs.ful));$("#cad").hidden=cs.ful!=="delivery";$("#csb").disabled=busy||Cake.offline}
 function rTh(){$("#dz span").textContent=photos.length?(photos.length<3?"Add more photos ("+photos.length+" of 3)":"3 of 3 added"):"Drop photos here, or click anywhere in this box";$("#th").innerHTML=photos.map((p,i)=>`<div><img src="${p.url}" alt="Reference ${i+1}"><button data-a="rmph" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
@@ -398,6 +418,7 @@ function tick(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("e
  Cake.feed("catalogue_grid",{},d=>{G=d;rTiles();rTick()});
  Cake.feed("order_list",{},d=>{OL=d.filter(o=>!(o.instant&&o.status==="completed"));rOrd();rDw()});
  Cake.feed("payments_ledger",{},d=>{LG=d;rSales()});
+ Cake.feed("shop_settings",{},d=>{CB=d.dayCloseBy;rClose()});
  RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="req",onCounts:c=>{$("#bn").textContent=(c.unseen+c.needsYou)||""}});
  A.tab({v:"sell"});rCs();rTick()})();
 </script>

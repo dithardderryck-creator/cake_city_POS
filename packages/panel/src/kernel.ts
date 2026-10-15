@@ -35,6 +35,7 @@ import { staffIntents } from './circuits/staff';
 import { stockIntents } from './circuits/stock';
 import { syncIntents } from './circuits/sync';
 import { offlineIntents } from './circuits/offline';
+import { dayCloseIntents } from './circuits/day-close';
 import { createReplayer, type ReplayResult } from './offline-replay';
 import { derivePassKey } from './offline-proof';
 import { cleanPayload, describeSchemaProblems, feedSchemas, schemas } from './schemas';
@@ -187,6 +188,7 @@ const registry = {
   ...paymentIntents,
   ...syncIntents,
   ...offlineIntents,
+  ...dayCloseIntents,
 } as Registry;
 
 export const INTENT_NAMES = Object.keys(registry) as IntentName[];

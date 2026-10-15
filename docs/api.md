@@ -248,6 +248,17 @@ The baker logs a batch of ready-made items (brownies, cupcakes). It adds to the 
 - **Hiding an item.** `catalogue/set_hidden` (owner) takes a product off the counter without archiving it. `catalogue_grid` marks it `hidden`; only the owner's list still contains it, and it cannot be sold while hidden.
 - **Bakers and usage.** `usage_inbox` now also works for a baker, showing only the reports they sent, so they can follow what happened to them.
 
+### End of day and the cash count
+
+`day_report` (feed, optional `{ day: "YYYY-MM-DD" }`, today by default) is the one screen the owner needs to end a day: money taken and refunded by method, refunds with their reasons, items sold and the top five, offline sales that went through that day and those still waiting, orders that still owe money, stock counts that came out different, and the cash drawer sum (`cash.expected` = what the last close left in the drawer + cash taken − cash refunded). `closed` is `null` until someone has counted the drawer for that day.
+
+`day/close` (`{ day?, countedCash, floatKept?, note? }`) records the count. `floatKept` is the cash left in the drawer for tomorrow and becomes tomorrow's starting figure (default 0). A count that differs from what was expected needs a `note`. Rules:
+
+- **Who may close** is a shop setting, `dayCloseBy` in `shop_settings` and `settings/update`. `"owner"` (the default): only the owner can see the report or close. `"cashier_and_owner"`: a signed-in cashier can too, and the report names who closed.
+- **Closing locks nothing.** Closing the same day again replaces the count (both are in the audit trail). Money recorded after a close shows as `closed.changedSince` so the report says the count is out of date; those sales are part of that day's report if they were made that day.
+- A day that has not happened yet cannot be closed. An earlier day that was forgotten can.
+- Cards, bank transfers and mobile money are in the report but never in the drawer sum. Only cash is.
+
 ### Stock forecast
 
 The `stock_forecast` feed (owner, baker, Inventory) gives one line per ingredient: real stock up to today, projected stock after. It is worked out from **two inputs** and shown as **one** line:

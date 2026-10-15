@@ -269,7 +269,7 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 </section>
 <div class="dr" id="od" hidden><div class="dp" id="odp" role="dialog" aria-modal="true" aria-label="Order details"></div></div>
 <section id="v-transactions" hidden>
-<header><div><h1>Transactions</h1><p class="sub">Every payment and refund, tied to a ticket and a named person. Refunds are your decision.</p></div></header>
+<header><div><h1>Transactions</h1><p class="sub">Every payment and refund, tied to a ticket and a named person. Refunds are your decision.</p></div><button class="b p" id="eod">End of day</button></header>
 <div class="grid">
 <section class="card rev"><div class="row"><h2 id="trh">Collected today</h2><span class="mute" id="trnet"></span></div><input class="pr" type="date" id="trday" aria-label="Show another day" style="margin-top:8px"><div class="big num" id="trtot">0</div><div id="trm"></div></section>
 <section class="card due"><div class="row"><h2>Outstanding balances</h2><span class="tag cop" id="trobn"></span></div><ul class="list" id="trob"></ul></section>
@@ -389,7 +389,7 @@ $("#alist").onclick=e=>{const b=e.target.closest("[data-ret]");if(b)guard(b,()=>
 $("#post").onclick=e=>{const t=$("#at").value.trim();if(!t){Cake.toast("Write the announcement first.");return}guard(e.currentTarget,async()=>{const r=await Cake.send("announcements/post",{text:t,requiresAck:$("#ak").checked},"Announcement posted");if(r.ok)$("#at").value=""})};
 
 /* ---------- catalogue ---------- */
-let cf="all",cs=new Set(),drMode=null;
+let cf="all",cs=new Set(),drMode=null,stopDay=null,dayPick="";
 const cState=p=>p.hidden?"hidden":(p.combinations.length&&p.combinations.every(c=>c.price!=null)?"published":"draft");
 const cap=t=>t[0].toUpperCase()+t.slice(1);
 function cr(){const all=D.cat||[],q=$("#cq").value.toLowerCase().trim(),f=all.filter(p=>(cf==="all"||cState(p)===cf)&&(p.name+" "+p.category).toLowerCase().includes(q));
@@ -414,7 +414,7 @@ $("#bulk").onclick=async e=>{const b=e.target.closest("[data-b]");if(!b)return;c
   if(r){if(!r.ok)break;n++}}});
  cs.clear();cr();Cake.toast(n+" item"+(n===1?"":"s")+" changed.")};
 const drawer=html=>{$("#dpn").innerHTML=html;$("#dr").hidden=false};
-const dclose=()=>{$("#dr").hidden=true;drMode=null};
+const dclose=()=>{$("#dr").hidden=true;drMode=null;if(typeof stopDay==="function"){stopDay();stopDay=null;D.day=null}};
 function sizeRow(l="",p=""){return`<div class="vr" style="grid-template-columns:1fr 120px 32px"><input class="vn" value="${E(l)}" placeholder="Size, e.g. 1 kg" aria-label="Size name"><input class="vp" type="number" min="0" inputmode="numeric" step="1" value="${E(p)}" placeholder="Price" aria-label="Price"><button aria-label="Remove size">✕</button></div>`}
 function editor(id){const p=id?D.cat.find(x=>x.productId===id):null;drMode=id?"edit":"new";
  if(!p&&id)return;
@@ -447,7 +447,8 @@ $("#dr").onclick=async e=>{if(e.target.id==="dr"){dclose();return}
   const grid=await Cake.read("catalogue_grid",{}),np=grid&&grid.find(x=>x.productId===productId);
   for(let i=0;np&&i<rows.length;i++){if(rows[i].p==="")continue;const c=np.combinations.find(x=>x.valueIds.includes(valueIds[i]));if(c&&!(await Cake.send("catalogue/set_price",{combinationId:c.combinationId,price:+rows[i].p})).ok)return}
   Cake.toast(rows.some(r=>r.p==="")?"Added. Set a price on every size to sell it.":"Added to the catalogue");dclose()})}
- else if(k==="shop"||k==="alerts"||k==="counter"||k==="offline")guard(b,()=>saveSettings(k))};
+ else if(k==="shop"||k==="alerts"||k==="counter"||k==="offline"||k==="dayrule")guard(b,()=>saveSettings(k));
+ else if(k==="dayclose")guard(b,dayClose)};
 
 /* ---------- stock ---------- */
 let ss=null,sf="all";
@@ -549,6 +550,38 @@ $("#trq").oninput=trl;seg("#trf","f",v=>{trf=v;trl()});
 $("#trday").onchange=e=>{trday=e.target.value;subLedger()};
 $("#v-transactions").onclick=e=>{const k=e.target.closest("[data-o]");if(k){go("orders");oopen(k.dataset.o)}};
 
+/* ---------- end of day ---------- */
+function dayOpen(){drMode="day";dayPick="";D.day=null;drawer('<p class="empty">Loading…</p>');subDay()}
+function subDay(){stopDay&&stopDay();stopDay=Cake.feed("day_report",dayPick?{day:dayPick}:{},d=>{D.day=d;if(drMode==="day")dayRender()})}
+function dayRender(){const r=D.day;if(!r)return;const c=r.closed,M=r.money,K=r.cash,pm=M.byMethod.filter(m=>m.taken||m.refunded);
+ keep($("#dpn"),()=>drawer(`<div class="row"><h2>End of day</h2><button class="b" data-d="close">Close</button></div>
+ <div class="fl"><span>Day</span><input class="pr" type="date" data-dd value="${E(r.day)}" aria-label="Choose the day"></div>
+ <p class="mute" style="margin:2px 0 0">${E(r.dayLabel)}${r.isToday?" · today":""}</p>
+ <h2 style="font-size:15px;margin-top:16px">Money</h2>
+ <dl class="kv"><dt>Taken</dt><dd>${E(M.takenLabel)}</dd><dt>Refunded</dt><dd>${E(M.refundedLabel)}</dd><dt><b>Net</b></dt><dd><b>${E(M.netLabel)}</b></dd>${pm.map(m=>`<dt>${E(m.label)}</dt><dd>${E(m.takenLabel)}${m.refunded?" · refunded "+E(m.refundedLabel):""}</dd>`).join("")}</dl>
+ ${r.refunds.length?`<ul class="tl">${r.refunds.map(f=>`<li><time>${E(f.time)}</time><span>${E(f.orderNumber)} · ${E(f.reason)} <span class="mute">(${E(f.methodLabel)}, approved by ${E(f.byName)})</span></span><b style="margin-left:auto">${E(f.amountLabel)}</b></li>`).join("")}</ul>`:""}
+ <h2 style="font-size:15px;margin-top:16px">What was sold</h2>
+ <p class="mute" style="margin:2px 0 6px">${r.orders.itemsSold} item${r.orders.itemsSold===1?"":"s"} on orders made this day · ${r.orders.withPayments} order${r.orders.withPayments===1?"":"s"} paid on · ${r.orders.instantSales} counter sale${r.orders.instantSales===1?"":"s"}</p>
+ ${r.topItems.length?`<ul class="tl">${r.topItems.map(i=>`<li><span>${E(i.name)} <span class="mute">× ${i.qty}</span></span><b style="margin-left:auto">${E(i.totalLabel)}</b></li>`).join("")}</ul>`:'<p class="empty">Nothing sold on this day.</p>'}
+ ${r.offline.wentThrough||r.offline.waiting?`<p class="mute">${r.offline.wentThrough?r.offline.wentThrough+" sale"+(r.offline.wentThrough===1?"":"s")+" made while a till was offline went through. ":""}${r.offline.waiting?`<b>${r.offline.waiting} offline sale${r.offline.waiting===1?" is":"s are"} still waiting for you</b> in the notices.`:""}</p>`:""}
+ ${r.outstanding.count?`<p class="mute">${r.outstanding.count} order${r.outstanding.count===1?"":"s"} still owe ${E(r.outstanding.totalLabel)} in all.</p>`:""}
+ ${r.stockDifferences?`<p class="mute">${r.stockDifferences} stock count${r.stockDifferences===1?"":"s"} came out different from the books.</p>`:""}
+ <h2 style="font-size:15px;margin-top:16px">Cash drawer</h2>
+ <dl class="kv"><dt>Left from the last close</dt><dd>${E(K.openingFloatLabel)}</dd><dt>Cash taken</dt><dd>+ ${E(K.cashInLabel)}</dd><dt>Cash refunded</dt><dd>− ${E(K.cashRefundedLabel)}</dd><dt><b>Should be in the drawer</b></dt><dd><b>${E(K.expectedLabel)}</b></dd></dl>
+ ${c?`<div class="confirm" style="display:block;margin:10px 0"><b>Counted ${E(c.countedLabel)}</b> by ${E(c.byName)}, ${E(c.closedAtLabel)}.<br>${E(c.differenceWords)} ${c.floatKept?"Left in the drawer: "+E(c.floatKeptLabel)+".":""}${c.note?`<div class="mute">Note: ${E(c.note)}</div>`:""}${c.changedSince?`<div style="margin-top:6px"><b>Money moved after this count.</b> It expected ${E(c.expectedAtCloseLabel)}, now ${E(K.expectedLabel)}. Count again to update it.</div>`:""}</div>`:""}
+ <h2 style="font-size:15px;margin-top:12px">${c?"Count again":"Count the drawer"}</h2>
+ <label class="fl"><span>Cash counted now</span><input data-k="cc" type="number" min="0" inputmode="numeric" step="1"></label>
+ <label class="fl"><span>Cash left in the drawer for tomorrow</span><input data-k="fk" type="number" min="0" inputmode="numeric" step="1" placeholder="0"></label>
+ <label class="fl"><span>Note (needed if the count is not what the system expects)</span><input data-k="cn" maxlength="500"></label>
+ <div class="btns"><button class="b p" data-d="dayclose">${c?"Save the new count":"Close the day"}</button></div>`))}
+async function dayClose(){const v=n=>$("#dpn").querySelector(`[data-k="${n}"]`).value.trim(),r=D.day;if(!r)return;
+ const cc=v("cc"),fk=v("fk");if(cc===""||!Number.isInteger(+cc)||+cc<0){Cake.toast("Enter the cash you counted, in whole shillings.");return}
+ if(fk!==""&&(!Number.isInteger(+fk)||+fk<0)){Cake.toast("Cash left for tomorrow is a whole number, 0 or more.");return}
+ const p={day:r.day,countedCash:+cc,floatKept:fk===""?0:+fk};if(v("cn"))p.note=v("cn");
+ const x=await Cake.send("day/close",p,"Day closed");if(x.ok){const f=$("#dpn").querySelector('[data-k="cc"]');if(f)f.value=""}}
+$("#dpn").addEventListener("change",e=>{if(drMode==="day"&&e.target.hasAttribute("data-dd")){dayPick=e.target.value;D.day=null;drawer('<p class="empty">Loading…</p>');subDay()}});
+$("#eod").onclick=dayOpen;
+
 /* ---------- staff ---------- */
 let sfs=null,sfm=null,auw="all";
 const sst=u=>!u.active?["Deactivated","risk"]:u.locked?["Locked","cop"]:["Active",""];
@@ -633,6 +666,10 @@ function openSettings(){const s=D.shop,a=D.alertset;if(!s)return;drMode="setting
  <label class="fl"><span>Flag a stock count or usage that is off by this percent or more</span><input data-k="bg" type="number" min="1" max="100" inputmode="numeric" value="${s.bigDifferencePercent}"></label>
  <label class="fl"><span>Wait this many minutes after a payment before it can be refunded (0 = no wait)</span><input data-k="rc" type="number" min="0" max="120" inputmode="numeric" value="${s.refundCooldownMinutes}"></label>
  <div class="btns"><button class="b p" data-d="counter">Save counter rules</button></div>
+ <h2 style="font-size:15px;margin-top:24px">Closing the day</h2>
+ <p class="mute" style="margin:2px 0 8px">At the end of the day the drawer is counted against what the system expects. Closing never locks anything.</p>
+ <label class="fl"><span>Who counts the drawer and closes the day</span><select data-k="dc"><option value="owner" ${s.dayCloseBy==="owner"?"selected":""}>Only me</option><option value="cashier_and_owner" ${s.dayCloseBy==="cashier_and_owner"?"selected":""}>The cashier counts, and I can too</option></select></label>
+ <div class="btns"><button class="b p" data-d="dayrule">Save</button></div>
  <h2 style="font-size:15px;margin-top:24px">Selling when the connection is lost</h2>
  <p class="mute" style="margin:2px 0 8px">A till that loses the shop server can keep selling ready-made items. The sales are saved on the till and checked again when it reconnects. Off until you switch it on.</p>
  <label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="oe" type="checkbox" ${s.offlineEnabled?"checked":""}> Let tills keep selling when the server cannot be reached</label>
@@ -645,6 +682,7 @@ async function saveSettings(k){const v=n=>($("#dpn").querySelector(`[data-k="${n
  if(k==="shop"){if(!t("sn")){Cake.toast("The shop needs a name.");return}await Cake.send("settings/update",{shopName:t("sn"),shopAddress:t("sa")||null,shopPhone:t("sp")||null,receiptFooter:t("sf")||null,decoratingStage:v("sd").checked},"Shop details saved")}
  else if(k==="counter"){const on=(D.shop.allPaymentMethods||[]).filter(m=>v("pm-"+m.key).checked).map(m=>m.key);if(!on.length){Cake.toast("Keep at least one way of paying switched on.");return}const lo=t("lo"),bg=t("bg"),rc=t("rc");if(lo===""||!(+lo>=0)||!Number.isInteger(+lo)){Cake.toast("Low stock is a whole number, 0 or more.");return}if(bg===""||!(+bg>=1&&+bg<=100)){Cake.toast("The difference percent is between 1 and 100.");return}if(rc===""||!(+rc>=0&&+rc<=120)||!Number.isInteger(+rc)){Cake.toast("The refund wait is a whole number of minutes, 0 to 120.");return}await Cake.send("settings/update",{paymentMethods:on,lowStockUnits:+lo,bigDifferencePercent:+bg,refundCooldownMinutes:+rc},"Counter rules saved")}
  else if(k==="offline"){const oh=t("oh"),os=t("os"),om=t("om");if(oh===""||!Number.isInteger(+oh)||+oh<1||+oh>72){Cake.toast("Permission lasts a whole number of hours, 1 to 72.");return}if(os===""||!Number.isInteger(+os)||+os<1||+os>1000){Cake.toast("The most sales is a whole number, 1 to 1000.");return}if(om===""||!Number.isInteger(+om)||+om<1){Cake.toast("The most money is a whole number of shillings, 1 or more.");return}await Cake.send("settings/update",{offlineEnabled:v("oe").checked,offlinePassHours:+oh,offlineMaxSales:+os,offlineMaxTotal:+om},"Offline rules saved")}
+ else if(k==="dayrule")await Cake.send("settings/update",{dayCloseBy:v("dc").value},"Saved")
  else{const p={critical:{}};for(const f of ALERT_FIELDS){const x=t("a-"+f[0]);if(x==="")continue;p[f[0]]=+x}for(const kk of D.alertset.kinds)p.critical[kk.kind]=v("c-"+kk.kind).checked;await Cake.send("alerts/configure",p,"Warning rules saved")}}
 $("#xset").onclick=openSettings;
 

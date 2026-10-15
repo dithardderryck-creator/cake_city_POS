@@ -555,6 +555,8 @@ export interface ShopSettings {
   offlineMaxSales: number;
   /** Most money one pass may carry, in shillings. */
   offlineMaxTotal: number;
+  /** Who may count the cash and close the day. */
+  dayCloseBy: 'owner' | 'cashier_and_owner';
 }
 
 /**
@@ -605,6 +607,28 @@ export interface HeldAction {
   note?: string;
   /** The order made when the owner approved it. */
   orderId?: Id;
+}
+
+/** The cash count that closes one day. Closing locks nothing: sales after it simply count in the next report. */
+export interface DayClose {
+  id: Id; // the day, YYYY-MM-DD
+  day: string;
+  closedAt: string;
+  closedById: Id;
+  closedByName: string;
+  /** Cash in the drawer at the start of the day: what was left in it when the previous day was closed. */
+  openingFloat: number;
+  cashIn: number;
+  cashRefunded: number;
+  /** openingFloat + cashIn - cashRefunded, worked out at the moment of closing. */
+  expectedCash: number;
+  countedCash: number;
+  difference: number;
+  /** Cash left in the drawer for tomorrow. */
+  floatKept: number;
+  note?: string;
+  /** Sales taken and refunds paid, by method, as they stood when the day was closed. */
+  netTotal: number;
 }
 
 /** What happened to one queued sale when it arrived. Lets a repeated send be answered without running anything twice. */

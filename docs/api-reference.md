@@ -421,6 +421,7 @@ Allowed: **owner**
 | `offlinePassHours` | integer | no | min 1, max 72 |
 | `offlineMaxSales` | integer | no | min 1, max 1000 |
 | `offlineMaxTotal` | integer | no | min 0, max 1000000000 |
+| `dayCloseBy` | "owner" \| "cashier_and_owner" | no |  |
 
 ### Inventory
 
@@ -849,6 +850,19 @@ Allowed: **owner**
 | `action` | "approve" \| "dismiss" | yes |  |
 | `note` | string | no | max length 500 |
 
+### Payments
+
+#### `day/close`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `day` | string | no |  |
+| `countedCash` | integer | yes | min 0, max 1000000000 |
+| `floatKept` | integer | no | min 0, max 1000000000 |
+| `note` | string | no | max length 500 |
+
 ## Feeds
 
 Read with `POST /api/feed` as `{ "name": "<name>", "params": { ... } }`, or subscribe over the live connection to get the same data again after every change.
@@ -868,6 +882,14 @@ Allowed: **owner, cashier**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `orderId` | string | yes | min length 1, max length 64 |
+
+#### `day_report`
+
+Allowed: **owner, cashier**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `day` | string | no |  |
 
 #### `announcements`
 

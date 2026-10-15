@@ -37,6 +37,7 @@ const cakeSpec = z.strictObject({
 export const schemas = {
   'auth/sign_in': z.strictObject({ userId: id, pin }),
   'auth/sign_out': empty,
+  'day/close': z.strictObject({ day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'choose a date').optional(), countedCash: money, floatKept: money.optional(), note: longText.optional() }),
   'offline/get_pass': empty,
   'offline/review': z.strictObject({ heldId: id, action: z.enum(['approve', 'dismiss']), note: longText.optional() }),
   'auth/change_pin': z.strictObject({ currentPin: pin, newPin: pin }),
@@ -126,6 +127,7 @@ export const schemas = {
     offlinePassHours: z.number().int().min(1).max(72).optional(),
     offlineMaxSales: z.number().int().min(1).max(1000).optional(),
     offlineMaxTotal: money.optional(),
+    dayCloseBy: z.enum(['owner', 'cashier_and_owner']).optional(),
   }),
 
   'payments/record_payment': z.strictObject({
@@ -280,6 +282,7 @@ export const feedSchemas = {
   bake_queue: empty,
   shop_settings: empty,
   offline_review: empty,
+  day_report: z.strictObject({ day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'choose a date').optional() }),
   ingredient_list: z.strictObject({ includeInactive: z.boolean().optional() }),
   recipe_rules: empty,
   usage_form: z.strictObject({ orderId: id, lineId: id }),

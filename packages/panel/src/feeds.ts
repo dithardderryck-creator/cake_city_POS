@@ -71,6 +71,7 @@ import { reportFeeds, type ReportsData, type ReportsParams } from './circuits/re
 import { countFeeds, type CountSessionData } from './circuits/count';
 import { announcementFeeds, type AnnouncementsData } from './circuits/announcements';
 import { moneyFeeds, type PaymentsLedgerData, type ReceiptData } from './circuits/money-feeds';
+import { dayCloseFeeds, type DayReportData } from './circuits/day-close';
 
 /* ---------- Feed data shapes (what the UI receives) ---------- */
 
@@ -601,6 +602,7 @@ export interface ShopSettingsData {
   offlinePassHours: number;
   offlineMaxSales: number;
   offlineMaxTotal: number;
+  dayCloseBy: 'owner' | 'cashier_and_owner';
   can: { edit: boolean };
 }
 
@@ -652,6 +654,7 @@ export interface FeedMap {
   alert_inbox: { params: Record<string, never>; data: AlertInboxData };
   request_inbox: { params: Record<string, never>; data: RequestInboxData };
   payments_ledger: { params: { day?: string }; data: PaymentsLedgerData };
+  day_report: { params: { day?: string }; data: DayReportData };
   announcements: { params: Record<string, never>; data: AnnouncementsData };
   count_session: { params: Record<string, never>; data: CountSessionData };
   batch_log: { params: Record<string, never>; data: BatchLogData };
@@ -857,6 +860,7 @@ const NAV: Record<Role, NavItem[]> = {
 
 export const feeds: FeedRegistry = {
   ...moneyFeeds,
+  ...dayCloseFeeds,
   ...announcementFeeds,
   ...countFeeds,
   ...batchFeeds,
@@ -1283,6 +1287,7 @@ export const feeds: FeedRegistry = {
         offlinePassHours: s.offlinePassHours,
         offlineMaxSales: s.offlineMaxSales,
         offlineMaxTotal: s.offlineMaxTotal,
+        dayCloseBy: s.dayCloseBy,
         can: { edit: session?.role === 'owner' },
       };
     },
