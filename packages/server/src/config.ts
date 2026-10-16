@@ -42,6 +42,10 @@ export interface ServerConfig {
   onlineDb: { url: string; token: string } | null;
   /** OFFLINE_MASTER_KEY: the secret offline passes are made from. Optional; when missing, one is made and kept in the database. */
   offlineMasterKey: string | null;
+  /** How many proxies sit in front of this server (TRUST_PROXY, 0 to 5). Needed so each visitor's own address is used for the sign-in and pairing limits, not the host's proxy. 0 trusts nobody. */
+  trustProxy: number;
+  /** TEST_COPY=1: a throw-away copy. Fills an empty database with demo data and prints a one-time device code at every start. Never for a real shop. */
+  testCopy: boolean;
 }
 
 export class ConfigError extends Error {}
@@ -111,6 +115,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     pushContact: loadPushContact(env),
     onlineDb: loadOnlineDb(env),
     offlineMasterKey: loadMasterKey(env),
+    trustProxy: int(env, 'TRUST_PROXY', 0, 0, 5),
+    testCopy: /^(1|true|yes|on)$/i.test((env.TEST_COPY ?? '').trim()),
   };
 }
 

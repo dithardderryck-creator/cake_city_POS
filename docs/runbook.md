@@ -57,6 +57,8 @@ Set these as environment variables before starting. All are optional.
 | `BACKUP_TIME` | 02:00 | Nightly backup time, 24-hour, shop local time |
 | `BACKUP_KEEP` | 30 | How many local backups to keep |
 | `ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Other web addresses allowed to call the API. Comma-separated, or `*` |
+| `TRUST_PROXY` | `0` | How many proxies sit in front of the server (0 to 5), so each visitor gets their own sign-in and pairing limit. Set to 1 behind a host such as Render |
+| `TEST_COPY` | off | `1` on a throw-away online copy only: fill an empty database with demo data and print a one-time device code at every start. See `docs/test-copy.md` |
 | `STATIC_DIR` | `apps/ui/dist` when started with `npm start`, otherwise none | Folder of built pages to serve |
 | `TLS_CERT`, `TLS_KEY` | none | Paths to a certificate and key, to serve HTTPS. Set both or neither |
 | `REQUIRE_DEVICE` | on | Only registered devices can sign in or see staff names. Set `0` to switch it off (try-outs only) |

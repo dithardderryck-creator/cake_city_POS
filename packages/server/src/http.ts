@@ -59,7 +59,7 @@ export interface HttpHandle {
 export interface HttpOptions {
   panel: Panel;
   log: Logger;
-  config: Pick<ServerConfig, 'allowedOrigins' | 'staticDir' | 'tls'>;
+  config: Pick<ServerConfig, 'allowedOrigins' | 'staticDir' | 'tls' | 'trustProxy'>;
   version: string;
 }
 
@@ -141,7 +141,16 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
   };
 
   // The socket is gone if the client hung up before we answered, so this must not assume it exists.
-  const ipOf = (req: http.IncomingMessage) => req.socket?.remoteAddress ?? 'unknown';
+  // Behind a host's proxy every connection comes from the proxy. With TRUST_PROXY=n, the visitor is the nth address from the
+  // right of X-Forwarded-For: those added by our own n proxies can be trusted, anything further left was written by the visitor.
+  const ipOf = (req: http.IncomingMessage) => {
+    const direct = req.socket?.remoteAddress ?? 'unknown';
+    const hops = o.config.trustProxy;
+    if (!hops) return direct;
+    const header = req.headers['x-forwarded-for'];
+    const list = (Array.isArray(header) ? header.join(',') : header ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    return list[list.length - hops] ?? direct;
+  };
 
   function serveStatic(req: http.IncomingMessage, res: http.ServerResponse, root: string, urlPath: string) {
     let rel: string;

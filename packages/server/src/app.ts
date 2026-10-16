@@ -14,6 +14,7 @@ import { createHttpServer } from './http';
 import { acquireLock } from './lock';
 import { errorFields, type Logger } from './log';
 import { createScryptHasher } from './scrypt';
+import { prepareTestCopy, testCopyBanner } from './test-copy';
 import { openSqliteStore, SCHEMA_VERSION, type SqliteStore } from './sqlite-store';
 
 export const VERSION = '0.2.0';
@@ -28,6 +29,8 @@ export interface RunningServer {
   /** Null when Google Drive has not been connected. */
   cloud: Cloud | null;
   addresses: string[];
+  /** Test copies only: the one-time first-device code. */
+  testCopy?: { code: string; seeded: boolean };
   close(): Promise<void>;
 }
 
@@ -62,10 +65,13 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
   try {
     store = openSqliteStore(config.dbFile);
     const db = store;
+    const hasherInUse = hasher ?? createScryptHasher();
+    const testCopy = config.testCopy ? await prepareTestCopy({ store: db, hasher: hasherInUse, log }) : undefined;
+    if (testCopy) for (const line of testCopyBanner(testCopy)) console.log(line);
     const terminals: Terminals = {};
     const panel = createPanel({
       store: db,
-      hasher: hasher ?? createScryptHasher(),
+      hasher: hasherInUse,
       devicePrefix: config.devicePrefix,
       currencyLabel: config.currencyLabel,
       requireDevice: config.requireDevice,
@@ -197,6 +203,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       archive,
       cloud,
       addresses,
+      testCopy,
       close: () =>
         (closing ??= (async () => {
           clearInterval(timer);

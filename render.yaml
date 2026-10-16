@@ -1,0 +1,20 @@
+# Free, throw-away test copy on Render. See docs/test-copy.md.
+# The free plan has no permanent disk, so data is wiped whenever the service sleeps or restarts. Demo data only.
+services:
+  - type: web
+    name: cake-pos-test
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      - key: TEST_COPY
+        value: "1"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: PORT
+        value: "10000"
+      - key: TZ
+        value: Africa/Dar_es_Salaam
+      - key: CURRENCY_LABEL
+        value: TSh
