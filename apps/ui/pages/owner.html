@@ -7,8 +7,8 @@
 <link rel="stylesheet" href="/fonts.css">
 <style>
 :root{--bg:#FDFBF7;--paper:#F5F1E8;--surf:#fff;--line:#E6DECD;--ink:#1F1A13;--mute:#6B5E4F;--cop:#C47F3D;--cop-d:#9A5F2A;--cop-s:#C47F3D1f;--sage:#5E7247;--sage-s:#5E72471c;--risk:#B4452F;--risk-s:#B4452F18;--sh:0 1px 2px #1f1a1308,0 10px 28px -14px #1f1a1322;--ease:cubic-bezier(.32,.72,0,1);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}}
-:root[data-theme="dark"]{--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}
 html{scroll-padding-top:calc(var(--hh,120px) + 8px)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button,input{font:inherit;color:inherit}button{cursor:pointer}
@@ -74,7 +74,7 @@ details[open] summary .chev{transform:rotate(180deg)}.chev{transition:transform 
 textarea,.pr{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px 12px;resize:vertical;min-height:70px}.pr{width:170px;min-height:0;border-radius:999px;padding:7px 14px}
 @media(max-width:900px){.split{grid-template-columns:1fr}.rev,.due,.stock,.req,.act{grid-column:span 12}.find{width:100%}}
 .bulk{position:sticky;top:calc(var(--hh,120px) + 8px);z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:var(--ink);color:var(--bg);margin-bottom:12px;animation:pop .35s var(--ease)}.bulk .b{background:transparent;color:var(--bg);border-color:#ffffff40}.bulk[hidden]{display:none}
-.ci{display:grid;grid-template-columns:28px 2fr 1.1fr 1fr 120px 90px 60px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.ci:last-child{border:0}.ci.head{color:var(--mute);font-size:12px;padding:10px 0}
+.ci{display:grid;grid-template-columns:28px 2fr 1.1fr 1fr 124px 64px 76px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.ci:last-child{border:0}.ci.head{color:var(--mute);font-size:12px;padding:10px 0}
 .ci select{border:1px solid var(--line);border-radius:999px;background:var(--paper);padding:5px 10px}
 .ci.hidden b,.ci.draft b{color:var(--mute)}
 .sw{width:42px;height:24px;border-radius:999px;border:0;background:var(--line);position:relative;transition:background .3s}.sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .35s var(--ease)}.sw[aria-checked="true"]{background:var(--sage)}.sw[aria-checked="true"] i{transform:translateX(18px)}
@@ -93,7 +93,7 @@ textarea,.pr{width:100%;border:1px solid var(--line);border-radius:12px;backgrou
 .oc{text-align:left;width:100%;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:6px;transition:border-color .3s,transform .4s var(--ease)}.oc:hover{border-color:var(--cop);transform:translateY(-2px)}
 .oc.risk{border-left:3px solid var(--risk)}
 .wk{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:10px;overflow-x:auto}
-.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:12px 0}.kv dt{color:var(--mute)}.kv dd{margin:0}
+.kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 16px;margin:12px 0}.kv dt{color:var(--mute)}.kv dd{margin:0}
 .dv{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .tkt{display:flex;align-items:stretch;background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:14px 0 4px}.tkt .no{padding:14px 18px;background:var(--cop-s);border-right:2px dashed var(--line);font:600 26px Fraunces,serif;letter-spacing:.02em;color:var(--cop-d);display:flex;align-items:center}.tkt .in{padding:12px 16px;display:grid;gap:2px;align-content:center}
 .xhead{position:sticky;top:0;z-index:12;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
@@ -121,7 +121,7 @@ nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-wei
 .xts{overflow:hidden;text-overflow:ellipsis;max-width:100%}
 nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{width:16px;height:16px}
 @container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
-@container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}nav.xtabs button{font-size:11.5px}}
+@media(max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 4px}nav.xtabs button{font-size:11.5px;padding:7px 2px}}
 @media(max-width:540px){nav.xtabs{position:static}}
 @media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
 @media(max-width:359px){.xtop .brand{display:none}}
@@ -176,6 +176,7 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 .ph{display:flex;flex-wrap:wrap;margin:6px 0}.ph img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin:0 6px 6px 0;cursor:zoom-in;background:var(--paper)}
 #ntc{margin:0 0 12px}
 </style>
+<link rel="stylesheet" href="/forms.css">
 </head>
 <body>
 <div class="app">
@@ -340,11 +341,12 @@ function subReports(){stopRep&&stopRep();stopRep=Cake.feed("reports",{days:rpd},
 function setRange(n){rpd=n;$$("#v-overview .seg button,#rpr button").forEach(x=>x.setAttribute("aria-pressed",+x.dataset.r===n));drawn=false;subReports()}
 $$("#v-overview .seg button,#rpr button").forEach(b=>b.onclick=()=>setRange(+b.dataset.r));
 function countTo(el,n,label){if(reduce||counted){el.textContent=label;return}counted=true;const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/900),e=1-Math.pow(1-p,4);el.textContent=p<1?M(Math.round(n*e)):label;if(p<1)requestAnimationFrame(f)})(t0)}
+const FS=el=>{const w=el.getBoundingClientRect().width;return w>0?Math.min(26,Math.max(11,Math.round(11*640/w))):11};
 function draw(series){const svg=$("#svg"),W=640,H=210,p={l:8,r:8,t:12,b:26},data=series.map(s=>s.total),mx=Math.max(1,Math.max(...data)*1.1);
  const X=i=>p.l+i*(W-p.l-p.r)/Math.max(1,data.length-1),Y=v=>p.t+(1-v/mx)*(H-p.t-p.b);
  const pts=data.map((v,i)=>[X(i),Y(v)]),line="M"+pts.map(q=>q.join(",")).join("L");
  let g="";for(let i=0;i<4;i++){const y=p.t+i*(H-p.t-p.b)/3;g+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y}" y2="${y}" stroke="var(--line)"/>`}
- const step=Math.ceil(data.length/6);let xl="";series.forEach((s,i)=>{if(i%step===0||i===data.length-1)xl+=`<text x="${X(i)}" y="${H-6}" font-size="11" fill="var(--mute)" text-anchor="middle">${E(s.label)}</text>`});
+ const step=Math.ceil(data.length/6);let xl="";series.forEach((s,i)=>{if(i%step===0||i===data.length-1)xl+=`<text x="${X(i)}" y="${H-6}" font-size="${FS(svg)}" fill="var(--mute)" text-anchor="middle">${E(s.label)}</text>`});
  svg.innerHTML=`<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--cop)" stop-opacity=".28"/><stop offset="1" stop-color="var(--cop)" stop-opacity="0"/></linearGradient></defs>${g}<path d="${line}L${X(data.length-1)},${H-p.b}L${p.l},${H-p.b}Z" fill="url(#a)"/><path id="ln" d="${line}" fill="none" stroke="var(--cop)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><line id="cx" y1="${p.t}" y2="${H-p.b}" stroke="var(--mute)" stroke-dasharray="3 4" opacity="0"/><circle id="dot" r="5" fill="var(--cop)" stroke="var(--surf)" stroke-width="2" opacity="0"/>${xl}`;
  if(!drawn&&!reduce){const ln=$("#ln"),L=ln.getTotalLength();ln.style.strokeDasharray=L;ln.style.strokeDashoffset=L;ln.getBoundingClientRect();ln.style.transition="stroke-dashoffset 1.1s cubic-bezier(.32,.72,0,1)";ln.style.strokeDashoffset=0}
  drawn=true;
@@ -539,11 +541,11 @@ function subLedger(){stopL&&stopL();stopL=Cake.feed("payments_ledger",trday?{day
 function trn(){const l=D.ledger;if(!l)return;
  $("#trh").textContent=l.isToday?"Collected today":"Collected on "+dayLabel(l.day);$("#trtot").textContent=l.totals.netLabel;
  $("#trnet").textContent=l.totals.refunds?"After refunds of "+l.totals.refundedLabel:"No refunds";
- $("#trm").innerHTML=l.byMethod.map((m,i)=>`<div class="mrow"><div class="row"><span><i class="dot" style="background:${MC[i%3]}"></i>${E(m.label)}</span><b class="num">${E(m.amountLabel)}</b></div><div class="bar"><i style="width:${Math.min(100,m.share)}%;background:${MC[i%3]}"></i></div></div>`).join("")||'<p class="empty">No payments on this day.</p>';
+ $("#trm").innerHTML=l.byMethod.map((m,i)=>`<div class="mrow"><div class="row"><span><i class="dot" style="background:${MC[i%MC.length]}"></i>${E(m.label)}</span><b class="num">${E(m.amountLabel)}</b></div><div class="bar"><i style="width:${Math.min(100,m.share)}%;background:${MC[i%MC.length]}"></i></div></div>`).join("")||'<p class="empty">No payments on this day.</p>';
  const ob=l.outstanding||[];$("#trobn").textContent=l.can.seeOutstanding?l.outstandingTotalLabel:"";
  $("#trob").innerHTML=l.can.seeOutstanding?ob.map(x=>`<li class="item ${x.ready?"risk":""}" data-o="${E(x.orderId)}" style="cursor:pointer"><div class="row"><b>${E(x.orderNumber)}</b><b class="num">${E(x.balanceLabel)}</b></div><small>${E(x.customerName)} · ${E(x.statusLabel)}${x.deliveryDate?", due "+E(dayLabel(x.deliveryDate).toLowerCase()):""}</small></li>`).join("")||'<p class="empty">Nobody owes anything.</p>':"";
  trl()}
-const MC=["var(--cop)","var(--sage)","var(--mute)"];
+const MC=["var(--cop)","var(--sage)","var(--mute)","#8d6b8f"];
 function trl(){const l=D.ledger;if(!l)return;const q=$("#trq").value.toLowerCase().replace(/\s/g,""),f=l.rows.filter(p=>(trf==="all"||(trf==="pay"&&p.kind!=="refund")||(trf==="ref"&&p.kind==="refund"))&&(p.orderNumber+p.customerName).toLowerCase().replace(/\s/g,"").includes(q));
  $("#trl").innerHTML=f.map(p=>`<div class="lr"><span class="mute">${E(p.time)}</span><span><button class="lk" data-o="${E(p.orderId)}">${E(p.orderNumber)}</button><div class="mute">${E(p.customerName)} · ${p.kind==="refund"?E(p.reason||"")+", approved by "+E(p.byName):"taken by "+E(p.byName)}</div></span><span>${E(p.methodLabel)}</span><span><span class="tag ${p.kind==="refund"?"risk":p.kind==="deposit"?"cop":""}">${E(p.kindLabel)}</span></span><b class="num" style="text-align:right;${p.amount<0?"color:var(--risk)":""}">${E(p.amountLabel)}</b></div>`).join("")||(l.rows.length?'<p class="empty">No transactions match. Clear the search or the filter.</p>':'<p class="empty">No payments or refunds have been recorded yet.</p>')}
 $("#trq").oninput=trl;seg("#trf","f",v=>{trf=v;trl()});
@@ -641,9 +643,9 @@ const hbar=(l,v,w,c,x="")=>`<div class="hb"><span>${E(l)}</span><div class="bar"
 function rpt(){const r=D.reports;if(!r)return;const s=r.sales;
  $("#rst").textContent=s.totalLabel;$("#rsd").textContent="Last "+r.range.days+" days · "+s.perDayLabel+" a day"+(s.changePercent==null?"":" · "+(s.changePercent>0?"+":"")+s.changePercent+"% on the period before");
  const W=640,H=200,n=s.series.length,bw=(W-10)/n,mx=Math.max(1,...s.series.map(x=>x.total));
- $("#rsv").innerHTML=[0,1,2].map(i=>`<line x1="0" x2="${W}" y1="${10+i*80}" y2="${10+i*80}" stroke="var(--line)"/>`).join("")+s.series.map((d,i)=>{const h=d.total/mx*165;return`<rect x="${5+i*bw+bw*.12}" y="${180-h}" width="${bw*.76}" height="${h}" rx="${Math.min(6,bw*.2)}" fill="var(--cop)"><title>${E(d.label)} · ${E(d.totalLabel)}</title></rect>`}).join("")+s.series.map((d,i)=>(i%Math.ceil(n/6)===0||i===n-1)?`<text x="${5+i*bw+bw/2}" y="197" font-size="11" fill="var(--mute)" text-anchor="middle">${E(d.label)}</text>`:"").join("");
- $("#rmb").innerHTML=r.methods.map((m,i)=>`<i style="width:${m.share*100}%;background:${MC[i%3]}"></i>`).join("");
- $("#rml").innerHTML=r.methods.map((m,i)=>`<div class="row" style="padding:5px 0"><span><i class="dot" style="background:${MC[i%3]}"></i>${E(m.label)}</span><span><b class="num">${E(m.amountLabel)}</b> <span class="mute">${pct(m.share)}%</span></span></div>`).join("")||'<p class="empty">No payments in this period.</p>';
+ $("#rsv").innerHTML=[0,1,2].map(i=>`<line x1="0" x2="${W}" y1="${10+i*80}" y2="${10+i*80}" stroke="var(--line)"/>`).join("")+s.series.map((d,i)=>{const h=d.total/mx*165;return`<rect x="${5+i*bw+bw*.12}" y="${180-h}" width="${bw*.76}" height="${h}" rx="${Math.min(6,bw*.2)}" fill="var(--cop)"><title>${E(d.label)} · ${E(d.totalLabel)}</title></rect>`}).join("")+s.series.map((d,i)=>(i%Math.ceil(n/6)===0||i===n-1)?`<text x="${5+i*bw+bw/2}" y="197" font-size="${FS($("#rsv"))}" fill="var(--mute)" text-anchor="middle">${E(d.label)}</text>`:"").join("");
+ $("#rmb").innerHTML=r.methods.map((m,i)=>`<i style="width:${m.share*100}%;background:${MC[i%MC.length]}"></i>`).join("");
+ $("#rml").innerHTML=r.methods.map((m,i)=>`<div class="row" style="padding:5px 0"><span><i class="dot" style="background:${MC[i%MC.length]}"></i>${E(m.label)}</span><span><b class="num">${E(m.amountLabel)}</b> <span class="mute">${pct(m.share)}%</span></span></div>`).join("")||'<p class="empty">No payments in this period.</p>';
  $("#rbs").innerHTML=r.bestSellers.map(b=>hbar(b.name,E(b.amountLabel),pct(b.share)/Math.max(1,pct(r.bestSellers[0].share))*100)).join("")||'<p class="empty">No orders in this period.</p>';
  $("#rds").innerHTML=r.stockDays.rows.slice(0,6).map(i=>hbar(i.name,E(i.label),Math.min(100,i.daysLeft/10*100),i.level==="critical"?"var(--risk)":i.level==="low"?"var(--cop)":"var(--sage)")).join("")||'<p class="empty">Not enough confirmed usage yet.</p>';
  $("#rus").innerHTML=r.usage.map(u=>{const m=Math.max(u.suggested,u.confirmed,1e-9);return`<div class="hb2"><div class="row"><span>${E(u.name)}</span><span class="mute">${E(u.suggestedText)} suggested · <b style="color:var(--ink)">${E(u.confirmedText)}</b> confirmed${u.flagged?` <span class="tag ${u.direction==="more"?"risk":"cop"}">${u.differencePercent>0?"+":""}${u.differencePercent}%</span>`:""}</span></div><div class="bar"><i style="width:${u.suggested/m*100}%;background:var(--line)"></i></div><div class="bar"><i style="width:${u.confirmed/m*100}%;background:${u.flagged&&u.direction==="more"?"var(--risk)":"var(--sage)"}"></i></div></div>`}).join("")||'<p class="empty">No usage was confirmed in this period.</p>';

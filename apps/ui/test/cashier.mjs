@@ -52,6 +52,9 @@ try {
   const page = await ctx.newPage();
   watch(page, 'cashier');
   await signInAs(page, shop.base, 'cashier');
+  await page.waitForTimeout(500);
+  // The "offline" bar must take no room while the shop is reachable (it once showed as a red strip).
+  assert.equal(await page.evaluate(() => { const e = document.getElementById('offline'); return !e || e.getBoundingClientRect().height; }), 0, 'offline bar should be hidden when online');
   await page.waitForSelector('#tiles .tile');
   assert.match(await txt(page, '#who'), /Baraka/, 'shows who is signed in');
   assert.ok((await page.locator('#tiles .tile').count()) > 0, 'items for sale are listed');

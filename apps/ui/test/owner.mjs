@@ -22,6 +22,8 @@ try {
   await page.waitForSelector('#hello');
   await until(async () => /Amina/.test(await txt(page, '#hello')), 'greeting with the owner name');
   assert.match(await txt(page, '.xnm'), /Amina/);
+  // The "offline" bar must take no room while the shop is reachable (it once showed as a red strip).
+  assert.equal(await page.evaluate(() => { const e = document.getElementById('offline'); return !e || e.getBoundingClientRect().height; }), 0, 'offline bar should be hidden when online');
   assert.match(await txt(page, '#reqs'), /All caught up/);
   await page.screenshot({ path: `${shots}/overview-empty.png` });
 
@@ -52,8 +54,7 @@ try {
   await page.fill('#odp [data-k="rr"]', 'Customer changed their mind');
   await page.click('#odp [data-x="refundok"]');
   // just paid: the refund cooldown refuses it in plain words and the form stays open
-  await page.waitForSelector('#toast.on');
-  assert.match(await txt(page, '#toast'), /too recent to refund/i);
+  await until(async () => /too recent to refund/i.test(await txt(page, '#toast')), 'the refund cooldown message');
   assert.ok(await page.locator('#odp [data-k="rr"]').count(), 'form stays open after the cooldown refusal');
   assert.ok((await owner.send('settings/update', { refundCooldownMinutes: 0 })).ok);
   await page.click('#odp [data-x="refundok"]');

@@ -1,0 +1,29 @@
+/* Form controls shared by every page, so a checkbox, a dropdown or a text box looks the same everywhere.
+   Colours come from each page's own variables, so light and dark both work. */
+
+/* Checkbox: the browser's own blue square is replaced by one that matches the buttons. */
+input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;display:inline-grid;place-content:center;width:20px!important;height:20px;min-height:0!important;padding:0!important;margin:0 8px 0 0;vertical-align:-5px;border:1.5px solid var(--mute)!important;border-radius:6px!important;background:var(--surf)!important;cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s}
+input[type=checkbox]::after{content:"";width:10px;height:5px;margin-top:-2px;border:solid var(--on,#fff);border-width:0 0 2px 2px;transform:rotate(-45deg) scale(0);transition:transform .18s cubic-bezier(.32,.72,0,1)}
+input[type=checkbox]:checked{background:var(--cop)!important;border-color:var(--cop)!important}
+input[type=checkbox]:checked::after{transform:rotate(-45deg) scale(1)}
+input[type=checkbox]:hover:not(:disabled){border-color:var(--cop)!important}
+input[type=checkbox]:focus-visible{outline:0;box-shadow:0 0 0 3px var(--cop-s)}
+input[type=checkbox]:disabled{opacity:.5;cursor:not-allowed}
+label:has(>input[type=checkbox]){cursor:pointer}
+
+/* Dropdown: one arrow, one font, in the page's colours. Size and shape stay with each page. */
+select{appearance:none;-webkit-appearance:none;font:inherit;color:var(--ink);cursor:pointer;padding-right:32px;background-repeat:no-repeat;background-size:5px 5px,5px 5px;background-position:calc(100% - 17px) 52%,calc(100% - 12px) 52%;background-image:linear-gradient(45deg,transparent 50%,var(--mute) 50%),linear-gradient(135deg,var(--mute) 50%,transparent 50%)}
+select:focus-visible{outline:0;border-color:var(--cop);box-shadow:0 0 0 3px var(--cop-s)}
+select option{background:var(--surf);color:var(--ink)}
+
+/* Text boxes keep the page's font (a bare textarea would fall back to monospace). */
+textarea,input{font-family:inherit}
+textarea{color:var(--ink)}
+input[type=date],input[type=number],input[type=time]{color:var(--ink)}
+
+/* A button's label never breaks in the middle of a word. */
+.b,.cx-b{white-space:nowrap}
+
+/* Amounts never split across two lines, and a button inside a row keeps clear of the text beside it. */
+.num{white-space:nowrap}
+.rr>span>.b{margin-left:8px}

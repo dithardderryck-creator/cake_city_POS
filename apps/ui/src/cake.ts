@@ -42,11 +42,14 @@ function offlineBanner(): HTMLElement {
     el.id = 'offline';
     el.setAttribute('role', 'alert');
     el.hidden = true;
+    // Sticky and first in the page, so it pushes the page down instead of covering the header. Display is set in refreshBanner, never here:
+    // a display written inline would beat the hidden attribute and show an empty bar all the time.
     el.style.cssText =
-      'position:fixed;left:0;right:0;top:0;z-index:60;padding:8px 14px;text-align:center;font:600 13px system-ui,sans-serif;background:var(--risk,#b4452f);color:#fff;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap';
+      'position:sticky;left:0;right:0;top:0;z-index:60;padding:8px 14px;text-align:center;font:600 13px system-ui,sans-serif;background:var(--risk,#b4452f);color:#fff;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap';
+    el.style.display = 'none';
     el.innerHTML =
       '<span id="offline-t"></span><button id="offline-b" hidden style="font:inherit;color:inherit;border:1px solid #fff8;border-radius:8px;padding:4px 12px;background:none;cursor:pointer">See them</button>';
-    document.body.appendChild(el);
+    document.body.prepend(el);
     el.querySelector('#offline-b')!.addEventListener('click', showOfflineNotices);
   }
   return el;
@@ -78,6 +81,7 @@ function refreshBanner(): void {
     text = `${plural(needs, 'offline sale needs', 'offline sales need')} a look.`;
   }
   el.hidden = !text;
+  el.style.display = text ? 'flex' : 'none';
   el.style.background = colour;
   el.querySelector('#offline-t')!.textContent = text;
   (el.querySelector('#offline-b') as HTMLElement).hidden = !needs;
