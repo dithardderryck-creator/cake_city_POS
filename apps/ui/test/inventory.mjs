@@ -120,7 +120,8 @@ try {
   await page.waitForSelector('#rm:not([hidden]) #cv');
   await page.click('#rm [data-a="cx"]');
   await page.click('#rm [data-a="cn"]');
-  await page.waitForSelector('#rm #cv');
+  // Saving the first item moves on to the second after a round trip: wait for that, or the next number is typed into the old screen.
+  await until(async () => /2 of 4/.test(await txt(page, '#rm')), 'the count moved to the second item');
   await page.fill('#cv', '1');
   await page.click('#rm [data-a="cn"]');
   await page.waitForSelector('#rm #cv');

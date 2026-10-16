@@ -12,7 +12,7 @@ const errs = [];
 const watch = (p, tag) => {
   p.on('pageerror', (e) => errs.push(`${tag}: ${e}`));
   // Refusals (403 for an unregistered device, 429) are expected here and shown on the page; only real script errors count.
-  p.on('console', (m) => m.type() === 'error' && !/status of (401|403|429)/.test(m.text()) && errs.push(`${tag}: console ${m.text()}`));
+  p.on('console', (m) => m.type() === 'error' && !/status of (401|403|422|429)/.test(m.text()) && errs.push(`${tag}: console ${m.text()}`));
 };
 const vis = (p, s) => p.locator(s).first().isVisible();
 async function typeCode(page, text) {
@@ -110,6 +110,53 @@ try {
 
   // The owner's own browser is unaffected.
   assert.match(await owner.innerText('#dvb'), /Office laptop/);
+
+  /* ---- a browser that lost its registration is re-registered under the same name ---- */
+  await owner.fill('#dvb [data-k="dn"]', 'Back phone');
+  await owner.click('#dvb [data-v="mk"]');
+  await owner.waitForSelector('#dvcode');
+  const c3 = await browser.newContext({ viewport: { width: 390, height: 800 } });
+  const phone = await c3.newPage();
+  watch(phone, 'phone');
+  await phone.goto(shop.base + '/');
+  await phone.waitForSelector('#pair:not([hidden])');
+  await typeCode(phone, (await owner.innerText('#dvcode')).trim());
+  await phone.waitForSelector('#pick button');
+  await until(async () => /Back phone/.test(await owner.innerText('#dvb')), 'phone listed');
+  // Its browser data is wiped (or it is a new browser): it is unregistered again, and the same name cannot be reused plainly.
+  await phone.evaluate(() => localStorage.clear());
+  await phone.reload();
+  await phone.waitForSelector('#pair:not([hidden])');
+  await owner.fill('#dvb [data-k="dn"]', 'Back phone');
+  await owner.click('#dvb [data-v="mk"]');
+  await until(async () => /already registered/i.test(await owner.innerText('.toast')), 'a plain code under a used name is refused');
+  const phoneRow = owner.locator('#dvb li:has([data-v="rev"])', { hasText: 'Back phone' });
+  await phoneRow.locator('[data-v="rep"]').click();
+  await owner.waitForSelector('#dvcode');
+  assert.match(await owner.innerText('#dvb'), /replaces the old registration/);
+  await typeCode(phone, (await owner.innerText('#dvcode')).trim());
+  await phone.waitForSelector('#pick button');
+  await until(async () => (await owner.locator('#dvb li:has([data-v="rev"])', { hasText: 'Back phone' }).count()) === 1 && (await owner.locator('#dvcode').count()) === 0, 'listed once after re-registering').catch(async (e) => { throw new Error(e.message + ' | ' + (await owner.innerText('#dvb')).slice(0, 700)); });
+
+  /* ---- IT has its own page and can revoke too ---- */
+  const c4 = await browser.newContext({ viewport: { width: 1000, height: 800 } });
+  const itp = await c4.newPage();
+  watch(itp, 'it');
+  await itp.goto(shop.base + '/');
+  await itp.waitForSelector('#pair:not([hidden])');
+  await typeCode(itp, shop.deviceCode('IT laptop'));
+  await itp.waitForSelector('#pick button');
+  await signInAs(itp, shop.base, 'it');
+  await itp.waitForURL('**/it.html');
+  await itp.waitForSelector('#dvb .list');
+  assert.match(await itp.innerText('#dvb'), /Back phone/);
+  await itp.screenshot({ path: `${shots}/it-devices.png` });
+  assert.equal(await itp.locator('#dvb li', { hasText: 'IT laptop' }).locator('[data-v="rev"]').count(), 0, 'IT cannot revoke the device in use');
+  itp.once('dialog', (d) => d.accept());
+  await itp.locator('#dvb li:has([data-v="rev"])', { hasText: 'Back phone' }).locator('[data-v="rev"]').click();
+  await until(async () => (await itp.locator('#dvb li:has([data-v="rev"])', { hasText: 'Back phone' }).count()) === 0, 'IT list drops the revoked phone');
+  await phone.reload();
+  await phone.waitForSelector('#pair:not([hidden])');
 
   assert.deepEqual(errs, []);
   console.log('devices ok');

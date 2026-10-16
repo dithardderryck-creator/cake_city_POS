@@ -33,6 +33,12 @@ npm run start
 
 Open the address on the computer, type the code on the first screen, then sign in with the owner's PIN. After that the owner registers every other phone, tablet and computer from **Staff → Devices** (Make a code, type it on the new device). Revoke a lost or stolen device there too: everyone signed in on it is signed out straight away.
 
+**Devices, wifi and getting locked out.** A device is recognised by a secret its browser keeps, never by the wifi or address it is on. Switching between the shop wifi, mobile data or a hotspot does not sign anyone out or un-register a device (the server only needs to be reachable; away from the shop wifi the sign-in page says it cannot connect and works again when the device is back). Both the owner and IT can see, rename, re-register and revoke devices (IT does it on its own page, `/it.html`). Safeguards:
+- You cannot revoke the device you are using, and the last registered device can never be revoked.
+- A browser that lost its secret (cleared site data, new browser, private window) shows the registration page. Open **Devices** on another registered device and press **Re-register** next to its name: the code it makes replaces the old record, so the name is not listed twice. Revoke is for lost or stolen devices.
+- If the only registered device is lost, make a code on the server itself (step 4 above) and register a new one.
+- A revoked till refuses any offline sales it had not sent yet. Revoke a till only after it has reconnected, unless it is lost or stolen.
+
 It prints the addresses, for example `http://192.168.1.20:8787`. Open that on any phone, tablet or computer on the shop wifi.
 
 **Give the server computer a fixed address** in your router settings (look for "DHCP reservation" or "static IP"), so the address never changes.

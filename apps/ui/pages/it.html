@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cake POS · IT</title>
+<link rel="stylesheet" href="/fonts.css">
+<style>
+:root{--bg:#FDFBF7;--paper:#F5F1E8;--surf:#fff;--line:#E6DECD;--ink:#1F1A13;--mute:#6B5E4F;--cop:#C47F3D;--cop-d:#9A5F2A;--cop-s:#C47F3D1f;--sage:#5E7247;--sage-s:#5E72471c;--risk:#B4452F;--risk-s:#B4452F18;--sh:0 1px 2px #1f1a1308,0 10px 28px -14px #1f1a1322;--ease:cubic-bezier(.32,.72,0,1);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#15110c;--paper:#1c1711;--surf:#211b14;--line:#3a3025;--ink:#f3ebdd;--mute:#b3a592;--cop:#d9943e;--cop-d:#e3a458;--cop-s:#d9943e24;--sage:#9ab383;--sage-s:#9ab38326;--risk:#e1735c;--risk-s:#e1735c22;--sh:0 10px 28px -14px #000a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cop);outline-offset:2px}
+h1,h2,.num{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
+.bar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar>div{display:flex;align-items:center;gap:12px;max-width:1100px;margin:0 auto;padding:12px clamp(16px,3vw,32px)}
+.brand{font:600 20px Fraunces,serif;margin-right:auto}.brand i{font-style:normal;color:var(--cop)}
+.who{display:flex;align-items:center;gap:10px;color:var(--mute)}.who b{color:var(--ink);font-weight:600}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--paper);color:var(--mute);font-size:12px;font-weight:600}.tag.cop{background:var(--cop-s);color:var(--cop-d)}.tag.risk{background:var(--risk-s);color:var(--risk)}.tag.ok{background:var(--sage-s);color:var(--sage)}
+.ib{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surf);color:var(--mute);transition:border-color .3s,color .3s}.ib:hover{border-color:var(--cop);color:var(--ink)}.ib svg{width:18px;height:18px}
+main{max-width:1100px;margin:0 auto;padding:24px clamp(16px,3vw,32px) 56px}
+h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01em}.sub{color:var(--mute);margin:2px 0 22px}
+h2{font-size:17px;font-weight:600;margin:0}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:20px;margin-bottom:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mute{color:var(--mute)}.empty{color:var(--mute);margin:12px 0 4px}
+.list{list-style:none;margin:10px 0 0;padding:0}.list li{padding:12px 0;border-top:1px solid var(--line)}.list li:first-child{border-top:0}
+.b{min-height:40px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-weight:600;transition:transform .15s,border-color .3s}.b:hover{border-color:var(--cop)}.b:active{transform:scale(.97)}.b:disabled{opacity:.5;cursor:not-allowed}
+.b.p{background:var(--cop);border-color:var(--cop);color:#fff}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.fl{display:block}.fl>span{display:block;color:var(--mute);font-size:12px;margin-bottom:4px}
+input{width:100%;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+input:focus-visible{border-color:var(--cop)}
+.big{font-size:clamp(30px,6vw,44px);font-weight:600;margin:6px 0}
+.kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 18px;margin:12px 0 0}.kv dt{color:var(--mute)}.kv dd{margin:0}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;opacity:0;transition:all .4s var(--ease);z-index:30;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:560px){.who .nm{display:none}}
+</style>
+<link rel="stylesheet" href="/forms.css">
+</head>
+<body>
+<div class="bar"><div>
+<div class="brand">Cake <i>POS</i></div>
+<div class="who"><span class="tag cop">IT</span><b class="nm" id="nm"></b></div>
+<button class="ib" id="theme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+<button class="ib" id="out" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
+</div></div>
+<main>
+<h1>Devices</h1>
+<p class="sub">Which phones, tablets and computers may open the shop system. Switching wifi or mobile data never signs a device out: it is recognised by what it keeps, not by where it is.</p>
+<section class="card" id="dvc"><div class="row"><h2>Registered devices</h2><span class="tag" id="dvn"></span></div><div id="dvb"></div></section>
+<section class="card" id="sys"><div class="row"><h2>System</h2><span class="tag" id="sst"></span></div><dl class="kv" id="skv"></dl></section>
+</main>
+<script src="/cake.js"></script>
+<script>
+const $=s=>document.querySelector(s),E=Cake.esc,xroot=document.documentElement;
+const hhmm=iso=>new Date(iso).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+const when=iso=>{const d=new Date(iso);return d.toDateString()===new Date().toDateString()?hhmm(iso):d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+hhmm(iso)};
+async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return await fn()}finally{b.disabled=false}}
+try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
+$("#theme").onclick=()=>{const dark=xroot.dataset.theme?xroot.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;xroot.dataset.theme=dark?"light":"dark";try{localStorage.setItem("theme",xroot.dataset.theme)}catch(e){}};
+$("#out").onclick=()=>Cake.signOut();
+
+/* ---------- devices ---------- */
+let D={},dvcode=null;
+function dvr(){const d=D.dev;if(!d)return;
+ if(dvcode&&(Date.parse(dvcode.expiresAt)<Date.now()||(dvcode.replaces?!d.devices.some(x=>x.id===dvcode.replaces):d.devices.some(x=>x.name===dvcode.name))))dvcode=null;
+ $("#dvn").textContent=d.devices.length+" registered";
+ const keep=$("#dvb [data-k=dn]"),typed=keep?keep.value:"",focus=keep&&document.activeElement===keep;
+ $("#dvb").innerHTML=(d.required?"":'<p class="tag risk" style="white-space:normal">The device check is switched off on this server, so any device can sign in. Turn it on with REQUIRE_DEVICE=1.</p>')
+ +(d.devices.length?'<ul class="list">'+d.devices.map(x=>`<li><div class="row" style="flex-wrap:wrap;gap:8px"><div><b>${E(x.name)}</b>${x.isThis?' <span class="tag cop">This device</span>':""}<br><span class="mute">Added by ${E(x.createdByName)} · ${E(when(x.createdAt))} · ${x.lastSeenAt?"last used "+E(when(x.lastSeenAt)):"not used yet"}</span></div><div class="btns"><button class="b" data-v="ren" data-id="${E(x.id)}">Rename</button>${x.isThis?"":`<button class="b" data-v="rep" data-id="${E(x.id)}" title="For a browser that lost its registration">Re-register</button><button class="b" data-v="rev" data-id="${E(x.id)}">Revoke</button>`}</div></div></li>`).join("")+"</ul>":'<p class="empty">No devices are registered yet.</p>')
+ +(dvcode?`<div class="card" style="margin:12px 0;background:var(--cop-s);text-align:center"><p class="mute" style="margin:0">Code for ${E(dvcode.name)}${dvcode.replaces?" (replaces the old registration once used)":""}. Type it on that device. It works once, until ${E(hhmm(dvcode.expiresAt))}.</p><div class="big num" style="letter-spacing:.2em">${E(dvcode.code)}</div><div class="btns" style="justify-content:center"><button class="b" data-v="done">Done</button></div></div>`:"")
+ +(d.openCodes.length?'<h2 style="font-size:15px;margin-top:14px">Waiting for a device</h2><ul class="list">'+d.openCodes.map(c=>`<li><div class="row"><span><b>${E(c.name)}</b> <span class="mute">· expires ${E(hhmm(c.expiresAt))}</span></span><button class="b" data-v="cx" data-id="${E(c.id)}">Cancel code</button></div></li>`).join("")+"</ul>":"")
+ +'<div class="row" style="flex-wrap:wrap;gap:8px;margin-top:14px;align-items:flex-end"><label class="fl" style="flex:1;min-width:200px;margin:0"><span>New device name</span><input data-k="dn" maxlength="40" placeholder="For example, Counter tablet" autocomplete="off"></label><button class="b p" data-v="mk">Make a code</button></div>'
+ +(d.revoked.length?'<details style="margin-top:14px"><summary class="mute">Revoked devices ('+d.revoked.length+')</summary><ul class="list">'+d.revoked.map(x=>`<li><span><b>${E(x.name)}</b> <span class="mute">· revoked ${E(when(x.revokedAt))} by ${E(x.revokedByName)}</span></span></li>`).join("")+"</ul></details>":"");
+ const n=$("#dvb [data-k=dn]");if(n&&typed){n.value=typed;if(focus)n.focus()}}
+$("#dvc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=b.dataset.v,d=D.dev||{devices:[]},x=d.devices.find(y=>y.id===b.dataset.id);
+ if(k==="mk"){const n=($("#dvb [data-k=dn]").value||"").trim();if(!n){Cake.toast("Name the device first, for example Counter tablet.");return}
+  guard(b,async()=>{const r=await Cake.send("devices/create_code",{name:n});if(r.ok){dvcode=r.data;dvr()}})}
+ else if(k==="rep"&&x){guard(b,async()=>{const r=await Cake.send("devices/create_code",{name:x.name,replaces:x.id});if(r.ok){dvcode={...r.data,replaces:x.id};dvr()}})}
+ else if(k==="done"){dvcode=null;dvr()}
+ else if(k==="cx")guard(b,()=>Cake.send("devices/cancel_code",{codeId:b.dataset.id},"Code cancelled"))
+ else if(k==="ren"&&x){const n=prompt("New name for "+x.name,x.name);if(n===null)return;if(!n.trim()){Cake.toast("Give the device a name.");return}guard(b,()=>Cake.send("devices/rename",{deviceId:x.id,name:n.trim()},"Renamed"))}
+ else if(k==="rev"&&x){if(!confirm("Revoke "+x.name+"? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet will be refused."))return;guard(b,()=>Cake.send("devices/revoke",{deviceId:x.id},x.name+" was revoked"))}};
+
+/* ---------- system ---------- */
+function sysr(){const m=D.map;if(!m)return;
+ const bad=m.outbox.failed>0||(m.backup&&m.backup.lastError);
+ $("#sst").className="tag "+(bad?"risk":"ok");$("#sst").textContent=bad?"Needs a look":"All good";
+ const rows=[["Signed in now",String(m.activeSessions)],["Changes waiting to sync",String(m.outbox.pending)],["Failed syncs",String(m.outbox.failed)],...m.system.map(s=>[s.label,s.value])];
+ $("#skv").innerHTML=rows.map(r=>`<dt>${E(r[0])}</dt><dd>${E(r[1])}</dd>`).join("")}
+
+(async()=>{const me=await Cake.boot("it");$("#nm").textContent=me.name;
+ Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
+ Cake.feed("panel_map",{},d=>{D.map=d;sysr()})})();
+</script>
+</body>
+</html>

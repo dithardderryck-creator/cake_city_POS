@@ -126,6 +126,53 @@ describe('registered devices', () => {
     expect(errOf(await panel.dispatch('devices/revoke', { deviceId: me.id }, owner, { deviceToken: office }))).toMatch(/using this device/);
   });
 
+  it('lets IT revoke a device too, and the owner is not locked out of the others', async () => {
+    const office = await pairFirst('Office laptop');
+    const phone = await pairFirst('Owner phone');
+    const owner = ok<{ sessionId: string }>(await signIn('owner', phone)).sessionId;
+    const it = ok<{ sessionId: string }>(await signIn('it', office)).sessionId;
+    const list = await panel.feed('device_list', {}, it, office);
+    const row = (list.ok ? list.data.devices.find((d) => d.name === 'Owner phone') : undefined)!;
+    ok(await panel.dispatch('devices/revoke', { deviceId: row.id }, it, { deviceToken: office }));
+    expect((await panel.feed('me', {}, owner)).ok).toBe(false);
+    // The laptop still works, and a fresh code brings the phone back.
+    expect(ok<{ sessionId: string }>(await signIn('owner', office)).sessionId).toBeTruthy();
+  });
+
+  it('never lets the last registered device be revoked', async () => {
+    const office = await pairFirst('Office laptop');
+    const list = await store.list<{ id: string; revokedAt?: string }>('devices');
+    const only = list.find((d) => !d.revokedAt)!;
+    // Device check is off on this panel, so the actor is not on a device and the "this device" rule cannot catch it.
+    const open = createPanel({ store, clock });
+    const t = ok<{ sessionId: string }>(await open.dispatch('auth/sign_in', { userId: await idOf('owner'), pin: pinOf('owner') })).sessionId;
+    expect(errOf(await open.dispatch('devices/revoke', { deviceId: only.id }, t))).toMatch(/only registered device/);
+    expect(await panel.deviceStatus(office)).toMatchObject({ registered: true });
+  });
+
+  it('re-registers a browser that lost its secret under the same name and retires the old record', async () => {
+    const office = await pairFirst('Office laptop');
+    const tablet = await pairFirst('Counter tablet');
+    const owner = ok<{ sessionId: string }>(await signIn('owner', office)).sessionId;
+    const cashier = ok<{ sessionId: string }>(await signIn('cashier', tablet)).sessionId;
+    const list = await panel.feed('device_list', {}, owner, office);
+    const old = (list.ok ? list.data.devices.find((d) => d.name === 'Counter tablet') : undefined)!;
+    // A plain code under the same name is refused; one marked as a replacement is allowed.
+    expect(errOf(await panel.dispatch('devices/create_code', { name: 'Counter tablet' }, owner, { deviceToken: office }))).toMatch(/already registered/);
+    const code = ok<{ code: string }>(await panel.dispatch('devices/create_code', { name: 'Counter tablet', replaces: old.id }, owner, { deviceToken: office })).code;
+    const fresh = ok<{ deviceToken: string }>(await panel.dispatch('devices/pair', { code })).deviceToken;
+    expect(await panel.deviceStatus(fresh)).toEqual({ required: true, registered: true, name: 'Counter tablet' });
+    // The old secret and its sessions are dead, and the name is listed once.
+    expect(await panel.deviceStatus(tablet)).toMatchObject({ registered: false });
+    expect((await panel.feed('me', {}, cashier)).ok).toBe(false);
+    const after = await panel.feed('device_list', {}, owner, office);
+    expect(after.ok && after.data.devices.filter((d) => d.name === 'Counter tablet').length).toBe(1);
+    // It cannot replace a device that is gone, or the one in use.
+    expect(errOf(await panel.dispatch('devices/create_code', { name: 'X', replaces: old.id }, owner, { deviceToken: office }))).toMatch(/no longer registered/);
+    const me = (after.ok ? after.data.devices.find((d) => d.isThis) : undefined)!;
+    expect(errOf(await panel.dispatch('devices/create_code', { name: 'Office laptop', replaces: me.id }, owner, { deviceToken: office }))).toMatch(/using this device/);
+  });
+
   it('does not allow two devices with the same name, and renames', async () => {
     const office = await pairFirst('Office laptop');
     const owner = ok<{ sessionId: string }>(await signIn('owner', office)).sessionId;

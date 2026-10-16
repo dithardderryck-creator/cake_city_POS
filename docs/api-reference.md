@@ -43,6 +43,7 @@ Allowed: **owner, it**
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
 | `name` | string | yes | max length 120 |
+| `replaces` | string | no | min length 1, max length 64 |
 
 #### `devices/cancel_code`
 

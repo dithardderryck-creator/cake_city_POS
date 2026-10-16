@@ -42,7 +42,7 @@ export const schemas = {
   'offline/review': z.strictObject({ heldId: id, action: z.enum(['approve', 'dismiss']), note: longText.optional() }),
   'auth/change_pin': z.strictObject({ currentPin: pin, newPin: pin }),
 
-  'devices/create_code': z.strictObject({ name }),
+  'devices/create_code': z.strictObject({ name, replaces: id.optional() }),
   'devices/cancel_code': z.strictObject({ codeId: id }),
   'devices/pair': z.strictObject({ code: z.string().min(1).max(40) }),
   'devices/rename': z.strictObject({ deviceId: id, name }),

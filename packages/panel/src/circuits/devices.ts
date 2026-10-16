@@ -39,7 +39,12 @@ export const deviceIntents = {
       if (name.length > 40) return ['Keep the device name to 40 characters or fewer.'];
       const nowMs = ctx.clock.now().getTime();
       const devices = await ctx.store.list<Device>('devices');
-      if (devices.some((d) => !d.revokedAt && d.name.toLowerCase() === name.toLowerCase())) return [`A device called "${name}" is already registered. Choose another name.`];
+      if (p.replaces) {
+        const old = devices.find((d) => d.id === p.replaces);
+        if (!old || old.revokedAt) return ['The device you want to replace is no longer registered.'];
+        if (ctx.device?.id === old.id) return ['You are using this device right now, so it cannot be replaced from here. It is already registered.'];
+      }
+      if (devices.some((d) => !d.revokedAt && d.id !== p.replaces && d.name.toLowerCase() === name.toLowerCase())) return [`A device called "${name}" is already registered. Choose another name.`];
       const codes = await ctx.store.list<PairingCode>('pairingCodes');
       const pending = codes.filter((c) => !c.usedAt && !c.cancelledAt && Date.parse(c.expiresAt) > nowMs);
       if (pending.some((c) => c.name.toLowerCase() === name.toLowerCase())) return [`There is already an open code for "${name}". Use it, or cancel it first.`];
@@ -56,6 +61,7 @@ export const deviceIntents = {
         createdAt: new Date(at).toISOString(),
         expiresAt: new Date(at + ctx.config.pairingCodeMs).toISOString(),
         createdByName: ctx.session!.name,
+        ...(p.replaces ? { replacesDeviceId: p.replaces } : {}),
       };
       await ctx.store.put('pairingCodes', rec);
       // The code itself is shown once, here. Only its hash is kept.
@@ -101,8 +107,14 @@ export const deviceIntents = {
         createdByName: rec.createdByName,
       };
       await ctx.store.put('pairingCodes', { ...rec, usedAt: ctx.now() });
+      // A re-registration retires the old record (its browser lost the secret), so the same name is not listed twice.
+      const old = rec.replacesDeviceId ? await ctx.store.get<Device>('devices', rec.replacesDeviceId) : undefined;
+      if (old && !old.revokedAt) {
+        await ctx.store.put('devices', { ...old, revokedAt: ctx.now(), revokedByName: `replaced by a new registration` });
+        await ctx.revokeDeviceSessions(old.id);
+      }
       await ctx.store.put('devices', device);
-      return { summary: `Registered the device "${device.name}"`, target: device.id, data: { deviceToken, deviceName: device.name }, skipSync: true };
+      return { summary: `Registered the device "${device.name}"${old ? ' (replacing the old registration)' : ''}`, target: device.id, data: { deviceToken, deviceName: device.name }, skipSync: true };
     },
   },
 
@@ -134,6 +146,8 @@ export const deviceIntents = {
       const d = await ctx.store.get<Device>('devices', p.deviceId);
       if (!d || d.revokedAt) return ['That device is already revoked.'];
       if (ctx.device?.id === d.id) return ['You are using this device right now. Revoke it from another device, so you are not locked out by accident.'];
+      const active = (await ctx.store.list<Device>('devices')).filter((x) => !x.revokedAt);
+      if (active.length <= 1) return ['This is the only registered device. Register another one first, or nobody could sign in.'];
       return [];
     },
     handle: async (p, ctx) => {

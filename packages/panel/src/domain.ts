@@ -44,6 +44,8 @@ export interface PairingCode {
   createdByName: string;
   usedAt?: string;
   cancelledAt?: string;
+  /** Set when this code re-registers a device whose browser lost its secret. Using the code retires that old device. */
+  replacesDeviceId?: string;
 }
 
 export interface Session {

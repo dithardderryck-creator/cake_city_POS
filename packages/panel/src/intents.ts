@@ -17,7 +17,7 @@ export interface IntentMap {
   'auth/change_pin': { currentPin: string; newPin: string };
 
   /** Owner or IT: make a one-time code (valid about 10 minutes) that registers one device under the given name. */
-  'devices/create_code': { name: string };
+  'devices/create_code': { name: string; replaces?: Id };
   'devices/cancel_code': { codeId: string };
   /** Public on purpose: a device that is not registered yet has nothing else to prove itself with. Uses up the code. */
   'devices/pair': { code: string };
