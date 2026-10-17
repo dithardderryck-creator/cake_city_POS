@@ -138,6 +138,14 @@ try {
 
   // catalogue: add an item through the page, hide it, change a price
   await tab(page, 'catalogue');
+  // Each cake can be opened to show every size / filling option the counter sells as its own tile.
+  const optsBtn = page.locator('#ctab [data-opts]').first();
+  const nOpts = parseInt(await optsBtn.innerText(), 10);
+  assert.ok(nOpts > 1, 'a cake shows how many options it has');
+  await optsBtn.click();
+  assert.equal(await page.locator('#ctab .co').count(), nOpts, 'opening it lists every option');
+  await page.locator('#ctab [data-opts]').first().click();
+  assert.equal(await page.locator('#ctab .co').count(), 0, 'and closes again');
   await page.click('#cnew');
   await page.fill('#dn', 'Lemon loaf');
   await page.fill('#dcat', 'Loaves');
