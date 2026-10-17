@@ -1021,7 +1021,10 @@ export const feeds: FeedRegistry = {
               return 0;
             });
 
-          const prices = combinations.filter((c) => c.sellable && c.price !== null).map((c) => c.price as number);
+          // "From" price: every price the owner has set, even while the cake is switched off for today, so a cake that is simply
+          // off the counter is not shown as having no price.
+          const prices = combinations.filter((c) => c.price !== null && c.markedUnavailable === false).map((c) => c.price as number);
+          const sellablePrices = combinations.filter((c) => c.sellable && c.price !== null).length;
           return {
             productId: p.id,
             name: p.name,
@@ -1034,7 +1037,7 @@ export const feeds: FeedRegistry = {
             groups: productGroups,
             combinations,
             priceFromLabel: prices.length ? config.formatMoney(Math.min(...prices)) : null,
-            sellable: prices.length > 0,
+            sellable: sellablePrices > 0,
             can,
           };
         });

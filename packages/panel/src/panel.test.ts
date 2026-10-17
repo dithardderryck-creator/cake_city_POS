@@ -175,6 +175,17 @@ describe('catalogue variation grid (D-26, D-27)', () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error.messages[0]).toMatch(/off the menu today/);
   });
+
+  it('still shows the price of a cake that is only switched off for today, and says it is not sellable', async () => {
+    const owner = await signIn('owner');
+    const before = (await grid(owner)).find((g) => g.name === 'Red Velvet Cake')!;
+    expect(before.priceFromLabel).toBeTruthy();
+    ok(await panel.dispatch('catalogue/toggle_available_today', { productId: before.productId, available: false }, owner));
+    const after = (await grid(owner)).find((g) => g.name === 'Red Velvet Cake')!;
+    expect(after.priceFromLabel).toBe(before.priceFromLabel);
+    expect(after.sellable).toBe(false);
+    expect(after.availableToday).toBe(false);
+  });
 });
 
 describe('orders and stock (BR-03, BR-11)', () => {
