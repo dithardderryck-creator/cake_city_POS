@@ -3,7 +3,7 @@
 Things deliberately left out for now. Nothing here blocks the screens that exist. Updated 11 Oct 2026.
 
 ## Screens and features
-- **IT page**: left as it is. Signing in as IT goes to `/it.html`, which does not exist. Server side is ready (`panel_map`, `request_inbox`). Decide what IT should see before building it.
+- **IT page**: a small one exists (`/it.html`, 17 Oct 2026): devices (make a code, rename, re-register, revoke) and a system summary. Still to decide: the fuller IT command centre (request inbox, panel map circuits, backups, alerts, the AI monitor idea). Server side is ready (`panel_map`, `request_inbox`).
 - **Owner: "what each role can do" table**: the first design had a fixed one. Left out because a fixed table would drift from the server's real rules. If wanted, it should come from the server.
 - **Owner: per-ingredient movement history** (received, used, counted): there is no feed for it yet. The Stock tab shows the forecast line instead.
 ## Change requests from the owner (11 Oct 2026), to be broken down before building
