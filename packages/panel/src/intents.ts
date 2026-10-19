@@ -93,6 +93,7 @@ export interface IntentMap {
     offlineMaxSales?: number;
     offlineMaxTotal?: number;
     dayCloseBy?: 'owner' | 'cashier_and_owner';
+    language?: 'en' | 'sw';
   };
 
   'payments/record_payment': {

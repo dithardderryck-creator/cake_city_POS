@@ -1,0 +1,185 @@
+# Text the pages build while they run (A–F).
+(Baker) ||| (Mwokaji)
+(Cashier) ||| (Keshia)
+(Inventory) ||| (Stoo)
+(Owner) ||| (Mmiliki)
+: {*} ||| : {*}
+A PIN is {n} to {n} digits. ||| PIN ni tarakimu {n} hadi {n}.
+A PIN is 4 to 6 digits. ||| PIN ni tarakimu 4 hadi 6.
+A device called "{*}" is already registered. Choose another name. ||| Kifaa kiitwacho "{*}" tayari kimesajiliwa. Chagua jina lingine.
+A till that loses the shop server can keep selling ready-made items. The sales are saved on the till and checked again when it reconnects. Off until you switch it on. ||| Kaunta inayopoteza seva ya duka inaweza kuendelea kuuza bidhaa zilizo tayari. Mauzo huhifadhiwa kwenye kaunta na kukaguliwa tena inaporudi mtandaoni. Imezimwa hadi uiwashe.
+Accept ranges as reported ||| Kubali makadirio kama yalivyoripotiwa
+Active ||| Inatumika
+Add a reason. ||| Ongeza sababu.
+Add amount ||| Ongeza kiasi
+Add ingredient ||| Ongeza kiungo
+Add item ||| Ongeza bidhaa
+Add more photos ({n} of {n}) ||| Ongeza picha zaidi ({n} kati ya {n})
+Add size ||| Ongeza ukubwa
+Added by {*} · {*} · last used {*} ||| Imeongezwa na {*} · {*} · ilitumika {*}
+Added by {*} · {*} · not used yet ||| Imeongezwa na {*} · {*} · haijatumika bado
+Added. Set a price on every size to sell it. ||| Imeongezwa. Weka bei kwa kila ukubwa ili kuiuza.
+Added to the catalogue ||| Imeongezwa kwenye katalogi
+Address ||| Anwani
+Addresses ||| Anwani
+Admin tool on the server ||| Zana ya msimamizi kwenye seva
+After refunds of {*} ||| Baada ya marejesho ya {*}
+Alerts ||| Tahadhari
+Alerts outside the app ||| Tahadhari nje ya programu
+Alerts reach people by ||| Tahadhari huwafikia watu kwa
+All alerts ||| Tahadhari zote
+All caught up. New requests from staff will appear here. ||| Hakuna kinachosubiri. Maombi mapya kutoka kwa wafanyakazi yataonekana hapa.
+All caught up. ||| Hakuna kinachosubiri.
+All confirmed ||| Yote yamethibitishwa
+All good ||| Yote sawa
+All tickets ({n}) ||| Tiketi zote ({n})
+All usage ||| Matumizi yote
+Allergy ||| Mzio
+Allergy notes ||| Maelezo ya mzio
+Already counted: {*} by {*}. The drawer matches. ||| Tayari imehesabiwa: {*} na {*}. Droo inalingana.
+Already counted: {*} by {*}. ||| Tayari imehesabiwa: {*} na {*}.
+Amount ||| Kiasi
+Amount name ||| Jina la kiasi
+Amount paying now ||| Kiasi kinacholipwa sasa
+Amount received (leave empty for the whole balance) ||| Kiasi kilichopokelewa (acha wazi kwa deni lote)
+Announcement posted ||| Tangazo limechapishwa
+Approval ||| Idhini
+Approve and record the sale ||| Idhinisha na urekodi mauzo
+Approve refund ||| Idhinisha kurejesha pesa
+Archive ||| Hifadhi kwenye kumbukumbu
+Archive item ||| Hifadhi bidhaa kwenye kumbukumbu
+Asked by {*} · {*} · {*} ||| Aliyeomba: {*} · {*} · {*}
+At the counter ||| Kaunta
+At the end of the day the drawer is counted against what the system expects. Closing never locks anything. ||| Mwisho wa siku droo huhesabiwa dhidi ya kile mfumo unachotarajia. Kufunga hakufungi chochote.
+Available at the counter today ||| Inapatikana kaunta leo
+Awaiting price ||| Inasubiri bei
+Awaiting quote ||| Inasubiri bei
+Back ||| Rudi
+Back to counting ||| Rudi kuhesabu
+Baker's range {n} g to {n} g · expected {n} g · on hand {n} kg ||| Makadirio ya mwokaji g {n} hadi g {n} · inayotarajiwa g {n} · iliyopo kg {n}
+Baker's range {*} · expected {*} · on hand {*} ||| Makadirio ya mwokaji {*} · inayotarajiwa {*} · iliyopo {*}
+Baking ||| Inaokwa
+Baking ({n}) ||| Inaokwa ({n})
+Balance ||| Salio
+Balance due ||| Deni lililobaki
+Balance left ||| Salio lililobaki
+Bank transfer ||| Uhamisho wa benki
+Batch logged. ||| Kundi limeandikwa.
+Batch taken back. ||| Kundi limerudishwa.
+Big differences: {*} ||| Tofauti kubwa: {*}
+Cake boxes ||| Masanduku ya keki
+Cake boxes is at or below its reorder level. ||| Masanduku ya keki yamefikia au chini ya kiwango cha kuagiza upya.
+Cake boxes is running low ||| Masanduku ya keki yanaisha
+Cake for {*} has not been started ||| Keki ya {*} haijaanzwa
+Cake not started ||| Keki haijaanzwa
+Cakes ||| Keki
+Cancel ||| Ghairi
+Cancel code ||| Ghairi msimbo
+Cancel order ||| Ghairi oda
+Cancel {n} orders ||| Ghairi oda {n}
+Cannot reach the shop server, and this till is not set up to sell offline. Check the wifi. The last sale may or may not have gone through. Tap Pay again when the wifi is back: it will not be done twice. ||| Seva ya duka haipatikani, na kaunta hii haijawekwa kuuza nje ya mtandao. Angalia wifi. Mauzo ya mwisho yanaweza kuwa yamepita au hayajapita. Gusa Lipa tena wifi ikirudi: hayatafanyika mara mbili.
+Cannot reach the shop server. Check the wifi. Changes are paused until it is back. ||| Seva ya duka haipatikani. Angalia wifi. Mabadiliko yamesitishwa hadi irudi.
+Cannot reach the shop server. You can keep selling ready-made items: each sale is saved on this till and sent when the server is back. {n} sale is waiting. ||| Seva ya duka haipatikani. Unaweza kuendelea kuuza bidhaa zilizo tayari: kila mauzo huhifadhiwa kwenye kaunta hii na kutumwa seva ikirudi. Mauzo {n} yanasubiri.
+Cannot reach the shop server. You can keep selling ready-made items: each sale is saved on this till and sent when the server is back. {n} sales are waiting. ||| Seva ya duka haipatikani. Unaweza kuendelea kuuza bidhaa zilizo tayari: kila mauzo huhifadhiwa kwenye kaunta hii na kutumwa seva ikirudi. Mauzo {n} yanasubiri.
+Cannot reach the shop server. You can keep selling ready-made items: each sale is saved on this till and sent when the server is back. ||| Seva ya duka haipatikani. Unaweza kuendelea kuuza bidhaa zilizo tayari: kila mauzo huhifadhiwa kwenye kaunta hii na kutumwa seva ikirudi.
+Card ||| Kadi
+Card · Payment · {*} · {*} ||| Kadi · Malipo · {*} · {*}
+Cash ||| Pesa taslimu
+Cash counted now ||| Pesa iliyohesabiwa sasa
+Cash drawer ||| Droo ya pesa
+Cash left in the drawer for tomorrow ||| Pesa inayobaki kwenye droo kwa kesho
+Cash refunded ||| Pesa taslimu zilizorejeshwa
+Cash taken ||| Pesa taslimu zilizopokelewa
+Cash · Payment · {*} · {*} ||| Pesa taslimu · Malipo · {*} · {*}
+Catalogue · Pickup ||| Katalogi · Kuchukua
+Catalogue · {*} ||| Katalogi · {*}
+Category ||| Kundi
+Change delivery ||| Badilisha uwasilishaji
+Change price ||| Badilisha bei
+Change to return ||| Chenji ya kurudisha
+Changes waiting to sync ||| Mabadiliko yanayosubiri kusawazishwa
+Check first ||| Kagua kwanza
+Check the amounts for "{*}": the top must not be below the bottom. ||| Kagua kiasi cha "{*}": cha juu hakipaswi kuwa chini ya cha chini.
+Check the differences ||| Kagua tofauti
+Checking the code… ||| Inakagua msimbo…
+Checking… ||| Inakagua…
+Choose a PIN ||| Chagua PIN
+Choose the day ||| Chagua siku
+Close ||| Funga
+Close the day ||| Funga siku
+Closed ||| Imefungwa
+Closing review ||| Mapitio ya kufunga
+Closing the day ||| Kufunga siku
+Code for {*}. Type it on that device. It works once, until {*} ||| Msimbo wa {*}. Uandike kwenye kifaa hicho. Hufanya kazi mara moja, hadi {*}
+Code for {*} (replaces the old registration once used). Type it on that device. It works once, until {*} ||| Msimbo wa {*} (hubadilisha usajili wa zamani ukitumika). Uandike kwenye kifaa hicho. Hufanya kazi mara moja, hadi {*}
+Completed ||| Imekamilika
+Completed ({n}) ||| Imekamilika ({n})
+Confirm with my amounts ||| Thibitisha kwa kiasi changu
+Confirmed ||| Imethibitishwa
+Confirmed. Stock updated. ||| Imethibitishwa. Stoku imesasishwa.
+Contains: {*} ||| Ina: {*}
+Copy text ||| Nakili maandishi
+Count again ||| Hesabu tena
+Count difference ||| Tofauti ya hesabu
+Count differences need a look ||| Tofauti za hesabu zinahitaji kukaguliwa
+Count every ingredient and packaging item, one at a time. You review the differences before anything is saved. ||| Hesabu kila kiungo na kifungashio, kimoja baada ya kingine. Utakagua tofauti kabla ya kuhifadhi chochote.
+Count in progress ||| Hesabu inaendelea
+Count saved as in progress. ||| Hesabu imehifadhiwa ikiendelea.
+Count saved. ||| Hesabu imehifadhiwa.
+Count the drawer ||| Hesabu droo
+Count the till float ||| Hesabu pesa ya kuanzia
+Count thrown away. ||| Hesabu imetupwa.
+Counted {*} ||| Imehesabiwa {*}
+Counted amount in {*} ||| Kiasi kilichohesabiwa kwa {*}
+Counted today at {*} ||| Imehesabiwa leo saa {*}
+Counter ||| Kaunta
+Counter rules saved ||| Sheria za kaunta zimehifadhiwa
+Counter ticket ||| Tiketi ya kaunta
+Create account ||| Fungua akaunti
+Created {*} with {n} choices ||| Imeunda {*} yenye chaguo {n}
+Critical alerts only ||| Tahadhari muhimu pekee
+Custom cake ||| Keki maalum
+Custom cakes have a separate decorating step ||| Keki maalum zina hatua tofauti ya kupamba
+Custom · Pickup ||| Maalum · Kuchukua
+Customer ||| Mteja
+Customer changed their mind ||| Mteja amebadili mawazo
+Customer wants to change the cake ||| Mteja anataka kubadilisha keki
+Daily count · {n} of {n} ||| Hesabu ya kila siku · {n} kati ya {n}
+Data folder ||| Folda ya data
+Database ||| Hifadhidata
+Day ||| Siku
+Day closed ||| Siku imefungwa
+Day closed. ||| Siku imefungwa.
+Deactivate ||| Zima akaunti
+Deactivate keeps the person and can be undone. Remove deletes them for good; their past sales and actions stay in the records under their name. ||| Kuzima kunamweka mtu na kunaweza kutenguliwa. Kuondoa kunamfuta kabisa; mauzo na vitendo vyake vya zamani hubaki kwenye kumbukumbu kwa jina lake.
+Deactivated ||| Imezimwa
+Decline ||| Kataa
+Declined ||| Imekataliwa
+Declined. The cashier is told ||| Imekataliwa. Keshia anaambiwa
+Decoration ||| Mapambo
+Delete ||| Futa
+Description (optional) ||| Maelezo (si lazima)
+Details ||| Maelezo
+Details (optional) ||| Maelezo (si lazima)
+Details for {*} ||| Maelezo ya {*}
+Dismiss ||| Ondoa
+Done ||| Imekamilika
+Done at {*} ||| Imekamilika saa {*}
+Due ||| Inadaiwa
+Edit ||| Hariri
+Enter how many people the cake should serve. ||| Weka idadi ya watu keki inapaswa kuhudumia.
+Enter the amount first. ||| Weka kiasi kwanza.
+Enter your PIN ||| Weka PIN yako
+Everyone ||| Kila mtu
+Exact amount of {*} in {*} ||| Kiasi halisi cha {*} kwa {*}
+Exit ||| Toka
+Expected {*} ||| Inayotarajiwa {*}
+Extra ingredient not on the suggestion ||| Kiungo cha ziada kisichokuwa kwenye pendekezo
+Failed syncs ||| Usawazishaji ulioshindwa
+Fewer ||| Pungufu
+Flag a count difference of at least ||| Weka alama tofauti ya hesabu ya angalau
+Flag a stock count or usage that is off by this percent or more ||| Weka alama hesabu ya stoku au matumizi yenye tofauti ya asilimia hii au zaidi
+Flavor ||| Ladha
+{*} updated. ||| {*} imesasishwa.
+For a browser that lost its registration ||| Kwa kivinjari kilichopoteza usajili wake
+For example, {*} ||| Mfano, {*}

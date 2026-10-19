@@ -852,7 +852,7 @@ describe('registered devices', () => {
     const stranger = clientFor(server, { deviceStore: memoryStore() });
 
     // Nothing to see: no names, no sign-in.
-    expect(await stranger.deviceStatus()).toEqual({ required: true, registered: false });
+    expect(await stranger.deviceStatus()).toEqual({ required: true, registered: false, language: 'en' });
     expect(await stranger.staff()).toEqual([]);
     const raw = await fetch(server.url + '/api/staff');
     expect(raw.status).toBe(403);
@@ -868,7 +868,7 @@ describe('registered devices', () => {
     const { code } = await makePairingCode(server.store, { name: 'Office laptop' });
     const paired = await stranger.pairDevice(code);
     expect(paired).toEqual({ ok: true, name: 'Office laptop' });
-    expect(await stranger.deviceStatus()).toEqual({ required: true, registered: true, name: 'Office laptop' });
+    expect(await stranger.deviceStatus()).toEqual({ required: true, registered: true, name: 'Office laptop', language: 'en' });
     expect((await stranger.pairDevice(code)).ok).toBe(false); // one use only
 
     // Now the names show and the owner can sign in, over the live connection too.
@@ -898,7 +898,7 @@ describe('registered devices', () => {
     expect((await stranger.dispatch('devices/revoke', { deviceId: (row as { id: string }).id })).ok).toBe(true);
     const after = await tablet.feed('me', {});
     expect(after.ok).toBe(false);
-    expect(await tablet.deviceStatus()).toEqual({ required: true, registered: false });
+    expect(await tablet.deviceStatus()).toEqual({ required: true, registered: false, language: 'en' });
     expect(await tablet.staff()).toEqual([]);
   });
 
@@ -915,7 +915,7 @@ describe('registered devices', () => {
   it('lets everyone in when the host switches the check off', async () => {
     const { server } = await boot({ env: { REQUIRE_DEVICE: '0' } });
     const c = clientFor(server);
-    expect(await c.deviceStatus()).toEqual({ required: false, registered: false });
+    expect(await c.deviceStatus()).toEqual({ required: false, registered: false, language: 'en' });
     expect((await c.staff()).length).toBeGreaterThan(0);
   });
 });

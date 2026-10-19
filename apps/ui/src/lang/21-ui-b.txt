@@ -1,0 +1,210 @@
+# Text the pages build while they run (F–R).
+From ||| Kutoka
+Gave "{*}" an offline pass until {*} ||| Imeipa "{*}" ruhusa ya nje ya mtandao hadi {*}
+Go to Stock ||| Nenda kwenye Stoku
+Good morning, {*} ||| Habari za asubuhi, {*}
+Good afternoon, {*} ||| Habari za mchana, {*}
+Good evening, {*} ||| Habari za jioni, {*}
+Google Drive ||| Google Drive
+Grams ||| Gramu
+Hide for {n} hours ||| Ficha kwa saa {n}
+I have noted them ||| Nimeyaona
+I have read this ||| Nimesoma hili
+I'll take it ||| Nitalichukua
+In preparation ||| Inaandaliwa
+In preparation ({n}) ||| Inaandaliwa ({n})
+In production ||| Inatengenezwa
+In progress ||| Inaendelea
+Ingredient · system expects {*} ||| Kiungo · mfumo unatarajia {*}
+Ingredient · system expects ||| Kiungo · mfumo unatarajia
+Packaging · system expects {*} ||| Kifungashio · mfumo unatarajia {*}
+Packaging · system expects ||| Kifungashio · mfumo unatarajia
+It expected {*} now {*} Count again to update it. ||| Ilitarajiwa {*} sasa {*} Hesabu tena ili kusasisha.
+Items ||| Bidhaa
+Keep at least one way of paying switched on. ||| Weka angalau njia moja ya kulipa ikiwa imewashwa.
+Kilograms ||| Kilo
+Kitchen ticket ||| Tiketi ya jikoni
+Large ||| Kubwa
+Last {n} days · {*} a day ||| Siku {n} zilizopita · {*} kwa siku
+Leave a box empty to use the middle of the baker's range. ||| Acha kisanduku wazi kutumia katikati ya makadirio ya mwokaji.
+Left from the last close ||| Iliyobaki tangu kufunga kwa mwisho
+Less ||| Pungufu
+Let tills keep selling when the server cannot be reached ||| Ruhusu kaunta ziendelee kuuza seva isipopatikana
+Litres ||| Lita
+Live connections ||| Miunganisho hai
+Loading… ||| Inapakia…
+Log a finished batch ||| Andika kundi lililokamilika
+Low ||| Chini
+Low stock ||| Stoku ndogo
+Made a pairing code for "{*}" ||| Ilitengeneza msimbo wa kuunganisha wa "{*}"
+Maintenance ||| Matengenezo
+Make a code ||| Tengeneza msimbo
+Mark done ||| Weka kuwa imekamilika
+Mark ready ||| Weka kuwa iko tayari
+Matches ||| Inalingana
+Matches system ||| Inalingana na mfumo
+Measured in ||| Hupimwa kwa
+Message ||| Ujumbe
+Millilitres ||| Mililita
+Mobile money ||| Pesa ya simu
+Mobile money or card reference ||| Namba ya muamala wa pesa ya simu au kadi
+Mobile money · {*} · {*} · {*} ||| Pesa ya simu · {*} · {*} · {*}
+Money ||| Pesa
+Money moved after this count. ||| Pesa ilihamia baada ya hesabu hii.
+More ||| Zaidi
+Most money one till may take this way ({*}) ||| Pesa nyingi zaidi kaunta moja inaweza kupokea kwa njia hii ({*})
+Most sales one till may save ||| Mauzo mengi zaidi kaunta moja inaweza kuhifadhi
+Name ||| Jina
+Name the device first, for example {*}. ||| Taja jina la kifaa kwanza, mfano {*}.
+Name, for example {*} ||| Jina, mfano {*}
+Needs acknowledgement ||| Inahitaji kukiri
+Net ||| Halisi
+Net today ||| Halisi leo
+Never counted ||| Haijawahi kuhesabiwa
+New ||| Mpya
+New ({n}) ||| Mpya ({n})
+New PIN ({n} to {n} digits) ||| PIN mpya (tarakimu {n} hadi {n})
+New device name ||| Jina la kifaa kipya
+New price ||| Bei mpya
+New request ||| Ombi jipya
+New stock item ||| Bidhaa mpya ya stoku
+New ticket · {n} item ||| Tiketi mpya · bidhaa {n}
+New ticket · {n} items ||| Tiketi mpya · bidhaa {n}
+Next {n} days ||| Siku {n} zijazo
+No actions recorded for this person. ||| Hakuna vitendo vilivyorekodiwa kwa mtu huyu.
+No changes yet. ||| Hakuna mabadiliko bado.
+No count differences in this period. ||| Hakuna tofauti za hesabu katika kipindi hiki.
+No counts yet. ||| Hakuna hesabu bado.
+No custom cake is waiting for a price. ||| Hakuna keki maalum inayosubiri bei.
+No custom cakes in the queue. ||| Hakuna keki maalum kwenye foleni.
+No devices are registered yet. Make a code below, then register the first one. ||| Hakuna kifaa kilichosajiliwa bado. Tengeneza msimbo hapa chini, kisha usajili cha kwanza.
+No devices are registered yet. ||| Hakuna kifaa kilichosajiliwa bado.
+No history ||| Hakuna historia
+No ingredients match. Clear the search or the filter. ||| Hakuna kiungo kinacholingana. Futa utafutaji au kichujio.
+No ingredients yet. Inventory adds them in Stock. ||| Hakuna viungo bado. Stoo huviongeza kwenye Stoku.
+No items yet ||| Hakuna bidhaa bado
+No open tickets ||| Hakuna tiketi zilizo wazi
+No orders in this period. ||| Hakuna oda katika kipindi hiki.
+No payments in this period. ||| Hakuna malipo katika kipindi hiki.
+No payments or refunds have been recorded yet. ||| Hakuna malipo wala marejesho yaliyorekodiwa bado.
+No payments yet today. ||| Hakuna malipo bado leo.
+No price ||| Hakuna bei
+No refunds ||| Hakuna marejesho
+No refunds in this period. ||| Hakuna marejesho katika kipindi hiki.
+No reorder level set ||| Hakuna kiwango cha kuagiza upya
+No reports yet. Use Report usage after a bake. ||| Hakuna ripoti bado. Tumia Ripoti matumizi baada ya uokaji.
+No sales yesterday to compare with ||| Hakuna mauzo jana ya kulinganisha
+No stock requests are open. ||| Hakuna maombi ya stoku yaliyo wazi.
+No suggestion for this cake. ||| Hakuna pendekezo kwa keki hii.
+No usage reports yet. ||| Hakuna ripoti za matumizi bado.
+No usage was confirmed in this period. ||| Hakuna matumizi yaliyothibitishwa katika kipindi hiki.
+Nobody owes anything. ||| Hakuna anayedaiwa.
+Node ||| Nodi
+None ||| Hakuna
+Not allowed ||| Hairuhusiwi
+Not confirmed ||| Haijathibitishwa
+Not counted ||| Haijahesabiwa
+Not counted today ||| Haijahesabiwa leo
+Not enough confirmed usage yet. ||| Hakuna matumizi ya kutosha yaliyothibitishwa bado.
+Not enough data yet ||| Data haitoshi bado
+Not enough history ||| Historia haitoshi
+Not enough history yet to forecast {*}. It improves as the chefs' usage is confirmed. ||| Historia haitoshi bado kutabiri {*}. Inaboreka matumizi ya wakaji yanapothibitishwa.
+Not now ||| Si sasa
+Not sent yet ||| Haijatumwa bado
+Not signed in ||| Hajaingia
+Note ||| Maelezo
+Note (needed if the count is not what is expected) ||| Maelezo (yanahitajika ikiwa hesabu si inayotarajiwa)
+Note (needed if the count is not what the system expects) ||| Maelezo (yanahitajika ikiwa hesabu si ile mfumo unatarajia)
+Note (needed to dismiss, optional to approve) ||| Maelezo (yanahitajika kuondoa, si lazima kuidhinisha)
+Note (optional) ||| Maelezo (si lazima)
+Note from {*}: {*} ||| Maelezo kutoka kwa {*}: {*}
+Note to the cashier ||| Maelezo kwa keshia
+Note to the cashier (optional) ||| Maelezo kwa keshia (si lazima)
+Note: {*} ||| Maelezo: {*}
+Nothing being prepared ||| Hakuna kinachoandaliwa
+Nothing closed yet ||| Hakuna kilichofungwa bado
+Nothing completed yet ||| Hakuna kilichokamilika bado
+Nothing here yet. Use New item to add one. ||| Hakuna kitu hapa bado. Tumia Bidhaa mpya kuongeza.
+Nothing here. ||| Hakuna kitu hapa.
+Nothing in the oven ||| Hakuna kitu jikoni
+Nothing in the queue ||| Hakuna kitu kwenye foleni
+Nothing is running low. ||| Hakuna kinachoisha.
+Nothing is up right now. ||| Hakuna kinachohitaji kushughulikiwa sasa.
+Nothing is waiting for Inventory. ||| Hakuna kinachosubiri Stoo.
+Nothing is waiting to go out. ||| Hakuna kinachosubiri kutoka.
+Nothing logged yet. ||| Hakuna kilichoandikwa bado.
+Nothing ready yet ||| Hakuna kilicho tayari bado
+Nothing recorded yet. ||| Hakuna kilichorekodiwa bado.
+Nothing waiting ||| Hakuna kinachosubiri
+Nothing waiting to be started ||| Hakuna kinachosubiri kuanzwa
+Nothing wasted in this period. ||| Hakuna kilichopotea katika kipindi hiki.
+Nothing yet today. ||| Hakuna kitu bado leo.
+Off ||| Imezimwa
+Offered at the counter ||| Inatolewa kaunta
+Offline rules saved ||| Sheria za nje ya mtandao zimehifadhiwa
+Offline sale from {*} on {*} needs your decision ||| Mauzo ya nje ya mtandao kutoka kwa {*} kwenye {*} yanahitaji uamuzi wako
+Offline sale to review ||| Mauzo ya nje ya mtandao ya kukagua
+Offline sales that need a look ||| Mauzo ya nje ya mtandao yanayohitaji kukaguliwa
+On track ||| Iko sawa
+Only Inventory can change quantities. ||| Stoo pekee ndiyo inayoweza kubadilisha kiasi.
+Only devices the owner or IT has registered can open the system. Ask them for a pairing code (Owner page, Devices). It works once and expires in about {n} minutes. ||| Vifaa vilivyosajiliwa na mmiliki au IT pekee ndivyo vinavyoweza kufungua mfumo. Waombe msimbo wa kuunganisha (ukurasa wa Mmiliki, Vifaa). Hufanya kazi mara moja na huisha baada ya takriban dakika {n}.
+Only me ||| Mimi pekee
+Only {*} is on hand. ||| Kuna {*} pekee zilizopo.
+Open recipe mode ||| Fungua hali ya mapishi
+Open ticket ||| Fungua tiketi
+Optional, e.g. {n}-inch round ||| Si lazima, mfano duara la inchi {n}
+Order S-{n} {*} ||| Oda S-{n} {*}
+Order issue ||| Tatizo la oda
+Order more {*} ||| Agiza {*} zaidi
+Order · New ||| Oda · Mpya
+Other ||| Nyingine
+Out of stock ||| Imeisha stoku
+Overdue and due today · {n} ||| Zilizochelewa na zinazotakiwa leo · {n}
+Overdue order ||| Oda iliyochelewa
+PIN ({n} to {n} digits) ||| PIN (tarakimu {n} hadi {n})
+Paid back by ||| Imerudishwa kwa
+Paid in full ||| Imelipwa kikamilifu
+Part paid ||| Imelipwa kiasi
+Part payment: on ||| Malipo ya awamu: yamewashwa
+Past counts ||| Hesabu zilizopita
+Payment ||| Malipo
+Payment recorded. ||| Malipo yamerekodiwa.
+Pending usage {*} · Never counted ||| Matumizi yanayosubiri {*} · Haijawahi kuhesabiwa
+Permission lasts a whole number of hours, {n} to {n} ||| Ruhusa hudumu idadi kamili ya saa, {n} hadi {n}
+Permission lasts this many hours ||| Ruhusa hudumu kwa saa hizi
+Pick a cake to see what to make. ||| Chagua keki kuona cha kutengeneza.
+Pick an ingredient to see how it is going. ||| Chagua kiungo kuona hali yake.
+Pick the cake, then tap the amount that matches what you used. Tap it again if you did not use it. ||| Chagua keki, kisha gusa kiasi kinacholingana na ulichotumia. Kigusa tena kama hukukitumia.
+Pickup · Today ||| Kuchukua · Leo
+Pieces ||| Vipande
+Place order and take payment ||| Weka oda na upokee malipo
+Posted {*} · {n} of {n} acknowledged ||| Imechapishwa {*} · {n} kati ya {n} wamekiri
+Posted {*} · {n} of {n} have read it ||| Imechapishwa {*} · {n} kati ya {n} wamesoma
+Price for {*} ||| Bei ya {*}
+Price needed ||| Bei inahitajika
+Price sent to the cashier ||| Bei imetumwa kwa keshia
+Price set to {*} ||| Bei imewekwa kuwa {*}
+Price updated ||| Bei imesasishwa
+Price: ||| Bei:
+Priced · {*} ||| Imepangiwa bei · {*}
+Product ||| Bidhaa
+Quantity ||| Kiasi
+Queue ({n}) ||| Foleni ({n})
+Re-register ||| Sajili upya
+Reactivate ||| Washa tena
+Ready ||| Tayari
+Ready ({n}) ||| Tayari ({n})
+Ready for handover · {n} ||| Tayari kukabidhiwa · {n}
+Ready. Cashier hands it over ||| Tayari. Keshia ataikabidhi
+Reason ||| Sababu
+Reason for declining ||| Sababu ya kukataa
+Reason, if you decline ||| Sababu, ukikataa
+Receipt ||| Risiti
+Receipt footer ||| Maelezo ya chini ya risiti
+Receipt for {*} ||| Risiti ya {*}
+Receipt · {*} ||| Risiti · {*}
+Receive ||| Pokea
+Receive a delivery or write off waste. Counting is done in Daily count. ||| Pokea mzigo au futa taka. Kuhesabu hufanyika kwenye Hesabu ya kila siku.
+Recent actions ||| Vitendo vya hivi karibuni
+Recently answered ||| Yaliyojibiwa hivi karibuni
+Recipe mode · {*} ||| Hali ya mapishi · {*}

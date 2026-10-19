@@ -43,12 +43,12 @@ describe('registered devices', () => {
     expect(errOf(await signIn('cashier', 'made-up-secret'))).toMatch(/not registered/);
     const names = await panel.feed('staff_signin', {});
     expect(names.ok).toBe(false);
-    expect(await panel.deviceStatus(undefined)).toEqual({ required: true, registered: false });
+    expect(await panel.deviceStatus(undefined)).toEqual({ required: true, registered: false, language: 'en' });
   });
 
   it('registers a device with a one-time code, then lets it sign in and see the names', async () => {
     const dev = await pairFirst('Counter tablet');
-    expect(await panel.deviceStatus(dev)).toEqual({ required: true, registered: true, name: 'Counter tablet' });
+    expect(await panel.deviceStatus(dev)).toEqual({ required: true, registered: true, name: 'Counter tablet', language: 'en' });
     const names = await panel.feed('staff_signin', {}, undefined, dev);
     expect(names.ok && names.data.length).toBe(DEMO_STAFF.length);
     expect(ok<{ sessionId: string }>(await signIn('cashier', dev)).sessionId).toBeTruthy();
@@ -161,7 +161,7 @@ describe('registered devices', () => {
     expect(errOf(await panel.dispatch('devices/create_code', { name: 'Counter tablet' }, owner, { deviceToken: office }))).toMatch(/already registered/);
     const code = ok<{ code: string }>(await panel.dispatch('devices/create_code', { name: 'Counter tablet', replaces: old.id }, owner, { deviceToken: office })).code;
     const fresh = ok<{ deviceToken: string }>(await panel.dispatch('devices/pair', { code })).deviceToken;
-    expect(await panel.deviceStatus(fresh)).toEqual({ required: true, registered: true, name: 'Counter tablet' });
+    expect(await panel.deviceStatus(fresh)).toEqual({ required: true, registered: true, name: 'Counter tablet', language: 'en' });
     // The old secret and its sessions are dead, and the name is listed once.
     expect(await panel.deviceStatus(tablet)).toMatchObject({ registered: false });
     expect((await panel.feed('me', {}, cashier)).ok).toBe(false);
@@ -185,7 +185,7 @@ describe('registered devices', () => {
 
   it('is off when the host does not ask for it', async () => {
     const open = createPanel({ store, clock });
-    expect(await open.deviceStatus(undefined)).toEqual({ required: false, registered: false });
+    expect(await open.deviceStatus(undefined)).toEqual({ required: false, registered: false, language: 'en' });
     expect((await open.feed('staff_signin', {})).ok).toBe(true);
   });
 

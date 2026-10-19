@@ -34,8 +34,8 @@ h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01
 .act{grid-column:span 12}
 h2{font-size:17px;font-weight:600;margin:0}
 .row{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.seg{display:inline-flex;background:var(--paper);border-radius:999px;padding:3px}
-.seg button{border:0;background:none;padding:5px 14px;border-radius:999px;color:var(--mute);transition:all .35s var(--ease)}
+.seg{display:inline-flex;background:var(--paper);border-radius:999px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg button{white-space:nowrap;border:0;background:none;padding:5px 14px;border-radius:999px;color:var(--mute);transition:all .35s var(--ease)}
 .seg button[aria-pressed="true"]{background:var(--surf);color:var(--ink);box-shadow:var(--sh)}
 svg{display:block;width:100%;height:auto;overflow:visible}
 .item{display:grid;gap:2px;padding:12px 14px;border-radius:12px;background:var(--paper);border-left:3px solid var(--sage)}

@@ -95,12 +95,41 @@ export async function signInAs(page, base, role) {
 /** Playwright is not a project dependency (browsers are installed on the machine), so find it where it lives. */
 export function loadPlaywright() {
   const req = createRequire(import.meta.url);
+  let pw;
   try {
-    return req('playwright');
+    pw = req('playwright');
   } catch {
     const g = execSync('npm root -g', { encoding: 'utf8' }).trim();
-    return createRequire(path.join(g, 'x.js'))('playwright');
+    pw = createRequire(path.join(g, 'x.js'))('playwright');
   }
+  // With I18N_COLLECT=<file>, every page records the English text it showed that has no Kiswahili yet (see src/i18n.ts).
+  if (process.env.I18N_COLLECT && !pw.__i18nWrapped) {
+    pw.__i18nWrapped = true;
+    const file = process.env.I18N_COLLECT;
+    const launch = pw.chromium.launch.bind(pw.chromium);
+    pw.chromium.launch = async (...args) => {
+      const browser = await launch(...args);
+      const newContext = browser.newContext.bind(browser);
+      browser.newContext = async (...a) => {
+        const ctx = await newContext(...a);
+        await ctx.addInitScript(() => {
+          try {
+            localStorage.setItem('cake-pos-collect', '1');
+            localStorage.setItem('cake-pos-lang', 'sw');
+          } catch {}
+        });
+        ctx.on('page', (page) =>
+          page.on('console', (m) => {
+            const t = m.text();
+            if (t.startsWith('@@MISSED ')) fs.appendFileSync(file, t.slice(9) + '\n');
+          }),
+        );
+        return ctx;
+      };
+      return browser;
+    };
+  }
+  return pw;
 }
 
 /** Signs in as another role in its own browser context without opening a page of theirs, and returns a way to send and read. */

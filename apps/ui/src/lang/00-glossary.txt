@@ -1,0 +1,7 @@
+# Words used everywhere. Keep the same word for the same idea in every file.
+# Owner = Mmiliki, Cashier = Keshia, Baker = Mwokaji, Inventory = Msimamizi wa stoo, IT = IT
+Owner ||| Mmiliki
+Cashier ||| Keshia
+Baker ||| Mwokaji
+Inventory ||| Stoo
+IT ||| IT

@@ -78,6 +78,7 @@ const show=n=>{for(const id of["off","pair","pick","pin"])$("#"+id).hidden=id!==
 async function start(){
   msg("");$("#sub").textContent="Checking this device…";$("#foot").hidden=true;
   const d=await Cake.deviceStatus();
+  if(d&&d.language)Cake.setLanguage(d.language);
   if(!d){$("#sub").textContent="Cannot connect";show("off");return}
   if(d.required&&!d.registered){$("#sub").textContent="This device is not registered";show("pair");$("#code").focus();return}
   if(d.name){$("#foot").textContent="This device: "+d.name;$("#foot").hidden=false}

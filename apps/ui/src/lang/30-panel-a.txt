@@ -1,0 +1,251 @@
+# Messages and labels that come from the server (alerts to payments). The server keeps writing English; these are only shown translated.
+"{*}" is not an alert type. ||| "{*}" si aina ya tahadhari.
+Choose a setting to change. ||| Chagua mpangilio wa kubadilisha.
+Choose an alert. ||| Chagua tahadhari.
+Count was off for {*} ||| Hesabu ilikuwa na tofauti kwa {*}
+Days before a cake is due ||| Siku kabla keki haijatakiwa
+Days before reorder level ||| Siku kabla ya kiwango cha kuagiza upya
+Days before running out ||| Siku kabla ya kuisha
+Hours a price request may wait ||| Saa ombi la bei linaweza kusubiri
+Hours a request may wait ||| Saa ombi linaweza kusubiri
+Hours usage may wait ||| Saa matumizi yanaweza kusubiri
+It could not be recorded as it was. ||| Haikuweza kurekodiwa kama ilivyokuwa.
+It was due {*}. {*} not handed over yet. ||| Ilitakiwa {*}. {*} bado hazijakabidhiwa.
+Minutes before an urgent request is escalated ||| Dakika kabla ombi la dharura halijapelekwa juu
+Nobody has taken: {*} ||| Hakuna aliyechukua: {*}
+Order {*} for {*} is overdue ||| Oda {*} ya {*} imechelewa
+Order {*}: {*} servings, {*}. Due {*}. ||| Oda {*}: watu {*}, {*}. Inatakiwa {*}.
+Saw alerts (nothing new) ||| Imeona tahadhari (hakuna mpya)
+Saw {*} ||| Imeona {*}
+Snooze for {*} to {*} hours. ||| Ahirisha kwa saa {*} hadi {*}.
+Snoozed an alert for {*} ||| Imeahirisha tahadhari kwa {*}
+That alert has already cleared. ||| Tahadhari hiyo imeshaondoka.
+That alert is not available. ||| Tahadhari hiyo haipatikani.
+Took the alert: {*} ||| Imechukua tahadhari: {*}
+Usage has been waiting a long time ||| Matumizi yamesubiri kwa muda mrefu
+Usage is waiting to be confirmed ||| Matumizi yanasubiri kuthibitishwa
+an item ||| bidhaa moja
+in {*} days ({*}) ||| baada ya siku {*} ({*})
+today ({*}) ||| leo ({*})
+tomorrow ({*}) ||| kesho ({*})
+yesterday ({*}) ||| jana ({*})
+{*} asked {*} ago. The customer is waiting for a price. ||| {*} aliomba {*} zilizopita. Mteja anasubiri bei.
+{*} days ago ({*}) ||| siku {*} zilizopita ({*})
+{*} has already taken this. ||| {*} ameshachukua hili.
+{*} is out of stock ||| {*} imeisha stoku
+{*} must be a whole number from {*} to {*}. ||| {*} lazima iwe namba kamili kuanzia {*} hadi {*}.
+Acknowledged an announcement (already done) ||| Imekiri tangazo (tayari imefanywa)
+Acknowledged an announcement: {*} ||| Imekiri tangazo: {*}
+Posted an announcement{*}: {*} ||| Imechapisha tangazo{*}: {*}
+Read an announcement: {*} ||| Imesoma tangazo: {*}
+That announcement does not exist. ||| Tangazo hilo halipo.
+That announcement is already down. ||| Tangazo hilo tayari limeshushwa.
+That announcement is no longer up. ||| Tangazo hilo halionyeshwi tena.
+There are a lot of announcements up. Take some down first. ||| Kuna matangazo mengi yaliyowekwa. Shusha baadhi kwanza.
+This announcement does not ask for an acknowledgement. ||| Tangazo hili halihitaji kukiri.
+Took down an announcement: {*} ||| Imeshusha tangazo: {*}
+Write the announcement first. ||| Andika tangazo kwanza.
+{*} of {*} acknowledged ||| {*} kati ya {*} wamekiri
+{*} of {*} have read it ||| {*} kati ya {*} wamesoma
+Choose a PIN that is different from the current one. ||| Chagua PIN tofauti na ya sasa.
+Enter your 4 to 6 digit PIN. ||| Weka PIN yako ya tarakimu 4 hadi 6.
+Sign-in refused for {*} ||| Kuingia kumekataliwa kwa {*}
+Sign-in refused: this device is not registered ||| Kuingia kumekataliwa: kifaa hiki hakijasajiliwa
+That PIN does not match. ||| PIN hiyo hailingani.
+That PIN does not match. Try again. ||| PIN hiyo hailingani. Jaribu tena.
+The new PIN must be 4 to 6 digits. ||| PIN mpya lazima iwe na tarakimu 4 hadi 6.
+{*} changed their PIN ||| {*} amebadilisha PIN yake
+{*} entered a wrong current PIN while changing it ||| {*} aliweka PIN ya sasa isiyo sahihi alipokuwa anaibadilisha
+A batch can be taken back for {*} minutes. Ask the owner. ||| Kundi linaweza kuchukuliwa tena ndani ya dakika {*}. Muulize mmiliki.
+Choose what you made. ||| Chagua ulichotengeneza.
+Logged a batch: {*} × {*} ||| Imeandika kundi: {*} × {*}
+Only the person who logged a batch can take it back. Ask the owner. ||| Aliyeandika kundi pekee ndiye anaweza kulichukua tena. Muulize mmiliki.
+Some of this batch has already been sold, so it cannot be taken back. Ask the owner to set the stock. ||| Sehemu ya kundi hili tayari imeuzwa, kwa hivyo haliwezi kuchukuliwa tena. Mwombe mmiliki aweke stoku.
+That batch does not exist. ||| Kundi hilo halipo.
+That batch was already taken back. ||| Kundi hilo tayari limechukuliwa tena.
+That item is no longer on the menu. ||| Bidhaa hiyo haipo tena kwenye menyu.
+Took back a batch: {*} × {*} ||| Imechukua tena kundi: {*} × {*}
+A product with that name already exists. ||| Bidhaa yenye jina hilo tayari ipo.
+Add at least one choice. ||| Ongeza angalau chaguo moja.
+Archived {*} ||| Imehifadhi {*} kwenye kumbukumbu
+Choose the options this product comes in first. ||| Chagua kwanza machaguo ambayo bidhaa hii inakuja nayo.
+Created {*} with {*} choices ||| Imeunda {*} yenye machaguo {*}
+Each choice needs a different name. ||| Kila chaguo linahitaji jina tofauti.
+Enter a price of zero or more. ||| Weka bei ya sifuri au zaidi.
+Give the option group a name, like Size or Filling. ||| Peana kundi la machaguo jina, kama Ukubwa au Kujaza.
+Give the product a name. ||| Peana bidhaa jina.
+Marked available ||| Imewekwa kuwa inapatikana
+Marked unavailable ||| Imewekwa kuwa haipatikani
+One of the chosen options no longer exists. ||| Mojawapo ya machaguo yaliyochaguliwa halipo tena.
+Price {*} applied to {*} combinations ||| Bei {*} imewekwa kwa michanganyiko {*}
+That combination no longer exists. ||| Mchanganyiko huo haupo tena.
+That item is already hidden. ||| Bidhaa hiyo tayari imefichwa.
+That item is already showing. ||| Bidhaa hiyo tayari inaonyeshwa.
+That item is archived. ||| Bidhaa hiyo imehifadhiwa kwenye kumbukumbu.
+That product no longer exists. ||| Bidhaa hiyo haipo tena.
+This product is archived. ||| Bidhaa hii imehifadhiwa kwenye kumbukumbu.
+Count at least one item first. ||| Hesabu angalau bidhaa moja kwanza.
+Picked up the daily count ||| Imechukua hesabu ya kila siku
+Skipped {*} in the daily count ||| Imeruka {*} kwenye hesabu ya kila siku
+Started the daily count ||| Imeanza hesabu ya kila siku
+That count is no longer open. ||| Hesabu hiyo haijafunguliwa tena.
+That item is not in the count. ||| Bidhaa hiyo haipo kwenye hesabu.
+The count cannot be negative. ||| Hesabu haiwezi kuwa hasi.
+Threw away the daily count ({*} items counted) ||| Imetupa hesabu ya kila siku (bidhaa {*} zilihesabiwa)
+today {*} ||| leo {*}
+A cake can have up to {*} reference photos. ||| Keki inaweza kuwa na hadi picha {*} za rejea.
+Changed the custom cake details ||| Imebadilisha maelezo ya keki maalum
+Choose a flavor. ||| Chagua ladha.
+Layers must be 1 or more. ||| Tabaka lazima ziwe 1 au zaidi.
+Order {*} is {*}. Start a new order instead. ||| Oda {*} ni {*}. Anza oda mpya badala yake.
+Removed a reference photo from the custom cake ||| Imeondoa picha ya rejea kwenye keki maalum
+Started a custom cake ({*} servings, {*}) ||| Imeanzisha keki maalum (watu {*}, {*})
+That custom cake is not on the order. ||| Keki maalum hiyo haipo kwenye oda.
+That photo is already on this cake. ||| Picha hiyo tayari ipo kwenye keki hii.
+That photo is already used on another cake. ||| Picha hiyo tayari inatumika kwenye keki nyingine.
+That photo is not on this cake. ||| Picha hiyo haipo kwenye keki hii.
+That photo was not found. Upload it again. ||| Picha hiyo haikupatikana. Ipakie tena.
+The owner is pricing this cake. Withdraw the quote request first to change it. ||| Mmiliki anapanga bei ya keki hii. Ondoa ombi la bei kwanza ili kuibadilisha.
+The size or recipe changed after the owner quoted. Ask the owner whether the price should change. ||| Ukubwa au mapishi yamebadilika baada ya mmiliki kutoa bei. Muulize mmiliki kama bei ibadilike.
+This cake has already been started, so its details can no longer be changed here. ||| Keki hii tayari imeanzwa, kwa hivyo maelezo yake hayawezi kubadilishwa hapa tena.
+This cake has already been started, so photos can no longer be removed. ||| Keki hii tayari imeanzwa, kwa hivyo picha haziwezi kuondolewa tena.
+A day that has not happened yet cannot be closed. ||| Siku ambayo haijafika haiwezi kufungwa.
+Choose a real date. ||| Chagua tarehe halisi.
+Only the owner can close the day. ||| Mmiliki pekee ndiye anaweza kufunga siku.
+Only the owner can see the end-of-day report. ||| Mmiliki pekee ndiye anaweza kuona ripoti ya mwisho wa siku.
+The count is {*} by {*}. Write a short note saying why, then close. ||| Hesabu ni {*} kwa {*}. Andika maelezo mafupi ya sababu, kisha funga.
+short ||| pungufu
+over ||| ziada
+Write a short note saying why the count is different. ||| Andika maelezo mafupi ya sababu hesabu ni tofauti.
+You cannot leave more in the drawer than you counted. ||| Huwezi kuacha zaidi kwenye droo kuliko ulivyohesabu.
+{*} more than expected. ||| {*} zaidi ya inavyotarajiwa.
+{*} short. ||| {*} pungufu.
+A device called "{*}" is already registered. ||| Kifaa kinachoitwa "{*}" tayari kimesajiliwa.
+Cancelled the pairing code for "{*}" ||| Imeghairi msimbo wa kuunganisha wa "{*}"
+Give the device a name, such as "Counter tablet", so you can tell it apart later. ||| Peana kifaa jina, kama "Tablet ya kaunta", ili uweze kukitofautisha baadaye.
+Give the device a name. ||| Peana kifaa jina.
+Keep the device name to 40 characters or fewer. ||| Weka jina la kifaa lisizidi herufi 40.
+Registered the device "{*}"{*} ||| Imesajili kifaa "{*}"{*}
+Renamed the device "{*}" to "{*}" ||| Imebadilisha jina la kifaa "{*}" kuwa "{*}"
+That code is no longer open. ||| Msimbo huo haujafunguliwa tena.
+That device is already revoked. ||| Kifaa hicho tayari kimefutiwa ruhusa.
+That device is no longer registered. ||| Kifaa hicho hakijasajiliwa tena.
+The device you want to replace is no longer registered. ||| Kifaa unachotaka kubadilisha hakijasajiliwa tena.
+There are too many open codes. Cancel the ones you do not need. ||| Kuna misimbo mingi iliyo wazi. Ghairi ile usiyoihitaji.
+There is already an open code for "{*}". Use it, or cancel it first. ||| Tayari kuna msimbo ulio wazi wa "{*}". Uutumie, au uughairi kwanza.
+This device is not registered. Ask the owner or IT for a pairing code. ||| Kifaa hiki hakijasajiliwa. Mwombe mmiliki au IT msimbo wa kuunganisha.
+This is the only registered device. Register another one first, or nobody could sign in. ||| Hiki ndicho kifaa pekee kilichosajiliwa. Sajili kingine kwanza, la sivyo hakuna ambaye angeweza kuingia.
+You are using this device right now, so it cannot be replaced from here. It is already registered. ||| Unatumia kifaa hiki sasa hivi, kwa hivyo hakiwezi kubadilishwa kutoka hapa. Tayari kimesajiliwa.
+You are using this device right now. Revoke it from another device, so you are not locked out by accident. ||| Unatumia kifaa hiki sasa hivi. Kifutie ruhusa kutoka kifaa kingine, ili usijifungie nje kwa bahati mbaya.
+{*} was revoked ||| Ruhusa ya {*} imefutwa
+{*}: Seen ||| {*}: Imeonekana
+{n} differences · {n} big · {n} not counted. Nothing is saved to stock until you submit. ||| Tofauti {n} · kubwa {n} · {n} hazijahesabiwa. Hakuna kinachohifadhiwa kwenye stoku hadi uwasilishe.
+Changed ingredient {*} ||| Imebadilisha kiungo {*}
+Enter a name. ||| Weka jina.
+Enter an amount greater than zero. ||| Weka kiasi kikubwa kuliko sifuri.
+Give each amount a name, such as "Light". ||| Peana kila kiasi jina, kama "Kidogo".
+Opening stock cannot be negative. ||| Stoku ya kuanzia haiwezi kuwa hasi.
+Packaging has no usage amounts for the baker. ||| Vifungashio havina kiasi cha matumizi kwa mwokaji.
+Received {*} of {*} ||| Imepokea {*} ya {*}
+Remove its usage amounts first. Packaging has none. ||| Ondoa kiasi chake cha matumizi kwanza. Vifungashio havina.
+Say what happened, such as "spoiled" or "spilled". ||| Eleza kilichotokea, kama "kimeharibika" au "kimemwagika".
+That amount is too small to count. ||| Kiasi hicho ni kidogo mno kuhesabiwa.
+That ingredient does not exist. ||| Kiungo hicho hakipo.
+The reorder level cannot be negative. ||| Kiwango cha kuagiza upya hakiwezi kuwa hasi.
+There is already an ingredient with that name. ||| Tayari kuna kiungo chenye jina hilo.
+Two amounts have the same name. ||| Kuna viwango viwili vyenye jina moja.
+Wrote off {*} of {*}: {*} ||| Imefuta {*} ya {*} kama taka: {*}
+{*} is used in a recipe rule, so it cannot be packaging. ||| {*} inatumika kwenye sheria ya mapishi, kwa hivyo haiwezi kuwa kifungashio.
+A custom cake on this order has no price yet. ||| Keki maalum kwenye oda hii bado haina bei.
+Customer: {*} ||| Mteja: {*}
+Nothing has been paid yet. ||| Hakuna kilicholipwa bado.
+Nothing to pay ||| Hakuna cha kulipa
+Paid {*} {*} ||| Imelipwa {*} {*}
+Receipt {*} ||| Risiti {*}
+Refund: {*} ||| Marejesho: {*}
+That order no longer exists. ||| Oda hiyo haipo tena.
+There is nothing on this order yet. ||| Hakuna kitu kwenye oda hii bado.
+This order was cancelled. ||| Oda hii imeghairiwa.
+Waiting for a price ||| Inasubiri bei
+A test was just sent. Wait a minute before sending another. ||| Jaribio limetumwa punde. Subiri dakika moja kabla ya kutuma lingine.
+Add a phone number before choosing text messages or WhatsApp. ||| Ongeza namba ya simu kabla ya kuchagua ujumbe mfupi au WhatsApp.
+Cake POS: {*}. {*} ||| Cake POS: {*}. {*}
+Changed contact details for {*} ||| Imebadilisha mawasiliano ya {*}
+No SMS provider is set up on this server. ||| Hakuna mtoa huduma wa SMS aliyewekwa kwenye seva hii.
+No WhatsApp provider is set up on this server. ||| Hakuna mtoa huduma wa WhatsApp aliyewekwa kwenye seva hii.
+Nobody has a phone or device set up for this. ||| Hakuna mwenye simu au kifaa kilichowekwa kwa hili.
+Push is not set up on this server. ||| Arifa za push hazijawekwa kwenye seva hii.
+Sent myself a test notification ||| Imejitumia arifa ya majaribio
+Test message ||| Ujumbe wa majaribio
+That device is no longer subscribed. ||| Kifaa hicho hakijajiandikisha tena.
+That person does not exist. ||| Mtu huyo hayupo.
+The alert no longer exists. ||| Tahadhari hiyo haipo tena.
+The device has unsubscribed. ||| Kifaa kimejiondoa.
+The problem cleared before this was sent. ||| Tatizo liliisha kabla hii haijatumwa.
+This is a test for {*}. If you can read it, alerts will reach you here. ||| Hili ni jaribio la {*}. Ukiweza kulisoma, tahadhari zitakufikia hapa.
+Turned off notifications on a device ||| Imezima arifa kwenye kifaa
+Turned on notifications on a device ||| Imewasha arifa kwenye kifaa
+Write the number with the country code, like +255712345678. ||| Andika namba pamoja na msimbo wa nchi, kama +255712345678.
+You can only change your own contact details. ||| Unaweza kubadilisha mawasiliano yako mwenyewe pekee.
+{*} had already taken it. ||| {*} alikuwa ameshaichukua.
+Dismissed an offline sale from {*} on {*} ||| Imeondoa mauzo ya nje ya mtandao kutoka kwa {*} kwenye {*}
+If it can no longer be sold, dismiss it with a note. ||| Kama haiwezi kuuzwa tena, iondoe kwa maelezo.
+Selling offline is switched off. Ask the owner to turn it on in the shop settings. ||| Kuuza nje ya mtandao kumezimwa. Mwombe mmiliki aliwashe kwenye mipangilio ya duka.
+Selling offline only works on a registered device. Ask the owner or IT for a pairing code. ||| Kuuza nje ya mtandao kunafanya kazi kwenye kifaa kilichosajiliwa pekee. Mwombe mmiliki au IT msimbo wa kuunganisha.
+That sale has already been dealt with. ||| Mauzo hayo tayari yameshughulikiwa.
+That sale is no longer in the list. ||| Mauzo hayo hayapo tena kwenye orodha.
+This kind of action cannot be approved. Dismiss it. ||| Aina hii ya kitendo haiwezi kuidhinishwa. Kiondoe.
+Write a short note saying why you are dismissing it. ||| Andika maelezo mafupi ya sababu unaliondoa.
+Hand over ||| Kabidhi
+Mark delivered ||| Weka kuwa imefikishwa
+Out for delivery ||| Iko njiani kupelekwa
+Start decorating ||| Anza kupamba
+A cake on this order is already being made. Only the owner can cancel it. ||| Keki kwenye oda hii tayari inatengenezwa. Mmiliki pekee ndiye anaweza kuighairi.
+Add a delivery address. ||| Ongeza anwani ya uwasilishaji.
+Add at least one item to the sale. ||| Ongeza angalau bidhaa moja kwenye mauzo.
+Cancelled order {*} ||| Imeghairi oda {*}
+Changed delivery details on order {*} ||| Imebadilisha maelezo ya uwasilishaji kwenye oda {*}
+Choose a valid delivery date. ||| Chagua tarehe sahihi ya uwasilishaji.
+Choose today or a later date. ||| Chagua leo au tarehe ya baadaye.
+Choose what to change. ||| Chagua cha kubadilisha.
+Enter a quantity of 1 or more. ||| Weka kiasi cha 1 au zaidi.
+Handed over ||| Imekabidhiwa
+Marked ready ||| Imewekwa kuwa tayari
+No ingredient suggestion could be made because no recipe lines fit this cake. The baker can still report what was used. ||| Hakuna pendekezo la viungo lililoweza kutolewa kwa sababu hakuna mstari wa mapishi unaofaa keki hii. Mwokaji bado anaweza kuripoti kilichotumika.
+Nothing has been paid on order {*} yet. ||| Hakuna kilicholipwa kwenye oda {*} bado.
+Only items that have not been prepared can be removed. ||| Bidhaa ambazo hazijaandaliwa pekee ndizo zinaweza kuondolewa.
+Order {*} is already cancelled. ||| Oda {*} tayari imeghairiwa.
+Order {*} is {*}. ||| Oda {*} ni {*}.
+Order {*} still has {*} unpaid. ||| Oda {*} bado ina {*} ambazo hazijalipwa.
+Removed {*} ||| Imeondoa {*}
+Sent out for delivery ||| Imetumwa kupelekwa
+Sold order {*} for {*} ||| Imeuza oda {*} kwa {*}
+Some items were already handed over, so the order cannot be cancelled. ||| Baadhi ya bidhaa tayari zimekabidhiwa, kwa hivyo oda haiwezi kughairiwa.
+Something is already out for delivery, so this order cannot become a pickup. ||| Kuna kitu tayari kiko njiani kupelekwa, kwa hivyo oda hii haiwezi kuwa ya kuchukuliwa.
+Started baking ||| Imeanza kuoka
+Started decorating ||| Imeanza kupamba
+Started order {*} ||| Imeanzisha oda {*}
+Stock was short by {*} for {*}. It has been logged for the daily count. ||| Stoku ilikuwa pungufu kwa {*} ya {*}. Imeandikwa kwa ajili ya hesabu ya kila siku.
+That item has already been handed over. ||| Bidhaa hiyo tayari imekabidhiwa.
+That item is already removed. ||| Bidhaa hiyo tayari imeondolewa.
+That item is no longer in the catalogue. ||| Bidhaa hiyo haipo tena kwenye katalogi.
+That item is not on the order. ||| Bidhaa hiyo haipo kwenye oda.
+That product has been archived. ||| Bidhaa hiyo imehifadhiwa kwenye kumbukumbu.
+That step is not available for this item right now, or not for your role. ||| Hatua hiyo haipatikani kwa bidhaa hii sasa, au si kwa jukumu lako.
+That version has no price yet. Ask the owner to set one. ||| Toleo hilo halina bei bado. Mwombe mmiliki aweke.
+That version is not available. ||| Toleo hilo halipatikani.
+The baker has already started a cake on this order. Tell them about the new date. ||| Mwokaji tayari ameanza keki kwenye oda hii. Mwambie kuhusu tarehe mpya.
+The cake was removed from the order ||| Keki imeondolewa kwenye oda
+The order was cancelled ||| Oda imeghairiwa
+The same item appears twice in this sale. ||| Bidhaa ile ile inaonekana mara mbili kwenye mauzo haya.
+This cake is already being made. Ask the owner to cancel it. ||| Keki hii tayari inatengenezwa. Mwombe mmiliki aighairi.
+This order has been paid. Only the owner can cancel it and decide on a refund. ||| Oda hii imelipwa. Mmiliki pekee ndiye anaweza kuighairi na kuamua kuhusu marejesho.
+This order has payments. Ask the owner to change it. ||| Oda hii ina malipo. Mwombe mmiliki aibadilishe.
+Write the phone number with the country code, like +255712345678. ||| Andika namba ya simu pamoja na msimbo wa nchi, kama +255712345678.
+{*} is hidden from the counter. ||| {*} imefichwa kaunta.
+{*} is off the menu today. ||| {*} haipo kwenye menyu leo.
+A custom cake on this order has no price yet. Wait for the owner's quote, or remove the cake, before taking payment. ||| Keki maalum kwenye oda hii bado haina bei. Subiri bei ya mmiliki, au ondoa keki, kabla ya kupokea malipo.
+Add a reason for the refund. ||| Ongeza sababu ya marejesho.
+Add items to the order before taking a payment. ||| Ongeza bidhaa kwenye oda kabla ya kupokea malipo.
+Enter a refund amount greater than zero. ||| Weka kiasi cha marejesho kikubwa kuliko sifuri.
+Enter an amount greater than zero. ||| Weka kiasi kikubwa kuliko sifuri.

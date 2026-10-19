@@ -5,6 +5,22 @@
 import { createClient, localStorageTokenStore } from '@cake-pos/client';
 import type { ClientResult, FeedMap, FeedName, IntentMap, IntentName, Role, SessionInfo, StaffSigninRow } from '@cake-pos/client';
 
+import * as i18n from './i18n';
+import type { Lang } from './i18n';
+
+i18n.early();
+
+/** Translates a piece of text into the shop's language (Kiswahili), or leaves it as it is. */
+export const tr = i18n.tr;
+export const setLanguage = i18n.setLanguage;
+export const language = i18n.current;
+export const onLanguage = i18n.onChange;
+
+/** Follows the shop's language: used after sign-in and whenever the settings change. */
+function followLanguage(l: Lang | undefined) {
+  if (l === 'en' || l === 'sw') void i18n.setLanguage(l);
+}
+
 const client = createClient({ tokenStore: localStorageTokenStore(), deviceStore: localStorageTokenStore('cake-pos-device'), offlineStore: localStorageTokenStore('cake-pos-offline') });
 
 /** The page each role works in. */
@@ -214,12 +230,15 @@ export async function boot(allowed: Role | Role[]): Promise<SessionInfo> {
   session = s;
   client.onSignedOut(goSignIn);
   watchConnection();
+  // Roles without the shop settings feed (IT) ask the server which language the shop uses.
+  void client.deviceStatus().then((d) => followLanguage(d?.language));
   // The shop's own settings (currency, accepted payment methods, thresholds) come from the server, never from the page.
   if (s.role !== 'it') {
     await new Promise<void>((done) => {
       feed('shop_settings', {}, (d) => {
         shop = d;
         currency = d.currencyLabel;
+        followLanguage(d.language);
         for (const l of shopListeners) l(d);
         done();
       });

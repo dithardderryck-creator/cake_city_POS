@@ -2,6 +2,10 @@
 
 Things deliberately left out for now. Nothing here blocks the screens that exist. Updated 11 Oct 2026.
 
+## Kiswahili (19 Oct 2026)
+- **Done:** a shop-wide language setting (owner Settings), every screen and the server's messages shown in Kiswahili, English kept in the backend. Test: `apps/ui/test/lang.mjs`.
+- **Still to do:** a native speaker must review the wording (`apps/ui/src/lang/*.txt`). Not checked yet: receipts shared by link and the xlsx archive (they probably stay English). The date picker follows the browser's language, not the shop's. Product, option and person names stay as typed.
+
 ## Screens and features
 - **IT page**: a small one exists (`/it.html`, 17 Oct 2026): devices (make a code, rename, re-register, revoke) and a system summary. Still to decide: the fuller IT command centre (request inbox, panel map circuits, backups, alerts, the AI monitor idea). Server side is ready (`panel_map`, `request_inbox`).
 - **Owner: "what each role can do" table**: the first design had a fixed one. Left out because a fixed table would drift from the server's real rules. If wanted, it should come from the server.

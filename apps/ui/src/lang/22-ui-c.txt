@@ -1,0 +1,219 @@
+# Text the pages build while they run (R–Z).
+Record payment ||| Rekodi malipo
+Record this sale at today's prices, under the name of the person who sold it? ||| Rekodi mauzo haya kwa bei za leo, kwa jina la aliyeuza?
+Reference (optional) ||| Rejea (si lazima)
+Reference photo ||| Picha ya rejea
+Reference photos ||| Picha za rejea
+Reference photos (optional, up to {n}) ||| Picha za rejea (si lazima, hadi {n})
+Reference {n} ||| Rejea {n}
+Refund ||| Rejesha pesa
+Refund amount (up to TSh {n}) ||| Kiasi cha kurejesha (hadi TSh {n})
+Refund approved ||| Marejesho yameidhinishwa
+Refunded ||| Imerejeshwa
+Refunded TSh {n} on order S-{n} ||| Imerejesha TSh {n} kwenye oda S-{n}
+Refund… ||| Rejesha…
+Refused ||| Imekataliwa
+Refused: this sale was changed after it was made, so it cannot be trusted. Tell the owner. ||| Imekataliwa: mauzo haya yalibadilishwa baada ya kufanywa, kwa hivyo hayaaminiki. Mwambie mmiliki.
+Remind if a price request is unanswered after (hours) ||| Kumbusha ombi la bei lisipojibiwa baada ya (saa)
+Remind if usage is still unconfirmed after (hours) ||| Kumbusha matumizi yakiwa bado hayajathibitishwa baada ya (saa)
+Remove ||| Ondoa
+Remove amount ||| Ondoa kiasi
+Remove size ||| Ondoa ukubwa
+Rename ||| Badilisha jina
+Reorder at {n} kg ||| Agiza upya kwa kilo {n}
+Reorder at {n} pcs ||| Agiza upya kwa vipande {n}
+Reorder level ||| Kiwango cha kuagiza upya
+Reorder level (optional) ||| Kiwango cha kuagiza upya (si lazima)
+Reorder level in kg ||| Kiwango cha kuagiza upya kwa kilo
+Reorder level {n} kg ||| Kiwango cha kuagiza upya kilo {n}
+Report again ||| Ripoti tena
+Request sent. ||| Ombi limetumwa.
+Request waiting ||| Ombi linasubiri
+Resume ||| Endelea
+Resume count ||| Endelea na hesabu
+Review ||| Kagua
+Review count ||| Kagua hesabu
+Revoke ||| Futa ruhusa
+Revoke {*}? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet will be refused. ||| Kufuta ruhusa ya {*}? Kila aliyeingia kwenye kifaa hicho ataondolewa sasa, na hakitaweza kufungua mfumo tena hadi kisajiliwe kwa msimbo mpya. Mauzo yoyote ya nje ya mtandao ambayo bado hayajatumwa yatakataliwa.
+Revoked devices ({n}) ||| Vifaa vilivyofutiwa ruhusa ({n})
+Revoked the device "{*}" ||| Imefuta ruhusa ya kifaa "{*}"
+Ribbon ||| Utepe
+{*} added. ||| Imeongezwa: {*}.
+Role ||| Jukumu
+Running out ||| Inaisha
+Sale {n} · TSh {n} ||| Mauzo {n} · TSh {n}
+Safety and hygiene ||| Usalama na usafi
+Sale recorded ||| Mauzo yamerekodiwa
+Save ||| Hifadhi
+Save and next ||| Hifadhi na endelea
+Save changes ||| Hifadhi mabadiliko
+Save contact ||| Hifadhi mawasiliano
+Save counter rules ||| Hifadhi sheria za kaunta
+Save new price ||| Hifadhi bei mpya
+Save offline rules ||| Hifadhi sheria za nje ya mtandao
+Save role ||| Hifadhi jukumu
+Save shop details ||| Hifadhi taarifa za duka
+Save the new count ||| Hifadhi hesabu mpya
+Save warning rules ||| Hifadhi sheria za tahadhari
+Saved ||| Imehifadhiwa
+Saved on this till · sale {n} ||| Imehifadhiwa kwenye kaunta hii · mauzo {n}
+Say why you are declining. ||| Eleza sababu ya kukataa.
+See notes ||| Ona maelezo
+See them ||| Yaone
+Seen ||| Imeonekana
+Seen by the owner ||| Imeonekana na mmiliki
+Select {*} ||| Chagua {*}
+Select a report to confirm. ||| Chagua ripoti ya kuthibitisha.
+Selling when the connection is lost ||| Kuuza muunganisho ukipotea
+Send an unanswered request up to you after (hours) ||| Kukupelekea ombi lisilojibiwa baada ya (saa)
+Send an urgent request up to you after (minutes) ||| Kukupelekea ombi la dharura baada ya (dakika)
+Send back ||| Rudisha
+Send back to the baker ||| Rudisha kwa mwokaji
+Send out ||| Tuma nje
+Send price ||| Tuma bei
+Send request ||| Tuma ombi
+Send to Inventory ||| Tuma kwa Stoo
+Sent ||| Imetumwa
+Sent back ||| Imerudishwa
+Sent back to the baker. ||| Imerudishwa kwa mwokaji.
+Sent back: {*} ||| Imerudishwa: {*}
+Sent to Inventory. Stock moves when they confirm. ||| Imetumwa kwa Stoo. Stoku itabadilika watakapothibitisha.
+Sent to the owner ||| Imetumwa kwa mmiliki
+Sent to the owner for a price. The price will show on the ticket in Orders. ||| Imetumwa kwa mmiliki kwa ajili ya bei. Bei itaonekana kwenye tiketi ndani ya Oda.
+Server unreachable ||| Seva haipatikani
+Server unreachable · selling offline ||| Seva haipatikani · inauza nje ya mtandao
+Serves ||| Inatosha watu
+serves {n} ||| inatosha watu {n}
+Set PIN ||| Weka PIN
+Shop details (printed on receipts) ||| Taarifa za duka (huchapishwa kwenye risiti)
+Shop details saved ||| Taarifa za duka zimehifadhiwa
+Shop name ||| Jina la duka
+Short tag ||| Lebo fupi
+Should be in the drawer ||| Inapaswa kuwa kwenye droo
+Show "running low" at the counter when this many or fewer are left ||| Onyesha "inaisha" kaunta zikibaki hizi au pungufu
+Sign in with your PIN to continue. ||| Ingia kwa PIN yako ili kuendelea.
+Signed in now ||| Walioingia sasa
+Size name ||| Jina la ukubwa
+Size, e.g. {n} kg ||| Ukubwa, mfano kilo {n}
+Sizes and prices. A size with no price cannot be sold yet. ||| Ukubwa na bei. Ukubwa usio na bei hauwezi kuuzwa bado.
+Sizes and prices. The switch offers a size at the counter. ||| Ukubwa na bei. Swichi hutoa ukubwa kaunta.
+Skip ||| Ruka
+Small ||| Ndogo
+Solid is real, faded is the forecast ||| Imara ni halisi, iliyofifia ni utabiri
+Some information on this screen could not be loaded. Your role cannot see this. ||| Baadhi ya taarifa kwenye skrini hii hazikupakiwa. Jukumu lako haliwezi kuona hili.
+Staffing ||| Wafanyakazi
+Start baking ||| Anza kuoka
+Start baking this cake first. ||| Anza kuoka keki hii kwanza.
+Start count ||| Anza kuhesabu
+Status of {*} ||| Hali ya {*}
+Still owed ||| Bado anadaiwa
+Still owed · TSh {n} ||| Bado anadaiwa · TSh {n}
+Stock and supplies ||| Stoku na vifaa
+Stock in and out ||| Stoku inayoingia na kutoka
+Stock level, past and forecast ||| Kiwango cha stoku, kilichopita na utabiri
+Stock now (optional) ||| Stoku sasa (si lazima)
+Stock received. ||| Stoku imepokelewa.
+Stock set to {n} ||| Stoku imewekwa kuwa {n}
+Stock · {n} kg ||| Stoku · kilo {n}
+Submit count ||| Wasilisha hesabu
+{*} is at or below its reorder level. ||| Kiwango cha kuagiza upya cha {*} kimefikiwa au kupitwa.
+{*} is running low ||| Stoku ya {*} inaisha
+Suggest one ||| Pendekeza moja
+Suggested recipe ||| Mapishi yanayopendekezwa
+Suggested {n} g ||| Inapendekezwa g {n}
+System error ||| Hitilafu ya mfumo
+System suggestion for {n} servings. ||| Pendekezo la mfumo kwa watu {n}.
+System suggestion for {n} servings. Tick as you go. ||| Pendekezo la mfumo kwa watu {n}. Weka alama unapoendelea.
+TSh {n} short. ||| Pungufu ya TSh {n}.
+Take back ||| Chukua tena
+Take down ||| Shusha
+Take it back ||| Ichukue tena
+Take part payment ||| Pokea malipo ya awamu
+Taken ||| Imechukuliwa
+Taken down ||| Imeshushwa
+Taken today ||| Zilizochukuliwa leo
+taken by {*} ||| imechukuliwa na {*}
+Tap an item to add it. ||| Gusa bidhaa kuiongeza.
+Text message ||| Ujumbe mfupi
+That amount is too large to take in one go. ||| Kiasi hicho ni kikubwa mno kupokea kwa mara moja.
+That code is not valid, was already used, or has expired. Ask the owner or IT for a new one. ||| Msimbo huo si sahihi, umeshatumika, au umeisha muda. Mwombe mmiliki au IT msimbo mpya.
+That is more than the balance of TSh {n} ||| Hiyo ni zaidi ya salio la TSh {n}
+The amounts the baker can tap when reporting usage, from smallest to largest. ||| Kiasi ambacho mwokaji anaweza kugusa anaporipoti matumizi, kutoka kidogo hadi kikubwa.
+The cashier counts, and I can too ||| Keshia anahesabu, nami naweza pia
+The catalogue is empty. Use New item to add the first product. ||| Katalogi ni tupu. Tumia Bidhaa mpya kuongeza bidhaa ya kwanza.
+The count is short by TSh {n} Write a short note saying why, then close. ||| Hesabu ina upungufu wa TSh {n} Andika maelezo mafupi ya sababu, kisha funga.
+The count was closed. ||| Hesabu imefungwa.
+The customer was shown TSh {n} At today's prices it is TSh {n} ||| Mteja alionyeshwa TSh {n} Kwa bei za leo ni TSh {n}
+The device check is switched off on this server, so any device can sign in. Turn it on with REQUIRE_DEVICE={n} ||| Ukaguzi wa kifaa umezimwa kwenye seva hii, kwa hivyo kifaa chochote kinaweza kuingia. Uwashe kwa REQUIRE_DEVICE={n}
+The drawer matches. ||| Droo inalingana.
+The refund wait is a whole number of minutes, {n} to {n} ||| Muda wa kusubiri marejesho ni idadi kamili ya dakika, {n} hadi {n}
+The server refused it ||| Seva imekataa
+The shop server could not be reached, so this sale is saved on this till. It is sent by itself when the wifi is back, and the proper receipt and stock update then. If you give the customer a slip, write sale number {n} on it. ||| Seva ya duka haikupatikana, kwa hivyo mauzo haya yamehifadhiwa kwenye kaunta hii. Yatatumwa yenyewe wifi ikirudi, kisha risiti sahihi na usasishaji wa stoku vitafuata. Ukimpa mteja karatasi, andika namba ya mauzo {n} juu yake.
+The total is now TSh {n} not the TSh {n} the customer was shown. Prices changed. ||| Jumla sasa ni TSh {n} si TSh {n} aliyoonyeshwa mteja. Bei zimebadilika.
+There is nothing to count yet. Add ingredients or packaging in Stock first, then come back. ||| Hakuna cha kuhesabu bado. Ongeza viungo au vifungashio kwenye Stoku kwanza, kisha urudi.
+There is nothing to count yet. Add ingredients or packaging in Stock first. ||| Hakuna cha kuhesabu bado. Ongeza viungo au vifungashio kwenye Stoku kwanza.
+There is nothing to sell yet. The owner adds products and prices in Catalogue. ||| Hakuna cha kuuza bado. Mmiliki huongeza bidhaa na bei kwenye Katalogi.
+These were sold while the server could not be reached. Write them down, and tell the owner. They are not lost: the owner can see the held ones and decide. ||| Hivi viliuzwa seva ilipokuwa haipatikani. Viandike, na umwambie mmiliki. Havijapotea: mmiliki anaweza kuona vilivyoshikiliwa na kuamua.
+This device ||| Kifaa hiki
+This device is not registered ||| Kifaa hiki hakijasajiliwa
+This device: {*} ||| Kifaa hiki: {*}
+This is the owner account. It cannot be deactivated, removed or change role. ||| Hii ni akaunti ya mmiliki. Haiwezi kuzimwa, kuondolewa wala kubadilishwa jukumu.
+This sale is too recent to refund. Try again in about {n} minutes. ||| Mauzo haya ni ya hivi karibuni mno kurejeshewa. Jaribu tena baada ya takriban dakika {n}.
+This shop does not take that kind of payment. Choose one of the methods shown. That item is no longer in the catalogue. ||| Duka hili halipokei aina hiyo ya malipo. Chagua mojawapo ya njia zilizoonyeshwa. Bidhaa hiyo haipo tena kwenye katalogi.
+Throw this count away ||| Tupa hesabu hii
+Throw this count away? Stock stays as it is. ||| Kutupa hesabu hii? Stoku itabaki kama ilivyo.
+Ticket S-{n} ||| Tiketi S-{n}
+Ticket number ||| Namba ya tiketi
+Today ||| Leo
+Today · Pickup ||| Leo · Kuchukua
+Today · Pickup · needs your price ||| Leo · Kuchukua · inahitaji bei yako
+Too short notice ||| Taarifa fupi mno
+Total ||| Jumla
+Treat these as critical (also sent to you) ||| Chukulia hizi kuwa muhimu sana (pia hutumwa kwako)
+Type ||| Aina
+Unit ||| Kipimo
+Unpaid ||| Haijalipwa
+Updated options for {*} ||| Imesasisha machaguo ya {*}
+Uptime ||| Muda wa kufanya kazi
+Urgent: shown first, and sent up to the owner sooner if nobody takes it ||| Dharura: huonyeshwa kwanza, na hupelekwa kwa mmiliki mapema kama hakuna anayeichukua
+Usage amounts ||| Kiasi cha matumizi
+Usage report ||| Ripoti ya matumizi
+Usage reported ||| Matumizi yameripotiwa
+Usage waiting ||| Matumizi yanasubiri
+Usual use ||| Matumizi ya kawaida
+Version ||| Toleo
+{*}: Not seen ||| {*}: Haijaonekana
+Wait this many minutes after a payment before it can be refunded ({n} = no wait) ||| Subiri dakika hizi baada ya malipo kabla hayajarejeshwa ({n} = bila kusubiri)
+Waiting for Inventory ||| Inasubiri Stoo
+Waiting for a device ||| Inasubiri kifaa
+Walk-in customer ||| Mteja wa dukani
+Customer changed their mind ||| Mteja amebadili mawazo
+approved by {*} ||| imeidhinishwa na {*}
+due today ||| inatakiwa leo
+Warn when an unstarted order is due within (days) ||| Onya oda isiyoanzwa inapotakiwa ndani ya (siku)
+Warn when stock will reach its reorder level within (days) ||| Onya stoku itakapofikia kiwango cha kuagiza upya ndani ya (siku)
+Warn when stock will run out within (days) ||| Onya stoku itakapoisha ndani ya (siku)
+Warning rules saved ||| Sheria za tahadhari zimehifadhiwa
+Ways of paying the cashier can use ||| Njia za kulipa ambazo keshia anaweza kutumia
+What is the issue? ||| Tatizo ni nini?
+What needs fixing? ||| Nini kinahitaji kurekebishwa?
+What was sold ||| Kilichouzwa
+WhatsApp ||| WhatsApp
+When to warn people ||| Wakati wa kuwaonya watu
+Who counts the drawer and closes the day ||| Nani anahesabu droo na kufunga siku
+Who is signing in? ||| Nani anaingia?
+Working… ||| Inafanya kazi…
+Write ||| Andika
+Write off ||| Futa kama taka
+Write on the cake ||| Andika kwenye keki
+Written off. ||| Imefutwa kama taka.
+You get an alert when stock reaches this level. ||| Utapata tahadhari stoku ikifikia kiwango hiki.
+Your role cannot see this. ||| Jukumu lako haliwezi kuona hili.
+Queue ||| Foleni
+baker ||| mwokaji
+cashier ||| keshia
+inventory ||| stoo
+owner ||| mmiliki
+e.g. Parking ||| mfano Maegesho
+egg, gluten, dairy ||| yai, gluteni, maziwa
+in-app, none set up ||| ndani ya programu, hakuna iliyowekwa

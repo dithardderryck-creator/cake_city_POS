@@ -128,6 +128,7 @@ export const schemas = {
     offlineMaxSales: z.number().int().min(1).max(1000).optional(),
     offlineMaxTotal: money.optional(),
     dayCloseBy: z.enum(['owner', 'cashier_and_owner']).optional(),
+    language: z.enum(['en', 'sw']).optional(),
   }),
 
   'payments/record_payment': z.strictObject({

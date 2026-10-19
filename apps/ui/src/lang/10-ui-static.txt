@@ -1,0 +1,197 @@
+# Text that is written into the pages themselves.
+30 days ||| Siku 30
+7 days ||| Siku 7
+Add reference photos ||| Ongeza picha za kumbukumbu
+Add staff ||| Ongeza mfanyakazi
+Alerts and requests for you, and the ones you sent. ||| Tahadhari na maombi kwako, na yale uliyotuma.
+All ||| Zote
+Allergies the customer mentioned ||| Mzio aliotaja mteja
+Amount received ||| Kiasi kilichopokelewa
+Announcement ||| Tangazo
+Announcements ||| Matangazo
+At counter ||| Kaunta
+Audit log ||| Kumbukumbu za shughuli
+Baker ||| Mwokaji
+Bakers report ranges. You confirm the exact amounts, and only then does stock drop. ||| Wakaji huripoti makadirio. Wewe unathibitisha kiasi halisi, na ndipo tu stoku inapopungua.
+Batches ||| Makundi
+Best sellers ||| Zinazouzwa zaidi
+By payment method ||| Kwa njia ya malipo
+Cake ||| Keki
+Cake POS · {*} ||| Cake POS · {*}
+Cancel orders… ||| Ghairi oda…
+Cancelling does not refund anything paid. ||| Kughairi hakurudishi pesa zilizolipwa.
+Cashier ||| Keshia
+Catalogue ||| Katalogi
+Change history ||| Historia ya mabadiliko
+Checking this device… ||| Inakagua kifaa hiki…
+Clear ||| Futa
+Collected today ||| Zilizokusanywa leo
+Confirm cancel ||| Thibitisha kughairi
+Count ||| Hesabu
+Count differences ||| Tofauti za hesabu
+Counted vs expected ||| Iliyohesabiwa dhidi ya inayotarajiwa
+Custom ||| Maalum
+Custom cake prices ||| Bei za keki maalum
+Custom cakes ||| Keki maalum
+Customer name ||| Jina la mteja
+Daily count ||| Hesabu ya kila siku
+Days left ||| Siku zilizobaki
+Days of stock left ||| Siku za stoku zilizobaki
+Decoration notes ||| Maelezo ya mapambo
+Delivery ||| Uwasilishaji
+Delivery address ||| Anwani ya uwasilishaji
+Devices ||| Vifaa
+Dietary needs ||| Mahitaji ya lishe
+Draft ||| Rasimu
+Drop photos here, or click anywhere in this box ||| Weka picha hapa, au bofya popote kwenye kisanduku hiki
+Due date ||| Tarehe ya kukabidhi
+Due soon ||| Zinazokaribia kukabidhiwa
+Edit item ||| Hariri bidhaa
+End of day ||| Mwisho wa siku
+Every payment and refund, tied to a ticket and a named person. Refunds are your decision. ||| Kila malipo na urejeshaji wa pesa, umeunganishwa na tiketi na mtu aliyetajwa. Urejeshaji wa pesa ni uamuzi wako.
+Everyone signs in with a PIN, so every action is tied to a named person. Only you manage staff and PINs. ||| Kila mtu huingia kwa PIN, hivyo kila kitendo kinahusishwa na mtu aliyetajwa. Wewe pekee ndiye unayesimamia wafanyakazi na PIN.
+Filling ||| Kujaza
+Filter by person ||| Chuja kwa mtu
+Filter by status ||| Chuja kwa hali
+Filter ledger ||| Chuja leja
+Filter stock ||| Chuja stoku
+Find order ||| Tafuta oda
+Flavour ||| Ladha
+Hello ||| Habari
+Hidden ||| Imefichwa
+Hide ||| Ficha
+How the shop is doing, and where money and stock are leaking. ||| Hali ya duka, na mahali pesa na stoku vinapopotea.
+IT ||| IT
+Ingredient ||| Kiungo
+Ingredient usage ||| Matumizi ya viungo
+Ingredients ||| Viungo
+Inscription ||| Maandishi ya keki
+Inventory ||| Stoo
+Item ||| Bidhaa
+Keep them ||| Ziache
+Layers ||| Tabaka
+Ledger ||| Leja
+Log batch ||| Andika kundi
+Log ready-made items as they come out of the oven. ||| Andika bidhaa zilizo tayari zinapotoka jikoni.
+Logged today ||| Zilizoandikwa leo
+Main ||| Kuu
+Mark unavailable ||| Weka kuwa haipatikani
+Needs your decision ||| Inahitaji uamuzi wako
+New custom cake ||| Keki maalum mpya
+New item ||| Bidhaa mpya
+Not you? Choose someone else ||| Si wewe? Chagua mtu mwingine
+Offline sales to review ||| Mauzo ya nje ya mtandao ya kukagua
+On hand ||| Zilizopo
+Only devices registered here can open the system. Make a one-time code, then type it on the new device's sign-in page. ||| Vifaa vilivyosajiliwa hapa pekee ndivyo vinavyoweza kufungua mfumo. Tengeneza msimbo wa mara moja, kisha uuandike kwenye ukurasa wa kuingia wa kifaa kipya.
+Only devices the owner or IT has registered can open the system. Ask them for a pairing code (Owner page, Devices). It works once and expires in about 10 minutes. ||| Vifaa vilivyosajiliwa na mmiliki au IT pekee ndivyo vinavyoweza kufungua mfumo. Waombe msimbo wa kuunganisha (ukurasa wa Mmiliki, Vifaa). Hufanya kazi mara moja na huisha baada ya takriban dakika 10.
+Only you can post. Ask staff to acknowledge when it matters. ||| Wewe pekee ndiye unayeweza kuchapisha. Waombe wafanyakazi wakiri wakati ni muhimu.
+Open Stock ||| Fungua Stoku
+Open tickets ||| Tiketi zilizo wazi
+Optional ||| Si lazima
+Optional, e.g. 8-inch round ||| Si lazima, mfano duara la inchi 8
+Optional, e.g. eggless ||| Si lazima, mfano bila mayai
+Optional, writing on the cake ||| Si lazima, maandishi juu ya keki
+Optional. The baker sees this ||| Si lazima. Mwokaji ataona hili
+Order details ||| Maelezo ya oda
+Orders ||| Oda
+Outstanding balances ||| Madeni yaliyobaki
+Overview ||| Muhtasari
+Owner ||| Mmiliki
+POS ||| POS
+Packaging ||| Vifungashio
+Paid ||| Imelipwa
+Pairing code ||| Msimbo wa kuunganisha
+Part payment: off ||| Malipo ya awamu: yamezimwa
+Payments ||| Malipo
+Payments today ||| Malipo ya leo
+Pending ||| Zinasubiri
+Phone ||| Simu
+Pickup ||| Kuchukua
+Post announcement ||| Chapisha tangazo
+Price ||| Bei
+Publish ||| Chapisha
+Published ||| Imechapishwa
+Queue ||| Foleni
+Range ||| Makadirio
+Reference photos (optional, up to 3) ||| Picha za kumbukumbu (si lazima, hadi 3)
+Refunds ||| Marejesho ya pesa
+Register this device ||| Sajili kifaa hiki
+Registered devices ||| Vifaa vilivyosajiliwa
+Report usage ||| Ripoti matumizi
+Reports ||| Ripoti
+Requests ||| Maombi
+Requests and alerts ||| Maombi na tahadhari
+Revenue ||| Mapato
+Revenue trend ||| Mwelekeo wa mapato
+Running low ||| Inaisha
+Sales ||| Mauzo
+Sales by day ||| Mauzo kwa siku
+Search ||| Tafuta
+Search (Ctrl K) ||| Tafuta (Ctrl K)
+Search cakes and customers ||| Tafuta keki na wateja
+Search cakes, customers ||| Tafuta keki, wateja
+Search cakes, sizes, fillings ||| Tafuta keki, ukubwa, kujaza
+Search ingredients ||| Tafuta viungo
+Search stock and usage reports ||| Tafuta stoku na ripoti za matumizi
+Search stock, reports ||| Tafuta stoku, ripoti
+Search the catalogue ||| Tafuta kwenye katalogi
+Search the ledger ||| Tafuta kwenye leja
+Search ticket or customer ||| Tafuta tiketi au mteja
+Search ticket, customer or cake ||| Tafuta tiketi, mteja au keki
+Search tickets ||| Tafuta tiketi
+Search tickets, items, customers ||| Tafuta tiketi, bidhaa, wateja
+Select ||| Chagua
+Select all ||| Chagua zote
+Sell ||| Uza
+Send price request to the owner ||| Tuma ombi la bei kwa mmiliki
+Server connected ||| Seva imeunganishwa
+Servings ||| Idadi ya watu
+Session ||| Kipindi
+Settings ||| Mipangilio
+Show ||| Onyesha
+Show another day ||| Onyesha siku nyingine
+Show tickets in ||| Onyesha tiketi za
+Sign out ||| Toka
+Size ||| Ukubwa
+Sound and vibration alerts ||| Tahadhari za sauti na mtetemo
+Staff ||| Wafanyakazi
+Staff activity ||| Shughuli za wafanyakazi
+Staff must acknowledge ||| Wafanyakazi lazima wakiri
+Staff talk through requests and announcements, never free chat. Each one moves through clear steps. ||| Wafanyakazi huwasiliana kupitia maombi na matangazo, si mazungumzo ya wazi. Kila moja hupitia hatua zilizo wazi.
+Start daily count ||| Anza hesabu ya kila siku
+Status ||| Hali
+Stock ||| Stoku
+Stock only drops once Inventory confirms the exact amounts. ||| Stoku hupungua tu Stoo inapothibitisha kiasi halisi.
+Stock requests ||| Maombi ya stoku
+Stock running low ||| Stoku inayoisha
+Stock type ||| Aina ya stoku
+Suggested vs confirmed ||| Iliyopendekezwa dhidi ya iliyothibitishwa
+Switch theme ||| Badilisha mwonekano
+System ||| Mfumo
+Take payment ||| Pokea malipo
+The cashier is waiting for your price. It goes straight onto the order. ||| Keshia anasubiri bei yako. Huingia moja kwa moja kwenye oda.
+The owner prices every custom cake. The price shows on the ticket in Orders when the owner has set it. ||| Mmiliki ndiye anayepanga bei ya kila keki maalum. Bei huonekana kwenye tiketi ndani ya Oda mmiliki anapoiweka.
+The shop server cannot be reached. Check that this device is on the shop wifi. ||| Seva ya duka haipatikani. Hakikisha kifaa hiki kiko kwenye wifi ya duka.
+These were sold at a till while the shop server could not be reached, but could not be recorded as they were. Nothing is lost: decide on each one. ||| Hizi ziliuzwa kwenye kaunta wakati seva ya duka haipatikani, lakini hazikuweza kurekodiwa kama zilivyokuwa. Hakuna kilichopotea: amua kuhusu kila moja.
+Ticket ||| Tiketi
+Tickets ||| Tiketi
+Today's bakes ||| Uokaji wa leo
+Today's sales ||| Mauzo ya leo
+Transactions ||| Miamala
+Try again ||| Jaribu tena
+Usage ||| Matumizi
+Usage awaiting confirmation ||| Matumizi yanayosubiri uthibitisho
+Usage pending ||| Matumizi yanasubiri
+Usage reports ||| Ripoti za matumizi
+Walk-in ||| Mteja wa dukani
+Waste and write-offs ||| Taka na bidhaa zilizofutwa
+What the Cashier can sell. Each cake is one row here; the counter shows every size, filling and diet option of it as its own tile. Hidden items and items without a price never reach the counter. ||| Kile ambacho Keshia anaweza kuuza. Kila keki ni safu moja hapa; kaunta huonyesha kila ukubwa, kujaza na chaguo la lishe kama kigae chake. Bidhaa zilizofichwa na zisizo na bei hazifiki kaunta.
+Which phones, tablets and computers may open the shop system. Switching wifi or mobile data never signs a device out: it is recognised by what it keeps, not by where it is. ||| Simu, tablet na kompyuta zipi zinaweza kufungua mfumo wa duka. Kubadilisha wifi au data ya simu hakukutoi kwenye kifaa: kinatambuliwa kwa kile kinachohifadhi, si mahali kilipo.
+Write an announcement for all staff ||| Andika tangazo kwa wafanyakazi wote
+You watch, Inventory acts. Quantities only change when Inventory confirms them. ||| Wewe unatazama, Stoo inatenda. Kiasi hubadilika tu Stoo inapokithibitisha.
+e.g. Chocolate ||| mfano Chokoleti
+required ||| lazima
+Language everyone sees on screen ||| Lugha ambayo kila mtu anaiona kwenye skrini
+English ||| English
+Kiswahili ||| Kiswahili
+Sign in ||| Ingia

@@ -1,0 +1,102 @@
+# Short lines about what happened (audit trail and activity), plus small leftovers.
+is confirmed ||| imethibitishwa
+not connected ||| haijaunganishwa
+pcs ||| vipande
+{n} pcs ||| vipande {n}
+{n} kg ||| kg {n}
+{n} l ||| l {n}
+{n} days ||| siku {n}
+sold {n} · arrived {n} ||| imeuzwa {n} · imewasili {n}
+{n} MB used of {n} MB; {n} orders archived ||| MB {n} zimetumika kati ya MB {n}; oda {n} zimehifadhiwa
+{n} MB, schema {n} ||| MB {n}, schema {n}
+{n} batch today · {n} items ||| Kundi {n} leo · bidhaa {n}
+{n} batches today · {n} items ||| Makundi {n} leo · bidhaa {n}
+{n} difference · {n} big · {n} not counted. Nothing is saved to stock until you submit. ||| Tofauti {n} · kubwa {n} · {n} hazijahesabiwa. Hakuna kinachohifadhiwa kwenye stoku hadi uwasilishe.
+{n} free ||| {n} zipo
+{n} g used ||| g {n} zimetumika
+{n} in stock ||| {n} kwenye stoku
+{n} item needs attention · not counted today ||| Bidhaa {n} inahitaji uangalizi · haijahesabiwa leo
+{n} items need attention · counted today at {n} ||| Bidhaa {n} zinahitaji uangalizi · zilihesabiwa leo saa {n}
+{n} items need attention · not counted today ||| Bidhaa {n} zinahitaji uangalizi · hazijahesabiwa leo
+{n} items on orders made this day · {n} orders paid on · {n} counter sales ||| Bidhaa {n} kwenye oda za siku hii · oda {n} zililipwa · mauzo {n} ya kaunta
+{n} items · {n} differences ||| Bidhaa {n} · tofauti {n}
+{n} items · {n} differences · {n} big ||| Bidhaa {n} · tofauti {n} · kubwa {n}
+{n} need you ||| {n} zinahitaji uamuzi wako
+{n} new combinations for {*} ||| Michanganyiko mipya {n} ya {*}
+{n} of {n} counted. ||| {n} kati ya {n} zimehesabiwa.
+{n} of {n} ticked ||| {n} kati ya {n} zimewekwa alama
+{n} offline sale needs a look. ||| Mauzo {n} ya nje ya mtandao yanahitaji kukaguliwa.
+{n} offline sales need a look. ||| Mauzo {n} ya nje ya mtandao yanahitaji kukaguliwa.
+{n} offline sale saved on this till, sending now. ||| Mauzo {n} ya nje ya mtandao yamehifadhiwa kwenye kaunta hii, yanatumwa sasa.
+{n} offline sales saved on this till, sending now. ||| Mauzo {n} ya nje ya mtandao yamehifadhiwa kwenye kaunta hii, yanatumwa sasa.
+{n} open · {n} overdue · {n} ready. Open a ticket to see its recipe. ||| {n} wazi · {n} zimechelewa · {n} tayari. Fungua tiketi kuona mapishi yake.
+{n} open · {n} ready · {n} out for delivery. The cashier moves orders along; you step in on price and cancellations. ||| {n} wazi · {n} tayari · {n} ziko njiani kupelekwa. Keshia husukuma oda mbele; wewe unaingilia kwenye bei na kughairi.
+{n} options ▴ ||| machaguo {n} ▴
+{n} options ▾ ||| machaguo {n} ▾
+{n} registered ||| {n} vimesajiliwa
+{n} selected ||| {n} vimechaguliwa
+{n} to make · {n} ready ||| {n} za kutengeneza · {n} tayari
+{n} waiting ||| {n} zinasubiri
+{n} waiting for you ||| {n} zinakusubiri
+paid by {*} ||| imelipwa kwa {*}
+Servings: {n} Flavor: {*} ||| Watu: {n} Ladha: {*}
+Filling: {*} ||| Kujaza: {*}
+Layers: {n} ||| Tabaka: {n}
+{n}-inch ||| inchi {n}
+{n}-inch custom cake ||| keki maalum ya inchi {n}
+custom cake ||| keki maalum
+{n}-inch · serves {n} ||| inchi {n} · inatosha watu {n}
+Added {*} as {*} ||| Imemuongeza {*} kama {*}
+Added ingredient {*} ||| Imeongeza kiungo {*}
+Added a reference photo to the custom cake ||| Imeongeza picha ya rejea kwenye keki maalum
+Added {*} ||| Imeongeza {*}
+{*} signed in ||| {*} ameingia
+{*} signed out ||| {*} ametoka
+Approved an offline sale from {*} on {*}: order S-{n} ||| Imeidhinisha mauzo ya nje ya mtandao kutoka kwa {*} kwenye {*}: oda S-{n}
+Asked the owner to price a custom cake for order S-{n} ||| Imemwomba mmiliki apange bei ya keki maalum ya oda S-{n}
+Changed {*} from {*} to {*} ||| Imebadilisha {*} kutoka {*} kuwa {*}
+Changed a custom cake price from TSh {n} to TSh {n} {*} ||| Imebadilisha bei ya keki maalum kutoka TSh {n} hadi TSh {n} {*}
+Changed a custom cake price from TSh {n} to TSh {n} ||| Imebadilisha bei ya keki maalum kutoka TSh {n} hadi TSh {n}
+Changed the alert settings ||| Imebadilisha mipangilio ya tahadhari
+Changed the shop settings ||| Imebadilisha mipangilio ya duka
+Closed {*} counted TSh {n} expected TSh {n} (replacing the earlier count) ||| Imefunga {*} ilihesabiwa TSh {n} ilitarajiwa TSh {n} (ikibadilisha hesabu ya awali)
+Closed {*} counted TSh {n} expected TSh {n} short by TSh {n} ||| Imefunga {*} ilihesabiwa TSh {n} ilitarajiwa TSh {n} upungufu wa TSh {n}
+Closed {*} counted TSh {n} expected TSh {n} ||| Imefunga {*} ilihesabiwa TSh {n} ilitarajiwa TSh {n}
+Created {*} with {n} choices ||| Imeunda {*} yenye machaguo {n}
+Declined to price the custom cake on order S-{n} ||| Imekataa kupanga bei ya keki maalum kwenye oda S-{n}
+Device pairing refused: {*} ||| Kuunganisha kifaa kumekataliwa: {*}
+code already closed ||| msimbo umeshafungwa
+unknown code ||| msimbo haujulikani
+code expired ||| msimbo umeisha muda
+wrong length ||| urefu si sahihi
+Hid {*} from the counter ||| Imeficha {*} kaunta
+Showed {*} at the counter ||| Imeonyesha {*} kaunta
+Offline sale {n} from "{*}" is waiting for the owner: {*} ||| Mauzo ya nje ya mtandao {n} kutoka "{*}" yanasubiri mmiliki: {*}
+Offline sale {n} from "{*}" went through as order S-{n} ||| Mauzo ya nje ya mtandao {n} kutoka "{*}" yamekamilika kama oda S-{n}
+Opened a quote request ||| Imefungua ombi la bei
+Opened an announcement (nothing new) ||| Imefungua tangazo (hakuna jipya)
+Paid in full: TSh {n} ||| Imelipwa kikamilifu: TSh {n}
+Price TSh {n} applied to {n} combinations ||| Bei TSh {n} imewekwa kwa michanganyiko {n}
+Price set to TSh {n} ||| Bei imewekwa kuwa TSh {n}
+Quoted TSh {n} for the custom cake on order S-{n} ||| Imenukuu TSh {n} kwa keki maalum ya oda S-{n}
+Refused an offline sale: sale {n} from "{*}" was changed or made up (its proof does not match) ||| Imekataa mauzo ya nje ya mtandao: mauzo {n} kutoka "{*}" yalibadilishwa au kubuniwa (uthibitisho wake hauendani)
+Registered the device "{*}" ||| Imesajili kifaa "{*}"
+Registered the device "{*}" (replacing the old registration) ||| Imesajili kifaa "{*}" (ikibadilisha usajili wa zamani)
+{*} can no longer sign in ||| {*} hawezi tena kuingia
+{*} can now sign in ||| {*} sasa anaweza kuingia
+{*} is now {*} ||| {*} sasa ni {*}
+{*} is signed out and blocked ||| {*} ametolewa na amezuiwa
+Rejected: {*} ||| Imekataliwa: {*}
+A device called "{*}" is already registered. Choose another name. ||| Kifaa kinachoitwa "{*}" tayari kimesajiliwa. Chagua jina lingine.
+Saw a request: {*} ||| Imeona ombi: {*}
+Saw {n} alert ||| Imeona tahadhari {n}
+Saw {n} alerts ||| Imeona tahadhari {n}
+Sent a request to {*}: {*} ||| Imetuma ombi kwa {*}: {*}
+Sold order S-{n} for TSh {n} ||| Imeuza oda S-{n} kwa TSh {n}
+Started a custom cake ({n} servings, {*}) ||| Imeanzisha keki maalum (watu {n}, {*})
+Started order S-{n} ||| Imeanzisha oda S-{n}
+Uploaded a reference photo ||| Imepakia picha ya rejea
+expires {n} ||| inaisha {n}
+last counted today {n} ||| ilihesabiwa mara ya mwisho leo {n}
+revoked {*} by {*} ||| ruhusa ilifutwa {*} na {*}
+replaced by a new registration ||| ilibadilishwa na usajili mpya

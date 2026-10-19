@@ -603,6 +603,7 @@ export interface ShopSettingsData {
   offlineMaxSales: number;
   offlineMaxTotal: number;
   dayCloseBy: 'owner' | 'cashier_and_owner';
+  language: 'en' | 'sw';
   can: { edit: boolean };
 }
 
@@ -1291,6 +1292,7 @@ export const feeds: FeedRegistry = {
         offlineMaxSales: s.offlineMaxSales,
         offlineMaxTotal: s.offlineMaxTotal,
         dayCloseBy: s.dayCloseBy,
+        language: s.language,
         can: { edit: session?.role === 'owner' },
       };
     },

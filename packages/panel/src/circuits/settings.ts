@@ -30,6 +30,7 @@ export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSetti
     offlineMaxSales: saved?.offlineMaxSales ?? DEFAULT_OFFLINE_MAX_SALES,
     offlineMaxTotal: saved?.offlineMaxTotal ?? DEFAULT_OFFLINE_MAX_TOTAL,
     dayCloseBy: saved?.dayCloseBy ?? 'owner',
+    language: saved?.language ?? 'en',
   };
 }
 
@@ -71,6 +72,7 @@ export const settingsIntents = {
         offlineMaxSales: p.offlineMaxSales ?? current.offlineMaxSales,
         offlineMaxTotal: p.offlineMaxTotal ?? current.offlineMaxTotal,
         dayCloseBy: p.dayCloseBy ?? current.dayCloseBy,
+        language: p.language ?? current.language,
       };
       await ctx.store.put('settings', next);
       const receipt = p.shopName !== undefined || p.shopAddress !== undefined || p.shopPhone !== undefined || p.receiptFooter !== undefined;

@@ -29,7 +29,7 @@ import { announcementIntents } from './circuits/announcements';
 import { countIntents } from './circuits/count';
 import { batchIntents } from './circuits/batches';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
-import { settingsIntents } from './circuits/settings';
+import { settingsIntents, loadSettings } from './circuits/settings';
 import { paymentIntents } from './circuits/payments';
 import { staffIntents } from './circuits/staff';
 import { stockIntents } from './circuits/stock';
@@ -122,7 +122,7 @@ export interface Panel {
     deviceToken?: string,
   ): () => void;
   /** Is this device allowed in? Used by the server to decide which page to show before anyone signs in. */
-  deviceStatus(deviceToken: string | undefined): Promise<{ required: boolean; registered: boolean; name?: string }>;
+  deviceStatus(deviceToken: string | undefined): Promise<{ required: boolean; registered: boolean; name?: string; language: 'en' | 'sw' }>;
   onEvent(listener: (e: PanelEvent) => void): () => void;
   /**
    * Store a picture (jpeg, png or webp, up to 5 MB) for a custom cake. Returns an id to pass to
@@ -674,7 +674,8 @@ export function createPanel(options: PanelOptions = {}): Panel {
     deviceStatus: (deviceToken) =>
       serial(async () => {
         const device = await resolveDevice(deviceToken);
-        return { required: config.requireDevice, registered: !!device, ...(device ? { name: device.name } : {}) };
+        // The language is not a secret and the sign-in page needs it before anyone signs in.
+        return { required: config.requireDevice, registered: !!device, ...(device ? { name: device.name } : {}), language: (await loadSettings(store)).language };
       }),
     uploadPhoto: (bytes, token) => serial(() => uploadPhotoInner(bytes, token)),
     readPhoto: (photoId, token) => serial(() => readPhotoInner(photoId, token)),

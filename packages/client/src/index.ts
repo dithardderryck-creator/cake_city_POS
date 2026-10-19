@@ -96,7 +96,7 @@ export interface ClientOptions {
   onSignedOut?: () => void;
 }
 
-export type DeviceStatus = { required: boolean; registered: boolean; name?: string };
+export type DeviceStatus = { required: boolean; registered: boolean; name?: string; language?: 'en' | 'sw' };
 export type PairResult = { ok: true; name: string } | { ok: false; code: string; messages: string[] };
 
 export type SignInResult = { ok: true; session: SessionInfo } | { ok: false; code: string; messages: string[] };
@@ -383,7 +383,7 @@ export function createClient(options: ClientOptions = {}): Client {
         const j = (await res.json()) as { ok?: boolean } & DeviceStatus;
         if (!j?.ok) return null;
         if (j.required && !j.registered && deviceToken()) options.deviceStore?.set(null);
-        return { required: j.required, registered: j.registered, ...(j.name ? { name: j.name } : {}) };
+        return { required: j.required, registered: j.registered, ...(j.name ? { name: j.name } : {}), ...(j.language ? { language: j.language } : {}) };
       } catch {
         return null;
       }

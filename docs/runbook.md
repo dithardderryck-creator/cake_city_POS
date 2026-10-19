@@ -49,6 +49,12 @@ It prints the addresses, for example `http://192.168.1.20:8787`. Open that on an
 
 `npm run build` builds the pages into `apps/ui/dist`, and `npm start` serves them from the same address as the server, so devices just open the server's address (no separate hosting). To serve a different folder, set `STATIC_DIR=path/to/folder`.
 
+### Kiswahili
+
+The owner picks the language for the whole shop in Settings (the "Language everyone sees on screen" choice). Everyone sees the change, including the sign-in page. Only what is shown on screen changes: the database, reports saved earlier and the server logs stay in English. Names the shop typed in (products, people, devices) are shown as typed.
+
+The Kiswahili was written without a native speaker. Before the shop relies on it, ask someone at the shop to read through each screen and note what sounds wrong. The wording lives in `apps/ui/src/lang/*.txt`, one line per phrase (`English ||| Kiswahili`), so a correction is one line. Run `npm run build` after editing; the build stops if a line loses a number or name placeholder. A phrase with no line shows in English.
+
 ## Settings
 
 Set these as environment variables before starting. All are optional.

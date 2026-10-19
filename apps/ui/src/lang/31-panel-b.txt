@@ -1,0 +1,201 @@
+# Messages and labels that come from the server (payments to offline sales).
+Only {*} is left to refund on this order. ||| Imebaki {*} pekee ya kurejesha kwenye oda hii.
+Refunded {*} on order {*} ||| Imerejesha {*} kwenye oda {*}
+That is more than the balance of {*}. ||| Hiyo ni zaidi ya salio la {*}.
+The balance is {*}. Confirm the partial payment exception to take less. ||| Salio ni {*}. Thibitisha ruhusa ya malipo ya awamu ili upokee kidogo.
+This sale is too recent to refund. Try again in about {*} minute{*}. ||| Mauzo haya ni ya hivi karibuni mno kurejeshewa. Jaribu tena baada ya takriban dakika {*}{*}.
+Took {*}. {*} still to pay ||| Imepokea {*}. {*} bado za kulipa
+That PIN does not match. {*} {*} left. ||| PIN hiyo hailingani. Zimebaki {*} {*}.
+Too many wrong PINs. Locked for {*}. ||| PIN zisizo sahihi ni nyingi mno. Imefungwa kwa {*}.
+Too many wrong PINs. Try again in {*}. ||| PIN zisizo sahihi ni nyingi mno. Jaribu tena baada ya {*}.
+Asked the owner to price a custom cake for order {*} ||| Imemwomba mmiliki apange bei ya keki maalum ya oda {*}
+Baking has started, so the price can no longer be changed here. ||| Uokaji umeanza, kwa hivyo bei haiwezi kubadilishwa hapa tena.
+Declined to price the custom cake on order {*} ||| Imekataa kupanga bei ya keki maalum kwenye oda {*}
+Enter a price greater than zero. ||| Weka bei kubwa kuliko sifuri.
+Only a quote that has been given can be revised. ||| Bei iliyokwishatolewa pekee ndiyo inaweza kurekebishwa.
+Only the person who asked, or the owner, can withdraw this request. ||| Aliyeomba, au mmiliki, pekee ndiye anaweza kuondoa ombi hili.
+Quote request already seen ||| Ombi la bei limeshaonekana
+Quoted {*} for the custom cake on order {*} ||| Imenukuu {*} kwa keki maalum ya oda {*}
+Say why the price changed. ||| Eleza kwa nini bei ilibadilika.
+Say why, so the cashier can tell the customer. ||| Eleza sababu, ili keshia amwambie mteja.
+Set the delivery date first. The owner needs it to price the cake. ||| Weka tarehe ya uwasilishaji kwanza. Mmiliki anaihitaji kupanga bei ya keki.
+That is the same as the current price. ||| Hiyo ni sawa na bei ya sasa.
+That quote request no longer exists. ||| Ombi hilo la bei halipo tena.
+The customer has paid {*} more than the new total. Consider a refund. ||| Mteja amelipa {*} zaidi ya jumla mpya. Fikiria kurejesha.
+The delivery date has passed. Choose a new one first. ||| Tarehe ya uwasilishaji imepita. Chagua mpya kwanza.
+The owner has already been asked to price this cake. ||| Mmiliki tayari ameombwa kupanga bei ya keki hii.
+This cake already has a price. ||| Keki hii tayari ina bei.
+This quote request is already closed. ||| Ombi hili la bei tayari limefungwa.
+Withdrew a quote request ||| Imeondoa ombi la bei
+That recipe line no longer exists. ||| Mstari huo wa mapishi haupo tena.
+{*} a recipe line for {*} ||| {*} mstari wa mapishi wa {*}
+{*} is switched off. ||| {*} imezimwa.
+A short tag is only for the category "Other". ||| Lebo fupi ni ya aina "Nyingine" pekee.
+Answered "{*}": {*} ||| Imejibu "{*}": {*}
+Choose one of the answers offered. ||| Chagua mojawapo ya majibu yaliyotolewa.
+Choose who the request is for: a role or a person. ||| Chagua ombi ni la nani: jukumu au mtu.
+Confirmed a request is fixed: {*} ||| Imethibitisha ombi limetatuliwa: {*}
+Every answer needs some words. ||| Kila jibu linahitaji maneno.
+It can be confirmed once the other person marks it done. ||| Linaweza kuthibitishwa mtu mwingine akishaliweka kuwa limekamilika.
+Marked a request done: {*} ||| Imeweka ombi kuwa limekamilika: {*}
+Only a request marked done can be reopened. ||| Ombi lililowekwa kuwa limekamilika pekee ndilo linaweza kufunguliwa tena.
+Only the people this request is for can answer it. ||| Watu ambao ombi hili ni lao pekee ndio wanaweza kulijibu.
+Only the people this request is for can take it. ||| Watu ambao ombi hili ni lao pekee ndio wanaweza kulichukua.
+Only the person who sent this request can confirm it. ||| Aliyetuma ombi hili pekee ndiye anaweza kulithibitisha.
+Only the person who sent this request can reopen it. ||| Aliyetuma ombi hili pekee ndiye anaweza kulifungua tena.
+Only the person who sent this request can take it back. ||| Aliyetuma ombi hili pekee ndiye anaweza kulichukua tena.
+Opened a request (nothing new) ||| Imefungua ombi (hakuna jipya)
+Reopened a request: {*} ||| Imefungua tena ombi: {*}
+Say what the issue is. ||| Eleza tatizo ni nini.
+Sent a{*} request to {*}: {*} ||| Imetuma ombi{*} kwa {*}: {*}
+Someone has already taken it, so it cannot be withdrawn. ||| Mtu ameshalichukua, kwa hivyo haliwezi kuondolewa.
+That is your own role. Choose someone else. ||| Hilo ni jukumu lako mwenyewe. Chagua mtu mwingine.
+That order does not exist. ||| Oda hiyo haipo.
+That person is not available. ||| Mtu huyo hapatikani.
+That request is not available. ||| Ombi hilo halipatikani.
+That request no longer exists. ||| Ombi hilo halipo tena.
+The answers must be different from each other. ||| Majibu lazima yawe tofauti na mengine.
+This request has no answers to choose from. ||| Ombi hili halina majibu ya kuchagua.
+This request is already closed. ||| Ombi hili tayari limefungwa.
+This request needs an answer. Choose one. ||| Ombi hili linahitaji jibu. Chagua moja.
+Took a request: {*} ||| Imechukua ombi: {*}
+Withdrew a request: {*} ||| Imeondoa ombi: {*}
+You cannot mark this request done. ||| Huwezi kuweka ombi hili kuwa limekamilika.
+You cannot send a request to yourself. ||| Huwezi kujitumia ombi mwenyewe.
+You have a lot of open requests. Wait for some to be dealt with first. ||| Una maombi mengi yaliyo wazi. Subiri baadhi yashughulikiwe kwanza.
+{*} confirmed it is fixed ||| {*} amethibitisha limetatuliwa
+{*} has taken this and will finish it. ||| {*} amelichukua hili na ataimaliza.
+{*} saw it ||| {*} ameliona
+{*} sent the request ||| {*} ametuma ombi
+{*} took it ||| {*} amelichukua
+{*} took the request back ||| {*} amechukua ombi lake tena
+Changed the shop details printed on receipts ||| Imebadilisha taarifa za duka zinazochapishwa kwenye risiti
+The shop needs a name. ||| Duka linahitaji jina.
+This shop does not take that kind of payment. Choose one of the methods shown. ||| Duka hili halipokei aina hiyo ya malipo. Chagua mojawapo ya njia zilizoonyeshwa.
+Turned off the Decorating stage for custom cakes ||| Imezima hatua ya Kupamba kwa keki maalum
+Turned on the Decorating stage for custom cakes ||| Imewasha hatua ya Kupamba kwa keki maalum
+Write the shop phone number with digits only, for example +255 712 345 678. ||| Andika namba ya simu ya duka kwa tarakimu pekee, kwa mfano +255 712 345 678.
+An owner account cannot be removed. ||| Akaunti ya mmiliki haiwezi kuondolewa.
+Enter the person’s name. ||| Weka jina la mtu.
+Reset the PIN for {*} ||| Imeweka upya PIN ya {*}
+Someone with that name already works here. ||| Mtu mwenye jina hilo tayari anafanya kazi hapa.
+That person is already removed. ||| Mtu huyo tayari ameondolewa.
+That person no longer exists. ||| Mtu huyo hayupo tena.
+The PIN must be 4 to 6 digits. ||| PIN lazima iwe na tarakimu 4 hadi 6.
+The owner's role cannot be changed. ||| Jukumu la mmiliki haliwezi kubadilishwa.
+There must always be at least one active owner. ||| Lazima kuwe na angalau mmiliki mmoja anayefanya kazi.
+You cannot change your own role. ||| Huwezi kubadilisha jukumu lako mwenyewe.
+You cannot remove your own account. ||| Huwezi kuondoa akaunti yako mwenyewe.
+You cannot turn off your own account. ||| Huwezi kuzima akaunti yako mwenyewe.
+{*} is already {*}. ||| {*} tayari ni {*}.
+Enter a whole number of zero or more. ||| Weka namba kamili ya sifuri au zaidi.
+Stock set to {*} ||| Stoku imewekwa kuwa {*}
+It said: {*} ||| Ilisema: {*}
+No online database is connected yet ||| Hakuna hifadhidata ya mtandaoni iliyounganishwa bado
+No reason was given. ||| Hakuna sababu iliyotolewa.
+Nothing is lost; it will try again. ||| Hakuna kinachopotea; itajaribu tena.
+Queued everything ({*} records) for the online database ||| Imeweka kila kitu (rekodi {*}) kwenye foleni ya hifadhidata ya mtandaoni
+Sent {*} changes to the online database ||| Imetuma mabadiliko {*} kwenye hifadhidata ya mtandaoni
+The online database did not accept the changes ||| Hifadhidata ya mtandaoni haikukubali mabadiliko
+The online database is up to date ||| Hifadhidata ya mtandaoni imesasishwa
+{*} They will send when the connection returns. ||| {*} Yatatumwa muunganisho utakaporudi.
+{*} changes are waiting and stay safe on this device. ||| Mabadiliko {*} yanasubiri na yanabaki salama kwenye kifaa hiki.
+A report for this cake is already waiting for Inventory. ||| Ripoti ya keki hii tayari inasubiri Stoo.
+Amounts cannot be negative. ||| Kiasi hakiwezi kuwa hasi.
+An ingredient is listed twice. ||| Kiungo kimeorodheshwa mara mbili.
+An ingredient on the list no longer exists. ||| Kiungo kwenye orodha hakipo tena.
+Choose an amount for {*} from its list. ||| Chagua kiasi cha {*} kutoka kwenye orodha yake.
+Confirmed ingredient usage for a cake ({*} items); stock updated ||| Imethibitisha matumizi ya viungo vya keki (bidhaa {*}); stoku imesasishwa
+Enter the exact amount for every ingredient in the report (0 if none was used). ||| Weka kiasi halisi cha kila kiungo kwenye ripoti (0 kama hakikutumika).
+One amount is for an ingredient that is not in the report. ||| Kiasi kimoja ni cha kiungo ambacho hakipo kwenye ripoti.
+Reported ingredients used for order {*} ({*} items) ||| Imeripoti viungo vilivyotumika kwa oda {*} (bidhaa {*})
+Say what needs fixing so the baker can correct it. ||| Eleza kinachohitaji kurekebishwa ili mwokaji akirekebishe.
+Sent a usage report back to the baker ||| Imerudisha ripoti ya matumizi kwa mwokaji
+Start baking this cake before reporting what was used. ||| Anza kuoka keki hii kabla ya kuripoti kilichotumika.
+That report no longer exists. ||| Ripoti hiyo haipo tena.
+This report has already been dealt with. ||| Ripoti hii tayari imeshughulikiwa.
+Tick at least one ingredient. ||| Weka alama kwenye angalau kiungo kimoja.
+{*}: only {*} was on hand, so the count is {*} short. Do a stock count. ||| {*}: kulikuwa na {*} pekee, kwa hivyo hesabu ina upungufu wa {*}. Fanya hesabu ya stoku.
+{*}: {*} is outside the "{*}" amount the baker chose ({*} to {*}). ||| {*}: {*} iko nje ya kiasi cha "{*}" alichochagua mwokaji ({*} hadi {*}).
+1 day late ||| Siku 1 imechelewa
+A custom cake has no price yet, so the total is not final. ||| Keki maalum bado haina bei, kwa hivyo jumla si ya mwisho.
+Already waiting for Inventory to confirm. ||| Tayari inasubiri Stoo ithibitishe.
+An alert that has since been removed ||| Tahadhari ambayo imeondolewa tangu hapo
+Answered: {*} ||| Imejibiwa: {*}
+Cakes to bake ||| Keki za kuoka
+Cloud sync ||| Usawazishaji wa wingu
+In {*} days ||| Baada ya siku {*}
+No date set ||| Hakuna tarehe iliyowekwa
+No phone or browser of yours is subscribed yet. Turn on notifications on the device you carry. ||| Hakuna simu au kivinjari chako kilichojiandikisha bado. Washa arifa kwenye kifaa unachobeba.
+No price yet ||| Hakuna bei bado
+Not available ||| Haipatikani
+Not priced yet ||| Haijapangiwa bei bado
+Off the menu today ||| Haipo kwenye menyu leo
+Open orders need {*} but {*} on hand ||| Oda zilizo wazi zinahitaji {*} lakini zilizopo ni {*}
+Panel map ||| Ramani ya paneli
+Phone notifications are not set up on the server yet. Ask IT. ||| Arifa za simu hazijawekwa kwenye seva bado. Muulize IT.
+Recipe generator ||| Kizalishaji cha mapishi
+Stock forecast ||| Utabiri wa stoku
+Text messages are not set up on the server yet. Ask IT. ||| Ujumbe mfupi haujawekwa kwenye seva bado. Muulize IT.
+That cake is not on the order. ||| Keki hiyo haipo kwenye oda.
+The next few days follow the cakes already booked, using the recipe suggestions corrected by what the chefs actually used. Further out it moves toward the kitchen's usual daily use. It never goes below what is booked. ||| Siku chache zijazo zinafuata keki zilizokwisha kuagizwa, kwa kutumia mapendekezo ya mapishi yaliyorekebishwa kwa kile wakaji walichotumia. Mbali zaidi inaelekea matumizi ya kawaida ya kila siku ya jikoni. Haishuki chini ya kilichoagizwa.
+Usage to confirm ||| Matumizi ya kuthibitisha
+WhatsApp and SMS ||| WhatsApp na SMS
+You have both SMS and WhatsApp on, so you will get each alert twice. ||| Umewasha SMS na WhatsApp zote, kwa hivyo utapata kila tahadhari mara mbili.
+any cake ||| keki yoyote
+for every cake ||| kwa kila keki
+last backup failed ||| nakala rudufu ya mwisho ilishindwa
+no backup yet ||| hakuna nakala rudufu bado
+not set up yet ||| haijawekwa bado
+per serving ||| kwa kila mtu
+per serving for each gap between layers ||| kwa kila mtu kwa kila nafasi kati ya tabaka
+{*} cakes ||| keki {*}
+{*} days late ||| siku {*} zimechelewa
+{*} has been paid above the current total. ||| {*} imelipwa zaidi ya jumla ya sasa.
+{*} is still unpaid. ||| {*} bado haijalipwa.
+{*} of {*} {*}, for {*} ||| {*} kati ya {*} {*}, kwa {*}
+Blocked: {*} cannot do this ||| Imezuiwa: {*} hawezi kufanya hili
+No message provider is set up on this server. ||| Hakuna mtoa huduma wa ujumbe aliyewekwa kwenye seva hii.
+Something went wrong. Nothing was changed ||| Kuna hitilafu. Hakuna kilichobadilishwa
+Something went wrong. Nothing was saved, so it is safe to try again. ||| Kuna hitilafu. Hakuna kilichohifadhiwa, kwa hivyo ni salama kujaribu tena.
+That file is empty. ||| Faili hiyo ni tupu.
+That person cannot do this. ||| Mtu huyo hawezi kufanya hili.
+That picture is no longer available. ||| Picha hiyo haipatikani tena.
+That picture is too big. Pictures can be up to 5 MB. ||| Picha hiyo ni kubwa mno. Picha zinaweza kuwa hadi MB 5.
+The provider did not answer in time. ||| Mtoa huduma hakujibu kwa wakati.
+The provider failed. ||| Mtoa huduma ameshindwa.
+This could not be loaded. Try again. ||| Hii haikuweza kupakiwa. Jaribu tena.
+Unknown feed {*}. ||| Mlisho usiojulikana {*}.
+Unknown instruction {*}. ||| Agizo lisilojulikana {*}.
+Use a JPEG, PNG or WebP picture. ||| Tumia picha ya JPEG, PNG au WebP.
+Your role cannot do this. Ask the owner. ||| Jukumu lako haliwezi kufanya hili. Muulize mmiliki.
+{*} (alerts) ||| {*} (tahadhari)
+Held for the owner: {*} ||| Imeshikiliwa kwa mmiliki: {*}
+It does not say what total the customer was shown. ||| Haisemi jumla gani mteja alionyeshwa.
+It is over the limit of {*} sales for one offline permission. ||| Imezidi kikomo cha mauzo {*} kwa ruhusa moja ya nje ya mtandao.
+It says it was made before the sale that came before it. ||| Inasema ilifanywa kabla ya mauzo yaliyotangulia.
+It takes the offline total over the limit of {*}. ||| Inapeleka jumla ya nje ya mtandao juu ya kikomo cha {*}.
+It was made after the offline permission ran out. ||| Ilifanywa baada ya ruhusa ya nje ya mtandao kuisha.
+It was made after the till was given a newer offline permission. ||| Ilifanywa baada ya kaunta kupewa ruhusa mpya zaidi ya nje ya mtandao.
+Offline sale {*} from "{*}" is waiting for the owner: {*} ||| Mauzo ya nje ya mtandao {*} kutoka "{*}" yanasubiri mmiliki: {*}
+Offline sale {*} from "{*}" went through as order {*} ||| Mauzo ya nje ya mtandao {*} kutoka "{*}" yamekamilika kama oda {*}
+Refused an offline sale: {*} ||| Imekataa mauzo ya nje ya mtandao: {*}
+Refused: sale {*} is missing before this one. Tell the owner. ||| Imekataliwa: mauzo {*} hayapo kabla ya haya. Mwambie mmiliki.
+Refused: the person or the till is no longer allowed to sell. ||| Imekataliwa: mtu au kaunta haruhusiwi tena kuuza.
+Refused: this sale does not match what was already received. Tell the owner. ||| Imekataliwa: mauzo haya hayalingani na yaliyokwisha pokelewa. Mwambie mmiliki.
+Refused: this sale is out of order. Tell the owner. ||| Imekataliwa: mauzo haya yako nje ya mpangilio. Mwambie mmiliki.
+Sent: order {*}, {*}. ||| Imetumwa: oda {*}, {*}.
+Something went wrong on the server. Nothing was lost. It will be sent again. ||| Kuna hitilafu kwenye seva. Hakuna kilichopotea. Itatumwa tena.
+The list of offline sales was not in the right shape. ||| Orodha ya mauzo ya nje ya mtandao haikuwa na umbo sahihi.
+The person who made these sales can no longer sell, so they were not accepted. Tell the owner. ||| Aliyefanya mauzo haya hawezi tena kuuza, kwa hivyo hayakukubaliwa. Mwambie mmiliki.
+The till says it was made before it was given permission to sell offline. ||| Kaunta inasema ilifanywa kabla ya kupewa ruhusa ya kuuza nje ya mtandao.
+The till's clock is ahead of the shop's. ||| Saa ya kaunta iko mbele ya saa ya duka.
+These offline sales were not accepted. Tell the owner. ||| Mauzo haya ya nje ya mtandao hayakukubaliwa. Mwambie mmiliki.
+This kind of action is not allowed offline. ||| Aina hii ya kitendo hairuhusiwi nje ya mtandao.
+sale {*} from "{*}" arrived out of order (expected {*}) ||| mauzo {*} kutoka "{*}" yamefika nje ya mpangilio (yalitarajiwa {*})
+sale {*} from "{*}" does not match the sale already received with that number ||| mauzo {*} kutoka "{*}" hayalingani na mauzo yaliyokwisha pokelewa yenye namba hiyo
+sale {*} from "{*}" was changed or made up (its proof does not match) ||| mauzo {*} kutoka "{*}" yalibadilishwa au kubuniwa (uthibitisho wake hauendani)
+sale {*} from "{*}": the person or the device is no longer allowed ||| mauzo {*} kutoka "{*}": mtu au kifaa hakiruhusiwi tena
+the pass does not belong to the device "{*}" ||| ruhusa haiendani na kifaa "{*}"
+the request did not come from a registered device ||| ombi halikutoka kwenye kifaa kilichosajiliwa
+{*} can no longer sell ||| {*} haruhusiwi tena kuuza

@@ -22,6 +22,28 @@ await build({
   logLevel: 'info',
 });
 
+// The Kiswahili word list: lines of "English ||| Kiswahili" in src/lang/*.txt, built into one small file that is only fetched
+// when the shop uses Kiswahili. A line must keep the same {n} and {*} placeholders on both sides.
+{
+  const dir = path.join(here, 'src/lang');
+  const entries = {};
+  const place = (t) => (t.match(/\{[n*]\}/g) ?? []).sort().join('');
+  for (const f of fs.existsSync(dir) ? fs.readdirSync(dir).filter((x) => x.endsWith('.txt')).sort() : []) {
+    fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((line, i) => {
+      if (!line.trim() || line.startsWith('#')) return;
+      const at = line.indexOf(' ||| ');
+      if (at < 0) throw new Error(`${f}:${i + 1}: expected "English ||| Kiswahili"`);
+      const en = line.slice(0, at).trim();
+      const sw = line.slice(at + 5).trim();
+      if (!en || !sw) throw new Error(`${f}:${i + 1}: empty side`);
+      if (place(en) !== place(sw)) throw new Error(`${f}:${i + 1}: placeholders differ: ${line}`);
+      entries[en] = sw;
+    });
+  }
+  fs.writeFileSync(path.join(dist, 'lang-sw.js'), 'window.__cakeSw=' + JSON.stringify(entries) + ';');
+  console.log('Kiswahili entries:', Object.keys(entries).length);
+}
+
 // Fonts are served by the shop server itself, so the screens look right with no internet.
 const fonts = path.join(here, '../../node_modules/@fontsource-variable');
 const face = (family, dir, file, weight) => {
@@ -47,7 +69,7 @@ for (const f of fs.existsSync(pages) ? fs.readdirSync(pages) : []) {
   fs.copyFileSync(path.join(pages, f), path.join(dist, f));
 }
 // The offline copy of the pages (see src/sw.js). Its name changes with every build, so a new build replaces the old copy.
-const precache = ['/', '/cake.js', '/fonts.css', '/forms.css', ...fs.readdirSync(pages).filter((f) => f.endsWith('.html')).map((f) => '/' + f), ...(fs.existsSync(path.join(dist, 'fonts')) ? fs.readdirSync(path.join(dist, 'fonts')).map((f) => '/fonts/' + f) : [])];
+const precache = ['/', '/cake.js', '/lang-sw.js', '/fonts.css', '/forms.css', ...fs.readdirSync(pages).filter((f) => f.endsWith('.html')).map((f) => '/' + f), ...(fs.existsSync(path.join(dist, 'fonts')) ? fs.readdirSync(path.join(dist, 'fonts')).map((f) => '/fonts/' + f) : [])];
 fs.writeFileSync(
   path.join(dist, 'sw.js'),
   fs.readFileSync(path.join(here, 'src/sw.js'), 'utf8').replace('__VERSION__', String(Date.now())).replace('__PRECACHE__', JSON.stringify(precache)),

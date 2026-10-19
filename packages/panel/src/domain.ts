@@ -559,6 +559,8 @@ export interface ShopSettings {
   offlineMaxTotal: number;
   /** Who may count the cash and close the day. */
   dayCloseBy: 'owner' | 'cashier_and_owner';
+  /** The language the screens are shown in. The server and its records stay in English; only the screens are translated. */
+  language: 'en' | 'sw';
 }
 
 /**

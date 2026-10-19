@@ -423,6 +423,7 @@ Allowed: **owner**
 | `offlineMaxSales` | integer | no | min 1, max 1000 |
 | `offlineMaxTotal` | integer | no | min 0, max 1000000000 |
 | `dayCloseBy` | "owner" \| "cashier_and_owner" | no |  |
+| `language` | "en" \| "sw" | no |  |
 
 ### Inventory
 
