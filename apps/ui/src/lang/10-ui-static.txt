@@ -171,7 +171,7 @@ System ||| Mfumo
 Take payment ||| Pokea malipo
 The cashier is waiting for your price. It goes straight onto the order. ||| Keshia anasubiri bei yako. Huingia moja kwa moja kwenye oda.
 The owner prices every custom cake. The price shows on the ticket in Orders when the owner has set it. ||| Mmiliki ndiye anayepanga bei ya kila keki maalum. Bei huonekana kwenye tiketi ndani ya Oda mmiliki anapoiweka.
-The shop server cannot be reached. Check that this device is on the shop wifi. ||| Seva ya duka haipatikani. Hakikisha kifaa hiki kiko kwenye wifi ya duka.
+The shop server cannot be reached. Check this device's internet connection (or the shop wifi, if the server is kept at the shop), wait a minute if the server is waking up, then try again. ||| Seva ya duka haipatikani. Angalia muunganisho wa intaneti wa kifaa hiki (au wifi ya duka, kama seva iko dukani), subiri dakika moja kama seva inaamka, kisha jaribu tena.
 These were sold at a till while the shop server could not be reached, but could not be recorded as they were. Nothing is lost: decide on each one. ||| Hizi ziliuzwa kwenye kaunta wakati seva ya duka haipatikani, lakini hazikuweza kurekodiwa kama zilivyokuwa. Hakuna kilichopotea: amua kuhusu kila moja.
 Ticket ||| Tiketi
 Tickets ||| Tiketi
