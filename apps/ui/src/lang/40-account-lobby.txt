@@ -19,7 +19,6 @@ Save contact details ||| Hifadhi mawasiliano
 Appearance ||| Mwonekano
 Light ||| Mwanga
 Dark ||| Giza
-The shop uses {*}. The owner changes it in Settings. ||| Duka linatumia {*}. Mmiliki anaibadilisha kwenye Mipangilio.
 The new PIN must be 4 to 6 digits. ||| PIN mpya lazima iwe na tarakimu 4 hadi 6.
 The two new PINs do not match. ||| PIN mbili mpya hazilingani.
 PIN changed ||| PIN imebadilishwa
@@ -53,7 +52,7 @@ Low-stock level, count differences, when to warn people ||| Kiwango cha stoo ndo
 Offline selling ||| Kuuza bila mtandao
 Let a till keep selling when the server cannot be reached ||| Ruhusu kaunta iendelee kuuza seva isipopatikana
 Language ||| Lugha
-The language everyone sees on screen ||| Lugha ambayo kila mtu anaiona kwenye skrini
+The shop's default; each person can choose their own ||| Lugha ya msingi ya duka; kila mtu anaweza kuchagua yake
 Location check ||| Ukaguzi wa mahali
 Keep staff away from the shop in a lobby ||| Waweke wafanyakazi walio mbali na duka kwenye ukumbi wa mapokezi
 On ||| Imewashwa
@@ -65,8 +64,11 @@ Shop location set ||| Mahali pa duka pamewekwa
 Selling rules saved ||| Sheria za kuuza zimehifadhiwa
 Offline selling saved ||| Kuuza bila mtandao kumehifadhiwa
 Stock and warning rules saved ||| Sheria za stoo na maonyo zimehifadhiwa
-Everyone sees the same language, including the sign-in page. Only what is on screen changes; the records stay in English. ||| Kila mtu anaona lugha ile ile, pamoja na ukurasa wa kuingia. Ni kinachoonekana kwenye skrini tu kinabadilika; kumbukumbu zinabaki kwa Kiingereza.
-Language everyone sees on screen ||| Lugha ambayo kila mtu anaiona kwenye skrini
+This is the shop's default: the sign-in page and anyone who has not chosen their own language see it. Each person can choose their own under their name at the top. Only what is on screen changes; the records stay in English. ||| Hii ni lugha ya msingi ya duka: ukurasa wa kuingia na yeyote ambaye hajachagua lugha yake huiona. Kila mtu anaweza kuchagua yake chini ya jina lake juu. Ni kinachoonekana kwenye skrini tu kinabadilika; kumbukumbu zinabaki kwa Kiingereza.
+The shop's default language ||| Lugha ya msingi ya duka
+Only your own screens change. Other people keep theirs. ||| Ni skrini zako tu zinazobadilika. Wengine wanabaki na zao.
+Language I see on screen ||| Lugha ninayoiona kwenye skrini
+Same as the shop ({*}) ||| Sawa na duka ({*})
 Staff who are away from the shop are held in a lobby: they can read announcements and change their PIN, but cannot sell or work. The owner and IT are never held. It is a reminder for honest staff, not a lock: a phone can be made to report a false position. ||| Wafanyakazi walio mbali na duka wanawekwa kwenye ukumbi wa mapokezi: wanaweza kusoma matangazo na kubadilisha PIN yao, lakini hawawezi kuuza wala kufanya kazi. Mmiliki na IT hawazuiliwi kamwe. Ni ukumbusho kwa wafanyakazi waaminifu, si kufuli: simu inaweza kufanywa iripoti mahali pa uongo.
 Hold staff who are away from the shop in the lobby ||| Waweke wafanyakazi walio mbali na duka kwenye ukumbi wa mapokezi
 The shop's spot: ||| Mahali pa duka:
@@ -97,3 +99,7 @@ Set the shop radius to {n} m ||| Imeweka kipenyo cha duka kuwa mita {n}
 Choose a setting to change. ||| Chagua mpangilio wa kubadilisha.
 Send both the latitude and the longitude of the shop. ||| Tuma latitudo na longitudo zote mbili za duka.
 Set the shop location first, from a device that is standing in the shop. ||| Weka mahali pa duka kwanza, kutoka kwenye kifaa kilicho ndani ya duka.
+{*} chose Kiswahili for their screens ||| {*} amechagua Kiswahili kwa skrini zake
+{*} chose English for their screens ||| {*} amechagua Kiingereza kwa skrini zake
+{*} chose the shop's language for their screens ||| {*} amechagua lugha ya duka kwa skrini zake
+Your account could not be found. ||| Akaunti yako haikupatikana.

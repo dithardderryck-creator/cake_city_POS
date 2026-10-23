@@ -3,7 +3,7 @@
 Things deliberately left out for now. Nothing here blocks the screens that exist. Updated 11 Oct 2026.
 
 ## Kiswahili (19 Oct 2026)
-- **Done:** a shop-wide language setting (owner Settings), every screen and the server's messages shown in Kiswahili, English kept in the backend. Test: `apps/ui/test/lang.mjs`.
+- **Done:** a shop default language (owner Settings) plus a personal choice for everyone (My account, 23 Oct 2026; test `apps/ui/test/mylang.mjs`), every screen and the server's messages shown in Kiswahili, English kept in the backend. Test: `apps/ui/test/lang.mjs`.
 - **Still to do:** a native speaker must review the wording (`apps/ui/src/lang/*.txt`). Not checked yet: receipts shared by link and the xlsx archive (they probably stay English). The date picker follows the browser's language, not the shop's. Product, option and person names stay as typed.
 
 ## Location check and tidier settings (22 Oct 2026)

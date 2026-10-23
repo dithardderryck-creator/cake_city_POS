@@ -49,8 +49,8 @@ export function heldInLobby(s: ShopSettings, role: Role, place: PlaceReport | un
 }
 
 /** The few things staff can still do while held in the lobby. */
-export const LOBBY_INTENTS = new Set<string>(['auth/sign_out', 'auth/change_pin', 'session/report_place', 'announcements/mark_seen', 'announcements/acknowledge', 'staff/set_contact']);
-export const LOBBY_FEEDS = new Set<string>(['me', 'navigation', 'shop_settings', 'announcements', 'notification_setup', 'staff_signin']);
+export const LOBBY_INTENTS = new Set<string>(['auth/sign_out', 'auth/change_pin', 'auth/set_language', 'session/report_place', 'announcements/mark_seen', 'announcements/acknowledge', 'staff/set_contact']);
+export const LOBBY_FEEDS = new Set<string>(['me', 'my_language', 'navigation', 'shop_settings', 'announcements', 'notification_setup', 'staff_signin']);
 
 export const LOBBY_MESSAGE = 'You are outside the shop, so only the lobby is open. Go to the shop, then tap Check again.';
 

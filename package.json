@@ -13,7 +13,7 @@
     "build": "npm run build -w @cake-pos/ui && npm run build -w @cake-pos/server",
     "start": "node scripts/start.mjs",
     "ui:try": "node apps/ui/try.mjs",
-    "ui:test": "cd apps/ui && for t in cashier baker inventory inventory-edge owner devices empty badinput serverstop offline dayclose lang lobby; do UI_DIST=/tmp/ui-dist-$t node build.mjs >/dev/null && UI_DIST=/tmp/ui-dist-$t node test/$t.mjs || exit 1; done",
+    "ui:test": "cd apps/ui && for t in cashier baker inventory inventory-edge owner devices empty badinput serverstop offline dayclose lang lobby mylang; do UI_DIST=/tmp/ui-dist-$t node build.mjs >/dev/null && UI_DIST=/tmp/ui-dist-$t node test/$t.mjs || exit 1; done",
     "admin": "npm run admin -w @cake-pos/server --",
     "docs:api": "tsx scripts/gen-api-reference.ts",
     "test": "npm run test -w @cake-pos/panel && npm run test -w @cake-pos/server",

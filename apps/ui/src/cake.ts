@@ -16,9 +16,16 @@ export const setLanguage = i18n.setLanguage;
 export const language = i18n.current;
 export const onLanguage = i18n.onChange;
 
-/** Follows the shop's language: used after sign-in and whenever the settings change. */
+/** Follows a language: used after sign-in and whenever a setting changes. */
 function followLanguage(l: Lang | undefined) {
   if (l === 'en' || l === 'sw') void i18n.setLanguage(l);
+}
+
+/** The language this person chose for themselves, once the server has told us. Null means they follow the shop. */
+let myLanguage: Lang | null = null;
+/** The shop's language applies only to people who have not chosen their own. */
+function followShopLanguage(l: Lang | undefined) {
+  if (!myLanguage) followLanguage(l);
 }
 
 const client = createClient({ tokenStore: localStorageTokenStore(), deviceStore: localStorageTokenStore('cake-pos-device'), offlineStore: localStorageTokenStore('cake-pos-offline') });
@@ -234,15 +241,24 @@ export async function boot(allowed: Role | Role[]): Promise<SessionInfo> {
   session = s;
   client.onSignedOut(goSignIn);
   watchConnection();
+  // The person's own language comes first, so the first screen is already right; it also follows a change made on another device.
+  await new Promise<void>((done) => {
+    feed('my_language', {}, (d) => {
+      myLanguage = d.mine;
+      followLanguage(d.effective);
+      done();
+    });
+    setTimeout(done, 4000);
+  });
   // Roles without the shop settings feed (IT) ask the server which language the shop uses.
-  void client.deviceStatus().then((d) => followLanguage(d?.language));
+  void client.deviceStatus().then((d) => followShopLanguage(d?.language));
   // The shop's own settings (currency, accepted payment methods, thresholds) come from the server, never from the page.
   if (s.role !== 'it') {
     await new Promise<void>((done) => {
       feed('shop_settings', {}, (d) => {
         shop = d;
         currency = d.currencyLabel;
-        followLanguage(d.language);
+        followShopLanguage(d.language);
         for (const l of shopListeners) l(d);
         done();
       });
@@ -726,7 +742,8 @@ export async function openAccount(): Promise<void> {
   if (!who) return;
   const dev = await client.deviceStatus().catch(() => null);
   const setup = who.role === 'it' ? null : await client.feed('notification_setup', {}).then((r) => (r.ok ? r.data : null));
-  const lang = language() === 'sw' ? 'Kiswahili' : 'English';
+  const my = await client.feed('my_language', {}).then((r) => (r.ok ? r.data : null));
+  const langPick = `<select id="cx-lg"><option value="en" ${my?.mine === 'en' ? 'selected' : ''}>English</option><option value="sw" ${my?.mine === 'sw' ? 'selected' : ''}>Kiswahili</option><option value="shop" ${my && !my.mine ? 'selected' : ''}>Same as the shop (${my?.shop === 'sw' ? 'Kiswahili' : 'English'})</option></select>`;
   const level = (name: string, cur: string) => `<select id="${name}">${LEVELS.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   const d = dialog(`
     <div class="cx-row"><h2>My account</h2><button class="cx-b" data-x="close">Close</button></div>
@@ -749,9 +766,22 @@ export async function openAccount(): Promise<void> {
     }
     <hr><h3>Appearance</h3>
     <div class="cx-g" id="cx-th"><button class="cx-b" data-th="light" aria-pressed="${currentTheme() === 'light'}">Light</button><button class="cx-b" data-th="dark" aria-pressed="${currentTheme() === 'dark'}">Dark</button></div>
-    <h3>Language</h3><p class="cx-m">The shop uses ${lang}. The owner changes it in Settings.</p>
+    <h3>Language</h3><p class="cx-m">Only your own screens change. Other people keep theirs.</p>
+    <label for="cx-lg">Language I see on screen</label>${langPick}
     <hr><div class="cx-a"><button class="cx-b r" data-x="out">Sign out</button></div>`);
   const q = <T extends HTMLElement>(sel: string) => d.el.querySelector<T>(sel)!;
+  d.el.addEventListener('change', (e) => {
+    const sel = e.target as HTMLSelectElement;
+    if (sel.id !== 'cx-lg') return;
+    const v = sel.value as 'en' | 'sw' | 'shop';
+    sel.disabled = true;
+    void send('auth/set_language', { language: v }, 'Language saved').then((r) => {
+      sel.disabled = false;
+      if (!r.ok) return;
+      myLanguage = v === 'shop' ? null : v;
+      followLanguage(v === 'shop' ? (my?.shop ?? 'en') : v);
+    });
+  });
   d.el.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const th = t.closest<HTMLElement>('[data-th]');

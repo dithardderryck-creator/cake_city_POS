@@ -59,4 +59,31 @@ describe('screen language', () => {
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.error.messages.join(' ')).toMatch(/[A-Za-z]/);
   });
+
+  it('lets each person choose their own language, and "shop" follows the shop again', async () => {
+    const owner = await signIn('owner');
+    const cashier = await signIn('cashier');
+    const baker = await signIn('baker');
+    const mine = async (token: string) => {
+      const r = await panel.feed('my_language', {}, token);
+      if (!r.ok) throw new Error('feed failed');
+      return r.data;
+    };
+    expect(await mine(cashier)).toEqual({ mine: null, shop: 'en', effective: 'en' });
+    ok(await panel.dispatch('auth/set_language', { language: 'sw' }, cashier));
+    expect(await mine(cashier)).toEqual({ mine: 'sw', shop: 'en', effective: 'sw' });
+    // Nobody else is affected, and the shop's own setting is untouched.
+    expect(await mine(baker)).toEqual({ mine: null, shop: 'en', effective: 'en' });
+    expect((await panel.deviceStatus(undefined)).language).toBe('en');
+    // When the shop changes its language, people who did not choose follow it; the cashier keeps their own.
+    ok(await panel.dispatch('settings/update', { language: 'sw' }, owner));
+    ok(await panel.dispatch('auth/set_language', { language: 'en' }, cashier));
+    expect(await mine(baker)).toEqual({ mine: null, shop: 'sw', effective: 'sw' });
+    expect(await mine(cashier)).toEqual({ mine: 'en', shop: 'sw', effective: 'en' });
+    ok(await panel.dispatch('auth/set_language', { language: 'shop' }, cashier));
+    expect(await mine(cashier)).toEqual({ mine: null, shop: 'sw', effective: 'sw' });
+    // Junk is refused, and the choice is in the activity log.
+    expect((await panel.dispatch('auth/set_language', { language: 'fr' } as never, cashier)).ok).toBe(false);
+    expect((await store.list<{ id: string; summary: string }>('audit')).some((a) => /chose Kiswahili for their screens/.test(a.summary))).toBe(true);
+  });
 });

@@ -49,6 +49,20 @@ export const authIntents = {
     },
   },
 
+  'auth/set_language': {
+    circuit: 'Auth',
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
+    handle: async (p, ctx) => {
+      const me = ctx.session!;
+      const staff = await ctx.store.get<Staff>('staff', me.userId);
+      if (!staff) return { summary: `${me.name} chose a language`, failure: { code: 'invalid', messages: ['Your account could not be found.'] }, skipSync: true };
+      const { language: _old, ...rest } = staff;
+      await ctx.store.put('staff', p.language === 'shop' ? rest : { ...rest, language: p.language });
+      const label = p.language === 'shop' ? "the shop's language" : p.language === 'sw' ? 'Kiswahili' : 'English';
+      return { summary: `${me.name} chose ${label} for their screens`, target: staff.id };
+    },
+  },
+
   'auth/change_pin': {
     circuit: 'Auth',
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],

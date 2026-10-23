@@ -610,6 +610,13 @@ export interface ShopSettingsData {
   can: { edit: boolean; location: boolean };
 }
 
+/** The language one person sees: their own choice if they made one, otherwise the shop's. */
+export interface MyLanguageData {
+  mine: 'en' | 'sw' | null;
+  shop: 'en' | 'sw';
+  effective: 'en' | 'sw';
+}
+
 export interface LocationCheckData {
   enabled: boolean;
   radiusM: number;
@@ -649,6 +656,7 @@ export interface OfflineReviewData {
 
 export interface FeedMap {
   me: { params: Record<string, never>; data: Session };
+  my_language: { params: Record<string, never>; data: MyLanguageData };
   navigation: { params: Record<string, never>; data: NavItem[] };
   staff_signin: { params: Record<string, never>; data: StaffSigninRow[] };
   staff_list: { params: Record<string, never>; data: StaffListRow[] };
@@ -883,6 +891,16 @@ export const feeds: FeedRegistry = {
   me: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => session!,
+  },
+
+  my_language: {
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
+    build: async ({ store, session }) => {
+      const me = await store.get<Staff>('staff', session!.userId);
+      const shop = (await loadSettings(store)).language;
+      const mine = me?.language ?? null;
+      return { mine, shop, effective: mine ?? shop };
+    },
   },
 
   navigation: {

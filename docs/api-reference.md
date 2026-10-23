@@ -25,6 +25,14 @@ Allowed: **owner, cashier, baker, inventory, it**
 
 _No fields. Send an empty object `{}`._
 
+#### `auth/set_language`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `language` | "en" \| "sw" \| "shop" | yes |  |
+
 #### `auth/change_pin`
 
 Allowed: **owner, cashier, baker, inventory, it**
@@ -943,6 +951,12 @@ Allowed: **owner**
 | `days` | any | no |  |
 
 #### `me`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+_No fields. Send an empty object `{}`._
+
+#### `my_language`
 
 Allowed: **owner, cashier, baker, inventory, it**
 

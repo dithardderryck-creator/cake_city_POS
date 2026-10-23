@@ -76,6 +76,8 @@ export interface Staff {
   removedAt?: string;
   /** Where alerts reach this person outside the app. Absent until set. */
   contact?: StaffContact;
+  /** The language this person chose for their own screens. Absent means they follow the shop's language. */
+  language?: 'en' | 'sw';
 }
 
 /** A phone or browser that has agreed to receive notifications from this shop. Only that person's own devices. */

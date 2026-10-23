@@ -98,6 +98,9 @@ describe('the location check', () => {
       // The lobby's own things work.
       expect((await panel.feed('announcements', {}, cashier)).ok).toBe(true);
       expect((await panel.feed('shop_settings', {}, cashier)).ok).toBe(true);
+      // So does choosing a language, because the lobby has to be readable.
+      ok(await panel.dispatch('auth/set_language', { language: 'sw' }, cashier));
+      expect((await panel.feed('my_language', {}, cashier)).ok).toBe(true);
 
       const far = ok<{ inside: boolean; reason?: string }>(await panel.dispatch('session/report_place', AT_SCHOOL, cashier));
       expect(far).toMatchObject({ inside: false, reason: 'far' });

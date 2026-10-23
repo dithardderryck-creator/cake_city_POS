@@ -63,6 +63,7 @@ h2.step{margin:0;font:600 20px "Fraunces Variable",Fraunces,serif}
   </section>
   <p class="msg" id="msg" role="status" aria-live="polite"></p>
   <p class="foot" id="foot" hidden></p>
+  <p class="foot" id="lgrow"><button class="link" id="lg" style="margin:0;min-height:36px"></button></p>
 </main>
 <script src="/cake.js"></script>
 <script>
@@ -74,6 +75,10 @@ try{const t=localStorage.getItem("theme");if(t)document.documentElement.dataset.
 // Already signed in on this device? Go straight to the right page.
 const s=await Cake.client.restore();
 if(s){location.replace(Cake.HOME[s.role]);return}
+// Anyone can read this page in the language they prefer; signing in then uses their own saved choice.
+const lg=()=>{$("#lg").textContent=Cake.language()==="sw"?"English":"Kiswahili"};
+$("#lg").onclick=()=>{Cake.setLanguage(Cake.language()==="sw"?"en":"sw")};
+Cake.onLanguage(lg);lg();
 const show=n=>{for(const id of["off","pair","pick","pin"])$("#"+id).hidden=id!==n};
 async function start(){
   msg("");$("#sub").textContent="Checking this device…";$("#foot").hidden=true;

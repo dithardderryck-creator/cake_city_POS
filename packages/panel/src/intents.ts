@@ -15,6 +15,8 @@ export interface IntentMap {
   'day/close': { day?: string; countedCash: number; floatKept?: number; note?: string };
   'offline/review': { heldId: Id; action: 'approve' | 'dismiss'; note?: string };
   'auth/change_pin': { currentPin: string; newPin: string };
+  /** A person's own screen language; "shop" means follow whatever the shop uses. */
+  'auth/set_language': { language: 'en' | 'sw' | 'shop' };
 
   /** Owner or IT: make a one-time code (valid about 10 minutes) that registers one device under the given name. */
   'devices/create_code': { name: string; replaces?: Id };

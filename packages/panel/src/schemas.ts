@@ -41,6 +41,7 @@ export const schemas = {
   'offline/get_pass': empty,
   'offline/review': z.strictObject({ heldId: id, action: z.enum(['approve', 'dismiss']), note: longText.optional() }),
   'auth/change_pin': z.strictObject({ currentPin: pin, newPin: pin }),
+  'auth/set_language': z.strictObject({ language: z.enum(['en', 'sw', 'shop']) }),
 
   'devices/create_code': z.strictObject({ name, replaces: id.optional() }),
   'devices/cancel_code': z.strictObject({ codeId: id }),
@@ -284,6 +285,7 @@ export const _schemasMatchIntentMap: { [K in IntentName]: Both<K> } = null as un
 
 export const feedSchemas = {
   me: empty,
+  my_language: empty,
   navigation: empty,
   staff_signin: empty,
   staff_list: empty,
