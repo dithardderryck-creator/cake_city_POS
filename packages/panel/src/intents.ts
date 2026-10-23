@@ -96,6 +96,11 @@ export interface IntentMap {
     language?: 'en' | 'sw';
   };
 
+  /** Owner or IT: switch the location check on or off, set the shop's spot (from a device standing in the shop) and the radius. */
+  'settings/set_location': { enabled?: boolean; lat?: number; lng?: number; radiusM?: number };
+  /** Anyone signed in: say where this device is now. Staff outside the shop's fence are held in the lobby until they report a position inside it. */
+  'session/report_place': { lat: number; lng: number; accuracyM?: number };
+
   'payments/record_payment': {
     orderId: Id;
     method: PaymentMethod;
@@ -302,6 +307,8 @@ export interface HandlerResult {
   warnings?: string[];
   /** Skip queuing a sync item (sign-in, sign-out, and sync itself). */
   skipSync?: boolean;
+  /** Leave no audit line (for the position reports every couple of minutes, which would only bury the real entries). */
+  skipAudit?: boolean;
   /**
    * The instruction is refused, but what the circuit wrote is still saved.
    * Used where the refusal itself must be recorded, such as counting wrong PINs.

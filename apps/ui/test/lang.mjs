@@ -36,7 +36,10 @@ async function open(role, label) {
 async function openSettings(page) {
   await until(async () => {
     const sel = page.locator('select[data-k="sl"]');
-    if (!(await sel.isVisible())) await page.click('#xset');
+    if (!(await sel.isVisible())) {
+      if (!(await page.locator('#dpn [data-d="sec"][data-s="language"]').isVisible())) await page.click('#xset');
+      if (await page.locator('#dpn [data-d="sec"][data-s="language"]').isVisible()) await page.click('#dpn [data-d="sec"][data-s="language"]');
+    }
     return await sel.isVisible();
   }, 'the settings drawer opens');
 }
@@ -62,6 +65,12 @@ async function sweep(page, role) {
   };
   await visit(null);
   for (const v of tabs) await visit(v);
+  // My account, opened from the name at the top.
+  await page.locator('.xrole, .xnm, .who').first().click();
+  await page.waitForSelector('.cx-d');
+  await page.waitForTimeout(400);
+  for (const l of await englishLines(page)) found.set(l, 'account');
+  await page.click('.cx-d [data-x="close"]');
   return [...found].map(([l, v]) => `${role}/${v}: ${l}`);
 }
 
@@ -70,7 +79,7 @@ try {
   const owner = await open('owner', 'Owner');
   await openSettings(owner);
   await owner.selectOption('select[data-k="sl"]', 'sw');
-  await owner.click('[data-d="shop"]');
+  await owner.click('[data-d="secsave"]');
   await until(async () => /Mipangilio|Hifadhi/.test(await owner.locator('body').innerText()), 'the owner screen turns to Kiswahili');
   assert.equal(await owner.evaluate(() => localStorage.getItem('cake-pos-lang')), 'sw');
   await owner.click('[data-d="close"]');
@@ -99,8 +108,8 @@ try {
   /* Back to English. */
   await openSettings(owner);
   await owner.selectOption('select[data-k="sl"]', 'en');
-  await owner.click('[data-d="shop"]');
-  await until(async () => /Settings|Save shop details/.test(await owner.locator('body').innerText()), 'the owner screen is English again');
+  await owner.click('[data-d="secsave"]');
+  await until(async () => (await owner.evaluate(() => localStorage.getItem('cake-pos-lang'))) === 'en', 'the owner screen is English again');
   assert.equal(await owner.evaluate(() => localStorage.getItem('cake-pos-lang')), 'en');
   await owner.click('[data-d="close"]');
   assert.deepEqual(errs, [], 'no page errors');

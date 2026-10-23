@@ -30,6 +30,7 @@ import { countIntents } from './circuits/count';
 import { batchIntents } from './circuits/batches';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents, loadSettings } from './circuits/settings';
+import { placeIntents, heldInLobby, LOBBY_INTENTS, LOBBY_FEEDS, LOBBY_MESSAGE, type PlaceReport } from './circuits/place';
 import { paymentIntents } from './circuits/payments';
 import { staffIntents } from './circuits/staff';
 import { stockIntents } from './circuits/stock';
@@ -158,6 +159,8 @@ interface SessionRecord {
   expiresAt: string;
   /** The registered device this sign-in was made on. */
   deviceId?: string;
+  /** The latest position this sign-in reported, for the location check. */
+  place?: PlaceReport;
 }
 
 interface RequestRecord {
@@ -176,6 +179,7 @@ const registry = {
   ...customIntents,
   ...quoteIntents,
   ...settingsIntents,
+  ...placeIntents,
   ...inventoryIntents,
   ...recipeIntents,
   ...usageIntents,
@@ -314,7 +318,8 @@ export function createPanel(options: PanelOptions = {}): Panel {
       if (!dev || dev.revokedAt) return null;
     } else if (config.requireDevice) return null;
     if (nowMs - Date.parse(rec.lastSeenAt) > TOUCH_EVERY_MS) await store.put('sessions', { ...rec, lastSeenAt: now() });
-    return { userId: staff.id, name: staff.name, role: staff.role };
+    const held = heldInLobby(await loadSettings(store), staff.role, rec.place, nowMs);
+    return { userId: staff.id, name: staff.name, role: staff.role, ...(held ? { lobby: true } : {}) };
   }
 
   /** The registered device behind a secret, or null when it is missing, unknown or revoked. */
@@ -468,6 +473,12 @@ export function createPanel(options: PanelOptions = {}): Panel {
         await writeAudit({ ...actor, intent: type, summary: `Blocked: ${session.role} cannot do this`, outcome: 'denied' });
         return fail('forbidden', ['Your role cannot do this. Ask the owner.']);
       }
+      // The location check: outside the fence, only the lobby's few actions are open. A replayed offline sale was already proved, so it is not held.
+      if (session.lobby && !internal && !LOBBY_INTENTS.has(type)) {
+        bump(stat, 'denied');
+        await writeAudit({ ...actor, intent: type, summary: 'Blocked: outside the shop (location check)', outcome: 'denied' });
+        return fail('forbidden', [LOBBY_MESSAGE]);
+      }
     }
 
     // Shape check: what actually arrived, not what the types promise.
@@ -506,7 +517,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
           return { result: fail(res.failure.code, res.failure.messages), events: [], stat: denied ? 'denied' : 'invalid', changed: false };
         }
 
-        await writeAudit({ ...who, intent: type, target: res.target, summary: res.summary, outcome: 'ok' });
+        if (!res.skipAudit) await writeAudit({ ...who, intent: type, target: res.target, summary: res.summary, outcome: 'ok' });
         if (!res.skipSync) await enqueueSync(type, res.target);
         const events = [...(res.events ?? [])];
         // Alerts follow the data. If working them out ever fails, the sale or the stock change still goes through,
@@ -565,6 +576,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
     if (def.roles !== 'public') {
       if (!session) return { ok: false, error: { code: 'unauthenticated', messages: ['Sign in with your PIN to continue.'] } };
       if (!def.roles.includes(session.role)) return { ok: false, error: { code: 'forbidden', messages: ['Your role cannot see this.'] } };
+      if (session.lobby && !LOBBY_FEEDS.has(name)) return { ok: false, error: { code: 'forbidden', messages: [LOBBY_MESSAGE] } };
     }
     const device = await resolveDevice(deviceToken);
     if (def.device === 'required' && config.requireDevice && !device) return { ok: false, error: { code: 'forbidden', messages: [NOT_REGISTERED] } };
@@ -591,6 +603,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
     const session = await resolveSession(token);
     if (!session) return photoFail('unauthenticated', 'Sign in with your PIN to continue.');
     if (!PHOTO_WRITERS.includes(session.role)) return photoFail('forbidden', 'Your role cannot do this. Ask the owner.');
+    if (session.lobby) return photoFail('forbidden', LOBBY_MESSAGE);
     if (bytes.length === 0) return photoFail('invalid', 'That file is empty.');
     if (bytes.length > MAX_PHOTO_BYTES) return photoFail('invalid', 'That picture is too big. Pictures can be up to 5 MB.');
     const mime = sniffImage(bytes);
@@ -613,6 +626,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
     const session = await resolveSession(token);
     if (!session) return photoFail('unauthenticated', 'Sign in with your PIN to continue.');
     if (!PHOTO_READERS.includes(session.role)) return photoFail('forbidden', 'Your role cannot see this.');
+    if (session.lobby) return photoFail('forbidden', LOBBY_MESSAGE);
     const [meta, data] = await Promise.all([store.get<Photo>('photos', photoId), store.get<PhotoData>('photoData', photoId)]);
     if (!meta || !data) return photoFail('invalid', 'That picture is no longer available.');
     return { ok: true, mime: meta.mime, bytes: base64ToBytes(data.data) };

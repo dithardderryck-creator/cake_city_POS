@@ -6,6 +6,10 @@ Things deliberately left out for now. Nothing here blocks the screens that exist
 - **Done:** a shop-wide language setting (owner Settings), every screen and the server's messages shown in Kiswahili, English kept in the backend. Test: `apps/ui/test/lang.mjs`.
 - **Still to do:** a native speaker must review the wording (`apps/ui/src/lang/*.txt`). Not checked yet: receipts shared by link and the xlsx archive (they probably stay English). The date picker follows the browser's language, not the shop's. Product, option and person names stay as typed.
 
+## Location check and tidier settings (22 Oct 2026)
+- **Done:** location check with a lobby (owner and IT exempt, switch in owner Settings and on the IT page), My account for every role, owner Settings split into sections that each save on their own. Tests: `packages/panel/src/location.test.ts`, `apps/ui/test/lobby.mjs`.
+- **Still to decide:** real-world radius (try 150 m on the shop's own phones), whether a position needs a heartbeat so a phone left at home cannot keep a stale "inside" for 10 minutes, and whether baker and inventory should be held at all (today all three non-admin roles are).
+
 ## Screens and features
 - **IT page**: a small one exists (`/it.html`, 17 Oct 2026): devices (make a code, rename, re-register, revoke) and a system summary. Still to decide: the fuller IT command centre (request inbox, panel map circuits, backups, alerts, the AI monitor idea). Server side is ready (`panel_map`, `request_inbox`).
 - **Owner: "what each role can do" table**: the first design had a fixed one. Left out because a fixed table would drift from the server's real rules. If wanted, it should come from the server.

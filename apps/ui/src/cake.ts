@@ -165,6 +165,10 @@ export async function quickSale(sale: { items: Array<{ combinationId: string; qt
   const r = await client.offline.quickSale(sale);
   if (!r.ok) {
     const m = r.error.messages.join(' ') || 'That did not work.';
+    if (m.startsWith(LOBBY_PREFIX)) {
+      void checkPlace();
+      return { ok: false, message: m };
+    }
     toast(m);
     return { ok: false, message: m };
   }
@@ -245,6 +249,8 @@ export async function boot(allowed: Role | Role[]): Promise<SessionInfo> {
       setTimeout(done, 4000);
     });
   }
+  wireAccountChip();
+  watchPlace();
   return s;
 }
 
@@ -306,6 +312,11 @@ export function feed<K extends FeedName>(name: K, params: FeedMap[K]['params'], 
       render(r.data);
     } else {
       const m = r.error.messages[0] ?? 'Something went wrong.';
+      // Outside the fence the server only opens the lobby. That is shown by the lobby, not as a failure.
+      if (m.startsWith(LOBBY_PREFIX)) {
+        void checkPlace();
+        return;
+      }
       if (m !== lastError) toast(m);
       lastError = m;
       // A screen that could not load must say so on the screen, not only in a message that disappears.
@@ -446,6 +457,14 @@ body{overflow-wrap:anywhere}
 .cx-d{background:var(--surf);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:20px;width:min(460px,100%);max-height:90dvh;overflow-y:auto}.cx-d h2{margin:0 0 8px;font:600 18px "Fraunces",Georgia,serif}
 .cx-d label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}.cx-d input:not([type=checkbox]),.cx-d select,.cx-d textarea{width:100%;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit}.cx-d textarea{padding:10px 12px;min-height:64px;resize:none}
 .cx-g{display:flex;gap:6px;flex-wrap:wrap}.cx-e{color:var(--mute);margin:8px 0}
+.cx-d h3{margin:18px 0 2px;font-size:14px;font-weight:700}.cx-d .cx-m{margin:2px 0}.cx-d hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+.cx-d .cx-row{display:flex;justify-content:space-between;gap:12px;align-items:center}.cx-d .cx-row h2{margin:0}
+.xrole[role=button],.xnm[role=button],.who[role=button]{cursor:pointer}.xrole[role=button]:hover,.xnm[role=button]:hover,.who[role=button]:hover{opacity:.8}
+.cx-lobby{position:fixed;inset:0;z-index:45;background:var(--bg);color:var(--ink);display:grid;place-items:center;padding:20px;overflow-y:auto}
+.cx-lb{width:min(480px,100%);display:grid;gap:12px;text-align:center;justify-items:center}
+.cx-lb h1{margin:0;font:600 26px "Fraunces",Georgia,serif}.cx-lb p{margin:0}
+.cx-lb-mk{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:var(--cop);color:var(--on,#fff);font:600 26px "Fraunces",Georgia,serif}
+.cx-lb .cx-a{justify-content:center}.cx-lb .cx-ntc{width:100%;text-align:left}
 `;
 
 function partsCss(): void {
@@ -683,4 +702,211 @@ ${r.body ? `<div>${esc(r.body)}</div>` : ''}${r.outcome ? `<div class="cx-m">Out
     }),
   ];
   return { stop: () => stops.forEach((s) => s()), shown: markSeen };
+}
+
+
+/* ---------- My account: what every person can change about themselves ---------- */
+
+const ROLE_NAME: Record<Role, string> = { owner: 'Owner', cashier: 'Cashier', baker: 'Baker', inventory: 'Inventory', it: 'IT' };
+const LEVELS: Array<[string, string]> = [
+  ['off', 'Off'],
+  ['critical', 'Only critical alerts'],
+  ['all', 'Every alert'],
+];
+
+function currentTheme(): 'light' | 'dark' {
+  const t = document.documentElement.dataset.theme;
+  if (t === 'light' || t === 'dark') return t;
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+/** Opens the person's own settings. Every role gets the same sheet, from the name at the top of the page. */
+export async function openAccount(): Promise<void> {
+  const who = session;
+  if (!who) return;
+  const dev = await client.deviceStatus().catch(() => null);
+  const setup = who.role === 'it' ? null : await client.feed('notification_setup', {}).then((r) => (r.ok ? r.data : null));
+  const lang = language() === 'sw' ? 'Kiswahili' : 'English';
+  const level = (name: string, cur: string) => `<select id="${name}">${LEVELS.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const d = dialog(`
+    <div class="cx-row"><h2>My account</h2><button class="cx-b" data-x="close">Close</button></div>
+    <p class="cx-m"><b>${esc(who.name)}</b>${who.name.toLowerCase().includes(ROLE_NAME[who.role].toLowerCase()) ? '' : ` · ${esc(ROLE_NAME[who.role])}`}</p>
+    <p class="cx-m">This device: ${esc(dev?.name ?? 'Not registered')}</p>
+    <h3>Change my PIN</h3>
+    <label for="cx-pc">Current PIN</label><input id="cx-pc" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6">
+    <label for="cx-pn">New PIN (4 to 6 digits)</label><input id="cx-pn" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6">
+    <label for="cx-pr">New PIN again</label><input id="cx-pr" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6">
+    <div class="cx-a"><button class="cx-b p" data-x="pin">Change PIN</button></div>
+    ${
+      setup
+        ? `<hr><h3>How I get alerts</h3><p class="cx-m">Alerts reach you in the app. You can also get them by text message or WhatsApp.</p>
+    <label for="cx-ph">Phone number, with the country code</label><input id="cx-ph" inputmode="tel" placeholder="+255712345678" value="${esc(setup.me.phone ?? '')}">
+    <label for="cx-sm">Text message</label>${level('cx-sm', setup.me.sms)}
+    <label for="cx-wa">WhatsApp</label>${level('cx-wa', setup.me.whatsapp)}
+    ${setup.notes.map((n) => `<p class="cx-m">${esc(n)}</p>`).join('')}
+    <div class="cx-a"><button class="cx-b p" data-x="contact">Save contact details</button></div>`
+        : ''
+    }
+    <hr><h3>Appearance</h3>
+    <div class="cx-g" id="cx-th"><button class="cx-b" data-th="light" aria-pressed="${currentTheme() === 'light'}">Light</button><button class="cx-b" data-th="dark" aria-pressed="${currentTheme() === 'dark'}">Dark</button></div>
+    <h3>Language</h3><p class="cx-m">The shop uses ${lang}. The owner changes it in Settings.</p>
+    <hr><div class="cx-a"><button class="cx-b r" data-x="out">Sign out</button></div>`);
+  const q = <T extends HTMLElement>(sel: string) => d.el.querySelector<T>(sel)!;
+  d.el.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const th = t.closest<HTMLElement>('[data-th]');
+    if (th) {
+      document.documentElement.dataset.theme = th.dataset.th;
+      try {
+        localStorage.setItem('theme', th.dataset.th!);
+      } catch {
+        /* storage blocked: the choice lasts until the page closes */
+      }
+      d.el.querySelectorAll<HTMLElement>('[data-th]').forEach((b) => b.setAttribute('aria-pressed', String(b === th)));
+      return;
+    }
+    const b = t.closest<HTMLButtonElement>('[data-x]');
+    if (!b || b.disabled) return;
+    const k = b.dataset.x;
+    if (k === 'close') d.close();
+    else if (k === 'out') void signOut();
+    else if (k === 'pin') {
+      const cur = q<HTMLInputElement>('#cx-pc').value;
+      const nw = q<HTMLInputElement>('#cx-pn').value;
+      if (!/^\d{4,6}$/.test(nw)) return toast('The new PIN must be 4 to 6 digits.');
+      if (nw !== q<HTMLInputElement>('#cx-pr').value) return toast('The two new PINs do not match.');
+      b.disabled = true;
+      void send('auth/change_pin', { currentPin: cur, newPin: nw }, 'PIN changed').then((r) => {
+        b.disabled = false;
+        if (r.ok) for (const id of ['#cx-pc', '#cx-pn', '#cx-pr']) q<HTMLInputElement>(id).value = '';
+      });
+    } else if (k === 'contact') {
+      b.disabled = true;
+      const level = (id: string) => q<HTMLSelectElement>(id).value as 'off' | 'critical' | 'all';
+      void send('staff/set_contact', { userId: who.userId, phone: q<HTMLInputElement>('#cx-ph').value.trim() || null, sms: level('#cx-sm'), whatsapp: level('#cx-wa') }, 'Contact details saved').then(() => {
+        b.disabled = false;
+      });
+    }
+  });
+}
+
+/** Makes the role chip and the name at the top of every page open My account. */
+function wireAccountChip(): void {
+  partsCss();
+  for (const el of document.querySelectorAll<HTMLElement>('.xrole, .xnm, .who')) {
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', 'My account');
+    el.title = 'My account';
+    el.tabIndex = 0;
+    el.addEventListener('click', () => void openAccount());
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        void openAccount();
+      }
+    });
+  }
+}
+
+/* ---------- The location check: staff away from the shop get the lobby ---------- */
+
+/** The server's refusal while someone is held in the lobby starts like this. */
+const LOBBY_PREFIX = 'You are outside the shop';
+
+type Away = { kind: 'far'; distanceM?: number } | { kind: 'vague' | 'denied' | 'unavailable' | 'timeout' };
+let lobbyEl: HTMLElement | null = null;
+let lobbyStop: (() => void) | null = null;
+let placeBusy = false;
+
+export function getPosition(): Promise<{ lat: number; lng: number; accuracyM: number } | { error: 'denied' | 'unavailable' | 'timeout' }> {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) return resolve({ error: 'unavailable' });
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy }),
+      (e) => resolve({ error: e.code === 1 ? 'denied' : e.code === 3 ? 'timeout' : 'unavailable' }),
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+    );
+  });
+}
+
+function whyAway(a: Away): string {
+  if (a.kind === 'far') {
+    const d = a.distanceM;
+    if (d === undefined) return 'You are not at the shop. Work screens open when you are at the shop.';
+    return d >= 1000 ? `You are about ${(d / 1000).toFixed(1)} km from the shop. Work screens open when you are at the shop.` : `You are about ${d} m from the shop. Work screens open when you are at the shop.`;
+  }
+  if (a.kind === 'vague') return 'This device cannot tell where it is accurately enough. Move near a window or switch on precise location, then check again.';
+  if (a.kind === 'denied') return 'Location is switched off for this page. Allow location for this site in the browser settings, then check again.';
+  if (a.kind === 'timeout') return 'Finding the location took too long. Check again in a moment.';
+  return 'This device cannot share its location, so it cannot open the work screens. Ask the owner.';
+}
+
+function showLobby(a: Away): void {
+  partsCss();
+  if (!lobbyEl) {
+    const el = document.createElement('div');
+    el.id = 'cx-lobby';
+    el.className = 'cx-lobby';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-labelledby', 'cx-lb-t');
+    el.innerHTML = `<div class="cx-lb"><div class="cx-lb-mk">C</div><p class="cx-m" id="cx-lb-shop"></p><h1 id="cx-lb-t">You are outside the shop</h1><p id="cx-lb-why"></p>
+      <div class="cx-ntc" id="cx-lb-n" hidden></div>
+      <div class="cx-a"><button class="cx-b p" id="cx-lb-again">Check again</button><button class="cx-b" id="cx-lb-acct">My account</button><button class="cx-b" id="cx-lb-out">Sign out</button></div>
+      <p class="cx-m">The shop has turned on a location check. Your PIN and the announcements stay available here.</p></div>`;
+    document.body.appendChild(el);
+    el.querySelector('#cx-lb-again')!.addEventListener('click', () => void checkPlace());
+    el.querySelector('#cx-lb-acct')!.addEventListener('click', () => void openAccount());
+    el.querySelector('#cx-lb-out')!.addEventListener('click', () => void signOut());
+    lobbyEl = el;
+    lobbyStop = mountNotice(el.querySelector<HTMLElement>('#cx-lb-n')!);
+  }
+  lobbyEl.querySelector('#cx-lb-shop')!.textContent = shop?.shopName ?? '';
+  lobbyEl.querySelector('#cx-lb-why')!.textContent = whyAway(a);
+}
+
+function hideLobby(): void {
+  lobbyStop?.();
+  lobbyEl?.remove();
+  lobbyEl = null;
+  lobbyStop = null;
+}
+
+/** Asks this device where it is, tells the server, and shows or hides the lobby by the answer. */
+async function checkPlace(): Promise<void> {
+  if (placeBusy) return;
+  const check = shop?.locationCheck;
+  if (!session || session.role === 'owner' || session.role === 'it' || !check?.enabled) {
+    hideLobby();
+    return;
+  }
+  if (offline) return; // a till that cannot reach the server keeps working; the server decides once it can be reached
+  placeBusy = true;
+  const again = document.getElementById('cx-lb-again');
+  if (again) again.textContent = 'Checking…';
+  try {
+    const p = await getPosition();
+    if ('error' in p) return showLobby({ kind: p.error });
+    const r = await client.dispatch('session/report_place', { lat: p.lat, lng: p.lng, accuracyM: Math.round(p.accuracyM) });
+    if (!r.ok) return;
+    const d = r.data as { inside: boolean; distanceM: number; reason?: 'far' | 'vague' };
+    if (d.inside) hideLobby();
+    else showLobby(d.reason === 'vague' ? { kind: 'vague' } : { kind: 'far', distanceM: d.distanceM });
+  } finally {
+    placeBusy = false;
+    const b = document.getElementById('cx-lb-again');
+    if (b) b.textContent = 'Check again';
+  }
+}
+
+/** Keeps the position fresh while a page is open: now, every couple of minutes, and whenever the page comes back to the front. */
+function watchPlace(): void {
+  if (!session || session.role === 'owner' || session.role === 'it') return;
+  onShop(() => void checkPlace());
+  setInterval(() => {
+    if (!document.hidden) void checkPlace();
+  }, 120_000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void checkPlace();
+  });
 }

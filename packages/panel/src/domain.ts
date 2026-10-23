@@ -52,6 +52,8 @@ export interface Session {
   userId: Id;
   name: string;
   role: Role;
+  /** True while the location check holds this person in the lobby (outside the fence, or no recent position). */
+  lobby?: boolean;
 }
 
 /** How much a person wants by text message: nothing, only critical alerts, or every alert for them. */
@@ -561,6 +563,15 @@ export interface ShopSettings {
   dayCloseBy: 'owner' | 'cashier_and_owner';
   /** The language the screens are shown in. The server and its records stay in English; only the screens are translated. */
   language: 'en' | 'sw';
+  /** Staff outside the fence get the lobby only (owner and IT are never held). Needs the shop spot to be set first. */
+  locationCheckEnabled: boolean;
+  /** The shop's spot, set by the owner or IT from a device standing in the shop. */
+  shopLat?: number;
+  shopLng?: number;
+  /** How far from the spot still counts as at the shop, in metres. */
+  locationRadiusM: number;
+  locationSetAt?: string;
+  locationSetByName?: string;
 }
 
 /**

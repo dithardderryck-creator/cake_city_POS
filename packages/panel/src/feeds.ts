@@ -40,6 +40,7 @@ import type {
 import { REQUEST_CATEGORIES } from './domain';
 import { daysBetween, todayLocal } from './circuits/dates';
 import { ALL_PAYMENT_METHODS, loadSettings } from './circuits/settings';
+import { heldInLobby, type PlaceReport } from './circuits/place';
 import { quickSaleTotal } from './circuits/orders';
 import { DomainError } from './intents';
 import { BASE_UNIT_FOR, formatQty, unitTable } from './units';
@@ -604,7 +605,19 @@ export interface ShopSettingsData {
   offlineMaxTotal: number;
   dayCloseBy: 'owner' | 'cashier_and_owner';
   language: 'en' | 'sw';
-  can: { edit: boolean };
+  /** The location check, without the shop's exact spot (staff do not need it). */
+  locationCheck: { enabled: boolean; radiusM: number; spotSet: boolean };
+  can: { edit: boolean; location: boolean };
+}
+
+export interface LocationCheckData {
+  enabled: boolean;
+  radiusM: number;
+  spotSet: boolean;
+  setAt: string | null;
+  setByName: string | null;
+  /** Staff who are held in the lobby right now. */
+  heldNow: number;
 }
 
 export interface HeldSaleRow {
@@ -646,6 +659,7 @@ export interface FeedMap {
   quote_inbox: { params: Record<string, never>; data: QuoteInboxData };
   bake_queue: { params: Record<string, never>; data: BakeQueueData };
   shop_settings: { params: Record<string, never>; data: ShopSettingsData };
+  location_check: { params: Record<string, never>; data: LocationCheckData };
   offline_review: { params: Record<string, never>; data: OfflineReviewData };
   ingredient_list: { params: { includeInactive?: boolean }; data: IngredientRow[] };
   recipe_rules: { params: Record<string, never>; data: RecipeRuleRow[] };
@@ -1293,7 +1307,31 @@ export const feeds: FeedRegistry = {
         offlineMaxTotal: s.offlineMaxTotal,
         dayCloseBy: s.dayCloseBy,
         language: s.language,
-        can: { edit: session?.role === 'owner' },
+        locationCheck: { enabled: s.locationCheckEnabled, radiusM: s.locationRadiusM, spotSet: s.shopLat !== undefined && s.shopLng !== undefined },
+        can: { edit: session?.role === 'owner', location: session?.role === 'owner' || session?.role === 'it' },
+      };
+    },
+  },
+
+  location_check: {
+    roles: ['owner', 'it'],
+    build: async ({ store, clock }) => {
+      const s = await loadSettings(store);
+      const nowMs = clock.now().getTime();
+      const sessions = s.locationCheckEnabled ? await store.list<{ id: string; userId: string; place?: PlaceReport }>('sessions') : [];
+      const staff = new Map((await store.list<Staff>('staff')).map((p) => [p.id, p]));
+      const held = new Set<string>();
+      for (const r of sessions) {
+        const p = staff.get(r.userId);
+        if (p && p.active && heldInLobby(s, p.role, r.place, nowMs)) held.add(r.userId);
+      }
+      return {
+        enabled: s.locationCheckEnabled,
+        radiusM: s.locationRadiusM,
+        spotSet: s.shopLat !== undefined && s.shopLng !== undefined,
+        setAt: s.locationSetAt ?? null,
+        setByName: s.locationSetByName ?? null,
+        heldNow: held.size,
       };
     },
   },

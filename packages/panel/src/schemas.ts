@@ -131,6 +131,18 @@ export const schemas = {
     language: z.enum(['en', 'sw']).optional(),
   }),
 
+  'settings/set_location': z.strictObject({
+    enabled: z.boolean().optional(),
+    lat: z.number().min(-90).max(90).optional(),
+    lng: z.number().min(-180).max(180).optional(),
+    radiusM: z.number().int().min(30).max(2000).optional(),
+  }),
+  'session/report_place': z.strictObject({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+    accuracyM: z.number().min(0).max(1_000_000).optional(),
+  }),
+
   'payments/record_payment': z.strictObject({
     orderId: id,
     method,
@@ -282,6 +294,7 @@ export const feedSchemas = {
   quote_inbox: empty,
   bake_queue: empty,
   shop_settings: empty,
+  location_check: empty,
   offline_review: empty,
   day_report: z.strictObject({ day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'choose a date').optional() }),
   ingredient_list: z.strictObject({ includeInactive: z.boolean().optional() }),

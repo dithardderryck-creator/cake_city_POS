@@ -55,6 +55,14 @@ The owner picks the language for the whole shop in Settings (the "Language every
 
 The Kiswahili was written without a native speaker. Before the shop relies on it, ask someone at the shop to read through each screen and note what sounds wrong. The wording lives in `apps/ui/src/lang/*.txt`, one line per phrase (`English ||| Kiswahili`), so a correction is one line. Run `npm run build` after editing; the build stops if a line loses a number or name placeholder. A phrase with no line shows in English.
 
+### Settings, My account and the location check
+
+**Owner → Settings** is a list of sections, each with its own Save button: Shop details, Selling (ways of paying, refund wait, who closes the day, decorating step), Stock and warnings, Offline selling, Language, Location check. Nothing is saved until you press Save in that section.
+
+**My account** is under the name at the top of every page, for every role: change your own PIN, set your phone number and how you want alerts (text message, WhatsApp), pick light or dark, and sign out. The language is shop-wide and is changed by the owner in Settings.
+
+**Location check (off until you switch it on).** Owner → Settings → Location check, or the Location card on the IT page. Stand inside the shop with your phone, tap **Use where I am now**, then switch the check on. Cashiers, bakers and inventory staff who are away from the shop (more than the radius, 150 m to begin with) sign in as usual but only reach a lobby: they can read announcements and change their PIN, and cannot sell or work. The owner and IT are never held. Phones and tablets are good at this; a computer with no GPS may guess a position several hundred metres off, so set the spot from a phone. If a phone refuses to share its location it is held in the lobby too, with the reason shown. This is a reminder for honest staff, not a lock: a phone can be made to report a false position, and a till that has lost the server keeps selling under the offline rules. If it ever gets in the way, the owner or IT switches it off and everyone is released at once.
+
 ## Settings
 
 Set these as environment variables before starting. All are optional.

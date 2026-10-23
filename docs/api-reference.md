@@ -425,6 +425,29 @@ Allowed: **owner**
 | `dayCloseBy` | "owner" \| "cashier_and_owner" | no |  |
 | `language` | "en" \| "sw" | no |  |
 
+#### `settings/set_location`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `enabled` | boolean | no |  |
+| `lat` | number | no | min -90, max 90 |
+| `lng` | number | no | min -180, max 180 |
+| `radiusM` | integer | no | min 30, max 2000 |
+
+### Auth
+
+#### `session/report_place`
+
+Allowed: **owner, cashier, baker, inventory, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `lat` | number | yes | min -90, max 90 |
+| `lng` | number | yes | min -180, max 180 |
+| `accuracyM` | number | no | min 0, max 1000000 |
+
 ### Inventory
 
 #### `inventory/create_ingredient`
@@ -986,6 +1009,12 @@ _No fields. Send an empty object `{}`._
 #### `shop_settings`
 
 Allowed: **owner, cashier, baker, inventory**
+
+_No fields. Send an empty object `{}`._
+
+#### `location_check`
+
+Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 

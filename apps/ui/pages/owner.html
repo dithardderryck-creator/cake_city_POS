@@ -79,6 +79,7 @@ textarea,.pr{width:100%;border:1px solid var(--line);border-radius:12px;backgrou
 .ci select{border:1px solid var(--line);border-radius:999px;background:var(--paper);padding:5px 10px}
 .ci.hidden b,.ci.draft b{color:var(--mute)}
 .sw{width:42px;height:24px;border-radius:999px;border:0;background:var(--line);position:relative;transition:background .3s}.sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .35s var(--ease)}.sw[aria-checked="true"]{background:var(--sage)}.sw[aria-checked="true"] i{transform:translateX(18px)}
+.seclist{display:grid;gap:8px}.secrow{display:flex;gap:12px;align-items:center;justify-content:space-between;text-align:left;width:100%;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .3s}.secrow:hover{border-color:var(--cop)}.secrow>span:first-child{display:grid;gap:2px;flex:1;min-width:0}.secrow small{font-size:13px}.sech{font-size:15px;margin:22px 0 6px}
 .dr{position:fixed;inset:0;background:#1f1a1366;z-index:25;display:flex;justify-content:flex-end}.dr[hidden]{display:none}
 .dp{width:min(440px,100%);height:100%;background:var(--bg);padding:24px;overflow:auto;animation:slide .45s var(--ease);box-shadow:-20px 0 60px -20px #0006}
 @keyframes slide{from{transform:translateX(40px);opacity:0}}
@@ -418,7 +419,7 @@ $("#bulk").onclick=async e=>{const b=e.target.closest("[data-b]");if(!b)return;c
   if(r){if(!r.ok)break;n++}}});
  cs.clear();cr();Cake.toast(n+" item"+(n===1?"":"s")+" changed.")};
 const drawer=html=>{$("#dpn").innerHTML=html;$("#dr").hidden=false};
-const dclose=()=>{$("#dr").hidden=true;drMode=null;if(typeof stopDay==="function"){stopDay();stopDay=null;D.day=null}};
+const dclose=()=>{$("#dr").hidden=true;drMode=null;setSec=null;if(typeof stopDay==="function"){stopDay();stopDay=null;D.day=null}};
 function sizeRow(l="",p=""){return`<div class="vr" style="grid-template-columns:1fr 120px 32px"><input class="vn" value="${E(l)}" placeholder="Size, e.g. 1 kg" aria-label="Size name"><input class="vp" type="number" min="0" inputmode="numeric" step="1" value="${E(p)}" placeholder="Price" aria-label="Price"><button aria-label="Remove size">✕</button></div>`}
 function editor(id){const p=id?D.cat.find(x=>x.productId===id):null;drMode=id?"edit":"new";
  if(!p&&id)return;
@@ -451,7 +452,10 @@ $("#dr").onclick=async e=>{if(e.target.id==="dr"){dclose();return}
   const grid=await Cake.read("catalogue_grid",{}),np=grid&&grid.find(x=>x.productId===productId);
   for(let i=0;np&&i<rows.length;i++){if(rows[i].p==="")continue;const c=np.combinations.find(x=>x.valueIds.includes(valueIds[i]));if(c&&!(await Cake.send("catalogue/set_price",{combinationId:c.combinationId,price:+rows[i].p})).ok)return}
   Cake.toast(rows.some(r=>r.p==="")?"Added. Set a price on every size to sell it.":"Added to the catalogue");dclose()})}
- else if(k==="shop"||k==="alerts"||k==="counter"||k==="offline"||k==="dayrule")guard(b,()=>saveSettings(k));
+ else if(k==="sec"){setSec=b.dataset.s;keep($("#dpn"),renderSettings);$("#dpn").scrollTop=0}
+ else if(k==="secback"){setSec=null;renderSettings()}
+ else if(k==="secsave")guard(b,saveSettings)
+ else if(k==="locspot")guard(b,()=>setSpot(b));
  else if(k==="dayclose")guard(b,dayClose)};
 
 /* ---------- stock ---------- */
@@ -659,37 +663,52 @@ $("#rgs").onclick=()=>go("stock");
 
 /* ---------- settings (shop details and alert rules) ---------- */
 const ALERT_FIELDS=[["stockoutDays","Warn when stock will run out within (days)"],["reorderDays","Warn when stock will reach its reorder level within (days)"],["usageWaitHours","Remind if usage is still unconfirmed after (hours)"],["quoteWaitHours","Remind if a price request is unanswered after (hours)"],["dueSoonDays","Warn when an unstarted order is due within (days)"],["countDifference","Flag a count difference of at least"],["urgentRequestMinutes","Send an urgent request up to you after (minutes)"],["requestWaitHours","Send an unanswered request up to you after (hours)"]];
-function openSettings(){const s=D.shop,a=D.alertset;if(!s)return;drMode="settings";
- drawer(`<div class="row"><h2>Settings</h2><button class="b" data-d="close">Close</button></div>
- <h2 style="font-size:15px;margin-top:14px">Shop details (printed on receipts)</h2>
- <label class="fl"><span>Shop name</span><input data-k="sn" maxlength="60" value="${E(s.shopName)}"></label><label class="fl"><span>Address</span><input data-k="sa" maxlength="160" value="${E(s.shopAddress||"")}"></label><label class="fl"><span>Phone</span><input data-k="sp" maxlength="40" value="${E(s.shopPhone||"")}"></label><label class="fl"><span>Receipt footer</span><input data-k="sf" maxlength="160" value="${E(s.receiptFooter||"")}"></label>
- <label class="fl" style="grid-template-columns:auto 1fr;align-items:center;gap:10px"><input data-k="sd" type="checkbox" style="width:auto" ${s.decoratingStage?"checked":""}><span style="font-size:14px;color:var(--ink)">Custom cakes have a separate decorating step</span></label>
- <label class="fl"><span>Language everyone sees on screen</span><select data-k="sl"><option value="en" ${s.language!=="sw"?"selected":""}>English</option><option value="sw" ${s.language==="sw"?"selected":""}>Kiswahili</option></select></label>
- <div class="btns"><button class="b p" data-d="shop">Save shop details</button></div>
- <h2 style="font-size:15px;margin-top:24px">At the counter</h2>
- <div class="fl"><span>Ways of paying the cashier can use</span></div>${(s.allPaymentMethods||[]).map(m=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="pm-${E(m.key)}" type="checkbox" ${m.on?"checked":""}> ${E(m.label)}</label>`).join("")}
- <label class="fl"><span>Show "running low" at the counter when this many or fewer are left</span><input data-k="lo" type="number" min="0" inputmode="numeric" value="${s.lowStockUnits}"></label>
- <label class="fl"><span>Flag a stock count or usage that is off by this percent or more</span><input data-k="bg" type="number" min="1" max="100" inputmode="numeric" value="${s.bigDifferencePercent}"></label>
+let setSec=null;
+const SECS=[["shop","Shop details","Name, address, phone and the text printed on receipts"],["selling","Selling","Ways of paying, refunds, closing the day"],["stock","Stock and warnings","Low-stock level, count differences, when to warn people"],["offline","Offline selling","Let a till keep selling when the server cannot be reached"],["language","Language","The language everyone sees on screen"],["location","Location check","Keep staff away from the shop in a lobby"]];
+const secChip=(k,s)=>k==="offline"?(s.offlineEnabled?"On":"Off"):k==="location"?(s.locationCheck&&s.locationCheck.enabled?"On":"Off"):k==="language"?(s.language==="sw"?"Kiswahili":"English"):"";
+const yn=(id,on,label)=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="${id}" type="checkbox" ${on?"checked":""}> ${label}</label>`;
+const secBody={
+ shop:s=>`<label class="fl"><span>Shop name</span><input data-k="sn" maxlength="60" value="${E(s.shopName)}"></label><label class="fl"><span>Address</span><input data-k="sa" maxlength="160" value="${E(s.shopAddress||"")}"></label><label class="fl"><span>Phone</span><input data-k="sp" maxlength="40" value="${E(s.shopPhone||"")}"></label><label class="fl"><span>Receipt footer</span><input data-k="sf" maxlength="160" value="${E(s.receiptFooter||"")}"></label>`,
+ selling:s=>`<div class="fl"><span>Ways of paying the cashier can use</span></div>${(s.allPaymentMethods||[]).map(m=>yn("pm-"+E(m.key),m.on,E(m.label))).join("")}
  <label class="fl"><span>Wait this many minutes after a payment before it can be refunded (0 = no wait)</span><input data-k="rc" type="number" min="0" max="120" inputmode="numeric" value="${s.refundCooldownMinutes}"></label>
- <div class="btns"><button class="b p" data-d="counter">Save counter rules</button></div>
- <h2 style="font-size:15px;margin-top:24px">Closing the day</h2>
- <p class="mute" style="margin:2px 0 8px">At the end of the day the drawer is counted against what the system expects. Closing never locks anything.</p>
  <label class="fl"><span>Who counts the drawer and closes the day</span><select data-k="dc"><option value="owner" ${s.dayCloseBy==="owner"?"selected":""}>Only me</option><option value="cashier_and_owner" ${s.dayCloseBy==="cashier_and_owner"?"selected":""}>The cashier counts, and I can too</option></select></label>
- <div class="btns"><button class="b p" data-d="dayrule">Save</button></div>
- <h2 style="font-size:15px;margin-top:24px">Selling when the connection is lost</h2>
- <p class="mute" style="margin:2px 0 8px">A till that loses the shop server can keep selling ready-made items. The sales are saved on the till and checked again when it reconnects. Off until you switch it on.</p>
- <label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="oe" type="checkbox" ${s.offlineEnabled?"checked":""}> Let tills keep selling when the server cannot be reached</label>
+ ${yn("sd",s.decoratingStage,"Custom cakes have a separate decorating step")}`,
+ stock:s=>{const a=D.alertset;return`<label class="fl"><span>Show "running low" at the counter when this many or fewer are left</span><input data-k="lo" type="number" min="0" inputmode="numeric" value="${s.lowStockUnits}"></label>
+ <label class="fl"><span>Flag a stock count or usage that is off by this percent or more</span><input data-k="bg" type="number" min="1" max="100" inputmode="numeric" value="${s.bigDifferencePercent}"></label>
+ ${a?`<h3 class="sech">When to warn people</h3>${ALERT_FIELDS.map(f=>`<label class="fl"><span>${f[1]}</span><input data-k="a-${f[0]}" type="number" min="0" inputmode="numeric" value="${a[f[0]]}"></label>`).join("")}<div class="fl"><span>Treat these as critical (also sent to you)</span></div>${a.kinds.map(k=>yn("c-"+E(k.kind),k.critical,E(k.label))).join("")}`:""}`},
+ offline:s=>`<p class="mute" style="margin:2px 0 8px">A till that loses the shop server can keep selling ready-made items. The sales are saved on the till and checked again when it reconnects. Off until you switch it on.</p>
+ ${yn("oe",s.offlineEnabled,"Let tills keep selling when the server cannot be reached")}
  <label class="fl"><span>Permission lasts this many hours</span><input data-k="oh" type="number" min="1" max="72" inputmode="numeric" value="${s.offlinePassHours}"></label>
  <label class="fl"><span>Most sales one till may save</span><input data-k="os" type="number" min="1" max="1000" inputmode="numeric" value="${s.offlineMaxSales}"></label>
- <label class="fl"><span>Most money one till may take this way (${E(s.currencyLabel)})</span><input data-k="om" type="number" min="1" inputmode="numeric" value="${s.offlineMaxTotal}"></label>
- <div class="btns"><button class="b p" data-d="offline">Save offline rules</button></div>
- ${a?`<h2 style="font-size:15px;margin-top:24px">When to warn people</h2>${ALERT_FIELDS.map(f=>`<label class="fl"><span>${f[1]}</span><input data-k="a-${f[0]}" type="number" min="0" inputmode="numeric" value="${a[f[0]]}"></label>`).join("")}<div class="fl"><span>Treat these as critical (also sent to you)</span></div>${a.kinds.map(k=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="c-${E(k.kind)}" type="checkbox" ${k.critical?"checked":""}> ${E(k.label)}</label>`).join("")}<div class="btns"><button class="b p" data-d="alerts">Save warning rules</button></div>`:""}`)}
-async function saveSettings(k){const v=n=>($("#dpn").querySelector(`[data-k="${n}"]`)||{value:""}),t=n=>v(n).value.trim();
- if(k==="shop"){if(!t("sn")){Cake.toast("The shop needs a name.");return}await Cake.send("settings/update",{shopName:t("sn"),shopAddress:t("sa")||null,shopPhone:t("sp")||null,receiptFooter:t("sf")||null,decoratingStage:v("sd").checked,language:v("sl").value},"Shop details saved")}
- else if(k==="counter"){const on=(D.shop.allPaymentMethods||[]).filter(m=>v("pm-"+m.key).checked).map(m=>m.key);if(!on.length){Cake.toast("Keep at least one way of paying switched on.");return}const lo=t("lo"),bg=t("bg"),rc=t("rc");if(lo===""||!(+lo>=0)||!Number.isInteger(+lo)){Cake.toast("Low stock is a whole number, 0 or more.");return}if(bg===""||!(+bg>=1&&+bg<=100)){Cake.toast("The difference percent is between 1 and 100.");return}if(rc===""||!(+rc>=0&&+rc<=120)||!Number.isInteger(+rc)){Cake.toast("The refund wait is a whole number of minutes, 0 to 120.");return}await Cake.send("settings/update",{paymentMethods:on,lowStockUnits:+lo,bigDifferencePercent:+bg,refundCooldownMinutes:+rc},"Counter rules saved")}
+ <label class="fl"><span>Most money one till may take this way (${E(s.currencyLabel)})</span><input data-k="om" type="number" min="1" inputmode="numeric" value="${s.offlineMaxTotal}"></label>`,
+ language:s=>`<p class="mute" style="margin:2px 0 8px">Everyone sees the same language, including the sign-in page. Only what is on screen changes; the records stay in English.</p><label class="fl"><span>Language everyone sees on screen</span><select data-k="sl"><option value="en" ${s.language!=="sw"?"selected":""}>English</option><option value="sw" ${s.language==="sw"?"selected":""}>Kiswahili</option></select></label>`,
+ location:s=>{const c=s.locationCheck||{},l=D.loc;return`<p class="mute" style="margin:2px 0 8px">Staff who are away from the shop are held in a lobby: they can read announcements and change their PIN, but cannot sell or work. The owner and IT are never held. It is a reminder for honest staff, not a lock: a phone can be made to report a false position.</p>
+ ${yn("le",c.enabled,"Hold staff who are away from the shop in the lobby")}
+ <div class="fl"><span>The shop's spot</span></div>
+ <p style="margin:0 0 8px">${c.spotSet?`Set${l&&l.setByName?" by "+E(l.setByName):""}${l&&l.setAt?" on "+E(when(l.setAt)):""}.`:"Not set yet. Stand inside the shop with this device, then tap the button."}</p>
+ <div class="btns" style="margin-top:0"><button class="b" data-d="locspot">Use where I am now</button></div>
+ <label class="fl"><span>How far from the spot still counts as at the shop (metres)</span><input data-k="lr" type="number" min="30" max="2000" inputmode="numeric" value="${c.radiusM||150}"></label>
+ <p class="mute" style="margin:0 0 8px">A phone is usually within 20 to 60 m indoors, so 150 m suits one shop. A computer without GPS may not be precise enough, so use a phone to set the spot.</p>
+ ${l&&c.enabled?`<p class="mute">Held in the lobby right now: ${l.heldNow}</p>`:""}`}
+};
+function openSettings(){drMode="settings";if(D.shop)renderSettings();else drawer(`<div class="row"><h2>Settings</h2><button class="b" data-d="close">Close</button></div><p class="mute">Loading…</p>`)}
+function renderSettings(){const s=D.shop;if(!s)return;
+ if(!setSec){drawer(`<div class="row"><h2>Settings</h2><button class="b" data-d="close">Close</button></div><p class="mute" style="margin:2px 0 12px">Shop-wide rules. Your own PIN, alerts and theme are under your name at the top.</p>
+ <div class="seclist">${SECS.map(([k,t,d])=>{const c=secChip(k,s);return`<button class="secrow" data-d="sec" data-s="${k}"><span><b>${t}</b><small class="mute">${d}</small></span>${c?`<span class="tag ${c==="On"?"":"cop"}">${c}</span>`:""}<span aria-hidden="true">›</span></button>`}).join("")}</div>`);return}
+ const row=SECS.find(x=>x[0]===setSec);
+ drawer(`<div class="row"><button class="b" data-d="secback">‹ Settings</button><button class="b" data-d="close">Close</button></div><h2 style="margin:14px 0 4px">${row[1]}</h2>${secBody[setSec](s)}<div class="btns"><button class="b p" data-d="secsave">Save</button></div>`)}
+async function saveSettings(){const v=n=>($("#dpn").querySelector(`[data-k="${n}"]`)||{value:""}),t=n=>v(n).value.trim(),k=setSec;
+ if(k==="shop"){if(!t("sn")){Cake.toast("The shop needs a name.");return}await Cake.send("settings/update",{shopName:t("sn"),shopAddress:t("sa")||null,shopPhone:t("sp")||null,receiptFooter:t("sf")||null},"Shop details saved")}
+ else if(k==="language")await Cake.send("settings/update",{language:v("sl").value},"Language saved")
+ else if(k==="selling"){const on=(D.shop.allPaymentMethods||[]).filter(m=>v("pm-"+m.key).checked).map(m=>m.key);if(!on.length){Cake.toast("Keep at least one way of paying switched on.");return}const rc=t("rc");if(rc===""||!(+rc>=0&&+rc<=120)||!Number.isInteger(+rc)){Cake.toast("The refund wait is a whole number of minutes, 0 to 120.");return}await Cake.send("settings/update",{paymentMethods:on,refundCooldownMinutes:+rc,dayCloseBy:v("dc").value,decoratingStage:v("sd").checked},"Selling rules saved")}
+ else if(k==="stock"){const lo=t("lo"),bg=t("bg");if(lo===""||!(+lo>=0)||!Number.isInteger(+lo)){Cake.toast("Low stock is a whole number, 0 or more.");return}if(bg===""||!(+bg>=1&&+bg<=100)){Cake.toast("The difference percent is between 1 and 100.");return}
+  const r=await Cake.send("settings/update",{lowStockUnits:+lo,bigDifferencePercent:+bg});if(!r.ok)return;
+  if(D.alertset){const p={critical:{}};for(const f of ALERT_FIELDS){const x=t("a-"+f[0]);if(x==="")continue;p[f[0]]=+x}for(const kk of D.alertset.kinds)p.critical[kk.kind]=v("c-"+kk.kind).checked;await Cake.send("alerts/configure",p,"Stock and warning rules saved")}else Cake.toast("Stock and warning rules saved")}
  else if(k==="offline"){const oh=t("oh"),os=t("os"),om=t("om");if(oh===""||!Number.isInteger(+oh)||+oh<1||+oh>72){Cake.toast("Permission lasts a whole number of hours, 1 to 72.");return}if(os===""||!Number.isInteger(+os)||+os<1||+os>1000){Cake.toast("The most sales is a whole number, 1 to 1000.");return}if(om===""||!Number.isInteger(+om)||+om<1){Cake.toast("The most money is a whole number of shillings, 1 or more.");return}await Cake.send("settings/update",{offlineEnabled:v("oe").checked,offlinePassHours:+oh,offlineMaxSales:+os,offlineMaxTotal:+om},"Offline rules saved")}
- else if(k==="dayrule")await Cake.send("settings/update",{dayCloseBy:v("dc").value},"Saved")
- else{const p={critical:{}};for(const f of ALERT_FIELDS){const x=t("a-"+f[0]);if(x==="")continue;p[f[0]]=+x}for(const kk of D.alertset.kinds)p.critical[kk.kind]=v("c-"+kk.kind).checked;await Cake.send("alerts/configure",p,"Warning rules saved")}}
+ else if(k==="location"){const lr=t("lr");if(lr===""||!Number.isInteger(+lr)||+lr<30||+lr>2000){Cake.toast("The distance is a whole number of metres, 30 to 2000.");return}await Cake.send("settings/set_location",{enabled:v("le").checked,radiusM:+lr},"Location check saved")}}
+async function setSpot(b){const p=await Cake.getPosition();if(p.error){Cake.toast(p.error==="denied"?"Location is switched off for this page. Allow it in the browser settings.":"This device could not find its location. Try again near a window.");return}
+ if(p.accuracyM>150&&!confirm("This device is only sure of its position to about "+Math.round(p.accuracyM)+" m. Set the shop's spot anyway?"))return;
+ await Cake.send("settings/set_location",{lat:p.lat,lng:p.lng},"Shop location set")}
 $("#xset").onclick=openSettings;
 
 /* ---------- offline sales waiting for the owner ---------- */
@@ -748,7 +767,8 @@ $("#xout").onclick=()=>Cake.signOut();
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
  Cake.feed("offline_review",{},d=>{D.off=d;ofr()});
  Cake.feed("audit_view",{},d=>{D.audit=d;ov();cr();sfr()});
- Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr()});
+ Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr();if(drMode==="settings")keep($("#dpn"),renderSettings)});
+ Cake.feed("location_check",{},d=>{D.loc=d;if(drMode==="settings"&&setSec==="location")keep($("#dpn"),renderSettings)});
  Cake.feed("alert_settings",{},d=>{D.alertset=d});
  subReports();subLedger();go("overview")})();
 </script>

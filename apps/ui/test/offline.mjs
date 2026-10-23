@@ -171,16 +171,17 @@ try {
 
   /* 5. The owner switches the rules on the settings screen. */
   await op.click('#xset');
+  await op.click('#dpn [data-d="sec"][data-s="offline"]');
   await op.waitForSelector('#dpn [data-k="oh"]');
   await op.fill('#dpn [data-k="oh"]', '6');
   await op.fill('#dpn [data-k="os"]', '7');
-  await op.click('#dpn [data-d="offline"]');
+  await op.click('#dpn [data-d="secsave"]');
   await until(async () => {
     const st = await read('shop_settings');
     return st.offlinePassHours === 6 && st.offlineMaxSales === 7 && st.offlineEnabled === true;
   }, 'the offline rules to be saved', 15000);
   await op.fill('#dpn [data-k="oh"]', '99');
-  await op.click('#dpn [data-d="offline"]');
+  await op.click('#dpn [data-d="secsave"]');
   assert.equal((await read('shop_settings')).offlinePassHours, 6, 'a nonsense value is refused on the screen and changes nothing');
 
   assert.deepEqual(errs, [], 'no page errors: ' + errs.join(' | '));

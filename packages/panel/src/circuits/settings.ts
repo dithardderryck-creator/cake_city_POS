@@ -12,6 +12,9 @@ export const DEFAULT_REFUND_COOLDOWN_MINUTES = 5;
 export const DEFAULT_OFFLINE_PASS_HOURS = 12;
 export const DEFAULT_OFFLINE_MAX_SALES = 50;
 export const DEFAULT_OFFLINE_MAX_TOTAL = 1_000_000;
+export const DEFAULT_LOCATION_RADIUS_M = 150;
+export const MIN_LOCATION_RADIUS_M = 30;
+export const MAX_LOCATION_RADIUS_M = 2000;
 
 /** What is saved, with a sensible value for anything the owner has not chosen yet. */
 export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSettings> {
@@ -31,6 +34,8 @@ export async function loadSettings(store: Pick<Store, 'get'>): Promise<ShopSetti
     offlineMaxTotal: saved?.offlineMaxTotal ?? DEFAULT_OFFLINE_MAX_TOTAL,
     dayCloseBy: saved?.dayCloseBy ?? 'owner',
     language: saved?.language ?? 'en',
+    locationCheckEnabled: saved?.locationCheckEnabled ?? false,
+    locationRadiusM: saved?.locationRadiusM ?? DEFAULT_LOCATION_RADIUS_M,
   };
 }
 
@@ -88,6 +93,35 @@ export const settingsIntents = {
         target: 'shop',
         events: [{ type: 'SettingsChanged', payload: { decoratingStage: next.decoratingStage } }],
       };
+    },
+  },
+
+  'settings/set_location': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    validate: async (p, ctx) => {
+      if (p.enabled === undefined && p.lat === undefined && p.radiusM === undefined) return ['Choose a setting to change.'];
+      if ((p.lat === undefined) !== (p.lng === undefined)) return ['Send both the latitude and the longitude of the shop.'];
+      const current = await loadSettings(ctx.store);
+      const spotSet = p.lat !== undefined || (current.shopLat !== undefined && current.shopLng !== undefined);
+      if (p.enabled === true && !spotSet) return ['Set the shop location first, from a device that is standing in the shop.'];
+      return [];
+    },
+    handle: async (p, ctx) => {
+      const current = await loadSettings(ctx.store);
+      const moved = p.lat !== undefined && p.lng !== undefined;
+      const next: ShopSettings = {
+        ...current,
+        locationCheckEnabled: p.enabled ?? current.locationCheckEnabled,
+        locationRadiusM: p.radiusM ?? current.locationRadiusM,
+        ...(moved ? { shopLat: p.lat, shopLng: p.lng, locationSetAt: ctx.now(), locationSetByName: ctx.session!.name } : {}),
+      };
+      await ctx.store.put('settings', next);
+      const parts: string[] = [];
+      if (p.enabled !== undefined) parts.push(next.locationCheckEnabled ? 'Turned on the location check' : 'Turned off the location check');
+      if (moved) parts.push('Set the shop location');
+      if (p.radiusM !== undefined) parts.push(`Set the shop radius to ${next.locationRadiusM} m`);
+      return { summary: parts.join('. '), target: 'shop', events: [{ type: 'SettingsChanged', payload: { locationCheck: next.locationCheckEnabled } }] };
     },
   },
 } satisfies Partial<Registry>;

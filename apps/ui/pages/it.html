@@ -51,6 +51,7 @@ input:focus-visible{border-color:var(--cop)}
 <h1>Devices</h1>
 <p class="sub">Which phones, tablets and computers may open the shop system. Switching wifi or mobile data never signs a device out: it is recognised by what it keeps, not by where it is.</p>
 <section class="card" id="dvc"><div class="row"><h2>Registered devices</h2><span class="tag" id="dvn"></span></div><div id="dvb"></div></section>
+<section class="card" id="loc"><div class="row"><h2>Location check</h2><span class="tag" id="locs"></span></div><div id="locb"></div></section>
 <section class="card" id="sys"><div class="row"><h2>System</h2><span class="tag" id="sst"></span></div><dl class="kv" id="skv"></dl></section>
 </main>
 <script src="/cake.js"></script>
@@ -85,6 +86,26 @@ $("#dvc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=
  else if(k==="ren"&&x){const n=prompt("New name for "+x.name,x.name);if(n===null)return;if(!n.trim()){Cake.toast("Give the device a name.");return}guard(b,()=>Cake.send("devices/rename",{deviceId:x.id,name:n.trim()},"Renamed"))}
  else if(k==="rev"&&x){if(!confirm("Revoke "+x.name+"? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet will be refused."))return;guard(b,()=>Cake.send("devices/revoke",{deviceId:x.id},x.name+" was revoked"))}};
 
+/* ---------- location check ---------- */
+function locr(){const l=D.loc;if(!l)return;
+ $("#locs").className="tag "+(l.enabled?"ok":"");$("#locs").textContent=l.enabled?"On":"Off";
+ const k=$("#locb [data-k=lr]"),typed=k?k.value:"",focus=k&&document.activeElement===k;
+ $("#locb").innerHTML=`<p class="mute" style="margin:6px 0 10px">Staff who are away from the shop are held in a lobby: they can read announcements and change their PIN, but cannot sell or work. The owner and IT are never held. It is a reminder for honest staff, not a lock: a phone can be made to report a false position.</p>
+ <label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="le" type="checkbox" ${l.enabled?"checked":""}> Hold staff who are away from the shop in the lobby</label>
+ <p style="margin:10px 0 6px"><b>The shop's spot:</b> ${l.spotSet?`Set${l.setByName?" by "+E(l.setByName):""}${l.setAt?" on "+E(when(l.setAt)):""}.`:"Not set yet. Stand inside the shop with this device, then tap the button."}</p>
+ <div class="btns"><button class="b" data-v="spot">Use where I am now</button></div>
+ <label class="fl" style="margin-top:12px"><span>How far from the spot still counts as at the shop (metres)</span><input data-k="lr" type="number" min="30" max="2000" inputmode="numeric" value="${l.radiusM}"></label>
+ <p class="mute" style="margin:6px 0 10px">A phone is usually within 20 to 60 m indoors, so 150 m suits one shop. A computer without GPS may not be precise enough, so use a phone to set the spot.</p>
+ ${l.enabled?`<p class="mute">Held in the lobby right now: ${l.heldNow}</p>`:""}
+ <div class="btns"><button class="b p" data-v="save">Save</button></div>`;
+ const n=$("#locb [data-k=lr]");if(n&&typed){n.value=typed;if(focus)n.focus()}}
+$("#loc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=b.dataset.v;
+ if(k==="spot")guard(b,async()=>{const p=await Cake.getPosition();if(p.error){Cake.toast(p.error==="denied"?"Location is switched off for this page. Allow it in the browser settings.":"This device could not find its location. Try again near a window.");return}
+  if(p.accuracyM>150&&!confirm("This device is only sure of its position to about "+Math.round(p.accuracyM)+" m. Set the shop's spot anyway?"))return;
+  await Cake.send("settings/set_location",{lat:p.lat,lng:p.lng},"Shop location set")});
+ else if(k==="save")guard(b,async()=>{const lr=$("#locb [data-k=lr]").value.trim();if(lr===""||!Number.isInteger(+lr)||+lr<30||+lr>2000){Cake.toast("The distance is a whole number of metres, 30 to 2000.");return}
+  await Cake.send("settings/set_location",{enabled:$("#locb [data-k=le]").checked,radiusM:+lr},"Location check saved")})};
+
 /* ---------- system ---------- */
 function sysr(){const m=D.map;if(!m)return;
  const bad=m.outbox.failed>0||(m.backup&&m.backup.lastError);
@@ -94,6 +115,7 @@ function sysr(){const m=D.map;if(!m)return;
 
 (async()=>{const me=await Cake.boot("it");$("#nm").textContent=me.name;
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
+ Cake.feed("location_check",{},d=>{D.loc=d;locr()});
  Cake.feed("panel_map",{},d=>{D.map=d;sysr()})})();
 </script>
 </body>

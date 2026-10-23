@@ -81,8 +81,9 @@ try {
   // The owner lets the cashier close; the cashier's page shows the button without reloading.
   await page.click('#dpn [data-d="close"]');
   await page.click('#xset');
+  await page.click('#dpn [data-d="sec"][data-s="selling"]');
   await page.selectOption('#dpn [data-k="dc"]', 'cashier_and_owner');
-  await page.click('#dpn [data-d="dayrule"]');
+  await page.click('#dpn [data-d="secsave"]');
   await until(async () => (await owner.read('shop_settings', {})).dayCloseBy === 'cashier_and_owner', 'the setting to save');
   await until(async () => (await cp.locator('#cdc button').count()) === 1, 'the cashier button to appear');
   await cp.click('#cdc button');

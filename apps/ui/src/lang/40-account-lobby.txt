@@ -1,0 +1,99 @@
+# My account, the sectioned Settings, the location check and the lobby.
+My account ||| Akaunti yangu
+This device: {*} ||| Kifaa hiki: {*}
+Not registered ||| Hakijasajiliwa
+Change my PIN ||| Badilisha PIN yangu
+Current PIN ||| PIN ya sasa
+New PIN (4 to 6 digits) ||| PIN mpya (tarakimu 4 hadi 6)
+New PIN again ||| PIN mpya tena
+Change PIN ||| Badilisha PIN
+How I get alerts ||| Jinsi ninavyopata arifa
+Alerts reach you in the app. You can also get them by text message or WhatsApp. ||| Arifa zinakufikia ndani ya programu. Unaweza pia kuzipata kwa ujumbe mfupi au WhatsApp.
+Phone number, with the country code ||| Namba ya simu, pamoja na msimbo wa nchi
+Text message ||| Ujumbe mfupi
+WhatsApp ||| WhatsApp
+Off ||| Zimezimwa
+Only critical alerts ||| Arifa muhimu sana tu
+Every alert ||| Kila arifa
+Save contact details ||| Hifadhi mawasiliano
+Appearance ||| Mwonekano
+Light ||| Mwanga
+Dark ||| Giza
+The shop uses {*}. The owner changes it in Settings. ||| Duka linatumia {*}. Mmiliki anaibadilisha kwenye Mipangilio.
+The new PIN must be 4 to 6 digits. ||| PIN mpya lazima iwe na tarakimu 4 hadi 6.
+The two new PINs do not match. ||| PIN mbili mpya hazilingani.
+PIN changed ||| PIN imebadilishwa
+Contact details saved ||| Mawasiliano yamehifadhiwa
+Sign out ||| Toka
+You are outside the shop ||| Uko nje ya duka
+Check again ||| Angalia tena
+Checking… ||| Inaangalia…
+The shop has turned on a location check. Your PIN and the announcements stay available here. ||| Duka limewasha ukaguzi wa mahali. PIN yako na matangazo yanabaki hapa.
+You are not at the shop. Work screens open when you are at the shop. ||| Hauko dukani. Skrini za kazi zinafunguka ukiwa dukani.
+You are about {n} m from the shop. Work screens open when you are at the shop. ||| Uko umbali wa takriban mita {n} kutoka dukani. Skrini za kazi zinafunguka ukiwa dukani.
+You are about {n} km from the shop. Work screens open when you are at the shop. ||| Uko umbali wa takriban kilomita {n} kutoka dukani. Skrini za kazi zinafunguka ukiwa dukani.
+This device cannot tell where it is accurately enough. Move near a window or switch on precise location, then check again. ||| Kifaa hiki hakiwezi kujua kilipo kwa usahihi wa kutosha. Sogea karibu na dirisha au washa mahali kwa usahihi, kisha angalia tena.
+Location is switched off for this page. Allow location for this site in the browser settings, then check again. ||| Mahali pamezimwa kwa ukurasa huu. Ruhusu mahali kwa tovuti hii kwenye mipangilio ya kivinjari, kisha angalia tena.
+Finding the location took too long. Check again in a moment. ||| Kutafuta mahali kumechukua muda mrefu mno. Angalia tena baada ya muda mfupi.
+This device cannot share its location, so it cannot open the work screens. Ask the owner. ||| Kifaa hiki hakiwezi kushiriki mahali kilipo, kwa hiyo hakiwezi kufungua skrini za kazi. Muulize mmiliki.
+You are outside the shop, so only the lobby is open. Go to the shop, then tap Check again. ||| Uko nje ya duka, kwa hiyo ni ukumbi wa mapokezi pekee uliofunguliwa. Nenda dukani, kisha gusa Angalia tena.
+Blocked: outside the shop (location check) ||| Imezuiwa: nje ya duka (ukaguzi wa mahali)
+Reported a position ||| Imeripoti mahali
+Settings ||| Mipangilio
+‹ Settings ||| ‹ Mipangilio
+Close ||| Funga
+Save ||| Hifadhi
+Shop-wide rules. Your own PIN, alerts and theme are under your name at the top. ||| Sheria za duka zima. PIN yako, arifa na mwonekano viko chini ya jina lako juu.
+Shop details ||| Taarifa za duka
+Name, address, phone and the text printed on receipts ||| Jina, anwani, simu na maandishi yanayochapishwa kwenye risiti
+Selling ||| Kuuza
+Ways of paying, refunds, closing the day ||| Njia za kulipa, marejesho, kufunga siku
+Stock and warnings ||| Stoo na maonyo
+Low-stock level, count differences, when to warn people ||| Kiwango cha stoo ndogo, tofauti za hesabu, wakati wa kuwaonya watu
+Offline selling ||| Kuuza bila mtandao
+Let a till keep selling when the server cannot be reached ||| Ruhusu kaunta iendelee kuuza seva isipopatikana
+Language ||| Lugha
+The language everyone sees on screen ||| Lugha ambayo kila mtu anaiona kwenye skrini
+Location check ||| Ukaguzi wa mahali
+Keep staff away from the shop in a lobby ||| Waweke wafanyakazi walio mbali na duka kwenye ukumbi wa mapokezi
+On ||| Imewashwa
+Shop details (printed on receipts) ||| Taarifa za duka (zinachapishwa kwenye risiti)
+Shop details saved ||| Taarifa za duka zimehifadhiwa
+Language saved ||| Lugha imehifadhiwa
+Location check saved ||| Ukaguzi wa mahali umehifadhiwa
+Shop location set ||| Mahali pa duka pamewekwa
+Selling rules saved ||| Sheria za kuuza zimehifadhiwa
+Offline selling saved ||| Kuuza bila mtandao kumehifadhiwa
+Stock and warning rules saved ||| Sheria za stoo na maonyo zimehifadhiwa
+Everyone sees the same language, including the sign-in page. Only what is on screen changes; the records stay in English. ||| Kila mtu anaona lugha ile ile, pamoja na ukurasa wa kuingia. Ni kinachoonekana kwenye skrini tu kinabadilika; kumbukumbu zinabaki kwa Kiingereza.
+Language everyone sees on screen ||| Lugha ambayo kila mtu anaiona kwenye skrini
+Staff who are away from the shop are held in a lobby: they can read announcements and change their PIN, but cannot sell or work. The owner and IT are never held. It is a reminder for honest staff, not a lock: a phone can be made to report a false position. ||| Wafanyakazi walio mbali na duka wanawekwa kwenye ukumbi wa mapokezi: wanaweza kusoma matangazo na kubadilisha PIN yao, lakini hawawezi kuuza wala kufanya kazi. Mmiliki na IT hawazuiliwi kamwe. Ni ukumbusho kwa wafanyakazi waaminifu, si kufuli: simu inaweza kufanywa iripoti mahali pa uongo.
+Hold staff who are away from the shop in the lobby ||| Waweke wafanyakazi walio mbali na duka kwenye ukumbi wa mapokezi
+The shop's spot: ||| Mahali pa duka:
+The shop's spot ||| Mahali pa duka
+Set by {*} on {*}. ||| Imewekwa na {*} tarehe {*}.
+Set on {*}. ||| Imewekwa tarehe {*}.
+Set by {*}. ||| Imewekwa na {*}.
+Set. ||| Imewekwa.
+Not set yet. Stand inside the shop with this device, then tap the button. ||| Bado halijawekwa. Simama ndani ya duka na kifaa hiki, kisha gusa kitufe.
+Use where I am now ||| Tumia nilipo sasa
+How far from the spot still counts as at the shop (metres) ||| Umbali gani kutoka mahali hapo bado unahesabiwa kuwa dukani (mita)
+A phone is usually within 20 to 60 m indoors, so 150 m suits one shop. A computer without GPS may not be precise enough, so use a phone to set the spot. ||| Simu kwa kawaida huwa sahihi ndani ya mita 20 hadi 60 ndani ya jengo, kwa hiyo mita 150 inafaa duka moja. Kompyuta isiyo na GPS inaweza isiwe sahihi vya kutosha, kwa hiyo tumia simu kuweka mahali.
+Held in the lobby right now: {n} ||| Walio kwenye ukumbi wa mapokezi sasa: {n}
+Location is switched off for this page. Allow it in the browser settings. ||| Mahali pamezimwa kwa ukurasa huu. Ruhusu kwenye mipangilio ya kivinjari.
+This device could not find its location. Try again near a window. ||| Kifaa hiki kimeshindwa kupata mahali kilipo. Jaribu tena karibu na dirisha.
+This device is only sure of its position to about {n} m. Set the shop's spot anyway? ||| Kifaa hiki kina uhakika wa mahali kilipo ndani ya takriban mita {n} tu. Weka mahali pa duka hata hivyo?
+The distance is a whole number of metres, 30 to 2000. ||| Umbali ni namba kamili ya mita, 30 hadi 2000.
+The shop needs a name. ||| Duka linahitaji jina.
+Keep at least one way of paying switched on. ||| Acha angalau njia moja ya kulipa ikiwa imewashwa.
+Low stock is a whole number, 0 or more. ||| Stoo ndogo ni namba kamili, 0 au zaidi.
+The difference percent is between 1 and 100. ||| Asilimia ya tofauti ni kati ya 1 na 100.
+Permission lasts a whole number of hours, 1 to 72. ||| Ruhusa hudumu kwa saa nzima, 1 hadi 72.
+The most sales is a whole number, 1 to 1000. ||| Idadi kubwa ya mauzo ni namba kamili, 1 hadi 1000.
+Turned on the location check ||| Imewasha ukaguzi wa mahali
+Turned off the location check ||| Imezima ukaguzi wa mahali
+Set the shop location ||| Imeweka mahali pa duka
+Set the shop radius to {n} m ||| Imeweka kipenyo cha duka kuwa mita {n}
+Choose a setting to change. ||| Chagua mpangilio wa kubadilisha.
+Send both the latitude and the longitude of the shop. ||| Tuma latitudo na longitudo zote mbili za duka.
+Set the shop location first, from a device that is standing in the shop. ||| Weka mahali pa duka kwanza, kutoka kwenye kifaa kilicho ndani ya duka.
