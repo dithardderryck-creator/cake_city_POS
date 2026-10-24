@@ -1,15 +1,23 @@
-import { createDriveClient, loadDriveCredentials, type DriveClient, type DriveDeps } from './google-drive';
+import { createDriveAccounts, type DriveAccounts } from './drive-accounts';
 import type { ServerConfig } from './config';
+import type { DriveDeps } from './google-drive';
+import type { Logger } from './log';
 
-export interface Cloud {
-  client: DriveClient;
-  folderName: string;
-  account?: string;
-}
-
-/** The shop's Google Drive, if someone has run `google-auth`. Null means "not connected", which is a normal state. */
-export function loadCloud(config: Pick<ServerConfig, 'driveFile'>, deps: DriveDeps = {}): Cloud | null {
-  const creds = loadDriveCredentials(config.driveFile);
-  if (!creds) return null;
-  return { client: createDriveClient(creds, deps), folderName: creds.folderName, account: creds.account };
+/**
+ * The shop's Google accounts. "Not connected" (no accounts yet) is a normal state: backups simply stay on this
+ * computer until someone signs an account in from the Owner or IT screen (or with `google-auth` in the admin tool).
+ */
+export function openDrive(
+  config: Pick<ServerConfig, 'driveFile' | 'googleClient' | 'googleEndpoints'>,
+  log: Logger,
+  extra: { deps?: DriveDeps; onConnected?: (email: string | null) => void; sleep?: (ms: number) => Promise<void> } = {},
+): DriveAccounts {
+  return createDriveAccounts({
+    file: config.driveFile,
+    client: config.googleClient,
+    deps: { ...(config.googleEndpoints ? { endpoints: config.googleEndpoints } : {}), ...extra.deps },
+    log,
+    ...(extra.onConnected ? { onConnected: extra.onConnected } : {}),
+    ...(extra.sleep ? { sleep: extra.sleep } : {}),
+  });
 }

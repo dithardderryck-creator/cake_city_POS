@@ -16,6 +16,14 @@ export interface IntentMap {
   'offline/review': { heldId: Id; action: 'approve' | 'dismiss'; note?: string };
   'auth/change_pin': { currentPin: string; newPin: string };
   /** A person's own screen language; "shop" means follow whatever the shop uses. */
+  /** The shop's Google Drive accounts (owner and IT). The secret in `save_client` is never logged or remembered. */
+  'drive/save_client': { clientId: string; clientSecret: string };
+  'drive/connect_start': Record<string, never>;
+  'drive/connect_cancel': Record<string, never>;
+  'drive/remove_account': { accountId: string };
+  'drive/move_account': { accountId: string; direction: 'up' | 'down' };
+  'drive/pause_account': { accountId: string; paused: boolean };
+  'drive/test': { accountId?: string };
   'auth/set_language': { language: 'en' | 'sw' | 'shop' };
 
   /** Owner or IT: make a one-time code (valid about 10 minutes) that registers one device under the given name. */

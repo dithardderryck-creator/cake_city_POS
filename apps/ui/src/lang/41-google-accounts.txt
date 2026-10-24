@@ -1,0 +1,86 @@
+# Google accounts (Owner Settings → Online copy, and the IT page).
+Online copy ||| Nakala ya mtandaoni
+Google accounts for backups and old orders ||| Akaunti za Google za nakala rudufu na oda za zamani
+Google accounts ||| Akaunti za Google
+{n} account ||| Akaunti {n}
+{n} accounts ||| Akaunti {n}
+Google Drive is not available on this server. ||| Google Drive haipatikani kwenye seva hii.
+Working ||| Inafanya kazi
+Full ||| Imejaa
+Sign in again ||| Ingia tena
+Cannot reach Google ||| Google haipatikani
+Problem ||| Tatizo
+Paused ||| Imesimamishwa
+Not checked yet ||| Bado haijakaguliwa
+of ||| kati ya
+used ||| imetumika
+{n} GB ||| {n} GB
+{n} MB ||| {n} MB
+{n} KB ||| {n} KB
+Use earlier ||| Itumie mapema zaidi
+Use later ||| Itumie baadaye
+Pause ||| Simamisha
+Resume ||| Endelea
+Check ||| Kagua
+Disconnect ||| Tenganisha
+On your phone or any computer, open ||| Kwenye simu yako au kompyuta yoyote, fungua
+and enter this code ||| kisha weka msimbo huu
+Sign in with the Google account to add, then press Allow. The code works for about {n} more minutes. ||| Ingia kwa akaunti ya Google unayotaka kuongeza, kisha bonyeza Ruhusu. Msimbo huu unafanya kazi kwa takriban dakika {n} zaidi.
+Cancel ||| Ghairi
+OK ||| Sawa
+Set up Google first ||| Weka mipangilio ya Google kwanza
+This is done once, by someone comfortable with the Google Cloud Console (IT): make a project, switch on the Google Drive API, publish the consent screen, and create an OAuth client of the type "TVs and Limited Input devices". Then paste its two values here. ||| Hii hufanywa mara moja, na mtu anayeweza kutumia Google Cloud Console (IT): tengeneza mradi, washa Google Drive API, chapisha skrini ya idhini, na tengeneza OAuth client ya aina "TVs and Limited Input devices". Kisha bandika thamani zake mbili hapa.
+Client ID ||| Client ID
+Client secret ||| Client secret
+Save ||| Hifadhi
+Add a Google account ||| Ongeza akaunti ya Google
+Add another Google account ||| Ongeza akaunti nyingine ya Google
+Backups, and old orders when the database fills up, are copied to Google Drive. Accounts are used in order: when one is full or stops working, the next one takes over by itself. ||| Nakala rudufu, na oda za zamani hifadhidata inapojaa, hunakiliwa kwenye Google Drive. Akaunti hutumika kwa mpangilio: moja ikijaa au ikiacha kufanya kazi, inayofuata huchukua nafasi yake yenyewe.
+No Google account is connected yet. Everything stays on the shop computer until one is. ||| Bado hakuna akaunti ya Google iliyounganishwa. Kila kitu kinabaki kwenye kompyuta ya duka hadi iunganishwe.
+Files go in the folder "{*}" of each account. Only files this app made are visible to it. ||| Faili huwekwa kwenye folda "{*}" ya kila akaunti. Faili zilizotengenezwa na programu hii pekee ndizo inazoziona.
+Google details saved ||| Maelezo ya Google yamehifadhiwa
+Checked ||| Imekaguliwa
+Account disconnected ||| Akaunti imetenganishwa
+Paste both the client ID and the client secret. ||| Bandika Client ID na Client secret zote mbili.
+Disconnect {*}? Copies already in that Google Drive stay there, and the server stops using the account. To remove the app's access completely, also remove it in that Google account's security settings. ||| Kutenganisha {*}? Nakala zilizo tayari kwenye Google Drive hiyo zinabaki huko, na seva inaacha kutumia akaunti hiyo. Ili kuondoa kabisa ruhusa ya programu, iondoe pia kwenye mipangilio ya usalama ya akaunti hiyo ya Google.
+{*} is connected. ||| {*} imeunganishwa.
+{*} was already connected. Its sign-in was renewed. ||| {*} ilikuwa tayari imeunganishwa. Uingiaji wake umefanywa upya.
+The account is connected. ||| Akaunti imeunganishwa.
+The sign-in was cancelled. ||| Uingiaji umeghairiwa.
+The sign-in was declined on the Google page. Nothing was connected. ||| Uingiaji ulikataliwa kwenye ukurasa wa Google. Hakuna kilichounganishwa.
+The code expired before it was approved. Start the sign-in again. ||| Msimbo uliisha muda kabla haujaidhinishwa. Anza kuingia tena.
+Google sign-in failed ({*}). ||| Kuingia kwa Google kumeshindwa ({*}).
+Google refused the sign-in request ({*}). Check the client ID. ||| Google imekataa ombi la kuingia ({*}). Angalia Client ID.
+Could not reach Google ({*}). It will be tried again when the internet is back. ||| Google haikupatikana ({*}). Itajaribiwa tena mtandao ukirudi.
+The Google Drive is full. Free some space or buy more storage. ||| Google Drive imejaa. Futa baadhi ya faili au nunua nafasi zaidi.
+Only {n} MB is left in this Google account. Free some space, or the next account is used. ||| Ni MB {n} tu zilizobaki kwenye akaunti hii ya Google. Futa baadhi ya faili, la sivyo akaunti inayofuata itatumika.
+Google no longer accepts this shop's sign-in (it was removed, or the Google account password changed). Sign this account in again from the Owner or IT screen. ||| Google haikubali tena uingiaji wa duka hili (uliondolewa, au nenosiri la akaunti ya Google lilibadilishwa). Ingiza akaunti hii tena kutoka skrini ya Mmiliki au IT.
+All {n} connected Google accounts are full. Free some space, or connect another account. ||| Akaunti zote {n} za Google zilizounganishwa zimejaa. Futa baadhi ya faili, au unganisha akaunti nyingine.
+The Google account is full. Free some space, or connect another account. ||| Akaunti ya Google imejaa. Futa baadhi ya faili, au unganisha akaunti nyingine.
+No Google account is connected, or all of them are paused. ||| Hakuna akaunti ya Google iliyounganishwa, au zote zimesimamishwa.
+That does not look like a Google client ID. Copy it again from the Google Cloud Console. ||| Hiyo haionekani kama Google client ID. Inakili tena kutoka Google Cloud Console.
+That does not look like a Google client secret. Copy it again from the Google Cloud Console. ||| Hiyo haionekani kama Google client secret. Inakili tena kutoka Google Cloud Console.
+Disconnect every Google account first: their sign-ins belong to the old client ID. ||| Tenganisha akaunti zote za Google kwanza: uingiaji wake unatokana na Client ID ya zamani.
+A sign-in is already waiting for a code. Finish it, or cancel it first. ||| Kuna uingiaji unaosubiri msimbo tayari. Ukamilishe, au uughairi kwanza.
+Save the Google client ID and secret first. ||| Hifadhi Google client ID na secret kwanza.
+That Google account is not connected. ||| Akaunti hiyo ya Google haijaunganishwa.
+The Google client ID and secret are set in the server settings, so they cannot be changed here. ||| Google client ID na secret zimewekwa kwenye mipangilio ya seva, kwa hiyo haziwezi kubadilishwa hapa.
+The saved Google sign-in file is damaged. Connect the accounts again from this screen. ||| Faili ya uingiaji wa Google iliyohifadhiwa imeharibika. Unganisha akaunti tena kutoka skrini hii.
+The saved Google sign-ins could not be read ({*}). ||| Uingiaji wa Google uliohifadhiwa haukuweza kusomwa ({*}).
+Saved the Google client details (the secret is not logged) ||| Imehifadhi maelezo ya Google client (secret haiandikwi kwenye kumbukumbu)
+Started connecting a Google account ||| Imeanza kuunganisha akaunti ya Google
+Cancelled connecting a Google account ||| Imeghairi kuunganisha akaunti ya Google
+Disconnected the Google account {*} ||| Imetenganisha akaunti ya Google {*}
+Moved a Google account earlier in the order ||| Imehamisha akaunti ya Google mapema zaidi kwenye mpangilio
+Moved a Google account later in the order ||| Imehamisha akaunti ya Google baadaye kwenye mpangilio
+Paused the Google account {*} ||| Imesimamisha akaunti ya Google {*}
+Resumed the Google account {*} ||| Imeendeleza akaunti ya Google {*}
+Checked the Google accounts ||| Imekagua akaunti za Google
+Google client details were not saved ||| Maelezo ya Google client hayakuhifadhiwa
+Could not start connecting a Google account ||| Imeshindwa kuanza kuunganisha akaunti ya Google
+Could not disconnect a Google account ||| Imeshindwa kutenganisha akaunti ya Google
+Could not reorder the Google accounts ||| Imeshindwa kupanga upya akaunti za Google
+Could not change a Google account ||| Imeshindwa kubadilisha akaunti ya Google
+Could not check the Google accounts ||| Imeshindwa kukagua akaunti za Google
+{n} connected, {n} working: {*} ||| {n} zimeunganishwa, {n} zinafanya kazi: {*}
+{n} connected, {n} working, {n} need attention: {*} ||| {n} zimeunganishwa, {n} zinafanya kazi, {n} zinahitaji uangalizi: {*}

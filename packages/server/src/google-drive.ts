@@ -39,6 +39,13 @@ export interface DriveCredentials {
   account?: string;
 }
 
+export interface DriveCheck {
+  account?: string;
+  /** Bytes used and the limit of this Google account. The limit is absent for accounts with unlimited storage. */
+  usageBytes?: number;
+  limitBytes?: number;
+}
+
 export interface DriveFile {
   id: string;
   name: string;
@@ -48,6 +55,9 @@ export interface DriveFile {
   createdTime?: string;
 }
 
+/** What went wrong, in the few ways that change what the server does next. */
+export type DriveErrorKind = 'full' | 'auth' | 'network' | 'other';
+
 export class DriveError extends Error {
   constructor(
     message: string,
@@ -55,6 +65,8 @@ export class DriveError extends Error {
     public status: number,
     /** True when trying again later could work (no internet, busy, rate limit). False when a person has to act. */
     public retryable: boolean,
+    /** `full`: this Google account has no room left. `auth`: it no longer accepts our sign-in. `network`: Google could not be reached. */
+    public kind: DriveErrorKind = 'other',
   ) {
     super(message);
   }
@@ -79,8 +91,8 @@ export interface DriveClient {
   find(parentId: string, name: string): Promise<DriveFile | undefined>;
   list(parentId: string): Promise<DriveFile[]>;
   remove(fileId: string): Promise<void>;
-  /** A cheap call that proves the permission slip still works. */
-  check(): Promise<{ account?: string }>;
+  /** A cheap call that proves the permission slip still works, and says how much room the account has. */
+  check(): Promise<DriveCheck>;
 }
 
 const escQ = (s: string) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -107,7 +119,7 @@ export function createDriveClient(creds: DriveCredentials, deps: DriveDeps = {})
       return await doFetch(url, { ...init, signal: AbortSignal.timeout(init.timeoutMs ?? 30_000) });
     } catch (err) {
       const why = err instanceof Error ? (err.cause instanceof Error ? err.cause.message : err.message) : String(err);
-      throw new DriveError(`Could not reach Google (${why}). It will be tried again when the internet is back.`, 0, true);
+      throw new DriveError(`Could not reach Google (${why}). It will be tried again when the internet is back.`, 0, true, 'network');
     }
   }
 
@@ -123,10 +135,11 @@ export function createDriveClient(creds: DriveCredentials, deps: DriveDeps = {})
       const revoked = body?.error === 'invalid_grant' || body?.error === 'invalid_client' || body?.error === 'unauthorized_client';
       throw new DriveError(
         revoked
-          ? 'Google no longer accepts this shop\'s sign-in (it was removed, or the Google account password changed). Run "google-auth" in the admin tool again.'
+          ? 'Google no longer accepts this shop\'s sign-in (it was removed, or the Google account password changed). Sign this account in again from the Owner or IT screen.'
           : `Google sign-in failed (${googleMessage(body, `status ${res.status}`)}).`,
         res.status,
         !revoked && (res.status >= 500 || res.status === 429),
+        revoked ? 'auth' : 'other',
       );
     }
     token = { value: body.access_token, expiresAt: now() + (body.expires_in ?? 3600) * 1000 };
@@ -151,6 +164,7 @@ export function createDriveClient(creds: DriveCredentials, deps: DriveDeps = {})
         full ? 'The Google Drive is full. Free some space or buy more storage.' : googleMessage(body, `Google Drive answered ${res.status}.`),
         res.status,
         limited || res.status >= 500,
+        full ? 'full' : 'other',
       );
     }
   }
@@ -253,9 +267,10 @@ export function createDriveClient(creds: DriveCredentials, deps: DriveDeps = {})
       }
     },
     async check() {
-      const res = await call((b) => ({ url: `${ep.api}/about?fields=user(emailAddress)`, init: { headers: authed(b) } }));
-      const data = (await res.json()) as { user?: { emailAddress?: string } };
-      return { account: data.user?.emailAddress };
+      const res = await call((b) => ({ url: `${ep.api}/about?fields=user(emailAddress),storageQuota(limit,usage)`, init: { headers: authed(b) } }));
+      const data = (await res.json()) as { user?: { emailAddress?: string }; storageQuota?: { limit?: string; usage?: string } };
+      const num = (v?: string) => (v !== undefined && Number.isFinite(Number(v)) ? Number(v) : undefined);
+      return { account: data.user?.emailAddress, usageBytes: num(data.storageQuota?.usage), limitBytes: num(data.storageQuota?.limit) };
     },
   };
 }
@@ -336,5 +351,5 @@ export async function waitForDeviceApproval(
     if (b?.error === 'expired_token') break;
     throw new DriveError(`Google sign-in failed (${googleMessage(b, `status ${res.status}`)}).`, res.status, false);
   }
-  throw new DriveError('The code expired before it was approved. Run "google-auth" again.', 0, false);
+  throw new DriveError('The code expired before it was approved. Start the sign-in again.', 0, false);
 }

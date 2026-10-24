@@ -6,6 +6,10 @@ Things deliberately left out for now. Nothing here blocks the screens that exist
 - **Done:** a shop default language (owner Settings) plus a personal choice for everyone (My account, 23 Oct 2026; test `apps/ui/test/mylang.mjs`), every screen and the server's messages shown in Kiswahili, English kept in the backend. Test: `apps/ui/test/lang.mjs`.
 - **Still to do:** a native speaker must review the wording (`apps/ui/src/lang/*.txt`). Not checked yet: receipts shared by link and the xlsx archive (they probably stay English). The date picker follows the browser's language, not the shop's. Product, option and person names stay as typed.
 
+## Google accounts (24 Oct 2026)
+- **Done:** several Google accounts, signed in from the Owner (Settings → Online copy) and IT screens by a code typed on google.com/device; used in order with automatic failover when one is full or signed out; reorder, pause, check, disconnect. Tests: `packages/server/src/drive-accounts.test.ts`, `packages/panel/src/drive.test.ts`, `apps/ui/test/drive.mjs`.
+- **Not tried against real Google** (only the stand-in): do one real sign-in, one backup and one archive before relying on it. Disconnecting does not revoke the app's access on Google's side. Restoring a backup from Drive is still a manual download. A per-account "keep at most N backups" is not offered (the newest few are kept across all accounts).
+
 ## Location check and tidier settings (22 Oct 2026)
 - **Done:** location check with a lobby (owner and IT exempt, switch in owner Settings and on the IT page), My account for every role, owner Settings split into sections that each save on their own. Tests: `packages/panel/src/location.test.ts`, `apps/ui/test/lobby.mjs`.
 - **Still to decide:** real-world radius (try 150 m on the shop's own phones), whether a position needs a heartbeat so a phone left at home cannot keep a stale "inside" for 10 minutes, and whether baker and inventory should be held at all (today all three non-admin roles are).
@@ -29,7 +33,7 @@ Notes from the owner (Gemini) on a POS login flow, to be used where they fit: te
 ## Open decisions (to break down together before testing)
 | Id | Question |
 | --- | --- |
-| Q-14 | Which Google account is used for Drive copies |
+| Q-14 | ~~Which Google account is used for Drive copies~~ **Decided 23 Oct 2026:** any number of accounts, signed in from the Owner and IT screens; used in order, the next takes over when one is full |
 | Q-15 | Archive folder (`ARCHIVE_DIR`) |
 | Q-16 | Live online database, or the shop computer plus Drive copies (D-67) |
 | Q-17 | Alert thresholds and who gets which alerts |

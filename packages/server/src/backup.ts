@@ -13,6 +13,8 @@ export interface BackupUploader {
   name: string;
   upload(file: string): Promise<void>;
   prune?(keep: number): Promise<void>;
+  /** An uploader that is switched off is skipped (and does not count as pending). Absent means always on. */
+  enabled?(): boolean;
 }
 
 /**
@@ -40,15 +42,17 @@ export function createFolderUploader(dir: string, label = 'Cloud folder'): Backu
  * Uploads snapshots to the shop's Google Drive, in a "Backups" folder. A failed upload (no internet, Drive busy) is
  * simply retried by the backup service every ten minutes until it works.
  */
-export function createDriveUploader(client: DriveClient, folderName: string, keep: number): BackupUploader {
+export function createDriveUploader(client: DriveClient, folderName: string | (() => string), keep: number, enabled?: () => boolean): BackupUploader {
+  const folderOf = () => (typeof folderName === 'function' ? folderName() : folderName);
   return {
     name: 'Google Drive',
+    ...(enabled ? { enabled } : {}),
     upload: async (file) => {
-      const folder = await client.ensureFolder([folderName, 'Backups']);
+      const folder = await client.ensureFolder([folderOf(), 'Backups']);
       await client.upload({ name: path.basename(file), parentId: folder, source: { path: file }, mimeType: 'application/octet-stream' });
     },
     prune: async () => {
-      const folder = await client.ensureFolder([folderName, 'Backups']);
+      const folder = await client.ensureFolder([folderOf(), 'Backups']);
       const files = (await client.list(folder)).filter((f) => BACKUP_FILE.test(f.name)).sort((a, b) => a.name.localeCompare(b.name));
       for (const f of files.slice(0, Math.max(0, files.length - keep))) await client.remove(f.id);
     },
@@ -144,8 +148,10 @@ export function createBackupService(o: BackupOptions): BackupService {
     fs.renameSync(tmp, stateFile);
   };
 
+  const active = () => o.uploaders.filter((u) => u.enabled?.() ?? true);
+
   async function processUploads() {
-    if (o.uploaders.length === 0) return;
+    if (active().length === 0) return;
     const state = load();
     for (const [file, up] of Object.entries(state.uploads)) {
       const full = path.join(o.dir, file);
@@ -153,7 +159,7 @@ export function createBackupService(o: BackupOptions): BackupService {
         delete state.uploads[file]; // pruned locally before it could upload
         continue;
       }
-      for (const u of o.uploaders) {
+      for (const u of active()) {
         if (up.done.includes(u.name)) continue;
         try {
           await u.upload(full);
@@ -171,7 +177,7 @@ export function createBackupService(o: BackupOptions): BackupService {
     }
     // Forget files that are fully uploaded, so the state file stays small.
     for (const [file, up] of Object.entries(state.uploads)) {
-      if (o.uploaders.every((u) => up.done.includes(u.name))) delete state.uploads[file];
+      if (active().every((u) => up.done.includes(u.name))) delete state.uploads[file];
     }
     save(state);
   }
@@ -245,7 +251,7 @@ export function createBackupService(o: BackupOptions): BackupService {
     processUploads,
     async status(): Promise<BackupStatus> {
       const s = load();
-      const pending = Object.values(s.uploads).filter((u) => !o.uploaders.every((x) => u.done.includes(x.name))).length;
+      const pending = active().length === 0 ? 0 : Object.values(s.uploads).filter((u) => !active().every((x) => u.done.includes(x.name))).length;
       return { lastOkAt: s.lastOkAt, lastError: memError ?? s.lastError, lastFile: s.lastFile, pendingUploads: pending };
     },
     start() {

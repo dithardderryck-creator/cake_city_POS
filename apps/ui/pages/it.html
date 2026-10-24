@@ -52,6 +52,7 @@ input:focus-visible{border-color:var(--cop)}
 <p class="sub">Which phones, tablets and computers may open the shop system. Switching wifi or mobile data never signs a device out: it is recognised by what it keeps, not by where it is.</p>
 <section class="card" id="dvc"><div class="row"><h2>Registered devices</h2><span class="tag" id="dvn"></span></div><div id="dvb"></div></section>
 <section class="card" id="loc"><div class="row"><h2>Location check</h2><span class="tag" id="locs"></span></div><div id="locb"></div></section>
+<section class="card" id="drc"><div class="row"><h2>Google accounts</h2></div><div id="drv"></div></section>
 <section class="card" id="sys"><div class="row"><h2>System</h2><span class="tag" id="sst"></span></div><dl class="kv" id="skv"></dl></section>
 </main>
 <script src="/cake.js"></script>
@@ -116,6 +117,7 @@ function sysr(){const m=D.map;if(!m)return;
 (async()=>{const me=await Cake.boot("it");$("#nm").textContent=me.name;
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
  Cake.feed("location_check",{},d=>{D.loc=d;locr()});
+ Cake.mountDrive($("#drv"));
  Cake.feed("panel_map",{},d=>{D.map=d;sysr()})})();
 </script>
 </body>

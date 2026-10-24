@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createBackupService, createDriveUploader } from './backup';
-import { loadCloud } from './cloud';
+import { openDrive } from './cloud';
 import { loadConfig, ConfigError } from './config';
 import { startFakeGoogle, type FakeGoogle } from './fake-google';
 import { createDriveClient, saveDriveCredentials } from './google-drive';
@@ -88,16 +88,25 @@ describe('database copy in Google Drive', () => {
 });
 
 describe('connecting Drive', () => {
+  const cfg = (file: string) => ({ driveFile: file, googleClient: null, googleEndpoints: null });
+
   it('is simply off when nobody has signed in', () => {
     const dir = tmp();
-    expect(loadCloud({ driveFile: path.join(dir, 'google-drive.json') })).toBeNull();
+    const drive = openDrive(cfg(path.join(dir, 'google-drive.json')), silentLogger);
+    expect(drive.active()).toBe(false);
+    expect(drive.hasAccounts()).toBe(false);
   });
 
-  it('is on once the sign-in file exists', () => {
+  it('is on once the sign-in file exists (the first, single-account file still works)', async () => {
     const dir = tmp();
     const file = path.join(dir, 'google-drive.json');
     saveDriveCredentials(file, { clientId: 'i', clientSecret: 's', refreshToken: 'r', folderName: 'My Shop', account: 'owner@example.com' });
-    expect(loadCloud({ driveFile: file })).toMatchObject({ folderName: 'My Shop', account: 'owner@example.com' });
+    const drive = openDrive(cfg(file), silentLogger);
+    expect(drive.active()).toBe(true);
+    expect(drive.folderName()).toBe('My Shop');
+    const st = await drive.terminal.status();
+    expect(st.accounts).toMatchObject([{ email: 'owner@example.com', position: 1 }]);
+    expect(st.clientFrom).toBe('saved');
   });
 });
 

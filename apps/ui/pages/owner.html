@@ -419,7 +419,7 @@ $("#bulk").onclick=async e=>{const b=e.target.closest("[data-b]");if(!b)return;c
   if(r){if(!r.ok)break;n++}}});
  cs.clear();cr();Cake.toast(n+" item"+(n===1?"":"s")+" changed.")};
 const drawer=html=>{$("#dpn").innerHTML=html;$("#dr").hidden=false};
-const dclose=()=>{$("#dr").hidden=true;drMode=null;setSec=null;if(typeof stopDay==="function"){stopDay();stopDay=null;D.day=null}};
+const dclose=()=>{$("#dr").hidden=true;drMode=null;setSec=null;Cake.unmountDrive();if(typeof stopDay==="function"){stopDay();stopDay=null;D.day=null}};
 function sizeRow(l="",p=""){return`<div class="vr" style="grid-template-columns:1fr 120px 32px"><input class="vn" value="${E(l)}" placeholder="Size, e.g. 1 kg" aria-label="Size name"><input class="vp" type="number" min="0" inputmode="numeric" step="1" value="${E(p)}" placeholder="Price" aria-label="Price"><button aria-label="Remove size">✕</button></div>`}
 function editor(id){const p=id?D.cat.find(x=>x.productId===id):null;drMode=id?"edit":"new";
  if(!p&&id)return;
@@ -664,8 +664,8 @@ $("#rgs").onclick=()=>go("stock");
 /* ---------- settings (shop details and alert rules) ---------- */
 const ALERT_FIELDS=[["stockoutDays","Warn when stock will run out within (days)"],["reorderDays","Warn when stock will reach its reorder level within (days)"],["usageWaitHours","Remind if usage is still unconfirmed after (hours)"],["quoteWaitHours","Remind if a price request is unanswered after (hours)"],["dueSoonDays","Warn when an unstarted order is due within (days)"],["countDifference","Flag a count difference of at least"],["urgentRequestMinutes","Send an urgent request up to you after (minutes)"],["requestWaitHours","Send an unanswered request up to you after (hours)"]];
 let setSec=null;
-const SECS=[["shop","Shop details","Name, address, phone and the text printed on receipts"],["selling","Selling","Ways of paying, refunds, closing the day"],["stock","Stock and warnings","Low-stock level, count differences, when to warn people"],["offline","Offline selling","Let a till keep selling when the server cannot be reached"],["language","Language","The shop's default; each person can choose their own"],["location","Location check","Keep staff away from the shop in a lobby"]];
-const secChip=(k,s)=>k==="offline"?(s.offlineEnabled?"On":"Off"):k==="location"?(s.locationCheck&&s.locationCheck.enabled?"On":"Off"):k==="language"?(s.language==="sw"?"Kiswahili":"English"):"";
+const SECS=[["shop","Shop details","Name, address, phone and the text printed on receipts"],["selling","Selling","Ways of paying, refunds, closing the day"],["stock","Stock and warnings","Low-stock level, count differences, when to warn people"],["offline","Offline selling","Let a till keep selling when the server cannot be reached"],["language","Language","The shop's default; each person can choose their own"],["location","Location check","Keep staff away from the shop in a lobby"],["online","Online copy","Google accounts for backups and old orders"]];
+const secChip=(k,s)=>k==="offline"?(s.offlineEnabled?"On":"Off"):k==="location"?(s.locationCheck&&s.locationCheck.enabled?"On":"Off"):k==="language"?(s.language==="sw"?"Kiswahili":"English"):k==="online"?(D.drv&&D.drv.available?(D.drv.accounts.length?D.drv.accounts.length+(D.drv.accounts.length===1?" account":" accounts"):"Off"):""):"";
 const yn=(id,on,label)=>`<label style="display:flex;gap:10px;align-items:center;margin:6px 0"><input data-k="${id}" type="checkbox" ${on?"checked":""}> ${label}</label>`;
 const secBody={
  shop:s=>`<label class="fl"><span>Shop name</span><input data-k="sn" maxlength="60" value="${E(s.shopName)}"></label><label class="fl"><span>Address</span><input data-k="sa" maxlength="160" value="${E(s.shopAddress||"")}"></label><label class="fl"><span>Phone</span><input data-k="sp" maxlength="40" value="${E(s.shopPhone||"")}"></label><label class="fl"><span>Receipt footer</span><input data-k="sf" maxlength="160" value="${E(s.receiptFooter||"")}"></label>`,
@@ -682,6 +682,7 @@ const secBody={
  <label class="fl"><span>Most sales one till may save</span><input data-k="os" type="number" min="1" max="1000" inputmode="numeric" value="${s.offlineMaxSales}"></label>
  <label class="fl"><span>Most money one till may take this way (${E(s.currencyLabel)})</span><input data-k="om" type="number" min="1" inputmode="numeric" value="${s.offlineMaxTotal}"></label>`,
  language:s=>`<p class="mute" style="margin:2px 0 8px">This is the shop's default: the sign-in page and anyone who has not chosen their own language see it. Each person can choose their own under their name at the top. Only what is on screen changes; the records stay in English.</p><label class="fl"><span>The shop's default language</span><select data-k="sl"><option value="en" ${s.language!=="sw"?"selected":""}>English</option><option value="sw" ${s.language==="sw"?"selected":""}>Kiswahili</option></select></label>`,
+ online:()=>`<div id="drv"></div>`,
  location:s=>{const c=s.locationCheck||{},l=D.loc;return`<p class="mute" style="margin:2px 0 8px">Staff who are away from the shop are held in a lobby: they can read announcements and change their PIN, but cannot sell or work. The owner and IT are never held. It is a reminder for honest staff, not a lock: a phone can be made to report a false position.</p>
  ${yn("le",c.enabled,"Hold staff who are away from the shop in the lobby")}
  <div class="fl"><span>The shop's spot</span></div>
@@ -692,11 +693,11 @@ const secBody={
  ${l&&c.enabled?`<p class="mute">Held in the lobby right now: ${l.heldNow}</p>`:""}`}
 };
 function openSettings(){drMode="settings";if(D.shop)renderSettings();else drawer(`<div class="row"><h2>Settings</h2><button class="b" data-d="close">Close</button></div><p class="mute">Loading…</p>`)}
-function renderSettings(){const s=D.shop;if(!s)return;
+function renderSettings(){const s=D.shop;if(!s)return;if(setSec!=="online")Cake.unmountDrive();
  if(!setSec){drawer(`<div class="row"><h2>Settings</h2><button class="b" data-d="close">Close</button></div><p class="mute" style="margin:2px 0 12px">Shop-wide rules. Your own PIN, alerts and theme are under your name at the top.</p>
  <div class="seclist">${SECS.map(([k,t,d])=>{const c=secChip(k,s);return`<button class="secrow" data-d="sec" data-s="${k}"><span><b>${t}</b><small class="mute">${d}</small></span>${c?`<span class="tag ${c==="On"?"":"cop"}">${c}</span>`:""}<span aria-hidden="true">›</span></button>`}).join("")}</div>`);return}
  const row=SECS.find(x=>x[0]===setSec);
- drawer(`<div class="row"><button class="b" data-d="secback">‹ Settings</button><button class="b" data-d="close">Close</button></div><h2 style="margin:14px 0 4px">${row[1]}</h2>${secBody[setSec](s)}<div class="btns"><button class="b p" data-d="secsave">Save</button></div>`)}
+ drawer(`<div class="row"><button class="b" data-d="secback">‹ Settings</button><button class="b" data-d="close">Close</button></div><h2 style="margin:14px 0 4px">${row[1]}</h2>${secBody[setSec](s)}${setSec==="online"?"":`<div class="btns"><button class="b p" data-d="secsave">Save</button></div>`}`);if(setSec==="online")Cake.mountDrive($("#dpn #drv"))}
 async function saveSettings(){const v=n=>($("#dpn").querySelector(`[data-k="${n}"]`)||{value:""}),t=n=>v(n).value.trim(),k=setSec;
  if(k==="shop"){if(!t("sn")){Cake.toast("The shop needs a name.");return}await Cake.send("settings/update",{shopName:t("sn"),shopAddress:t("sa")||null,shopPhone:t("sp")||null,receiptFooter:t("sf")||null},"Shop details saved")}
  else if(k==="language")await Cake.send("settings/update",{language:v("sl").value},"Language saved")
@@ -767,7 +768,8 @@ $("#xout").onclick=()=>Cake.signOut();
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
  Cake.feed("offline_review",{},d=>{D.off=d;ofr()});
  Cake.feed("audit_view",{},d=>{D.audit=d;ov();cr();sfr()});
- Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr();if(drMode==="settings")keep($("#dpn"),renderSettings)});
+ Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr();if(drMode==="settings"&&setSec!=="online")keep($("#dpn"),renderSettings)});
+ Cake.feed("drive_accounts",{},d=>{D.drv=d;if(drMode==="settings"&&!setSec)keep($("#dpn"),renderSettings)});
  Cake.feed("location_check",{},d=>{D.loc=d;if(drMode==="settings"&&setSec==="location")keep($("#dpn"),renderSettings)});
  Cake.feed("alert_settings",{},d=>{D.alertset=d});
  subReports();subLedger();go("overview")})();

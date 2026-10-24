@@ -444,6 +444,61 @@ Allowed: **owner, it**
 | `lng` | number | no | min -180, max 180 |
 | `radiusM` | integer | no | min 30, max 2000 |
 
+#### `drive/save_client`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `clientId` | string | yes | min length 1, max length 300 |
+| `clientSecret` | string | yes | min length 1, max length 300 |
+
+#### `drive/connect_start`
+
+Allowed: **owner, it**
+
+_No fields. Send an empty object `{}`._
+
+#### `drive/connect_cancel`
+
+Allowed: **owner, it**
+
+_No fields. Send an empty object `{}`._
+
+#### `drive/remove_account`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `accountId` | string | yes | min length 1, max length 40 |
+
+#### `drive/move_account`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `accountId` | string | yes | min length 1, max length 40 |
+| `direction` | "up" \| "down" | yes |  |
+
+#### `drive/pause_account`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `accountId` | string | yes | min length 1, max length 40 |
+| `paused` | boolean | yes |  |
+
+#### `drive/test`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `accountId` | string | no | min length 1, max length 40 |
+
 ### Auth
 
 #### `session/report_place`
@@ -953,6 +1008,12 @@ Allowed: **owner**
 #### `me`
 
 Allowed: **owner, cashier, baker, inventory, it**
+
+_No fields. Send an empty object `{}`._
+
+#### `drive_accounts`
+
+Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 

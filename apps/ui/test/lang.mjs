@@ -98,7 +98,7 @@ try {
     left.push(...(await sweep(page, role)));
   }
   // Names the shop typed in (products, people, devices) stay as they are. Anything else with no Kiswahili is a gap.
-  const DATA = /Chocolate Fudge Cake|Lemon Drizzle Cake|Red Velvet Cake|Chocolate ganache|Vanilla cream|Counter tablet|one tray slightly dark|Gluten-free|Eggless|Standard|Slice|Cakes|Amina|Baraka|Neema|Juma|Ibrahim|\bIT\b|\bOwner\b|TSh|Ctrl K|XXXX-XXXX|linux x64|\/tmp\/\S+/g;
+  const DATA = /Cake POS|Chocolate Fudge Cake|Lemon Drizzle Cake|Red Velvet Cake|Chocolate ganache|Vanilla cream|Counter tablet|one tray slightly dark|Gluten-free|Eggless|Standard|Slice|Cakes|Amina|Baraka|Neema|Juma|Ibrahim|\bIT\b|\bOwner\b|TSh|Ctrl K|XXXX-XXXX|linux x64|\/tmp\/\S+/g;
   const gaps = [...missed].filter((m) => /[A-Za-z]{3}/.test(m.replace(DATA, '').replace(/[·,:()\d\s-]/g, ''))).sort();
   if (gaps.length) console.log('No Kiswahili for:\n' + gaps.join('\n'));
   if (left.length) console.log('Still English:\n' + left.join('\n'));

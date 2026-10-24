@@ -41,6 +41,13 @@ export const schemas = {
   'offline/get_pass': empty,
   'offline/review': z.strictObject({ heldId: id, action: z.enum(['approve', 'dismiss']), note: longText.optional() }),
   'auth/change_pin': z.strictObject({ currentPin: pin, newPin: pin }),
+  'drive/save_client': z.strictObject({ clientId: z.string().trim().min(1).max(300), clientSecret: z.string().trim().min(1).max(300) }),
+  'drive/connect_start': empty,
+  'drive/connect_cancel': empty,
+  'drive/remove_account': z.strictObject({ accountId: z.string().min(1).max(40) }),
+  'drive/move_account': z.strictObject({ accountId: z.string().min(1).max(40), direction: z.enum(['up', 'down']) }),
+  'drive/pause_account': z.strictObject({ accountId: z.string().min(1).max(40), paused: z.boolean() }),
+  'drive/test': z.strictObject({ accountId: z.string().min(1).max(40).optional() }),
   'auth/set_language': z.strictObject({ language: z.enum(['en', 'sw', 'shop']) }),
 
   'devices/create_code': z.strictObject({ name, replaces: id.optional() }),
@@ -286,6 +293,7 @@ export const _schemasMatchIntentMap: { [K in IntentName]: Both<K> } = null as un
 export const feedSchemas = {
   me: empty,
   my_language: empty,
+  drive_accounts: empty,
   navigation: empty,
   staff_signin: empty,
   staff_list: empty,

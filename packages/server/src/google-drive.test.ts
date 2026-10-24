@@ -122,7 +122,7 @@ describe('google drive sign-in', () => {
     await own.close();
     expect(err).toBeInstanceOf(DriveError);
     expect(err.retryable).toBe(false);
-    expect(err.message).toMatch(/google-auth/);
+    expect(err.message).toMatch(/sign this account in again/i);
   });
 
   it('runs the enter-a-code-on-your-phone flow and waits for approval', async () => {

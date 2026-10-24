@@ -93,6 +93,7 @@ Set these as environment variables before starting. All are optional.
 | `TWILIO_WHATSAPP_FROM` | none | Like `whatsapp:+14155238886` |
 | `AT_USERNAME`, `AT_API_KEY`, `AT_SENDER_ID`, `AT_SANDBOX` | none | Africa's Talking (`AT_SANDBOX=1` for testing) |
 | `MESSAGE_WEBHOOK_URL`, `MESSAGE_WEBHOOK_TOKEN` | none | Any other service: the server posts each message there |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | none | The shop's Google Cloud sign-in details (see Online copy). Optional: they can instead be saved from the Owner or IT screen |
 | `BACKUP_EVERY_HOURS` | 0 | Also back up (and upload to Google Drive) this often, 1 to 24. 0 means nightly only |
 | `CLOUD_BACKUP_KEEP` | 60 | How many backups to keep in Google Drive |
 | `ARCHIVE_DIR` | `DATA_DIR/archive` | Where archived spreadsheets are kept on this computer. Point it at any folder, for example one on an external drive or a shared office folder |
@@ -123,29 +124,33 @@ Alerts always appear in the app. To also reach people when the app is closed:
 
 ## Online copy: Google Drive
 
-The shop computer stays the main copy of the data (it keeps working with no internet, and every sale is saved on it first). **Google Drive adds an online copy**: whenever the wifi is up, the server uploads each database backup to your Drive, and when the database gets full it moves old orders into Google Sheets there. If the internet is down, uploads wait and are retried every 10 minutes.
+The shop computer stays the main copy of the data (it keeps working with no internet, and every sale is saved on it first). **Google Drive adds online copies**: whenever the internet is up, the server uploads each database backup to Google Drive, and when the database gets full it moves old orders into Google Sheets there. If the internet is down, uploads wait and are retried every 10 minutes.
 
-**What goes where** (all inside one Drive folder, "Cake POS" by default):
+**Several Google accounts.** Connect as many accounts as you like. They are used in order (1 first): backups and archives go to the first account that has room, and when it is full, or Google stops accepting its sign-in, the next account takes over by itself. Nothing is lost when that happens: files already uploaded stay where they are, and the newest few backups are kept across all accounts together. The server never makes a second copy of a file that already got through. An account counts as full when less than about 20 MB is left.
+
+**Where to manage them:** the owner under Settings → Online copy, and IT on the "Google accounts" card of the IT page. Each account shows whether it works, how much of its storage is used, and what is wrong if something is. You can move an account earlier or later, pause it (it is skipped but remembered), check it now, sign it in again if Google stopped accepting it (sign in with the same Google account and it is renewed, not added twice), or disconnect it. The server looks at every account every half hour, so a full or signed-out account is noticed before a backup needs it. Connecting a new account makes a fresh backup straight away so it gets a copy at once.
+
+**What goes where** (inside one Drive folder per account, "Cake POS"):
 
 | Folder | Contents |
 | --- | --- |
-| `Backups` | Complete copies of the database, newest `CLOUD_BACKUP_KEEP` kept. Restoring one rebuilds the whole shop (see Restoring) |
+| `Backups` | Complete copies of the database, newest `CLOUD_BACKUP_KEEP` kept (counted across all accounts). Restoring one rebuilds the whole shop (see Restoring) |
 | `Archive` | Google Sheets of old finished orders and old activity-log entries |
 
-The server can only see files it created itself (the `drive.file` permission), never the rest of your Drive.
+The server can only see files it created itself (the `drive.file` permission), never the rest of an account's Drive. The sign-ins are kept in `google-drive.json` in the data folder (readable by the server's user only) and never in the database, because the database is what gets copied to Drive.
 
-**One-time setup (about 15 minutes, needs a Google account and a phone):**
+**One-time Google setup (about 15 minutes, by IT; needs a Google account):**
 
-1. Open the Google Cloud Console (`console.cloud.google.com`) signed in as the Google account that should own the shop's files. Create a project, for example "Cake POS".
+1. Open the Google Cloud Console (`console.cloud.google.com`) and create a project, for example "Cake POS". This project is shared by every Google account you connect.
 2. Enable the **Google Drive API** for that project.
-3. Set up the **OAuth consent screen**: user type External, an app name, your email. Add the scope `.../auth/drive.file`. **Then publish the app to "In production".** While it is left in "Testing", Google ends the sign-in after 7 days and uploads would start failing. The `drive.file` permission is the narrow one, so Google does not require a review for it.
+3. Set up the **OAuth consent screen**: user type External, an app name, your email. Add the scope `.../auth/drive.file`. **Then publish the app to "In production".** While it is left in "Testing", Google ends each sign-in after 7 days and uploads would start failing. The `drive.file` permission is the narrow one, so Google does not require a review for it.
 4. Create credentials: **OAuth client ID**, application type **TVs and Limited Input devices**. Copy the client ID and client secret.
-5. On the shop computer, in the project folder: `npm run admin -- google-auth`. Paste the client ID and secret when asked. It shows a short code and a web address. Open the address on your phone, enter the code, sign in and press Allow. The tool then creates the folders and saves the sign-in in the data folder (`google-drive.json`, readable only by the server's user).
-6. Restart the server. The Panel map now lists Google Drive as connected.
+5. In the app, open Owner → Settings → Online copy (or the IT page), paste the client ID and secret under "Set up Google first", and press Save. (Instead, the server's settings `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` do the same; then the screen does not ask. Use that on a host that forgets files when it restarts.)
+6. Press **Add a Google account**. A code appears. On your phone or any computer open `google.com/device`, enter the code, sign in with the Google account to add and press Allow. The account appears on the screen by itself within a few seconds. Repeat for each extra account.
 
-Check it any time with `npm run admin -- drive-check`. If the Google password is changed, or access is removed in the Google account's security page, run `google-auth` again. (These steps follow Google's documented flow; the screens change from time to time, and I could not try them against a real Google account, so do a backup and look for it in Drive before relying on it.)
+The admin tool does the same without the screen: `npm run admin -- google-auth` (adds an account) and `npm run admin -- drive-check` (shows every account and its state). They share the same file, so either way works while the server runs. (These steps follow Google's documented flow; the screens change from time to time, and I could not try them against a real Google account, so do a backup and look for it in Drive before relying on it.)
 
-> **Drive holds customer names, phone numbers and sales.** Use two-step sign-in on that Google account.
+> **Drive holds customer names, phone numbers and sales.** Use two-step sign-in on every Google account you connect. Disconnecting an account here stops the server using it; to take back its access completely, also remove the app in that Google account's security settings.
 
 **Frequent copies:** set `BACKUP_EVERY_HOURS=3` to have the online copy never more than about 3 hours behind (a backup takes a second or two for a normal shop). The database file is uploaded whole each time, so a very large database uses more data; archiving keeps it small.
 

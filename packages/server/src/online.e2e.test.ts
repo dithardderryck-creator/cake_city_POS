@@ -88,7 +88,7 @@ describe('the shop with its database online', () => {
 
   it('runs fine with no Google account connected: archives to the local folder only', async () => {
     const { server, dataDir } = await boot(null);
-    expect(server.cloud).toBeNull();
+    expect(server.drive.active()).toBe(false);
     await oldOrder(server, 1);
     const result = await server.archive.run({ force: true });
     expect(result.batches[0]!.driveFileId).toBeUndefined();

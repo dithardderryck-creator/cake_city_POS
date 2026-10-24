@@ -481,6 +481,14 @@ body{overflow-wrap:anywhere}
 .cx-lb h1{margin:0;font:600 26px "Fraunces",Georgia,serif}.cx-lb p{margin:0}
 .cx-lb-mk{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:var(--cop);color:var(--on,#fff);font:600 26px "Fraunces",Georgia,serif}
 .cx-lb .cx-a{justify-content:center}.cx-lb .cx-ntc{width:100%;text-align:left}
+.cx-drv{display:grid;gap:10px}.cx-drv p{margin:0}.cx-drv .cx-m{font-size:13px}.cx-drv label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}.cx-drv input{width:100%;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit}
+.cx-ac{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surf);display:grid;gap:6px}.cx-ac.off{opacity:.75}
+.cx-ach{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.cx-ach b{overflow-wrap:anywhere;font-weight:600}
+.cx-st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--paper);color:var(--mute);white-space:nowrap}.cx-st.ok{background:var(--sage-s,#5E72471c);color:var(--sage,#5E7247)}.cx-st.bad{background:var(--risk-s,#B4452F18);color:var(--risk,#B4452F)}.cx-st.cop{background:var(--cop-s,#C47F3D1f);color:var(--cop-d,#9A5F2A)}
+.cx-bar{height:6px;border-radius:999px;background:var(--paper);overflow:hidden}.cx-bar i{display:block;height:100%;background:var(--cop)}.cx-bar.hi i{background:var(--risk,#B4452F)}
+.cx-bad{color:var(--risk,#B4452F);font-size:13px}
+.cx-code{text-align:center;border:1px dashed var(--cop);border-radius:14px;padding:14px;background:var(--cop-s,#C47F3D1f)}.cx-code strong{display:block;font:700 28px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.14em;margin:8px 0}.cx-code a{color:var(--cop-d,#9A5F2A);font-weight:700;overflow-wrap:anywhere}
+.cx-ac .cx-a{margin-top:2px}.cx-ac .cx-b{min-height:36px;padding:0 12px;font-size:13px}
 `;
 
 function partsCss(): void {
@@ -939,4 +947,170 @@ function watchPlace(): void {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) void checkPlace();
   });
+}
+
+
+/* ---------- Google accounts: the same panel on the Owner Settings screen and on the IT page ---------- */
+
+const DRIVE_STATE: Record<string, [string, string]> = {
+  ok: ['Working', 'ok'],
+  full: ['Full', 'bad'],
+  needs_signin: ['Sign in again', 'bad'],
+  unreachable: ['Cannot reach Google', 'cop'],
+  error: ['Problem', 'bad'],
+  paused: ['Paused', ''],
+  unknown: ['Not checked yet', ''],
+};
+
+function fmtBytes(n: number): string {
+  if (n >= 1_073_741_824) return `${(n / 1_073_741_824).toFixed(n >= 10_737_418_240 ? 0 : 1)} GB`;
+  if (n >= 1_048_576) return `${Math.round(n / 1_048_576)} MB`;
+  return `${Math.max(0, Math.round(n / 1024))} KB`;
+}
+
+type DriveData = FeedMap['drive_accounts']['data'];
+let driveStop: (() => void) | null = null;
+
+/** Stops the Google accounts panel that is showing, if any. */
+export function unmountDrive(): void {
+  driveStop?.();
+  driveStop = null;
+}
+
+/**
+ * Shows the shop's Google accounts inside `el` and keeps them fresh. Only one is shown at a time.
+ * Owner and IT use it to sign accounts in (by a code typed on google.com/device), reorder them, pause, check and disconnect them.
+ */
+export function mountDrive(el: HTMLElement): () => void {
+  unmountDrive();
+  partsCss();
+  let data: DriveData | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let stopped = false;
+  const dismissed = new Set<string>();
+  el.classList.add('cx-drv');
+  const q = (sel: string) => el.querySelector<HTMLInputElement>(sel);
+
+  function render(): void {
+    if (!data) {
+      el.innerHTML = '<p class="cx-m">Loading…</p>';
+      return;
+    }
+    const d = data;
+    // Keep what someone is typing while the panel refreshes itself.
+    const typed = { id: q('[data-k="gid"]')?.value ?? '', secret: q('[data-k="gsec"]')?.value ?? '' };
+    const focus = document.activeElement instanceof HTMLElement ? (document.activeElement.dataset.k ?? null) : null;
+    if (!d.available) {
+      el.innerHTML = '<p class="cx-m">Google Drive is not available on this server.</p>';
+      return;
+    }
+    const waiting = d.connect?.state === 'waiting';
+    const accounts = d.accounts
+      .map((a) => {
+        const [label, tone] = DRIVE_STATE[a.state] ?? DRIVE_STATE.unknown!;
+        const pct = a.limitBytes && a.usedBytes !== null ? Math.min(100, Math.round((a.usedBytes / a.limitBytes) * 100)) : null;
+        const usage =
+          a.usedBytes === null
+            ? ''
+            : a.limitBytes
+              ? `<div class="cx-bar ${pct! >= 90 ? 'hi' : ''}" role="img" aria-label="${pct}%"><i style="width:${pct}%"></i></div><p class="cx-m"><span>${fmtBytes(a.usedBytes)}</span> <span>of</span> <span>${fmtBytes(a.limitBytes)}</span> <span>used</span></p>`
+              : `<p class="cx-m"><span>${fmtBytes(a.usedBytes)}</span> <span>used</span></p>`;
+        const last = d.accounts.length;
+        return `<div class="cx-ac ${a.state === 'paused' ? 'off' : ''}" data-id="${esc(a.id)}">
+          <div class="cx-ach"><b>${a.position} · ${esc(a.email ?? a.id)}</b><span class="cx-st ${tone}">${label}</span></div>
+          ${usage}${a.problem ? `<p class="cx-bad">${esc(a.problem)}</p>` : ''}
+          <div class="cx-a">
+            <button class="cx-b" data-x="up" ${a.position === 1 ? 'disabled' : ''} aria-label="Use earlier" title="Use earlier">↑</button>
+            <button class="cx-b" data-x="down" ${a.position === last ? 'disabled' : ''} aria-label="Use later" title="Use later">↓</button>
+            <button class="cx-b" data-x="pause" data-p="${a.state === 'paused' ? '0' : '1'}">${a.state === 'paused' ? 'Resume' : 'Pause'}</button>
+            <button class="cx-b" data-x="test">Check</button>
+            ${a.state === 'needs_signin' ? '<button class="cx-b p" data-x="signin" ' + (waiting ? 'disabled' : '') + '>Sign in again</button>' : ''}
+            <button class="cx-b r" data-x="remove" data-e="${esc(a.email ?? a.id)}">Disconnect</button>
+          </div>
+        </div>`;
+      })
+      .join('');
+    let connect = '';
+    const c = d.connect;
+    if (c?.state === 'waiting') {
+      const mins = Math.max(1, Math.round((Date.parse(c.expiresAt ?? '') - Date.now()) / 60000));
+      connect = `<div class="cx-code"><p>On your phone or any computer, open</p><a href="${esc(c.url ?? '')}" target="_blank" rel="noopener">${esc(c.url ?? '')}</a><p>and enter this code</p><strong>${esc(c.userCode ?? '')}</strong><p class="cx-m">Sign in with the Google account to add, then press Allow. The code works for about ${Number.isFinite(mins) ? mins : 10} more minutes.</p><div class="cx-a" style="justify-content:center"><button class="cx-b" data-x="cancel">Cancel</button></div></div>`;
+    } else if (c && !dismissed.has(c.at)) {
+      connect = `<div class="cx-ac"><p class="${c.state === 'failed' ? 'cx-bad' : ''}">${c.state === 'done' ? '✓ ' : ''}${esc(c.message ?? '')}</p><div class="cx-a"><button class="cx-b" data-x="dismiss" data-at="${esc(c.at)}">OK</button></div></div>`;
+    }
+    const setup = d.clientReady
+      ? `<div class="cx-a"><button class="cx-b p" data-x="add" ${waiting ? 'disabled' : ''}>${d.accounts.length ? 'Add another Google account' : 'Add a Google account'}</button></div>`
+      : `<div class="cx-ac"><b>Set up Google first</b>
+          <p class="cx-m">This is done once, by someone comfortable with the Google Cloud Console (IT): make a project, switch on the Google Drive API, publish the consent screen, and create an OAuth client of the type "TVs and Limited Input devices". Then paste its two values here.</p>
+          <label for="cx-gid">Client ID</label><input id="cx-gid" data-k="gid" autocomplete="off" spellcheck="false">
+          <label for="cx-gsec">Client secret</label><input id="cx-gsec" data-k="gsec" type="password" autocomplete="off" spellcheck="false">
+          <div class="cx-a"><button class="cx-b p" data-x="client">Save</button></div></div>`;
+    el.innerHTML = `${d.problem ? `<p class="cx-bad">${esc(d.problem)}</p>` : ''}
+      <p class="cx-m">Backups, and old orders when the database fills up, are copied to Google Drive. Accounts are used in order: when one is full or stops working, the next one takes over by itself.</p>
+      ${d.accounts.length ? accounts : '<p class="cx-m">No Google account is connected yet. Everything stays on the shop computer until one is.</p>'}
+      ${connect}${setup}
+      <p class="cx-m">Files go in the folder "${esc(d.folderName)}" of each account. Only files this app made are visible to it.</p>`;
+    if (typed.id) q('[data-k="gid"]')!.value = typed.id;
+    if (typed.secret) q('[data-k="gsec"]')!.value = typed.secret;
+    if (focus) q(`[data-k="${focus}"]`)?.focus();
+  }
+
+  async function pull(): Promise<void> {
+    const r = await client.feed('drive_accounts', {}).catch(() => null);
+    if (stopped) return;
+    if (r?.ok) {
+      data = r.data;
+      render();
+    }
+    clearTimeout(timer);
+    // Quick while a code is waiting to be typed, slow otherwise.
+    timer = setTimeout(() => void pull(), data?.connect?.state === 'waiting' ? 3000 : 20_000);
+  }
+
+  el.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-x]');
+    if (!b || b.disabled) return;
+    const id = b.closest<HTMLElement>('[data-id]')?.dataset.id ?? '';
+    const x = b.dataset.x;
+    const run = async (fn: () => Promise<unknown>) => {
+      b.disabled = true;
+      try {
+        await fn();
+      } finally {
+        await pull();
+      }
+    };
+    if (x === 'dismiss') {
+      dismissed.add(b.dataset.at ?? '');
+      render();
+    } else if (x === 'client') {
+      const clientId = q('[data-k="gid"]')?.value.trim() ?? '';
+      const clientSecret = q('[data-k="gsec"]')?.value.trim() ?? '';
+      if (!clientId || !clientSecret) return toast('Paste both the client ID and the client secret.');
+      void run(async () => {
+        const r = await send('drive/save_client', { clientId, clientSecret }, 'Google details saved');
+        if (r.ok) {
+          q('[data-k="gid"]')!.value = '';
+          q('[data-k="gsec"]')!.value = '';
+        }
+      });
+    } else if (x === 'add' || x === 'signin') void run(() => send('drive/connect_start', {}));
+    else if (x === 'cancel') void run(() => send('drive/connect_cancel', {}));
+    else if (x === 'up' || x === 'down') void run(() => send('drive/move_account', { accountId: id, direction: x }));
+    else if (x === 'pause') void run(() => send('drive/pause_account', { accountId: id, paused: b.dataset.p === '1' }));
+    else if (x === 'test') void run(() => send('drive/test', { accountId: id }, 'Checked'));
+    else if (x === 'remove') {
+      if (!confirm(`Disconnect ${b.dataset.e}? Copies already in that Google Drive stay there, and the server stops using the account. To remove the app's access completely, also remove it in that Google account's security settings.`)) return;
+      void run(() => send('drive/remove_account', { accountId: id }, 'Account disconnected'));
+    }
+  });
+
+  render();
+  void pull();
+  driveStop = () => {
+    stopped = true;
+    clearTimeout(timer);
+    el.innerHTML = '';
+  };
+  return unmountDrive;
 }

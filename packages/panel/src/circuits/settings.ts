@@ -1,5 +1,5 @@
 import type { PaymentMethod, ShopSettings } from '../domain';
-import type { Registry } from '../intents';
+import type { HandlerResult, Registry } from '../intents';
 import type { Store } from '../ports';
 import { normalisePhone } from './notify';
 
@@ -124,6 +124,90 @@ export const settingsIntents = {
       return { summary: parts.join('. '), target: 'shop', events: [{ type: 'SettingsChanged', payload: { locationCheck: next.locationCheckEnabled } }] };
     },
   },
+  /* ---------- Google Drive accounts: owner and IT ---------- */
+
+  'drive/save_client': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    skipRequestMemo: true,
+    validate: (_p, ctx) => (ctx.terminals.drive ? [] : [DRIVE_UNAVAILABLE]),
+    handle: async (p, ctx) => {
+      const r = await ctx.terminals.drive!.saveClient(p.clientId, p.clientSecret);
+      if (!r.ok) return driveRefused('Google client details were not saved', r.error);
+      return { summary: 'Saved the Google client details (the secret is not logged)', target: 'drive', skipSync: true };
+    },
+  },
+
+  'drive/connect_start': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    skipRequestMemo: true,
+    validate: (_p, ctx) => (ctx.terminals.drive ? [] : [DRIVE_UNAVAILABLE]),
+    handle: async (_p, ctx) => {
+      const r = await ctx.terminals.drive!.startConnect();
+      if (!r.ok) return driveRefused('Could not start connecting a Google account', r.error);
+      return { summary: 'Started connecting a Google account', target: 'drive', skipSync: true, data: { userCode: r.userCode, url: r.url, expiresAt: r.expiresAt } };
+    },
+  },
+
+  'drive/connect_cancel': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    validate: (_p, ctx) => (ctx.terminals.drive ? [] : [DRIVE_UNAVAILABLE]),
+    handle: async (_p, ctx) => {
+      await ctx.terminals.drive!.cancelConnect();
+      return { summary: 'Cancelled connecting a Google account', target: 'drive', skipSync: true };
+    },
+  },
+
+  'drive/remove_account': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    validate: (_p, ctx) => (ctx.terminals.drive ? [] : [DRIVE_UNAVAILABLE]),
+    handle: async (p, ctx) => {
+      const r = await ctx.terminals.drive!.remove(p.accountId);
+      if (!r.ok) return driveRefused('Could not disconnect a Google account', r.error);
+      return { summary: `Disconnected the Google account ${r.email ?? p.accountId}`, target: 'drive', skipSync: true };
+    },
+  },
+
+  'drive/move_account': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    validate: (_p, ctx) => (ctx.terminals.drive ? [] : [DRIVE_UNAVAILABLE]),
+    handle: async (p, ctx) => {
+      const r = await ctx.terminals.drive!.move(p.accountId, p.direction);
+      if (!r.ok) return driveRefused('Could not reorder the Google accounts', r.error);
+      return { summary: `Moved a Google account ${p.direction === 'up' ? 'earlier' : 'later'} in the order`, target: 'drive', skipSync: true };
+    },
+  },
+
+  'drive/pause_account': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    validate: (_p, ctx) => (ctx.terminals.drive ? [] : [DRIVE_UNAVAILABLE]),
+    handle: async (p, ctx) => {
+      const r = await ctx.terminals.drive!.pause(p.accountId, p.paused);
+      if (!r.ok) return driveRefused('Could not change a Google account', r.error);
+      return { summary: `${p.paused ? 'Paused' : 'Resumed'} the Google account ${r.email ?? p.accountId}`, target: 'drive', skipSync: true };
+    },
+  },
+
+  'drive/test': {
+    circuit: 'Settings',
+    roles: ['owner', 'it'],
+    validate: (_p, ctx) => (ctx.terminals.drive ? [] : [DRIVE_UNAVAILABLE]),
+    handle: async (p, ctx) => {
+      const r = await ctx.terminals.drive!.test(p.accountId);
+      if (!r.ok) return driveRefused('Could not check the Google accounts', r.error);
+      return { summary: 'Checked the Google accounts', target: 'drive', skipSync: true, skipAudit: true };
+    },
+  },
 } satisfies Partial<Registry>;
+
+const DRIVE_UNAVAILABLE = 'Google Drive is not available on this server.';
+function driveRefused(summary: string, error: string): HandlerResult {
+  return { summary, target: 'drive', failure: { code: 'invalid', messages: [error] }, skipSync: true };
+}
 
 export { normalisePhone };

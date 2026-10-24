@@ -30,6 +30,10 @@ export interface ServerConfig {
   cloudBackupKeep: number;
   /** Where the connected Google sign-in is kept. The file only exists once `google-auth` has been run. */
   driveFile: string;
+  /** The shop's Google Cloud sign-in details when they are set in the environment (otherwise they are saved from the Owner or IT screen). */
+  googleClient: { clientId: string; clientSecret: string } | null;
+  /** For tests only: send every Google call to a stand-in server. */
+  googleEndpoints: { token: string; deviceCode: string; api: string; upload: string } | null;
   /** Where archived spreadsheets are kept on this computer. */
   archiveDir: string;
   archive: { whenFullMb: number; minAgeDays: number; activityDays: number };
@@ -104,6 +108,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     backupEveryHours: int(env, 'BACKUP_EVERY_HOURS', 0, 0, 24),
     cloudBackupKeep: int(env, 'CLOUD_BACKUP_KEEP', 60, 1, 3650),
     driveFile: path.join(dataDir, 'google-drive.json'),
+    googleClient: loadGoogleClient(env),
+    googleEndpoints: loadGoogleEndpoints(env),
     archiveDir: path.resolve(env.ARCHIVE_DIR || path.join(dataDir, 'archive')),
     archive: {
       whenFullMb: int(env, 'ARCHIVE_WHEN_FULL_MB', 500, 1, 1_000_000),
@@ -118,6 +124,26 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     trustProxy: int(env, 'TRUST_PROXY', 0, 0, 5),
     testCopy: /^(1|true|yes|on)$/i.test((env.TEST_COPY ?? '').trim()),
   };
+}
+
+function loadGoogleClient(env: NodeJS.ProcessEnv): { clientId: string; clientSecret: string } | null {
+  const clientId = env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = env.GOOGLE_CLIENT_SECRET?.trim();
+  if (!clientId && !clientSecret) return null;
+  if (!clientId || !clientSecret) throw new ConfigError('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET go together: set both or neither.');
+  return { clientId, clientSecret };
+}
+
+function loadGoogleEndpoints(env: NodeJS.ProcessEnv): { token: string; deviceCode: string; api: string; upload: string } | null {
+  const raw = env.GOOGLE_ENDPOINTS_JSON?.trim();
+  if (!raw) return null;
+  try {
+    const e = JSON.parse(raw) as Record<string, unknown>;
+    if (typeof e.token === 'string' && typeof e.deviceCode === 'string' && typeof e.api === 'string' && typeof e.upload === 'string') return { token: e.token, deviceCode: e.deviceCode, api: e.api, upload: e.upload };
+  } catch {
+    /* falls through to the message below */
+  }
+  throw new ConfigError('GOOGLE_ENDPOINTS_JSON must be JSON with token, deviceCode, api and upload addresses (it is for tests only).');
 }
 
 const need = (env: NodeJS.ProcessEnv, key: string, why: string): string => {

@@ -3,8 +3,7 @@ import readline from 'node:readline';
 import { createPanel, seedDemo, type Role } from '@cake-pos/panel';
 import { createArchiveService } from './archive';
 import { createBackupService, createDriveUploader, createFolderUploader, type BackupUploader } from './backup';
-import { loadCloud } from './cloud';
-import { DriveError, loadDriveCredentials, requestDeviceCode, saveDriveCredentials, waitForDeviceApproval } from './google-drive';
+import { openDrive } from './cloud';
 import { createStaff, listStaff, makePairingCode, resetPin, restoreBackup } from './admin';
 import { loadConfig } from './config';
 import { serverRunning } from './lock';
@@ -105,10 +104,10 @@ async function main() {
         break;
       }
       case 'backup': {
-        const cloud = loadCloud(config);
+        const drive = openDrive(config, createLogger({ level: 'warn' }));
         const uploaders: BackupUploader[] = [];
         if (config.cloudBackupDir) uploaders.push(createFolderUploader(config.cloudBackupDir));
-        if (cloud) uploaders.push(createDriveUploader(cloud.client, cloud.folderName, config.cloudBackupKeep));
+        if (drive.active()) uploaders.push(createDriveUploader(drive.client, drive.folderName, config.cloudBackupKeep, () => drive.active()));
         const svc = createBackupService({
           store,
           exclusive: (fn) => fn(),
@@ -126,52 +125,50 @@ async function main() {
         break;
       }
       case 'google-auth': {
-        const clientId = flag(args, 'client-id') ?? process.env.GOOGLE_CLIENT_ID ?? (await ask('Google client ID: '));
-        const clientSecret = flag(args, 'client-secret') ?? process.env.GOOGLE_CLIENT_SECRET ?? (await ask('Google client secret: ', true));
-        const folderName = flag(args, 'folder') ?? 'Cake POS';
-        const code = await requestDeviceCode(clientId.trim());
-        console.log(`\nOn your phone or any computer, open:\n\n    ${code.verificationUrl}\n\nand enter this code:\n\n    ${code.userCode}\n\nSign in with the Google account that should own the shop's files, and press Allow.`);
-        console.log(`Waiting for you (the code works for ${Math.round(code.expiresInSeconds / 60)} minutes)...`);
-        const refreshToken = await waitForDeviceApproval({ clientId: clientId.trim(), clientSecret: clientSecret.trim() }, code);
-        const creds = { clientId: clientId.trim(), clientSecret: clientSecret.trim(), refreshToken, folderName, connectedAt: new Date().toISOString() };
-        saveDriveCredentials(config.driveFile, creds);
-        const cloud = loadCloud(config)!;
-        const { account } = await cloud.client.check();
-        await cloud.client.ensureFolder([folderName, 'Backups']);
-        await cloud.client.ensureFolder([folderName, 'Archive']);
-        saveDriveCredentials(config.driveFile, { ...creds, account });
-        console.log(`\nConnected${account ? ` as ${account}` : ''}. Backups and archives will go to the "${folderName}" folder in that Drive. Restart the server to start using it.`);
+        const drive = openDrive(config, createLogger({ level: 'warn' }));
+        if (!config.googleClient) {
+          const clientId = flag(args, 'client-id') ?? (await ask('Google client ID: '));
+          const clientSecret = flag(args, 'client-secret') ?? (await ask('Google client secret: ', true));
+          const saved = await drive.terminal.saveClient(clientId, clientSecret);
+          if (!saved.ok) throw new Error(saved.error);
+        }
+        const started = await drive.terminal.startConnect();
+        if (!started.ok) throw new Error(started.error);
+        console.log(`\nOn your phone or any computer, open:\n\n    ${started.url}\n\nand enter this code:\n\n    ${started.userCode}\n\nSign in with the Google account to add, and press Allow.`);
+        console.log('Waiting for you (the code works for a few minutes)...');
+        const done = await drive.waitForConnect();
+        if (done?.state !== 'done') throw new Error(done?.message ?? 'The sign-in did not finish.');
+        console.log(`\n${done.message} Backups and archives go to the "${drive.folderName()}" folder in its Drive. Run this again to add another account. You can also manage accounts from the Owner or IT screen.`);
         break;
       }
       case 'drive-check': {
-        const creds = loadDriveCredentials(config.driveFile);
-        if (!creds) {
-          console.log('Google Drive is not connected. Run: google-auth');
+        const drive = openDrive(config, createLogger({ level: 'warn' }));
+        if (!drive.hasAccounts()) {
+          console.log('No Google account is connected. Run: google-auth (or connect one from the Owner or IT screen).');
           break;
         }
-        const cloud = loadCloud(config)!;
-        try {
-          const { account } = await cloud.client.check();
-          console.log(`Google Drive works${account ? ` (account ${account})` : ''}. Folder: "${creds.folderName}".`);
-        } catch (err) {
-          console.log(`Google Drive does not work: ${err instanceof Error ? err.message : String(err)}`);
-          process.exitCode = err instanceof DriveError && err.retryable ? 0 : 1;
+        await drive.refresh();
+        const st = await drive.terminal.status();
+        const mb = (n: number | null) => (n === null ? '?' : `${Math.round(n / 1_048_576)} MB`);
+        for (const a of st.accounts) {
+          console.log(`${a.position}. ${a.email ?? a.id}: ${a.state}${a.limitBytes !== null ? `, ${mb(a.usedBytes)} of ${mb(a.limitBytes)} used` : ''}${a.problem ? ` (${a.problem})` : ''}`);
         }
+        if (st.accounts.some((a) => a.state === 'needs_signin' || a.state === 'error')) process.exitCode = 1;
         break;
       }
       case 'archive-status':
       case 'archive': {
-        const cloud = loadCloud(config);
+        const drive = openDrive(config, createLogger({ level: 'warn' }));
         const svc = createArchiveService({
           store,
           exclusive: (fn) => fn(),
           dir: config.archiveDir,
           statePath: path.join(config.dataDir, 'archive-state.json'),
-          drive: cloud ? { client: cloud.client, folderName: cloud.folderName } : null,
+          drive: () => (drive.active() ? { client: drive.client, folderName: drive.folderName() } : null),
           backupNow: async () => {
             const uploaders: BackupUploader[] = [];
             if (config.cloudBackupDir) uploaders.push(createFolderUploader(config.cloudBackupDir));
-            if (cloud) uploaders.push(createDriveUploader(cloud.client, cloud.folderName, config.cloudBackupKeep));
+            if (drive.active()) uploaders.push(createDriveUploader(drive.client, drive.folderName, config.cloudBackupKeep, () => drive.active()));
             const b = createBackupService({ store, exclusive: (fn) => fn(), dir: config.backupDir, keep: config.backupKeep, uploaders, hour: config.backupHour, minute: config.backupMinute, log: createLogger({ level: 'warn' }) });
             await b.runNow();
           },

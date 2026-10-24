@@ -110,7 +110,8 @@ export interface ArchiveOptions {
   /** Where the spreadsheets are kept on this computer. */
   dir: string;
   statePath: string;
-  drive: { client: DriveClient; folderName: string } | null;
+  /** Where the Google copy goes. A function, because accounts can be connected or paused while the server runs; null means none. */
+  drive: (() => { client: DriveClient; folderName: string } | null) | { client: DriveClient; folderName: string } | null;
   /** Takes a verified backup (and starts uploading it). Called before anything is removed. */
   backupNow: () => Promise<unknown>;
   /** Bytes of real data in the database (not the file size, which does not shrink when rows are removed). */
@@ -254,6 +255,7 @@ export function verifySpreadsheet(bytes: Uint8Array, expected: Sheet[]): void {
 
 export function createArchiveService(o: ArchiveOptions): ArchiveService {
   const clock = o.clock ?? { now: () => new Date() };
+  const driveNow = () => (typeof o.drive === 'function' ? o.drive() : o.drive);
   const settings: ArchiveSettings = { ...DEFAULT_ARCHIVE, ...o.settings };
   let timers: NodeJS.Timeout[] = [];
   let running: Promise<ArchiveResult> | null = null;
@@ -306,6 +308,7 @@ export function createArchiveService(o: ArchiveOptions): ArchiveService {
     const photoDir = path.join(o.dir, `${name}-photos`);
     const written: string[] = [];
     let driveFile: DriveFile | undefined;
+    let usedDrive: { client: DriveClient; folderName: string } | null = null;
     try {
       fs.writeFileSync(`${localFile}.part`, bytes);
       fs.renameSync(`${localFile}.part`, localFile);
@@ -320,9 +323,10 @@ export function createArchiveService(o: ArchiveOptions): ArchiveService {
           if (fs.statSync(f).size !== p.bytes.byteLength) throw new Error(`Photo ${p.file} was not saved completely.`);
         }
       }
-      if (o.drive) {
-        const folder = await o.drive.client.ensureFolder([o.drive.folderName, 'Archive']);
-        driveFile = await o.drive.client.upload({ name, parentId: folder, source: { bytes }, mimeType: XLSX_MIME, convertTo: GOOGLE_SHEET_MIME });
+      usedDrive = driveNow();
+      if (usedDrive) {
+        const folder = await usedDrive.client.ensureFolder([usedDrive.folderName, 'Archive']);
+        driveFile = await usedDrive.client.upload({ name, parentId: folder, source: { bytes }, mimeType: XLSX_MIME, convertTo: GOOGLE_SHEET_MIME });
       }
       await o.backupNow(); // the way back if anything below goes wrong
       await remove();
@@ -330,7 +334,7 @@ export function createArchiveService(o: ArchiveOptions): ArchiveService {
       // Nothing was removed from the database, so take back what was written: the next try starts clean.
       for (const f of written) fs.rmSync(f, { force: true });
       fs.rmSync(photoDir, { recursive: true, force: true });
-      if (driveFile && o.drive) await o.drive.client.remove(driveFile.id).catch(() => undefined);
+      if (driveFile && usedDrive) await usedDrive.client.remove(driveFile.id).catch(() => undefined);
       throw err;
     }
     return { kind, name, at: clock.now().toISOString(), count, localFile, driveFileId: driveFile?.id, driveLink: driveFile?.webViewLink, ...extra };
@@ -492,7 +496,7 @@ export function createArchiveService(o: ArchiveOptions): ArchiveService {
         lastRunAt: s.lastRunAt,
         lastError: memError ?? s.lastError,
         totalOrdersArchived: s.batches.filter((b) => b.kind === 'orders').reduce((n, b) => n + b.count, 0),
-        driveConnected: !!o.drive,
+        driveConnected: !!driveNow(),
         folder: o.dir,
         recent: s.batches.slice(-10).reverse(),
       };

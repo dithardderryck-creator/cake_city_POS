@@ -14,7 +14,7 @@ const adminJs = path.join(root, 'packages/server/dist/cake-pos-admin.mjs');
 
 export const PINS = { owner: '1111', cashier: '2222', baker: '3333', inventory: '4444', it: '9999' };
 
-export async function startShop({ seed = true, requireDevice = false } = {}) {
+export async function startShop({ seed = true, requireDevice = false, env: extraEnv = {} } = {}) {
   if (!fs.existsSync(serverJs)) throw new Error('Build the server first: npm run build -w @cake-pos/server');
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'cakepos-ui-'));
   const port = await new Promise((resolve) => {
@@ -32,6 +32,7 @@ export async function startShop({ seed = true, requireDevice = false } = {}) {
     LOG_LEVEL: 'warn',
     // Most browser checks are not about devices, so the device check is off unless a test asks for it.
     REQUIRE_DEVICE: requireDevice ? '1' : '0',
+    ...extraEnv,
   };
   if (seed) execFileSync(process.execPath, [adminJs, 'seed-demo', '--yes'], { env, encoding: 'utf8' });
   let child;

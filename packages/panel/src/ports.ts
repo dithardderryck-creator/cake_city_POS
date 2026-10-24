@@ -144,7 +144,65 @@ export interface PushTerminal {
   send(subscription: { endpoint: string; p256dh: string; auth: string }, payload: PushPayload): Promise<SendResult>;
 }
 
+/** How one connected Google account is doing. `full` and `needs_signin` are the ones a person has to act on. */
+export type DriveAccountState = 'ok' | 'full' | 'needs_signin' | 'unreachable' | 'error' | 'paused' | 'unknown';
+
+export interface DriveAccountView {
+  id: string;
+  /** The Google account's address, once Google has told us. */
+  email: string | null;
+  connectedAt: string;
+  state: DriveAccountState;
+  usedBytes: number | null;
+  /** Null for accounts with unlimited storage. */
+  limitBytes: number | null;
+  checkedAt: string | null;
+  lastOkAt: string | null;
+  /** Plain words about what is wrong, when something is. */
+  problem: string | null;
+  /** 1 is used first; the next one takes over when this one is full. */
+  position: number;
+}
+
+/** A sign-in waiting for someone to type a code on google.com/device, or how the last one ended. */
+export interface DriveConnectView {
+  state: 'waiting' | 'done' | 'failed';
+  userCode?: string;
+  url?: string;
+  expiresAt?: string;
+  email?: string;
+  message?: string;
+  at: string;
+}
+
+export interface DriveStatus {
+  /** Whether the Google client ID and secret are known, so a sign-in can be started. */
+  clientReady: boolean;
+  clientFrom: 'environment' | 'saved' | null;
+  folderName: string;
+  accounts: DriveAccountView[];
+  connect: DriveConnectView | null;
+  /** Something wrong with the saved sign-in file itself. */
+  problem: string | null;
+}
+
+export type DriveResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
+
+/** Terminal: the shop's Google Drive accounts, used for online copies of the backups and the archive. */
+export interface DriveTerminal {
+  status(): Promise<DriveStatus>;
+  saveClient(clientId: string, clientSecret: string): Promise<DriveResult>;
+  startConnect(): Promise<DriveResult<{ userCode: string; url: string; expiresAt: string }>>;
+  cancelConnect(): Promise<DriveResult>;
+  remove(accountId: string): Promise<DriveResult<{ email: string | null }>>;
+  move(accountId: string, direction: 'up' | 'down'): Promise<DriveResult>;
+  pause(accountId: string, paused: boolean): Promise<DriveResult<{ email: string | null }>>;
+  /** Checks one account (or all of them) now and updates what the status says. */
+  test(accountId?: string): Promise<DriveResult>;
+}
+
 export interface Terminals {
+  drive?: DriveTerminal;
   messages?: MessageTerminal;
   push?: PushTerminal;
   sync?: SyncTerminal;

@@ -7,7 +7,8 @@ import { createPanel, type Panel, type PinHasher, type Terminals } from '@cake-p
 import { createArchiveService, type ArchiveService } from './archive';
 import { createBackupService, createDriveUploader, createFolderUploader, type BackupService, type BackupUploader } from './backup';
 import { createHttpSyncTerminal } from './online-sync';
-import { loadCloud, type Cloud } from './cloud';
+import { openDrive } from './cloud';
+import type { DriveAccounts } from './drive-accounts';
 import type { DriveDeps } from './google-drive';
 import type { ServerConfig } from './config';
 import { createHttpServer } from './http';
@@ -26,8 +27,8 @@ export interface RunningServer {
   store: SqliteStore;
   backup: BackupService;
   archive: ArchiveService;
-  /** Null when Google Drive has not been connected. */
-  cloud: Cloud | null;
+  /** The shop's Google accounts (none connected is a normal state). */
+  drive: DriveAccounts;
   addresses: string[];
   /** Test copies only: the one-time first-device code. */
   testCopy?: { code: string; seeded: boolean };
@@ -80,17 +81,17 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       onError: (err, info) => log.error('Unexpected failure inside the panel', { ...info, ...errorFields(err) }),
     });
 
-    // Google Drive is optional. When the shop has signed in to it, backups and archives go there whenever wifi allows,
-    // and every upload simply waits and retries if the internet is down.
-    let cloud: Cloud | null = null;
-    try {
-      cloud = loadCloud(config, driveDeps);
-    } catch (err) {
-      log.error('Google Drive sign-in could not be read, so Drive is off until it is fixed', errorFields(err));
-    }
+    // Google Drive is optional. Any number of accounts can be signed in from the Owner or IT screen; backups and archives
+    // go to the first one with room whenever wifi allows, and every upload simply waits and retries if the internet is down.
+    const drive = openDrive(config, log, {
+      ...(driveDeps ? { deps: driveDeps } : {}),
+      // A newly connected account gets a copy straight away instead of waiting for tonight's backup.
+      onConnected: () => void backup.runNow().catch(() => undefined),
+    });
+    terminals.drive = drive.terminal;
     const uploaders: BackupUploader[] = [];
     if (config.cloudBackupDir) uploaders.push(createFolderUploader(config.cloudBackupDir));
-    if (cloud) uploaders.push(createDriveUploader(cloud.client, cloud.folderName, config.cloudBackupKeep));
+    uploaders.push(createDriveUploader(drive.client, drive.folderName, config.cloudBackupKeep, () => drive.active()));
     const backup = createBackupService({
       store: db,
       exclusive: (fn) => panel.exclusive(fn),
@@ -110,7 +111,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       exclusive: (fn) => panel.exclusive(fn),
       dir: config.archiveDir,
       statePath: path.join(config.dataDir, 'archive-state.json'),
-      drive: cloud ? { client: cloud.client, folderName: cloud.folderName } : null,
+      drive: () => (drive.active() ? { client: drive.client, folderName: drive.folderName() } : null),
       backupNow: () => backup.runNow(),
       usedBytes: () => db.usedBytes(),
       settings: { whenFullBytes: config.archive.whenFullMb * 1_048_576, minAgeDays: config.archive.minAgeDays, auditKeepDays: config.archive.activityDays },
@@ -126,6 +127,13 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       return [ch.includes('sms') ? `SMS (${config.messaging.sms?.kind})` : null, ch.includes('whatsapp') ? `WhatsApp (${config.messaging.whatsapp?.kind})` : null, terminals.push ? 'phone notifications' : null].filter(Boolean).join(', ') || 'none set up';
     };
 
+    const driveLine = async () => {
+      const st = await drive.terminal.status();
+      if (st.accounts.length === 0) return 'not connected';
+      const working = st.accounts.filter((a) => a.state === 'ok').length;
+      const attention = st.accounts.filter((a) => a.state !== 'ok' && a.state !== 'paused').length;
+      return `${st.accounts.length} connected, ${working} working${attention ? `, ${attention} need attention` : ''}: ${st.accounts.map((a) => a.email ?? a.id).join(', ')}`;
+    };
     const archiveLine = () => {
       const a = archive.status();
       return `${a.usedMb} MB used of ${a.whenFullMb} MB; ${a.totalOrdersArchived} orders archived${a.lastError ? `; last problem: ${a.lastError}` : ''}`;
@@ -142,7 +150,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
         { label: 'Live connections', value: String(http.clientCount()) },
         { label: 'Addresses', value: lanAddresses().join(', ') || 'none found' },
         { label: 'Data folder', value: config.dataDir },
-        { label: 'Google Drive', value: cloud ? `connected${cloud.account ? ` as ${cloud.account}` : ''}, folder "${cloud.folderName}"` : 'not connected' },
+        { label: 'Google Drive', value: await driveLine() },
         { label: 'Archive', value: archiveLine() },
         { label: 'Alerts reach people by', value: `in-app, ${describeMessaging()}` },
       ],
@@ -150,6 +158,11 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
 
     const port = await http.listen(config.port, config.host);
     backup.start();
+    // Look at the Google accounts now and every half hour, so a full or signed-out account is noticed before an upload needs it.
+    const driveCheck = () => (drive.hasAccounts() ? drive.refresh().catch((err) => log.warn('Checking the Google accounts failed', errorFields(err))) : Promise.resolve());
+    void driveCheck();
+    const driveTimer = setInterval(() => void driveCheck(), 30 * 60_000);
+    driveTimer.unref();
     archive.start();
     const maintain = () =>
       panel
@@ -201,7 +214,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       store: db,
       backup,
       archive,
-      cloud,
+      drive,
       addresses,
       testCopy,
       close: () =>
@@ -209,6 +222,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
           clearInterval(timer);
           clearInterval(alertTimer);
           clearInterval(deliverTimer);
+          clearInterval(driveTimer);
           if (syncTimer) clearInterval(syncTimer);
           backup.stop();
           archive.stop();

@@ -50,7 +50,7 @@ import { buildForecasts, type ForecastRow } from './forecast';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
-import type { BackupStatus, Clock, Store, Terminals } from './ports';
+import type { BackupStatus, Clock, DriveStatus, Store, Terminals } from './ports';
 import {
   PAYMENT_LABEL,
   PAYMENT_TONE,
@@ -657,6 +657,7 @@ export interface OfflineReviewData {
 export interface FeedMap {
   me: { params: Record<string, never>; data: Session };
   my_language: { params: Record<string, never>; data: MyLanguageData };
+  drive_accounts: { params: Record<string, never>; data: DriveStatus & { available: boolean } };
   navigation: { params: Record<string, never>; data: NavItem[] };
   staff_signin: { params: Record<string, never>; data: StaffSigninRow[] };
   staff_list: { params: Record<string, never>; data: StaffListRow[] };
@@ -891,6 +892,14 @@ export const feeds: FeedRegistry = {
   me: {
     roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ session }) => session!,
+  },
+
+  drive_accounts: {
+    roles: ['owner', 'it'],
+    build: async ({ terminals }) => {
+      if (!terminals.drive) return { available: false, clientReady: false, clientFrom: null, folderName: 'Cake POS', accounts: [], connect: null, problem: null };
+      return { available: true, ...(await terminals.drive.status()) };
+    },
   },
 
   my_language: {
