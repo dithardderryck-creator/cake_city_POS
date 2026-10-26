@@ -15,7 +15,6 @@ button,input{font:inherit;color:inherit}button{cursor:pointer}
 :focus-visible{outline:2px solid var(--cop);outline-offset:2px}
 .serif,h1,h2,.num{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
 .app{min-height:100dvh}
-.brand{font:600 20px Fraunces,serif;margin:0}.brand i{font-style:normal;color:var(--cop)}
 main{padding:24px clamp(16px,3vw,40px) 48px;max-width:1260px;width:100%;margin:0 auto}
 header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
 h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01em}
@@ -49,6 +48,13 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .b{border-radius:999px;padding:7px 16px;border:1px solid var(--line);background:var(--surf);transition:transform .2s,background .3s}.b:active{transform:scale(.96)}
 .b.p{background:var(--cop);border-color:var(--cop);color:#fff;font-weight:600}.b.p:hover{background:var(--cop-d)}
 .empty{color:var(--mute);padding:18px 0 4px}
+.need{margin-bottom:16px}.need .row{margin-bottom:4px}
+.nrow{width:100%;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 4px;color:inherit;cursor:pointer;border-radius:0}
+.nrow:first-of-type{border-top:0}.nrow:hover{background:var(--paper)}.nrow.still{cursor:default}.nrow.still:hover{background:none}
+.nrow b{display:block;font-weight:600}.nrow small{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--mute);margin-top:2px}.nrow svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nmore{margin-top:8px}
+.need.calm{padding:14px 20px}.need.calm .row{margin:0}.need.calm .tag{display:none}.need.calm #reqs{display:flex;align-items:center;gap:12px;color:var(--mute)}.need.calm .ck{width:32px;height:32px;border-radius:50%;background:var(--sage-s);color:var(--sage);display:grid;place-items:center;flex:none}.need.calm .ck svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.need.calm .row{display:none}
 .feed{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px 28px;margin-top:10px}
 .feed div{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.feed time{color:var(--mute);min-width:44px;font-variant-numeric:tabular-nums}
 details summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between}details summary::-webkit-details-marker{display:none}
@@ -98,35 +104,15 @@ textarea,.pr{width:100%;border:1px solid var(--line);border-radius:12px;backgrou
 .kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 16px;margin:12px 0}.kv dt{color:var(--mute)}.kv dd{margin:0}
 .dv{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .tkt{display:flex;align-items:stretch;background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:14px 0 4px}.tkt .no{padding:14px 18px;background:var(--cop-s);border-right:2px dashed var(--line);font:600 26px Fraunces,serif;letter-spacing:.02em;color:var(--cop-d);display:flex;align-items:center}.tkt .in{padding:12px 16px;display:grid;gap:2px;align-content:center}
-.xhead{position:sticky;top:0;z-index:12;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
-.xtop{display:flex;align-items:center;gap:12px;padding:10px clamp(16px,3vw,40px) 6px;max-width:1260px;margin:0 auto}
-.xtop .brand{flex:none;display:flex;align-items:center;gap:8px}.xmk{display:none;width:36px;height:36px;border-radius:50%;background:var(--cop);color:#fff;place-items:center;font:600 17px Fraunces,serif}
-.xpw{flex:1 1 0;min-width:0;container-type:inline-size;display:flex;justify-content:center}
-.xpill{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;padding:8px 10px;max-width:100%;border:1px solid var(--line);border-radius:999px;background:var(--surf);box-shadow:var(--sh)}
-.xpill>*{flex:none}.xpill .xnm{flex:0 1 auto;min-width:0}
-.xvd{width:1px;height:24px;background:var(--line)}
-.xrole{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--cop-s);color:var(--cop-d);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.xnm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xds{display:none}.xdtx{font-size:13px;color:var(--mute);white-space:nowrap}.xdtx b{color:var(--ink);font-weight:600}
-.xst{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;background:var(--sage-s);color:var(--sage);font-size:13px;font-weight:600;white-space:nowrap}.xst i{width:9px;height:9px;border-radius:50%;background:var(--sage)}
-.xib{width:40px;height:40px;border-radius:50%;border:0;background:none;display:inline-grid;place-items:center;color:var(--mute);position:relative;transition:background .3s,color .3s}.xib:hover{background:var(--cop-s);color:var(--ink)}
-.xbd{position:absolute;top:-1px;right:-1px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--cop);color:#fff;font-size:11px;display:inline-grid;place-items:center}.xbd:empty{display:none}
-@container (max-width:860px){.xdl{display:none}.xds{display:inline}}
-@container (max-width:680px){.xrt,.xsl{display:none}.xrole{padding:9px}.xst{width:36px;padding:0;justify-content:center}}
-@container (max-width:520px){.xvd,.xdd{display:none}.xpill{gap:8px}}
-@container (max-width:430px){.xpill{gap:4px;padding:5px 6px}.xib,.xst{width:34px;height:34px;min-height:34px}.xrole{padding:7px}}
-@container (max-width:340px){.xdtx{display:none}}
-@container (max-width:290px){.xnm{display:none}}
 nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:11;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:4px clamp(16px,3vw,40px)}
 nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
 nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
 nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}.xts{display:none}
 .xts{overflow:hidden;text-overflow:ellipsis;max-width:100%}
-nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{width:16px;height:16px}
+nav.xtabs svg{flex:none;width:18px;height:18px}
 @container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
 @media(max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 4px}nav.xtabs button{font-size:11.5px;padding:7px 2px}}
 @media(max-width:540px){nav.xtabs{position:static}}
-@media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
-@media(max-width:359px){.xtop .brand{display:none}}
 .ztools{position:sticky;top:var(--hh,120px);z-index:9;background:var(--bg);padding:8px 0 10px}
 .zrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .zsrch{position:relative;flex:1 1 240px;min-width:0}.zsrch svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--mute);pointer-events:none}
@@ -174,7 +160,6 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 @media(max-width:700px){.lr{grid-template-columns:1fr auto}.lr>*:nth-child(n+3){grid-column:1/-1}.hb{grid-template-columns:100px 1fr auto}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .nov{position:fixed;inset:0;background:#1f1a1366;display:grid;place-items:center;padding:16px;z-index:50}.nov[hidden]{display:none}.ndl{background:var(--surf);border-radius:20px;padding:20px;width:min(460px,100%);max-height:90vh;overflow:auto;box-shadow:var(--sh)}.nlab{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}.ndl select,.ndl input:not([type=checkbox]){width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px 12px}.ncat .b{margin:0 6px 6px 0}.ncat .b[aria-pressed=true]{background:var(--cop);border-color:var(--cop);color:#fff}
-.xst.off{background:var(--risk-s);color:var(--risk)}.xst.off i{background:var(--risk)}
 .ph{display:flex;flex-wrap:wrap;margin:6px 0}.ph img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin:0 6px 6px 0;cursor:zoom-in;background:var(--paper)}
 #ntc{margin:0 0 12px}
 </style>
@@ -182,23 +167,8 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 </head>
 <body>
 <div class="app">
-<div class="xhead">
-  <div class="xtop">
-    <div class="brand"><span class="xmk">C</span><span class="xtx">Cake <i>POS</i></span></div>
-    <div class="xpw"><div class="xpill" role="group" aria-label="Session">
-      <span class="xrole" title="Owner"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="xrt">Owner</span></span><span class="xvd"></span>
-      <span class="xnm"></span><span class="xvd"></span>
-      <span class="xdtx"><span class="xdd"><span class="xdl" id="xdl"></span><span class="xds" id="xds"></span> · </span><b id="xdt"></b></span><span class="xvd"></span>
-      <span class="xst" title="Server connected"><i></i><span class="xsl">Server connected</span></span><span class="xvd"></span>
-      <button class="xib" id="xsearch" aria-label="Search" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
-      <button class="xib" id="xset" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
-      <button class="xib" id="xbell" aria-label="Requests and alerts" title="Requests and alerts"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b class="xbd" id="xbn"></b></button>
-      <button class="xib" id="xtheme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></button>
-      <button class="xib" id="xout" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
-    </div></div>
-  </div>
-</div>
-<nav class="xtabs" aria-label="Main"><button data-v="overview" aria-current="page" aria-label="Overview" title="Overview"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg><span class="xtf">Overview</span><span class="xts">Overview</span></button><button data-v="requests" aria-label="Requests" title="Requests"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2-8h12l2 8v6H4zM4 13h5l1 2h4l1-2h5"/></svg><span class="xtf">Requests</span><span class="xts">Requests</span></button><button data-v="catalogue" aria-label="Catalogue" title="Catalogue"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16v-6H4zM6 14v-3h12v3M12 11V7M12 7c-1-1 0-3 0-3s1 2 0 3"/></svg><span class="xtf">Catalogue</span><span class="xts">Catalogue</span></button><button data-v="orders" aria-label="Orders" title="Orders"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="xtf">Orders</span><span class="xts">Orders</span></button><button data-v="stock" aria-label="Stock" title="Stock"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"/></svg><span class="xtf">Stock</span><span class="xts">Stock</span></button><button data-v="transactions" aria-label="Transactions" title="Transactions"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 10h18M7 15h3"/></svg><span class="xtf">Transactions</span><span class="xts">Payments</span></button><button data-v="staff" aria-label="Staff" title="Staff"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 20v-1a4 4 0 0 0-3-3.9M16 5.1a3 3 0 0 1 0 5.8"/></svg><span class="xtf">Staff</span><span class="xts">Staff</span></button><button data-v="reports" aria-label="Reports" title="Reports"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span class="xtf">Reports</span><span class="xts">Reports</span></button></nav>
+<div class="xhead"></div>
+<nav class="xtabs" aria-label="Main"><button data-v="overview" aria-current="page" aria-label="Overview" title="Overview"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg><span class="xtf">Overview</span><span class="xts">Overview</span></button><button data-v="requests" aria-label="Requests" title="Requests"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2-8h12l2 8v6H4zM4 13h5l1 2h4l1-2h5"/></svg><span class="xtf">Requests</span><span class="xts">Requests</span></button><button data-v="orders" aria-label="Orders" title="Orders"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="xtf">Orders</span><span class="xts">Orders</span></button><button data-v="transactions" aria-label="Payments" title="Payments"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 10h18M7 15h3"/></svg><span class="xtf">Payments</span><span class="xts">Payments</span></button></nav>
 <main>
 <div id="ntc"></div>
 <section id="v-overview">
@@ -207,6 +177,10 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
     <button class="find" id="open" aria-label="Search"><span>Search tickets, items, customers</span><kbd>Ctrl K</kbd></button>
   </header>
   <section class="card" id="ofc" hidden style="margin-bottom:16px;border-left:3px solid var(--risk)"><div class="row" style="flex-wrap:wrap"><h2>Offline sales to review</h2><span class="tag risk" id="ofn"></span></div><p class="mute" style="margin:2px 0 10px">These were sold at a till while the shop server could not be reached, but could not be recorded as they were. Nothing is lost: decide on each one.</p><div id="ofb"></div></section>
+  <section class="card need" id="nd" aria-labelledby="ndh">
+    <div class="row"><h2 id="ndh">Needs you</h2><span class="tag cop" id="reqn"></span></div>
+    <div id="reqs"></div>
+  </section>
   <div class="grid">
     <section class="card rev">
       <div class="row"><h2>Revenue</h2><div class="seg" role="group" aria-label="Range"><button aria-pressed="true" data-r="7">7 days</button><button aria-pressed="false" data-r="30">30 days</button></div></div>
@@ -218,17 +192,6 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
     <section class="card due">
       <div class="row"><h2>Due soon</h2><span class="tag" id="riskn"></span></div>
       <ul class="list" id="duel"></ul>
-    </section>
-
-    <section class="card stock">
-      <div class="row"><h2>Stock running low</h2></div>
-      <div id="bars"></div>
-      <div class="confirm"><span id="uc"></span><span class="tag cop">Pending</span></div>
-    </section>
-
-    <section class="card req">
-      <div class="row"><h2>Needs your decision</h2><span class="tag cop" id="reqn">3</span></div>
-      <div id="reqs"></div>
     </section>
 
     <section class="card act">
@@ -272,7 +235,7 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{wi
 </section>
 <div class="dr" id="od" hidden><div class="dp" id="odp" role="dialog" aria-modal="true" aria-label="Order details"></div></div>
 <section id="v-transactions" hidden>
-<header><div><h1>Transactions</h1><p class="sub">Every payment and refund, tied to a ticket and a named person. Refunds are your decision.</p></div><button class="b p" id="eod">End of day</button></header>
+<header><div><h1>Payments</h1><p class="sub">Every payment and refund, tied to a ticket and a named person. Refunds are your decision.</p></div><button class="b p" id="eod">End of day</button></header>
 <div class="grid">
 <section class="card rev"><div class="row"><h2 id="trh">Collected today</h2><span class="mute" id="trnet"></span></div><input class="pr" type="date" id="trday" aria-label="Show another day" style="margin-top:8px"><div class="big num" id="trtot">0</div><div id="trm"></div></section>
 <section class="card due"><div class="row"><h2>Outstanding balances</h2><span class="tag cop" id="trobn"></span></div><ul class="list" id="trob"></ul></section>
@@ -331,11 +294,11 @@ document.addEventListener("click",e=>{const i=e.target.closest("img[data-ph]");i
 const cakeHtml=c=>!c?"":`<dl class="kv"><dt>Serves</dt><dd>${c.servings}${c.sizeNote?" · "+E(c.sizeNote):""}</dd><dt>Flavour</dt><dd>${E(c.flavor)}${c.filling?", "+E(c.filling)+" filling":""}</dd>${c.layers>1?`<dt>Layers</dt><dd>${c.layers}</dd>`:""}${c.dietary&&c.dietary.length?`<dt>Dietary</dt><dd>${c.dietary.map(E).join(", ")}</dd>`:""}${c.inscription?`<dt>Message</dt><dd>${E(c.inscription)}</dd>`:""}${c.decorationNotes?`<dt>Design</dt><dd>${E(c.decorationNotes)}</dd>`:""}${c.allergyNotes?`<dt>Allergies</dt><dd>${E(c.allergyNotes)}</dd>`:""}</dl>${c.photoIds&&c.photoIds.length?`<div class="ph">${c.photoIds.map(id=>`<img data-ph="${E(id)}" alt="Reference photo">`).join("")}</div>`:""}`;
 
 /* ---------- navigation ---------- */
-let view="overview",RQ=null,RC={unseen:0,needsYou:0};
-function go(v){view=v;$$("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));
+let view="overview",CH=null,ndAll=false,RQ=null,RC={unseen:0,needsYou:0};
+function go(v){view=v;CH&&CH.setPage(v);$$("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));
  if(v==="requests"){RQ&&RQ.shown();qmark()}scrollTo(0,0)}
 $$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
-function badge(){const n=RC.unseen+RC.needsYou+((D.quotes&&D.quotes.open.length)||0);$("#xbn").textContent=n||"";$("#xbell").title=n?n+" need you":"Requests and alerts"}
+function badge(){const n=RC.unseen+RC.needsYou+((D.quotes&&D.quotes.open.length)||0);CH&&CH.setBadge(n)}
 
 /* ---------- overview ---------- */
 let rpd=7,stopRep=null,drawn=false,counted=false;
@@ -366,17 +329,18 @@ function ov(){
  const open=(D.orders||[]).filter(o=>!["completed","cancelled","empty","draft"].includes(o.status)).sort((a,b)=>(a.deliveryDate||"9999").localeCompare(b.deliveryDate||"9999")||a.number.localeCompare(b.number)),t=todayISO(),late=o=>o.deliveryDate&&o.deliveryDate<t;
  const nl=open.filter(late).length;$("#riskn").className="tag "+(nl?"risk":"");$("#riskn").textContent=nl?nl+" late":open.length?"On track":"None";
  $("#duel").innerHTML=open.slice(0,4).map(o=>`<li class="item ${late(o)?"risk":""}" data-o="${E(o.orderId)}" tabindex="0" style="cursor:pointer"><div class="row"><b>${E(o.number)} · ${E(o.customerName)}</b><span class="tag ${toneCls(o.statusTone)}">${E(o.statusLabel)}</span></div><small>${E(dayLabel(o.deliveryDate))} · ${o.fulfilment==="delivery"?"Delivery":"Pickup"}${o.needsQuote?" · needs your price":""}</small></li>`).join("")||'<p class="empty">Nothing is waiting to go out.</p>';
- const low=((D.forecast&&D.forecast.rows)||[]).filter(fcUrgent).slice(0,4);
- $("#bars").innerHTML=low.map(i=>{const d=i.daysUntilOut!=null?i.daysUntilOut:i.status==="out"?0:7;return`<div class="s"><div class="row"><span>${E(i.name)}</span><span class="mute">${E(daysText(i))}</span></div><div class="bar"><i class="${d<2?"low":d<4?"mid":""}" style="width:${Math.min(100,d/7*100)}%"></i></div></div>`}).join("")||'<p class="empty">Nothing is running low.</p>';
- const n=D.usage?D.usage.pending.length:0;$("#uc").innerHTML=n?`<b>${n} usage report${n>1?"s":""}</b> waiting for Inventory to confirm`:"<b>All usage</b> is confirmed";
- const q=((D.quotes&&D.quotes.open)||[]).map(x=>({t:"Price for "+x.orderNumber+", custom cake",f:x.requestedByName,m:x.customerName+(x.deliveryDate?" · "+dayLabel(x.deliveryDate):"")})),
-  rq=((D.inbox&&D.inbox.rows)||[]).filter(x=>x.needsYou).map(x=>({t:x.title,f:x.from.name,m:x.category+(x.urgent?" · Urgent":"")})),all=q.concat(rq);
- $("#reqn").textContent=all.length;
- $("#reqs").innerHTML=all.slice(0,3).map(x=>`<div class="rq" style="max-height:none"><div class="row"><b>${E(x.t)}</b><span class="tag">${E(x.f)}</span></div><div class="mute">${E(x.m)}</div><div class="btns"><button class="b p" data-go="requests">Review</button></div></div>`).join("")||'<p class="empty">All caught up. New requests from staff will appear here.</p>';
+ const low=((D.forecast&&D.forecast.rows)||[]).filter(fcUrgent),n=D.usage?D.usage.pending.length:0,
+  q=((D.quotes&&D.quotes.open)||[]).map(x=>({k:"Decision",c:"cop",t:"Price for "+x.orderNumber+", custom cake",m:x.requestedByName+" · "+x.customerName+(x.deliveryDate?" · "+dayLabel(x.deliveryDate):""),go:"requests"})),
+  rq=((D.inbox&&D.inbox.rows)||[]).filter(x=>x.needsYou).map(x=>({k:x.urgent?"Urgent":"Decision",c:x.urgent?"risk":"cop",t:x.title,m:x.from.name+" · "+x.category,go:"requests"})),
+  lt=open.filter(late).map(o=>({k:"Late",c:"risk",t:o.number+" · "+o.customerName,m:dayLabel(o.deliveryDate)+" · "+(o.fulfilment==="delivery"?"Delivery":"Pickup"),o:o.orderId})),
+  ls=low.map(i=>({k:i.status==="out"?"Out of stock":"Low stock",c:i.status==="out"||(i.daysUntilOut!=null&&i.daysUntilOut<2)?"risk":"cop",t:i.name,m:daysText(i),go:"stock"})),
+  all=lt.concat(rq,q,ls),shown=ndAll?all:all.slice(0,5),chev='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+ $("#nd").classList.toggle("calm",!all.length&&!n);$("#reqn").textContent=all.length||"";
+ $("#reqs").innerHTML=(all.length||n)?shown.map(x=>`<button class="nrow" ${x.o?`data-o="${E(x.o)}"`:`data-go="${x.go}"`}><span><b>${E(x.t)}</b><small><span class="tag ${x.c}">${E(x.k)}</span>${E(x.m)}</small></span>${chev}</button>`).join("")+(all.length>5?`<button class="b nmore" data-more>${ndAll?"Show fewer":"Show all "+all.length}</button>`:"")+(n?`<div class="nrow still"><span><b>${n} usage report${n>1?"s":""} waiting for Inventory to confirm</b><small><span class="tag">Waiting</span>Nothing for you to do</small></span></div>`:""):'<span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l5 4.5 9-10"/></svg></span><span><b style="color:var(--ink)">All caught up</b><br>Nothing is late, low or waiting for you. New requests from staff will appear here.</span>';
  $("#afeed").innerHTML=((D.audit||[]).filter(a=>a.outcome==="ok").slice(0,8).map(a=>`<div><time>${E(when(a.at))}</time><span><b>${E(a.who)}</b>: ${E(a.summary)}</span></div>`).join(""))||'<p class="empty">Nothing yet today.</p>';
  badge()}
 $("#duel").onclick=e=>{const i=e.target.closest("[data-o]");if(i){go("orders");oopen(i.dataset.o)}};
-$("#reqs").onclick=e=>{if(e.target.closest("[data-go]"))go("requests")};
+$("#reqs").onclick=e=>{const m=e.target.closest("[data-more]");if(m){ndAll=!ndAll;ov();return}const o=e.target.closest("[data-o]");if(o){go("orders");oopen(o.dataset.o);return}const g=e.target.closest("[data-go]");if(g)go(g.dataset.go)};
 
 /* ---------- requests, quotes and announcements ---------- */
 const seenQ=new Set();
@@ -710,7 +674,6 @@ async function saveSettings(){const v=n=>($("#dpn").querySelector(`[data-k="${n}
 async function setSpot(b){const p=await Cake.getPosition();if(p.error){Cake.toast(p.error==="denied"?"Location is switched off for this page. Allow it in the browser settings.":"This device could not find its location. Try again near a window.");return}
  if(p.accuracyM>150&&!confirm("This device is only sure of its position to about "+Math.round(p.accuracyM)+" m. Set the shop's spot anyway?"))return;
  await Cake.send("settings/set_location",{lat:p.lat,lng:p.lng},"Shop location set")}
-$("#xset").onclick=openSettings;
 
 /* ---------- offline sales waiting for the owner ---------- */
 function ofr(){const d=D.off,L=d?d.held:[];$("#ofc").hidden=!L.length;$("#ofn").textContent=L.length+(L.length===1?" waiting":" waiting");if(!L.length){$("#ofb").innerHTML="";return}
@@ -733,7 +696,7 @@ function show(){const v=q.value.toLowerCase().replace(/\s/g,""),all=[].concat(
   (D.ingr||[]).filter(i=>i.active).map(i=>[i.name,"Stock · "+i.onHandText,"s",i.ingredientId]));
  $("#res").innerHTML=all.filter(i=>(i[0]+i[1]).toLowerCase().replace(/\s/g,"").includes(v)).slice(0,30).map(i=>`<li><button data-t="${i[2]}" data-v="${E(i[3])}">${E(i[0])}<span class="mute">${E(i[1])}</span></button></li>`).join("")||`<li class="empty" style="padding:12px">Nothing matches "${E(q.value)}". Try an order number or a customer name.</li>`}
 function openPal(){pal.classList.add("on");q.value="";show();q.focus()}
-$("#open").onclick=openPal;$("#xsearch").onclick=openPal;q.oninput=show;
+$("#open").onclick=openPal;q.oninput=show;
 pal.onclick=e=>{const b=e.target.closest("li button");if(b){const t=b.dataset.t,v=b.dataset.v;
   if(t==="o"){go("orders");oopen(v)}else if(t==="c"){go("catalogue");$("#cq").value=v;cr()}else{go("stock");ss=v;$("#sq").value="";sr()}}
  if(e.target===pal||b)pal.classList.remove("on")};
@@ -744,16 +707,13 @@ addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===
 const xroot=document.documentElement,xhd=$(".xhead");let SHOP="Cake shop";
 try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
 const xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
-function xclock(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});$("#date").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
-$("#xbell").onclick=()=>go("requests");
-$("#xtheme").onclick=()=>{const dark=xroot.dataset.theme?xroot.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;xroot.dataset.theme=dark?"light":"dark";try{localStorage.setItem("theme",xroot.dataset.theme)}catch(e){}};
-$("#xout").onclick=()=>Cake.signOut();
+function xclock(){const d=new Date();$("#date").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}
 
 /* ---------- start ---------- */
-(async()=>{const me=await Cake.boot("owner");$(".xnm").textContent=me.name;
+(async()=>{const me=await Cake.boot("owner");
+ CH=Cake.mountChrome({groups:[{title:"Today",items:[{id:"overview",label:"Overview"},{id:"requests",label:"Requests"},{id:"orders",label:"Orders"}]},{title:"Money",items:[{id:"transactions",label:"Payments"},{id:"reports",label:"Reports"}]},{title:"Shop",items:[{id:"catalogue",label:"Catalogue"},{id:"stock",label:"Stock"},{id:"staff",label:"Staff"},{id:"settings",label:"Settings",run:openSettings}]}],go,search:openPal,bell:"requests"});CH.setPage(view);badge();
  const h=new Date().getHours();$("#hello").textContent=(h<12?"Good morning":h<18?"Good afternoon":"Good evening")+", "+me.name.replace(/\s*\(.*\)\s*$/,"");
  xclock();setInterval(xclock,30000);
- Cake.client.onConnection(s=>{const up=s!=="offline";$(".xst").className="xst"+(up?"":" off");$(".xst .xsl").textContent=up?"Server connected":"Server unreachable"});
  Cake.mountNotice($("#ntc"));
  RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="requests",onCounts:c=>{RC=c;badge()}});
  Cake.feed("order_list",{},d=>{D.orders=d;ov();orr()});

@@ -5,6 +5,8 @@
 import { createClient, localStorageTokenStore } from '@cake-pos/client';
 import type { ClientResult, FeedMap, FeedName, IntentMap, IntentName, Role, SessionInfo, StaffSigninRow } from '@cake-pos/client';
 
+import { buildChrome } from './chrome';
+import type { Chrome, ChromeOptions } from './chrome';
 import * as i18n from './i18n';
 import type { Lang } from './i18n';
 
@@ -826,6 +828,15 @@ export async function openAccount(): Promise<void> {
       });
     }
   });
+}
+
+/** Builds the top bar and the menu of this page: the same for every role. Call it after `boot`. */
+export function mountChrome(o: Omit<ChromeOptions, 'roleName'>): Chrome {
+  const who = session!;
+  return buildChrome(
+    { ...o, roleName: ROLE_NAME[who.role] },
+    { name: who.name, account: () => void openAccount(), signOut: () => void signOut(), onConnection: (fn) => client.onConnection(fn) },
+  );
 }
 
 /** Makes the role chip and the name at the top of every page open My account. */

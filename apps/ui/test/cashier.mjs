@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, PINS } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, PINS, openMenu, addToTicket } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-cashier';
 fs.mkdirSync(shots, { recursive: true });
@@ -56,8 +56,27 @@ try {
   // The "offline" bar must take no room while the shop is reachable (it once showed as a red strip).
   assert.equal(await page.evaluate(() => { const e = document.getElementById('offline'); return !e || e.getBoundingClientRect().height; }), 0, 'offline bar should be hidden when online');
   await page.waitForSelector('#tiles .tile');
-  assert.match(await txt(page, '#who'), /Baraka/, 'shows who is signed in');
+  assert.match(await page.locator('.xnm').first().textContent(), /Baraka/, 'shows who is signed in');
   assert.ok((await page.locator('#tiles .tile').count()) > 0, 'items for sale are listed');
+  // A cake that comes in several ways is ONE card; the size and filling are chosen in a sheet that opens on tap.
+  const names = await page.locator('#tiles .tile .nm').allInnerTexts();
+  assert.equal(new Set(names).size, names.length, 'each cake appears once on the Sell screen');
+  const many = page.locator('#tiles .tile[data-a="pick"]');
+  assert.ok((await many.count()) > 0, 'a cake with several sizes and fillings is one card');
+  await many.first().click();
+  await page.waitForSelector('#mod .pk');
+  const groups = page.locator('#mod .pk .pgo');
+  assert.ok((await groups.count()) >= 2, 'size and filling are asked for');
+  const was = await page.locator('#mod .pk .opt[aria-pressed="true"]').allInnerTexts();
+  await groups.nth(1).locator('.opt:not([disabled]):not([aria-pressed="true"])').first().click();
+  const now = await page.locator('#mod .pk .opt[aria-pressed="true"]').allInnerTexts();
+  assert.notDeepEqual(now, was, 'choosing another filling changes the choice');
+  assert.equal(await page.locator('#mod .pk .opt[aria-pressed="true"]').count(), await groups.count(), 'one choice per question');
+  await page.click('#mod .pk [data-a="pq"][data-d="1"]');
+  assert.equal((await txt(page, '#mod .pk .qty b')).trim(), '2');
+  await page.click('#mod [data-a="mc"]');
+  await page.waitForSelector('#mod .pk', { state: 'detached' });
+  assert.equal(await page.locator('#lines .ln').count(), 0, 'closing the sheet adds nothing');
   await page.screenshot({ path: `${shots}/sell.png` });
 
   // second cashier screen to prove live updates
@@ -70,9 +89,8 @@ try {
   const before = await countOn(watcher);
 
   // ---- walk-in cash sale ----
-  const tile = page.locator('#tiles .tile:not([disabled])').first();
-  await tile.click();
-  await tile.click();
+  await addToTicket(page);
+  await addToTicket(page);
   assert.match(await txt(page, '#lines'), /2/, 'two on the ticket');
   const total = await txt(page, '#tot');
   assert.notEqual(total.trim(), '0');
@@ -94,7 +112,7 @@ try {
   await watcher.click('#of [data-k="all"]');
 
   // ---- phone order, delivery, part payment ----
-  await page.locator('#tiles .tile:not([disabled])').nth(1).click();
+  await addToTicket(page, 1);
   await page.click('#sg1 [data-v="phone"]');
   await page.click('#sg2 [data-v="delivery"]');
   await page.fill('#dn', 'Grace Mushi');
@@ -172,8 +190,8 @@ try {
 
   // ---- requests and alerts ----
   await owner.send('requests/send', { toRole: 'cashier', category: 'Money', title: 'Count the till float', urgent: false });
-  await until(async () => (await page.locator('#bn').innerText()).trim() !== '', 'bell badge');
-  await page.click('#bell');
+  await until(async () => (await page.locator('#xbn').innerText()).trim() !== '', 'bell badge');
+  await page.click('#xbell');
   await page.waitForSelector('#rq .cx-c');
   await until(async () => /Count the till float/.test(await txt(page, '#rq')), 'the request to show');
   await page.click('#rq [data-act="racknowledge"]');
@@ -215,11 +233,12 @@ try {
     assert.equal(over, false, `no sideways scroll on ${v}`);
     await pp.screenshot({ path: `${shots}/phone-${v}.png` });
   }
-  await pp.click('#bell');
+  await pp.click('#xbell');
   assert.equal(await pp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'no sideways scroll on requests');
 
   // ---- sign out ----
-  await page.click('[data-a="out"]');
+  await openMenu(page);
+  await page.click('#xout');
   await page.waitForURL(shop.base + '/');
 
   // leftovers from the design

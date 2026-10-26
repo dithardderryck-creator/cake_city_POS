@@ -18,7 +18,6 @@ h2{font-size:17px;margin:0}.mute{color:var(--mute)}.sm{font-size:12px}[hidden]{d
 input,select,textarea{width:100%;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit}
 textarea{padding:10px 12px;min-height:64px;resize:none}label{display:block;font-size:12px;color:var(--mute);margin:0 0 4px}
 
-.brand{font:600 20px Fraunces,serif}.brand i{font-style:normal;color:var(--cop)}
 
 
 
@@ -53,7 +52,11 @@ main{flex:1;min-height:0;width:100%;max-width:1320px;margin:0 auto;padding:clamp
 .tiles{flex:1;min-height:0;overflow-y:auto;align-content:start;grid-auto-rows:max-content;padding:2px 4px 8px 2px;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
 .tile{text-align:left;min-height:112px;padding:14px;border-radius:14px;background:var(--surf);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px;transition:transform .15s,border-color .3s}
 .tile:hover{border-color:var(--cop)}.tile:active{transform:scale(.97)}.tile[disabled]{opacity:.45;cursor:not-allowed}
-.tile .nm{font-weight:600}.tile .op{color:var(--mute);font-size:12px;flex:1;margin-bottom:8px}.tile .pr{color:var(--cop);font-size:16px}
+.pk h2{margin:0;font-size:20px}.pg{margin-top:14px}.gl{font-size:13px;font-weight:600;color:var(--mute);margin-bottom:8px}.pgo{display:flex;flex-wrap:wrap;gap:8px}
+.opt{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surf)}.opt[aria-pressed=true]{background:var(--cop-s);border-color:var(--cop);font-weight:600}.opt:disabled{opacity:.4;cursor:not-allowed}
+.pks{margin:18px 0 12px;gap:12px}.pkp{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.qty{display:flex;align-items:center;gap:6px}.qty button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surf);font-size:20px}.qty button:disabled{opacity:.4}.qty b{min-width:28px;text-align:center}
+@media(max-width:700px){#mod.sh{place-items:end center;padding:0}#mod.sh .dlg{width:100%;max-height:88dvh;border-radius:24px 24px 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}}
+.tile .row{flex-wrap:wrap;gap:6px 8px;justify-content:flex-start}.tile .nm{font-weight:600}.tile .op{color:var(--mute);font-size:12px;flex:1;margin-bottom:8px}.tile .pr{color:var(--cop);font-size:16px}
 .tk{display:flex;flex-direction:column;min-height:0;overflow-y:auto}.tk>*{flex:none}.tk>#lines{flex:1 1 auto}
 #lines{min-height:80px;overflow-y:auto;overscroll-behavior:contain;margin-top:6px;padding-right:4px}
 .ln{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
@@ -85,49 +88,26 @@ main{flex:1;min-height:0;width:100%;max-width:1320px;margin:0 auto;padding:clamp
 .pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px;justify-content:center}.pad button{height:60px;border-radius:14px;background:var(--paper);border:1px solid var(--line);font:600 22px Fraunces,serif}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:all .35s var(--ease);z-index:40}.toast.on{opacity:1;transform:translate(-50%,0)}
 @media(max-width:960px){.pos{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.8fr) minmax(0,1.4fr)}.form{grid-template-columns:1fr 1fr}.or{grid-template-columns:1fr}.or .r{align-items:flex-start}}
-@media(max-width:1100px){}
 @media(max-width:700px){
  .pos{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}.tiles{padding-bottom:84px;grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}
  .tk{position:fixed;left:0;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:12;max-height:88dvh;border-radius:18px 18px 0 0;transform:translateY(calc(100% - 64px));transition:transform .35s var(--ease);box-shadow:0 -8px 24px #0006}.tk.open{transform:none}
  .tkh{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:48px;width:100%;margin:-4px 0 6px;font-weight:600}}
 @media(max-width:560px){.form{grid-template-columns:1fr}.form .w2{grid-column:auto}.tools input{max-width:none;flex:1 1 100%}.dtd-h{display:none}}
-@media(max-width:430px){}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* shared header, same as the Owner page */
 :root{--cop-d:#e3a458;--sh:0 10px 28px -14px #000a}:root[data-theme="light"]{--cop-d:#9A5F2A;--sh:0 1px 2px #1f1a1308,0 10px 28px -14px #1f1a1322}
-.xhead{position:sticky;top:0;z-index:12;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
-.xtop{display:flex;align-items:center;gap:12px;padding:10px clamp(16px,3vw,40px) 6px;max-width:1260px;margin:0 auto}
-.xtop .brand{flex:none;display:flex;align-items:center;gap:8px}.xmk{display:none;width:36px;height:36px;border-radius:50%;background:var(--cop);color:#fff;place-items:center;font:600 17px Fraunces,serif}
-.xpw{flex:1 1 0;min-width:0;container-type:inline-size;display:flex;justify-content:center}
-.xpill{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;padding:8px 10px;max-width:100%;border:1px solid var(--line);border-radius:999px;background:var(--surf);box-shadow:var(--sh)}
-.xpill>*{flex:none}.xpill .xnm{flex:0 1 auto;min-width:0}
-.xvd{width:1px;height:24px;background:var(--line)}
-.xrole{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--cop-s);color:var(--cop-d);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.xnm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xds{display:none}.xdtx{font-size:13px;color:var(--mute);white-space:nowrap}.xdtx b{color:var(--ink);font-weight:600}
-.xst{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;background:var(--sage-s);color:var(--sage);font-size:13px;font-weight:600;white-space:nowrap}.xst i{width:9px;height:9px;border-radius:50%;background:var(--sage)}
-.xib{width:40px;height:40px;border-radius:50%;border:0;background:none;display:inline-grid;place-items:center;color:var(--mute);position:relative;transition:background .3s,color .3s}.xib:hover{background:var(--cop-s);color:var(--ink)}
-.xbd{position:absolute;top:-1px;right:-1px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--cop);color:#fff;font-size:11px;display:inline-grid;place-items:center}.xbd:empty{display:none}
-@container (max-width:860px){.xdl{display:none}.xds{display:inline}}
-@container (max-width:680px){.xrt,.xsl{display:none}.xrole{padding:9px}.xst{width:36px;padding:0;justify-content:center}}
-@container (max-width:520px){.xvd,.xdd{display:none}.xpill{gap:8px}}
-@container (max-width:430px){.xpill{gap:4px;padding:5px 6px}.xib,.xst{width:34px;height:34px;min-height:34px}.xrole{padding:7px}}
-@container (max-width:340px){.xdtx{display:none}}
-@container (max-width:290px){.xnm{display:none}}
 nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:11;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:4px clamp(16px,3vw,40px)}
 nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
 nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
 nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}.xts{display:none}
 .xts{overflow:hidden;text-overflow:ellipsis;max-width:100%}
-nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}.xrole svg{width:16px;height:16px}
+nav.xtabs svg{flex:none;width:18px;height:18px}
 @container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
 @container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}nav.xtabs button{font-size:11.5px}}
 @media(max-width:540px){nav.xtabs{position:static}}
-@media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
-@media(max-width:359px){.xtop .brand{display:none}}
-.xhead{flex:none;padding-top:0}nav.xtabs{flex:none;top:0}
-button.xst{border:0;cursor:pointer}.xst.off{background:var(--risk-s);color:var(--risk)}.xst.off i{background:var(--risk)}
-.xib[aria-pressed="true"]{background:var(--cop-s);color:var(--ink)}
+body .xhead{flex:none;padding-top:0}nav.xtabs{flex:none;top:0}
+button.xst{border:0;cursor:pointer}
 .zboard{background:#201b15;border-radius:24px;padding:0 20px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0 22px;align-content:start}
 .zboard.one{display:block}.zboard.one .zcl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 18px}.zcol{min-width:0}
 .zch{position:sticky;top:0;z-index:3;background:#201b15;display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:16px 0 10px;border-bottom:1px solid #e9e1d3;color:#f3ebdd;font:600 13px "Plus Jakarta Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase}
@@ -160,21 +140,7 @@ button.xst{border:0;cursor:pointer}.xst.off{background:var(--risk-s);color:var(-
 <link rel="stylesheet" href="/forms.css">
 </head>
 <body>
-<div class="xhead">
-  <div class="xtop">
-    <div class="brand"><span class="xmk">C</span><span class="xtx">Cake <i>POS</i></span></div>
-    <div class="xpw"><div class="xpill" role="group" aria-label="Session">
-      <span class="xrole" title="Cashier"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="xrt">Cashier</span></span><span class="xvd"></span>
-      <span class="xnm" id="who"></span><span class="xvd"></span>
-      <span class="xdtx"><span class="xdd"><span class="xdl" id="xdl"></span><span class="xds" id="xds"></span> · </span><b id="xdt"></b></span><span class="xvd"></span>
-      <span class="xst" id="net"><i></i><span class="xsl">Server connected</span></span><span class="xvd"></span>
-      <button class="xib" data-a="drw" aria-label="Tickets" title="Open tickets"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z"/></svg><b class="xbd" id="tkn"></b></button>
-      <button class="xib" id="bell" data-a="tab" data-v="req" aria-pressed="false" aria-label="Requests and alerts" title="Requests and alerts"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b class="xbd" id="bn"></b></button>
-      <button class="xib" id="theme" data-a="theme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></button>
-      <button class="xib" data-a="out" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
-    </div></div>
-  </div>
-</div>
+<div class="xhead"></div>
 <nav class="xtabs" id="tabs" aria-label="Main"><button data-a="tab" data-v="sell" aria-current="page" aria-label="Sell" title="Sell"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 12H7zM9 7a3 3 0 0 1 6 0"/></svg><span class="xtf">Sell</span><span class="xts">Sell</span></button><button data-a="tab" data-v="orders" aria-label="Orders" title="Orders"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="xtf">Orders</span><span class="xts">Orders</span></button><button data-a="tab" data-v="custom" aria-label="Custom cakes" title="Custom cakes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16v-6H4zM6 14v-3h12v3M12 11V7M12 7c-1-1 0-3 0-3s1 2 0 3"/></svg><span class="xtf">Custom cakes</span><span class="xts">Custom</span></button><button data-a="tab" data-v="sales" aria-label="Today's sales" title="Today's sales"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span class="xtf">Today's sales</span><span class="xts">Sales</span></button></nav>
 <main>
 <div id="ntc" style="flex:none"></div>
@@ -225,17 +191,38 @@ const root=document.documentElement;try{const s=localStorage.getItem("theme");if
 let MT=[],SH=null;const firstM=()=>MT.length?MT[0][0]:"cash";  // the methods this shop takes come from its settings
 const SRC=[["walk_in","Walk-in"],["phone","Phone"]],FUL=[["pickup","Pickup"],["delivery","Delivery"]];
 const TONE={neutral:"",attention:"",ready:"ok",done:"gr",muted:"gr",danger:"risk"},CHIP={neutral:"",attention:"cop",ready:"ok",done:"ok",muted:"",danger:"risk"};
-let view="sell",cat="All",qs="",cart={},meth="cash",paid=0,part=false,m={src:"walk_in",ful:"pickup"},ofl="all",cs={src:"walk_in",ful:"pickup"},photos=[],busy=false,G=[],OL=[],LG=null,RQ=null,grow=0;
+let view="sell",CH=null,cat="All",qs="",cart={},meth="cash",paid=0,part=false,m={src:"walk_in",ful:"pickup"},ofl="all",cs={src:"walk_in",ful:"pickup"},photos=[],busy=false,G=[],OL=[],LG=null,RQ=null,grow=0;
 const clock12=d=>d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 const day=v=>v?new Date(v+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}):"Now";
 
 /* ---------- what is for sale (from the server) ---------- */
 const combos=()=>G.filter(p=>!p.archived&&!p.hidden).flatMap(p=>p.combinations.map(c=>({...c,name:p.name,cat:p.category||"Other"})));
 const free=c=>Math.max(0,c.onHand-c.committed);
-function rTiles(){const L=combos(),cats=["All",...new Set(L.map(c=>c.cat))];if(!cats.includes(cat))cat="All";
+const prods=()=>G.filter(p=>!p.archived&&!p.hidden&&p.combinations.length);
+const pcat=p=>p.category||"Other";
+function tileOne(p,c){const f=free(c),why=c.reason||c.warning||"";
+ return`<button class="tile" data-a="add" data-id="${esc(c.combinationId)}" ${c.sellable?"":"disabled"} title="${esc(why)}"><span class="nm">${esc(p.name)}</span><span class="op">${esc(c.label||"Plain")}</span><span class="row"><b class="num pr">${esc(c.priceLabel||"")}</b><span class="chip ${!c.sellable?"risk":f<=(SH?SH.lowStockUnits:0)?"cop":"ok"}">${c.sellable?f+" free":esc(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable"))}</span></span></button>`}
+function tileMany(p){const S=p.combinations.filter(c=>c.sellable),f=S.reduce((a,c)=>a+free(c),0),why=p.combinations.map(c=>c.reason||"").find(Boolean)||"";
+ return`<button class="tile" data-a="pick" data-p="${esc(p.productId)}" ${S.length?"":"disabled"} title="${esc(S.length?"":why)}"><span class="nm">${esc(p.name)}</span><span class="op">${p.combinations.length} options</span><span class="row"><b class="num pr">${p.priceFromLabel?"from "+esc(p.priceFromLabel):""}</b><span class="chip ${!S.length?"risk":f<=(SH?SH.lowStockUnits:0)?"cop":"ok"}">${S.length?f+" free":"Unavailable"}</span></span></button>`}
+function rTiles(){const P=prods(),cats=["All",...new Set(P.map(pcat))];if(!cats.includes(cat))cat="All";
  $("#cats").innerHTML=cats.map(c=>`<button aria-pressed="${c===cat}" data-a="cat" data-c="${esc(c)}">${esc(c)}</button>`).join("");const q=qs.toLowerCase();
- $("#tiles").innerHTML=L.filter(c=>(cat==="All"||c.cat===cat)&&(c.name+" "+c.label).toLowerCase().includes(q)).map(c=>{const f=free(c),why=c.reason||c.warning||"";
-  return`<button class="tile" data-a="add" data-id="${esc(c.combinationId)}" ${c.sellable?"":"disabled"} title="${esc(why)}"><span class="nm">${esc(c.name)}</span><span class="op">${esc(c.label||"Plain")}</span><span class="row"><b class="num pr">${esc(c.priceLabel||"")}</b><span class="chip ${!c.sellable?"risk":f<=(SH?SH.lowStockUnits:0)?"cop":"ok"}">${c.sellable?f+" free":esc(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable"))}</span></span></button>`}).join("")||(L.length?'<p class="mute">Nothing matches. Clear the search or pick All.</p>':'<p class="mute">There is nothing to sell yet. The owner adds products and prices in Catalogue.</p>')}
+ $("#tiles").innerHTML=P.filter(p=>(cat==="All"||pcat(p)===cat)&&(p.name+" "+p.combinations.map(c=>c.label).join(" ")).toLowerCase().includes(q)).map(p=>p.combinations.length===1?tileOne(p,p.combinations[0]):tileMany(p)).join("")||(P.length?'<p class="mute">Nothing matches. Clear the search or pick All.</p>':'<p class="mute">There is nothing to sell yet. The owner adds products and prices in Catalogue.</p>')}
+
+/* ---------- choosing size and filling for a cake that comes in several ways ---------- */
+let pk=null;
+const pkProd=()=>G.find(x=>x.productId===pk.pid);
+const pkCombo=()=>{const p=pkProd();return p&&p.combinations.find(c=>p.groups.every(g=>c.valueIds.includes(pk.sel[g.groupId])))||null};
+function openPick(pid){const p=G.find(x=>x.productId===pid);if(!p)return;const first=p.combinations.find(c=>c.sellable)||p.combinations[0],sel={};
+ p.groups.forEach(g=>{sel[g.groupId]=(g.values.find(v=>first.valueIds.includes(v.valueId))||g.values[0]).valueId});
+ closeModal();pk={pid,sel,qty:1};rPick();$("#mod").className="ov sh";$("#mod").hidden=false;const o=$("#mod .opt[aria-pressed=true]");if(o)o.focus()}
+function rPick(){const p=pkProd(),c=pkCombo(),f=c?free(c):0,ok=!!(c&&c.sellable);
+ const live=!!$("#mod .pk");
+ const html=`<div class="dlg pk" role="dialog" aria-label="${esc(p.name)}"><div class="row"><h2>${esc(p.name)}</h2><button class="b" data-a="mc" style="min-height:38px">Close</button></div>
+ ${p.groups.map(g=>`<div class="pg"><div class="gl" id="pg-${esc(g.groupId)}">${esc(g.name)}</div><div class="pgo" role="group" aria-labelledby="pg-${esc(g.groupId)}">${g.values.map(v=>`<button class="opt" aria-pressed="${pk.sel[g.groupId]===v.valueId}" data-a="pv" data-g="${esc(g.groupId)}" data-v="${esc(v.valueId)}" ${p.combinations.some(x=>x.valueIds.includes(v.valueId))?"":"disabled"}>${esc(v.label)}</button>`).join("")}</div></div>`).join("")}
+ <div class="row pks"><div class="pkp"><b class="num pr">${c&&c.priceLabel?esc(c.priceLabel):""}</b> <span class="chip ${!ok?"risk":f<=(SH?SH.lowStockUnits:0)?"cop":"ok"}">${ok?f+" free":esc(c?(c.markedUnavailable?"Unavailable":(c.reason||"Unavailable")):"Not made this way")}</span></div>
+ <div class="qty" role="group" aria-label="Quantity"><button data-a="pq" data-d="-1" aria-label="Fewer" ${pk.qty<2?"disabled":""}>−</button><b class="num">${pk.qty}</b><button data-a="pq" data-d="1" aria-label="More" ${ok&&pk.qty>=Math.max(f,1)?"disabled":""}>+</button></div></div>
+ <button class="b p" data-a="padd" ${ok?"":"disabled"} style="width:100%">Add to ticket${ok&&c.price!=null?" · "+esc(Cake.money(c.price*pk.qty)):""}</button></div>`;
+ $("#mod").innerHTML=html;if(live){const o=$("#mod .opt[aria-pressed=true]");if(o&&document.activeElement===document.body)o.focus()}}
 
 /* ---------- the ticket being built ---------- */
 const byId=id=>combos().find(c=>c.combinationId===id);
@@ -294,7 +281,7 @@ function rOrd(){const f={all:()=>true,pickup:o=>o.fulfilment==="pickup",delivery
  $("#of").innerHTML=[["all","All"],["pickup","Pickup"],["delivery","Delivery"],["custom","Custom"],["done","Closed"]].map(([k,l])=>`<button aria-pressed="${k===ofl}" data-a="of" data-k="${k}">${l}</button>`).join("");
  const q=($("#oq").value||"").toLowerCase().replace(/\s/g,""),V=OL.filter(f[ofl]).filter(o=>(o.number+o.customerName).toLowerCase().replace(/\s/g,"").includes(q)).sort((a,b)=>a.number<b.number?-1:1),cols=ZK.filter(k=>ofl!=="done"||k[0]==="Closed");
  $("#ol").innerHTML=V.length||!q?`<div class="zboard">${cols.map(k=>{let L=V.filter(o=>k[1].includes(o.status));const n=L.length;if(k[0]==="Closed")L=L.slice(-20).reverse();return`<section class="zcol" aria-label="${k[0]}"><h2 class="zch">${k[0]}<span class="zcn">${n}</span></h2><div class="zcl">${L.map(zt).join("")||`<p class="zem">${k[2]}</p>`}</div></section>`}).join("")}</div>`:`<div class="zboard"><p class="zem" style="padding-top:18px">No tickets match your search</p></div>`}
-function rDw(){const L=OL.filter(o=>o.status!=="completed"&&o.status!=="cancelled").sort((a,b)=>a.number<b.number?-1:1);$("#dw").innerHTML=`<div class="row"><h2>Tickets</h2><button class="b" data-a="dc" style="min-height:38px">Close</button></div><div class="zdr"><h2 class="zch">Open tickets<span class="zcn">${L.length}</span></h2>${L.map(zt).join("")||'<p class="zem" style="padding-top:12px">No open tickets</p>'}</div>`;$("#tkn").textContent=L.length||""}
+function rDw(){const L=OL.filter(o=>o.status!=="completed"&&o.status!=="cancelled").sort((a,b)=>a.number<b.number?-1:1);$("#dw").innerHTML=`<div class="row"><h2>Tickets</h2><button class="b" data-a="dc" style="min-height:38px">Close</button></div><div class="zdr"><h2 class="zch">Open tickets<span class="zcn">${L.length}</span></h2>${L.map(zt).join("")||'<p class="zem" style="padding-top:12px">No open tickets</p>'}</div>`;CH&&CH.setItemBadge("tickets",L.length)}
 
 /* ---------- today's sales ---------- */
 function rSales(){const d=LG;if(!d)return;
@@ -321,7 +308,7 @@ ${c?`<div class="mute sm" style="margin-bottom:8px">Already counted: ${esc(c.cou
 /* ---------- dialogs ---------- */
 let stopCard=null;
 function modal(h){$("#mod").innerHTML=`<div class="dlg" role="dialog" aria-modal="true">${h}</div>`;$("#mod").hidden=false}
-function closeModal(){if(stopCard){stopCard();stopCard=null}$("#mod").hidden=true;$("#mod").innerHTML=""}
+function closeModal(){if(stopCard){stopCard();stopCard=null}pk=null;$("#mod").hidden=true;$("#mod").className="ov";$("#mod").innerHTML=""}
 async function receipt(orderId){$("#dw").hidden=true;const r=await Cake.read("receipt",{orderId});if(!r)return;closeModal();
  modal(`<div class="row"><h2>Receipt · ${esc(r.number)}</h2><span class="chip ${r.statusLabel==="Paid in full"?"ok":"cop"}">${esc(r.statusLabel)}</span></div>
 <div class="mute sm" style="margin:6px 0 10px">${esc(r.shop.name)}${r.shop.address?" · "+esc(r.shop.address):""}${r.shop.phone?" · "+esc(r.shop.phone):""}<br>${esc(r.issuedLabel)} · ${esc(r.customer.name)}${r.customer.phone?" · "+esc(r.customer.phone):""} · ${esc(r.fulfilmentLabel)}${r.deliveryAddress?" · "+esc(r.deliveryAddress):""}</div>
@@ -349,12 +336,11 @@ const PAYFORM=c=>`<hr style="border:0;border-top:1px solid var(--line);margin:14
 const DELFORM=c=>`<hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><h2>Change delivery</h2><div class="seg" id="df" style="margin:8px 0">${FUL.map(([k,l])=>`<button data-a="dff" data-v="${k}" aria-pressed="${k===c.fulfilment}">${l}</button>`).join("")}</div><label for="dd2">Due date</label><input id="dd2" type="date" value="${esc(c.deliveryDate||"")}"><label for="da2" style="margin-top:8px">Delivery address</label><input id="da2" value="${esc(c.deliveryAddress||"")}"><label for="dp2" style="margin-top:8px">Phone</label><input id="dp2" inputmode="tel" value="${esc(c.customerPhone||"")}"><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="b" data-a="fx">Cancel</button><button class="b p" data-a="dsave">Save</button></div>`;
 const cur=()=>FLOW.card,guard=async(b,fn)=>{if(b.disabled)return;b.disabled=true;try{return await fn()}finally{b.disabled=false}};
 
-const A={tab(d){view=d.v;$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#tabs button").forEach(b=>b.dataset.v===view?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));$("#bell").setAttribute("aria-pressed",view==="req");if(view==="req"&&RQ)RQ.shown()},
- theme(){root.dataset.theme=root.dataset.theme==="light"?"dark":"light";try{localStorage.setItem("theme",root.dataset.theme)}catch(e){}},
+const A={tab(d){view=d.v;CH&&CH.setPage(view);$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#tabs button").forEach(b=>b.dataset.v===view?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));if(view==="req"&&RQ)RQ.shown()},
  drw(){$("#dw").hidden=!$("#dw").hidden},sheet(){const k=$(".tk");k.classList.toggle("open");$("#tkh").setAttribute("aria-expanded",k.classList.contains("open"));rTick()},dc(){$("#dw").hidden=true},mc(){closeModal()},
  rc(d,b){guard(b,()=>receipt(d.id))},open(d){openOrder(d.id)},out(){Cake.signOut()},
  cpy(){const t=$("#mod").dataset.text||"";navigator.clipboard?.writeText(t).then(()=>toast("Receipt copied."),()=>toast("Could not copy. Select the text and copy it by hand."))},
- cat(d){cat=d.c;rTiles()},add(d){cart[d.id]=(cart[d.id]||0)+1;grow=1;rTick()},qty(d){cart[d.id]=(cart[d.id]||0)+(+d.d);if(cart[d.id]<1)delete cart[d.id];rTick()},
+ cat(d){cat=d.c;rTiles()},pick(d){openPick(d.p)},pv(d){const p=pkProd();let sel={...pk.sel,[d.g]:d.v};if(!p.combinations.some(c=>p.groups.every(g=>c.valueIds.includes(sel[g.groupId])))){const c=p.combinations.filter(x=>x.valueIds.includes(d.v)).sort((a,b)=>b.sellable-a.sellable)[0];if(c)sel=Object.fromEntries(p.groups.map(g=>[g.groupId,(g.values.find(v=>c.valueIds.includes(v.valueId))||g.values[0]).valueId]))}pk.sel=sel;pk.qty=1;rPick()},pq(d){pk.qty=Math.max(1,pk.qty+(+d.d));rPick()},padd(){const c=pkCombo();if(!c||!c.sellable)return;cart[c.combinationId]=(cart[c.combinationId]||0)+pk.qty;grow=1;closeModal();rTick()},add(d){cart[d.id]=(cart[d.id]||0)+1;grow=1;rTick()},qty(d){cart[d.id]=(cart[d.id]||0)+(+d.d);if(cart[d.id]<1)delete cart[d.id];rTick()},
  clr(){rst();rTick()},src(d){m.src=d.v;rTick()},ful(d){m.ful=d.v;rTick()},pm(d){meth=d.i;paid=0;$("#rcv").value="";delete $("#rcv").dataset.ok;rTick()},part(){part=!part;paid=0;$("#rcv").value="";delete $("#rcv").dataset.ok;rTick()},go(){go()},
  of(d){ofl=d.k;rOrd()},
  /* inside an open ticket */
@@ -374,6 +360,7 @@ const A={tab(d){view=d.v;$$(".view").forEach(v=>v.hidden=v.id!=="v-"+view);$$("#
  dcnt(d,b){guard(b,dayForm)},
  dcsv(d,b){const v=k=>$(k).value.trim(),cc=v("#dcc"),fk=v("#dcf");if(cc===""||!/^\d+$/.test(cc)){toast("Enter the cash you counted, in whole shillings.");return}if(fk!==""&&!/^\d+$/.test(fk)){toast("Cash left for tomorrow is a whole number.");return}
   guard(b,async()=>{const r=await Cake.send("day/close",{day:d.day,countedCash:+cc,floatKept:fk===""?0:+fk,...(v("#dcn")&&{note:v("#dcn")})},"Day closed.");if(r.ok)closeModal()})}};
+addEventListener("keydown",e=>{if(e.key==="Escape"&&pk)closeModal()});
 document.addEventListener("click",e=>{if(e.target.id==="mod"){closeModal();return}const b=e.target.closest("[data-a]");if(b&&A[b.dataset.a])A[b.dataset.a](b.dataset,b)});
 function rCs(){$$("#cs1 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===cs.src));$$("#cs2 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===cs.ful));$("#cad").hidden=cs.ful!=="delivery";$("#csb").disabled=busy||Cake.offline}
 function rTh(){$("#dz span").textContent=photos.length?(photos.length<3?"Add more photos ("+photos.length+" of 3)":"3 of 3 added"):"Drop photos here, or click anywhere in this box";$("#th").innerHTML=photos.map((p,i)=>`<div><img src="${p.url}" alt="Reference ${i+1}"><button data-a="rmph" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
@@ -409,18 +396,18 @@ document.addEventListener("input",e=>{const t=e.target;
   t.dataset.ok=shown(d);if(!/\./.test(raw))t.value=t.dataset.ok;if(t.id==="rcv"){paid=+d;rTick()}}
  else if(t.id==="qs"){qs=t.value;rTiles()}else if(t.id==="oq")rOrd()});
 document.addEventListener("focusout",e=>{const t=e.target;if(t.id==="rcv"||t.id==="bamt")t.value=t.dataset.ok||""});
-function tick(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=clock12(d)}
 
-(async()=>{const me=await Cake.boot("cashier");$("#who").textContent=me.name;tick();setInterval(tick,30000);
+(async()=>{const me=await Cake.boot("cashier");
+ CH=Cake.mountChrome({ownStatus:true,groups:[{title:"Today",items:[{id:"sell",label:"Sell"},{id:"tickets",label:"Open tickets",run:()=>A.drw()},{id:"orders",label:"Orders"},{id:"custom",label:"Custom cakes"},{id:"req",label:"Requests"}]},{title:"Money",items:[{id:"sales",label:"Today's sales"}]}],go:id=>A.tab({v:id}),search:()=>{A.tab({v:"sell"});$("#qs").focus()},bell:"req"});
  Cake.onShop(s=>{SH=s;MT=s.paymentMethods.map(x=>[x.key,x.label]);if(!MT.some(x=>x[0]===meth))meth=firstM();$("#pay").innerHTML=MT.map(([k,l])=>`<button data-a="pm" data-i="${esc(k)}">${esc(l)}</button>`).join("")||'<p class="mute">No payment methods are switched on. Ask the owner.</p>';rTiles();rTick()});
- const netBar=()=>{const up=!Cake.offline,o=Cake.offlineStatus();$("#net").className="xst"+(up?"":" off");$("#net span").textContent=up?"Server connected":o.canSell?"Server unreachable · selling offline":"Server unreachable";rTick();rCs()};
+ const netBar=()=>{const up=!Cake.offline,o=Cake.offlineStatus();CH.setStatus(up,up?"Server connected":o.canSell?"Server unreachable · selling offline":"Server unreachable");rTick();rCs()};
  Cake.client.onConnection(netBar);Cake.onOffline(netBar);
  Cake.mountNotice($("#ntc"));
  Cake.feed("catalogue_grid",{},d=>{G=d;rTiles();rTick()});
  Cake.feed("order_list",{},d=>{OL=d.filter(o=>!(o.instant&&o.status==="completed"));rOrd();rDw()});
  Cake.feed("payments_ledger",{},d=>{LG=d;rSales()});
  Cake.feed("shop_settings",{},d=>{CB=d.dayCloseBy;rClose()});
- RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="req",onCounts:c=>{$("#bn").textContent=(c.unseen+c.needsYou)||""}});
+ RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="req",onCounts:c=>{CH.setBadge(c.unseen+c.needsYou)}});
  A.tab({v:"sell"});rCs();rTick()})();
 </script>
 </body>

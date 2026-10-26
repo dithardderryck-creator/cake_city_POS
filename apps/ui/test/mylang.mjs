@@ -1,7 +1,7 @@
 // Everyone picks their own language: My account has the choice, the shop's language is only the default,
 // and the sign-in page has a switch of its own.
 import assert from 'node:assert/strict';
-import { startShop, loadPlaywright, actor, until, PINS } from './harness.mjs';
+import { startShop, loadPlaywright, actor, until, PINS, openMenu } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shop = await startShop();
 const browser = await chromium.launch();
@@ -34,7 +34,7 @@ try {
   assert.notEqual(await lang(cashier), 'sw', 'English to begin with');
 
   /* The cashier picks Kiswahili in My account. Only their screens change. */
-  await cashier.locator('.xrole, .xnm, .who').first().click();
+  await openMenu(cashier).then(() => cashier.click('#xmn [data-acct]'));
   await cashier.waitForSelector('.cx-d #cx-lg');
   await cashier.selectOption('#cx-lg', 'sw');
   await until(async () => (await lang(cashier)) === 'sw' && /Akaunti yangu/.test(await body(cashier)), 'cashier screens in Kiswahili');
@@ -51,7 +51,7 @@ try {
   assert.ok((await owner.send('settings/update', { language: 'en' })).ok);
   assert.ok((await owner.send('settings/update', { language: 'sw' })).ok);
   await until(async () => (await lang(baker)) === 'sw', 'the baker follows the shop default');
-  await cashier.locator('.xrole, .xnm, .who').first().click();
+  await openMenu(cashier).then(() => cashier.click('#xmn [data-acct]'));
   await cashier.waitForSelector('.cx-d #cx-lg');
   await cashier.selectOption('#cx-lg', 'en');
   await until(async () => (await lang(cashier)) === 'en', 'cashier back to English');
@@ -62,7 +62,7 @@ try {
 
   /* "Same as the shop" again. */
   assert.ok((await owner.send('settings/update', { language: 'sw' })).ok);
-  await cashier.locator('.xrole, .xnm, .who').first().click();
+  await openMenu(cashier).then(() => cashier.click('#xmn [data-acct]'));
   await cashier.waitForSelector('.cx-d #cx-lg');
   assert.equal(await cashier.inputValue('#cx-lg'), 'en');
   await cashier.selectOption('#cx-lg', 'shop');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, actor, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, actor, until, menuGo } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-dayclose';
 fs.mkdirSync(shots, { recursive: true });
@@ -38,7 +38,7 @@ try {
   watch(page, 'owner');
   await signInAs(page, shop.base, 'owner');
   await page.waitForSelector('#hello');
-  await page.click('nav.xtabs [data-v="transactions"]');
+  await menuGo(page, 'transactions');
   await page.click('#eod');
   await until(async () => /Should be in the drawer/.test(await txt(page, '#dpn')), 'the report');
   assert.ok((await txt(page, '#dpn')).includes(rep.cash.expectedLabel), 'shows the expected cash');
@@ -72,7 +72,7 @@ try {
   watch(pp, 'phone');
   await signInAs(pp, shop.base, 'owner');
   await pp.waitForSelector('#hello');
-  await pp.click('nav.xtabs [data-v="transactions"]');
+  await menuGo(pp, 'transactions');
   await pp.click('#eod');
   await until(async () => /Should be in the drawer/.test(await txt(pp, '#dpn')), 'the report on a phone');
   assert.equal(await pp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'no sideways scroll');
@@ -80,7 +80,7 @@ try {
 
   // The owner lets the cashier close; the cashier's page shows the button without reloading.
   await page.click('#dpn [data-d="close"]');
-  await page.click('#xset');
+  await menuGo(page, 'settings');
   await page.click('#dpn [data-d="sec"][data-s="selling"]');
   await page.selectOption('#dpn [data-k="dc"]', 'cashier_and_owner');
   await page.click('#dpn [data-d="secsave"]');

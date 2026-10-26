@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSync } from 'esbuild';
-import { startShop, loadPlaywright, until, PINS } from './harness.mjs';
+import { startShop, loadPlaywright, until, PINS, menuGo } from './harness.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fakegoogle-'));
@@ -42,7 +42,7 @@ const emails = async (p) => (await rows(p).locator('.cx-ach b').allInnerTexts())
 try {
   const owner = await open('owner');
   await until(async () => {
-    if (!(await owner.locator('#dpn [data-s="online"]').isVisible())) await owner.click('#xset');
+    if (!(await owner.locator('#dpn [data-s="online"]').isVisible())) await menuGo(owner, 'settings');
     return owner.locator('#dpn [data-s="online"]').isVisible();
   }, 'the settings list opens');
   assert.match(await owner.locator('#dpn [data-s="online"]').innerText(), /Google accounts/);

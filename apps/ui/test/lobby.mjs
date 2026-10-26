@@ -1,7 +1,7 @@
 // The location check: staff away from the shop are held in a lobby, the owner and IT never are,
 // the check can be switched off by the owner or by IT, and everyone has a My account sheet.
 import assert from 'node:assert/strict';
-import { startShop, loadPlaywright, actor, until, PINS } from './harness.mjs';
+import { startShop, loadPlaywright, actor, until, PINS, openMenu, menuGo } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shop = await startShop();
 const browser = await chromium.launch();
@@ -40,7 +40,7 @@ try {
   const { p: op, ctx: octx } = await page('owner', SHOP);
   // The settings button does nothing until the shop settings have loaded, so press it until the list is there.
   await until(async () => {
-    if (!(await op.locator('#dpn [data-s="location"]').isVisible())) await op.click('#xset');
+    if (!(await op.locator('#dpn [data-s="location"]').isVisible())) await menuGo(op, 'settings');
     return op.locator('#dpn [data-s="location"]').isVisible();
   }, 'the settings list opens');
   await op.click('#dpn [data-d="sec"][data-s="location"]');
@@ -117,7 +117,7 @@ try {
   for (const d of '2223') await cp.click(`#pad button[data-k="${d}"]`);
   await cp.click('#ok');
   await cp.waitForURL('**/cashier.html');
-  await cp.locator('.xrole, .xnm, .who').first().click();
+  await openMenu(cp).then(() => cp.click('#xmn [data-acct]'));
   await cp.waitForSelector('.cx-d');
   await cp.fill('#cx-ph', '+255712345678');
   await cp.selectOption('#cx-sm', 'critical');

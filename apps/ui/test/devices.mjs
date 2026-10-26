@@ -2,7 +2,7 @@
 // a second browser registers with it, signs in, and is shut out the moment the owner revokes it.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, until, menuGo } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-devices';
 fs.mkdirSync(shots, { recursive: true });
@@ -64,7 +64,7 @@ try {
   await owner.setViewportSize({ width: 1280, height: 800 });
   await signInAs(owner, shop.base, 'owner');
   await owner.waitForSelector('#hello');
-  await owner.click('nav.xtabs [data-v="staff"]');
+  await menuGo(owner, 'staff');
   await owner.waitForSelector('#dvb .list');
   assert.match(await owner.innerText('#dvb'), /Office laptop/);
   assert.match(await owner.innerText('#dvb'), /This device/);

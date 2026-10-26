@@ -169,3 +169,22 @@ export const until = async (fn, what, ms = 8000) => {
   }
   throw new Error('timed out waiting for ' + what);
 };
+
+/** Opens the menu behind the button at the right of the top bar (it is already open when it is open). */
+export async function openMenu(page) {
+  if (await page.locator('#xmn').isVisible()) return;
+  await page.click('#xmenu');
+  await page.waitForSelector('#xmn:not([hidden])');
+}
+
+/** Opens the menu and chooses a page by its id (the same in every language). */
+export async function menuGo(page, id) {
+  await openMenu(page);
+  await page.click(`#xmn [data-id="${id}"]`);
+}
+
+/** Puts the nth cake that can be sold onto the ticket: one tap, or (for a cake that comes in several ways) one tap and "Add to ticket". */
+export async function addToTicket(page, nth = 0) {
+  await page.locator('#tiles .tile:not([disabled])').nth(nth).click();
+  if (await page.locator('#mod .pk').count()) await page.click('#mod [data-a="padd"]');
+}

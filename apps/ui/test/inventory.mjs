@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, actor, PNG, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, actor, PNG, until, openMenu } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-inventory';
 fs.mkdirSync(shots, { recursive: true });
@@ -32,7 +32,7 @@ try {
   globalThis.PG = page;
   await signInAs(page, shop.base, 'inventory');
   await page.waitForSelector('#sg .rc');
-  assert.match(await txt(page, '.xnm'), /Juma/);
+  assert.match(await page.locator('.xnm').first().textContent(), /Juma/);
   assert.equal(await page.locator('#sg .rc').count(), 2, 'two ingredients on the first tab');
   await page.click('#itabs [data-k="packaging"]');
   assert.match(await txt(page, '#sg'), /Cake boxes/);
@@ -169,6 +169,7 @@ try {
     assert.equal(await pp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `no sideways scroll on ${v}`);
     await pp.screenshot({ path: `${shots}/phone-${v}.png` });
   }
+  await openMenu(page);
   await page.click('#xout');
   await page.waitForURL(shop.base + '/');
   const html = fs.readFileSync(new URL('../pages/inventory.html', import.meta.url), 'utf8');

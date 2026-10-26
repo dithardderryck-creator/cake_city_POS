@@ -1,7 +1,7 @@
 // The whole shop in Kiswahili: the owner switches the language, every role's screens come out in Kiswahili
 // (no English sentences left behind), and switching back to English puts the English text back.
 import assert from 'node:assert/strict';
-import { startShop, loadPlaywright, until, PINS } from './harness.mjs';
+import { startShop, loadPlaywright, until, PINS, openMenu, menuGo } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shop = await startShop();
 const browser = await chromium.launch();
@@ -37,7 +37,7 @@ async function openSettings(page) {
   await until(async () => {
     const sel = page.locator('select[data-k="sl"]');
     if (!(await sel.isVisible())) {
-      if (!(await page.locator('#dpn [data-d="sec"][data-s="language"]').isVisible())) await page.click('#xset');
+      if (!(await page.locator('#dpn [data-d="sec"][data-s="language"]').isVisible())) await menuGo(page, 'settings');
       if (await page.locator('#dpn [data-d="sec"][data-s="language"]').isVisible()) await page.click('#dpn [data-d="sec"][data-s="language"]');
     }
     return await sel.isVisible();
@@ -66,7 +66,12 @@ async function sweep(page, role) {
   await visit(null);
   for (const v of tabs) await visit(v);
   // My account, opened from the name at the top.
-  await page.locator('.xrole, .xnm, .who').first().click();
+  if (await page.locator('#xmenu').count()) {
+    await openMenu(page);
+    await page.waitForTimeout(300);
+    for (const l of await englishLines(page)) found.set(l, 'menu');
+    await page.click('#xmn [data-acct]');
+  } else await page.locator('.who').first().click();
   await page.waitForSelector('.cx-d');
   await page.waitForTimeout(400);
   for (const l of await englishLines(page)) found.set(l, 'account');

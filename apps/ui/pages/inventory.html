@@ -17,8 +17,6 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--cop);outline-offset:2px}
 .serif,h1,h2,.num{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
 .app{min-height:100dvh}
-.brand{font:600 20px Fraunces,serif;margin:0}
-.brand i{font-style:normal;color:var(--cop)}
 main{padding:24px clamp(16px,3vw,40px) 48px;max-width:1260px;width:100%;margin:0 auto}
 header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
 h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01em}
@@ -112,45 +110,16 @@ details summary::-webkit-details-marker{display:none}
 @media(max-width:900px){.si{grid-template-columns:1fr 1fr}.si.head{display:none}}
 .oc.risk{border-left:3px solid var(--risk)}
 .tkt .in{padding:12px 16px;display:grid;gap:2px;align-content:center}
-.xhead{position:sticky;top:0;z-index:12;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
-.xtop{display:flex;align-items:center;gap:12px;padding:10px clamp(16px,3vw,40px) 6px;max-width:1260px;margin:0 auto}
-.xtop .brand{flex:none;display:flex;align-items:center;gap:8px}
-.xmk{display:none;width:36px;height:36px;border-radius:50%;background:var(--cop);color:#fff;place-items:center;font:600 17px Fraunces,serif}
-.xpw{flex:1 1 0;min-width:0;container-type:inline-size;display:flex;justify-content:center}
-.xpill{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;padding:8px 10px;max-width:100%;border:1px solid var(--line);border-radius:999px;background:var(--surf);box-shadow:var(--sh)}
-.xpill>*{flex:none}
-.xpill .xnm{flex:0 1 auto;min-width:0}
-.xvd{width:1px;height:24px;background:var(--line)}
-.xrole{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--cop-s);color:var(--cop-d);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.xnm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.xds{display:none}
-.xdtx{font-size:13px;color:var(--mute);white-space:nowrap}
-.xdtx b{color:var(--ink);font-weight:600}
-.xst{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;background:var(--sage-s);color:var(--sage);font-size:13px;font-weight:600;white-space:nowrap}
-.xst i{width:9px;height:9px;border-radius:50%;background:var(--sage)}
-.xib{width:40px;height:40px;border-radius:50%;border:0;background:none;display:inline-grid;place-items:center;color:var(--mute);position:relative;transition:background .3s,color .3s}
-.xib:hover{background:var(--cop-s);color:var(--ink)}
-.xbd{position:absolute;top:-1px;right:-1px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--cop);color:#fff;font-size:11px;display:inline-grid;place-items:center}
-.xbd:empty{display:none}
-@container (max-width:860px){.xdl{display:none}.xds{display:inline}}
-@container (max-width:680px){.xrt,.xsl{display:none}.xrole{padding:9px}.xst{width:36px;padding:0;justify-content:center}}
-@container (max-width:520px){.xvd,.xdd{display:none}.xpill{gap:8px}}
-@container (max-width:430px){.xpill{gap:4px;padding:5px 6px}.xib,.xst{width:34px;height:34px;min-height:34px}.xrole{padding:7px}}
-@container (max-width:340px){.xdtx{display:none}}
-@container (max-width:290px){.xnm{display:none}}
 nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:11;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:4px clamp(16px,3vw,40px)}
 nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
 nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
 nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}
 .xts{display:none}
 .xts{overflow:hidden;text-overflow:ellipsis;max-width:100%}
-nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}
-.xrole svg{width:16px;height:16px}
+nav.xtabs svg{flex:none;width:18px;height:18px}
 @container (max-width:880px){nav.xtabs{gap:4px}nav.xtabs button{flex:1 1 0;flex-direction:column;gap:1px;min-height:0;padding:5px 2px;font-size:11px;line-height:1.15}.xtf{display:none}.xts{display:inline}}
 @container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}nav.xtabs button{font-size:11.5px}}
 @media(max-width:540px){nav.xtabs{position:static}}
-@media(max-width:480px){.xtop .brand .xtx{display:none}.xmk{display:grid}}
-@media(max-width:359px){.xtop .brand{display:none}}
 .zrow .b,.zbb .b{min-height:42px}
 .b.r{border-color:var(--risk);color:var(--risk)}
 .zrow .b[aria-pressed="true"]{border-color:var(--cop);color:var(--cop-d)}
@@ -194,7 +163,7 @@ nav.xtabs svg,.xib svg,.xrole svg{flex:none;width:18px;height:18px}
 .pre{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.pre button{padding:9px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surf);font-size:13px;color:var(--mute)}.pre button[aria-pressed="true"]{background:var(--cop-s);border-color:var(--cop);color:var(--ink);font-weight:600}
 .ucv{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.ucv button{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surf);color:var(--mute)}.ucv button[aria-pressed="true"]{background:var(--cop-s);border-color:var(--cop);color:var(--ink);font-weight:600}
 .ur{padding:12px 0;border-bottom:1px solid var(--line)}.qt{display:flex;align-items:center;gap:14px;margin-top:4px}.qt .b{width:48px;height:44px;padding:0;font-size:22px}.qt b{font-size:28px;min-width:48px;text-align:center}
-.fl textarea{min-height:60px}.dp .seg{margin-top:6px}.xib[aria-pressed="false"]{opacity:.5}
+.fl textarea{min-height:60px}.dp .seg{margin-top:6px}
 @media(max-width:540px){nav.xtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:700px){#v-queue .split{grid-template-columns:1fr}#v-queue .split.det .rl{display:none}#v-queue .split:not(.det) #dt{display:none}#dt{position:static;max-height:none}.bk{display:inline-flex}}
 .sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:14px}.sg .rc{margin:0}.nd{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:0 0 16px}.nd .card{padding:14px}
@@ -233,29 +202,13 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .ndl textarea:focus{outline:0;border-color:var(--cop);box-shadow:0 0 0 3px var(--cop-s)}
 .ln{flex-wrap:nowrap}.ln>div:first-child{flex:1;min-width:0}.ln>div:last-child{flex:none}
 
-@media(max-width:1180px){.xdd,.xsl,.xrt{display:none}}
-@media(max-width:900px){.xnm,.xst,.xvd{display:none}}
-@media(max-width:480px){.xpill{gap:2px}}
-@media(max-width:360px){#xsnd{display:none}.xib{width:32px;height:32px;min-height:32px}.xtop{gap:6px}}
+@media(max-width:1180px){.xdd{display:none}}
 </style>
 <link rel="stylesheet" href="/forms.css">
 </head>
 <body>
 <div class="app">
-<div class="xhead"><div class="xtop">
-<div class="brand"><span class="xmk">C</span><span class="xtx">Cake <i>POS</i></span></div>
-<div class="xpw"><div class="xpill" role="group" aria-label="Session">
-<span class="xrole" title="Inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="xrt">Inventory</span></span><span class="xvd"></span>
-<span class="xnm"></span><span class="xvd"></span>
-<span class="xdtx"><span class="xdd"><span class="xdl" id="xdl"></span><span class="xds" id="xds"></span> · </span><b id="xdt"></b></span><span class="xvd"></span>
-<span class="xst"><i></i><span class="xsl">Server connected</span></span><span class="xvd"></span>
-<button class="xib" id="xsearch" aria-label="Search" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
-<button class="xib" id="xcount" aria-label="Start daily count" title="Start daily count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8M20 12v7H4V5h10"/></svg></button>
-<button class="xib" id="xbell" aria-label="Requests and alerts" title="Requests and alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b class="xbd" id="xbn"></b></button>
-<button class="xib" id="xsnd" aria-pressed="true" aria-label="Sound and vibration alerts" title="Sound and vibration alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg></button>
-<button class="xib" id="xtheme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></button>
-<button class="xib" id="xout" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
-</div></div></div></div>
+<div class="xhead"></div>
 <nav class="xtabs" aria-label="Main">
 <button data-v="stock" aria-current="page" title="Stock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"/></svg><span class="xtf">Stock</span><span class="xts">Stock</span></button>
 <button data-v="usage" title="Usage reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg><span class="xtf">Usage reports</span><span class="xts">Usage</span></button>
@@ -279,7 +232,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=Cake.esc,toast=Cake.toast;
-let IL=[],UIx=null,CD=null,view="stock",it="ingredient",usel=null,udSig="",DI=null,cm=null,snd=true,ac,lastN=-1,RQ=null;
+let IL=[],UIx=null,CD=null,view="stock",CH=null,it="ingredient",usel=null,udSig="",DI=null,cm=null,snd=true,ac,lastN=-1,RQ=null;
 try{snd=localStorage.getItem("invSound")!=="off"}catch(e){}
 const fmt=iso=>iso?new Date(iso).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
 const r3=n=>Math.round(n*1e4)/1e4,mid=i=>r3((i.min+i.max)/2);
@@ -332,8 +285,8 @@ async function crec(counted){const s=CD.session,i=s.items[cm.i],o=await Cake.sen
 /* ---------- search, sound, navigation ---------- */
 const pal=$("#pal"),opn=()=>{pal.classList.add("on");$("#q").value="";show();$("#q").focus()};
 function show(){const v=$("#q").value.toLowerCase(),a=IL.filter(i=>i.name.toLowerCase().includes(v)).map(i=>`<li><button data-k="i" data-id="${esc(i.ingredientId)}"><span>${esc(i.name)}</span><span class="mute">${esc(i.onHandText)} · ${esc(i.daysLeftLabel)}</span></button></li>`),b=reports().filter(r=>(r.orderNumber+r.reportedByName+r.cake.flavor).toLowerCase().includes(v)).map(r=>`<li><button data-k="u" data-id="${esc(r.reportId)}"><span>${esc(r.orderNumber)} ${esc(r.cake.flavor)} cake</span><span class="mute">Usage report</span></button></li>`);$("#res").innerHTML=[...a,...b].join("")||'<li class="empty" style="padding:12px">No match.</li>'}
-function beep(){const b=$("#xbell");b.classList.remove("ring");void b.offsetWidth;if(!matchMedia("(prefers-reduced-motion:reduce)").matches){b.classList.add("ring");setTimeout(()=>b.classList.remove("ring"),1400)}if(!snd)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume();[0,.3].forEach(d=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+d);o.stop(ac.currentTime+d+.2)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
-function go(v){view=v;$$("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="stock")sr();if(v==="usage")ur();if(v==="count")cr();if(v==="requests"&&RQ)RQ.shown();scrollTo(0,0)}
+function beep(){CH&&CH.ring();if(!snd)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume();[0,.3].forEach(d=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+d);o.stop(ac.currentTime+d+.2)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+function go(v){view=v;CH&&CH.setPage(v);$$("main>section").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="stock")sr();if(v==="usage")ur();if(v==="count")cr();if(v==="requests"&&RQ)RQ.shown();scrollTo(0,0)}
 $$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
 const A={itab(d,b){it=b.dataset.k;sr()},item(d){ish(d.id)},goto(d){go(d.v)},xd(){xdr()},nitem(){newItem()},
  recv(d,b){const n=parseFloat($("#mq").value),note=$("#mn").value.trim();if(!(n>0))return toast("Enter the amount first.");guard(b,async()=>{const o=await Cake.send("inventory/receive",{ingredientId:d.id,qty:n,unit:$("#mu").value,...(note&&{note})},"Stock received.");if(o.ok){$("#mq").value="";$("#mn").value=""}})},
@@ -353,23 +306,18 @@ const A={itab(d,b){it=b.dataset.k;sr()},item(d){ish(d.id)},goto(d){go(d.v)},xd()
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&A[b.dataset.a]&&b.type!=="checkbox")A[b.dataset.a](b.dataset,b)});
 $("#ulist").onclick=e=>{const b=e.target.closest(".rc");if(b){usel=b.dataset.id;udSig="";ur()}};
 $("#dr").onclick=e=>{if(e.target.id==="dr")xdr()};
-$("#open").onclick=$("#xsearch").onclick=opn;$("#q").oninput=show;
+$("#open").onclick=opn;$("#q").oninput=show;
 pal.onclick=e=>{const b=e.target.closest("li button");if(b){if(b.dataset.k==="i"){it=IT(b.dataset.id).kind;go("stock");ish(b.dataset.id)}else{usel=b.dataset.id;udSig="";go("usage")}}if(e.target===pal||b)pal.classList.remove("on")};
-$("#xcount").onclick=A.cstart;$("#xbell").onclick=()=>go("requests");
-$("#xsnd").setAttribute("aria-pressed",snd);$("#xsnd").onclick=()=>{snd=!snd;try{localStorage.setItem("invSound",snd?"on":"off")}catch(e){}$("#xsnd").setAttribute("aria-pressed",snd);toast(snd?"Sound and vibration on":"Sound and vibration off")};
 addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();opn()}if(e.key==="Escape"){pal.classList.remove("on");xdr();if(!$("#rm").hidden&&cm)A.xr()}});
 const xroot=document.documentElement,xhd=$(".xhead");try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
 const xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
-function xclock(){const d=new Date();$("#xdl").textContent=d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#xds").textContent=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});$("#xdt").textContent=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
-$("#xtheme").onclick=()=>{const dark=xroot.dataset.theme?xroot.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;xroot.dataset.theme=dark?"light":"dark";try{localStorage.setItem("theme",xroot.dataset.theme)}catch(e){}};
-$("#xout").onclick=()=>Cake.signOut();
-(async()=>{const me=await Cake.boot(["inventory","owner"]);$(".xnm").textContent=me.name;xclock();setInterval(xclock,30000);
- Cake.client.onConnection(s=>{const up=s!=="offline";$(".xst").className="xst"+(up?"":" off");$(".xst .xsl").textContent=up?"Server connected":"Server unreachable"});
+(async()=>{const me=await Cake.boot(["inventory","owner"]);
+ CH=Cake.mountChrome({groups:[{title:"Today",items:[{id:"stock",label:"Stock"},{id:"usage",label:"Usage reports"},{id:"count",label:"Daily count"},{id:"requests",label:"Requests"}]}],go,search:opn,bell:"requests",sound:{get:()=>snd,set:on=>{snd=on;try{localStorage.setItem("invSound",on?"on":"off")}catch(e){}toast(on?"Sound and vibration on":"Sound and vibration off")}}});CH.setPage(view);
  Cake.mountNotice($("#ntc"));
  Cake.feed("ingredient_list",{},d=>{IL=d;if(view==="stock")sr();if(view==="count"&&!cm)cr();if(DI){const i=IT(DI);if(!i)xdr();else{const e=$("#dp .dstat");if(e)e.innerHTML=stat(i)}}});
  Cake.feed("usage_inbox",{},d=>{UIx=d;if(view==="usage")ur();if(view==="stock")sr()});
  Cake.feed("count_session",{},d=>{CD=d;if(cm&&!d.session){$("#rm").hidden=true;cm=null;toast("The count was closed.")}else if(cm&&cm.rev)cmh();if(view==="count")cr();if(view==="stock")sr()});
- RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="requests",onCounts:c=>{const n=c.unseen+c.needsYou;$("#xbn").textContent=n||"";if(lastN>=0&&n>lastN)beep();lastN=n}});
+ RQ=Cake.mountRequests($("#rq"),{visible:()=>view==="requests",onCounts:c=>{const n=c.unseen+c.needsYou;CH&&CH.setBadge(n);if(lastN>=0&&n>lastN)beep();lastN=n}});
  go("stock")})();
 </script>
 </body>

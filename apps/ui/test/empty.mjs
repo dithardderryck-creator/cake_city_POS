@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { startShop, loadPlaywright, until } from './harness.mjs';
+import { startShop, loadPlaywright, until, menuGo } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const shop = await startShop({ seed: false });
@@ -54,15 +54,15 @@ try {
 
   /* Owner: empty catalogue, stock and ledger say "none yet", not "no match". */
   const own = await open('owner', '1111');
-  await own.click('nav.xtabs [data-v="catalogue"]');
+  await menuGo(own, 'catalogue');
   await until(async () => /catalogue is empty/i.test(await text(own, '#ctab')), 'empty catalogue');
-  await own.click('nav.xtabs [data-v="stock"]');
+  await menuGo(own, 'stock');
   await until(async () => /No ingredients yet/i.test(await text(own, '#stab')), 'empty stock');
-  await own.click('nav.xtabs [data-v="transactions"]');
+  await menuGo(own, 'transactions');
   await until(async () => /No payments or refunds have been recorded yet/i.test(await text(own, '#trl')), 'empty ledger');
   /* The counter's rules are the owner's to change, and the cashier sees the change at once. */
   assert.equal(await cash.locator('#pay button').count(), 4, 'all four ways of paying at first');
-  await own.click('#xset');
+  await menuGo(own, 'settings');
   await own.click('#dpn [data-d="sec"][data-s="selling"]');
   await own.waitForSelector('#dpn [data-k="pm-card"]');
   await own.uncheck('#dpn [data-k="pm-card"]');

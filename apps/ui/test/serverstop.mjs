@@ -1,7 +1,7 @@
 // The shop server freezes or dies in the middle of a sale. The cashier must be told the truth, lose nothing,
 // and never sell twice when they tap again.
 import assert from 'node:assert/strict';
-import { startShop, signInAs, loadPlaywright, actor, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, actor, until, addToTicket } from './harness.mjs';
 const { chromium } = loadPlaywright();
 
 const shop = await startShop();
@@ -19,7 +19,7 @@ try {
   const before = await orders();
 
   const fillTicket = async () => {
-    await page.locator('#tiles .tile:not([disabled])').first().click();
+    await addToTicket(page);
     await page.click('#pay [data-i="cash"]');
     await page.fill('#rcv', '99999999');
   };

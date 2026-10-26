@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, actor, PNG, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, actor, PNG, until, openMenu } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-baker';
 fs.mkdirSync(shots, { recursive: true });
@@ -19,7 +19,7 @@ try {
   globalThis.PG = page;
   await signInAs(page, shop.base, 'baker');
   await page.waitForSelector('#qsub');
-  assert.match(await txt(page, '.xnm'), /Neema/);
+  assert.match(await page.locator('.xnm').first().textContent(), /Neema/);
   assert.match(await txt(page, '#rl0'), /No custom cakes/, 'empty queue says so');
 
   // a custom cake arrives while the baker is looking
@@ -154,6 +154,7 @@ try {
     await pp.screenshot({ path: `${shots}/phone-${v}.png` });
   }
 
+  await openMenu(page);
   await page.click('#xout');
   await page.waitForURL(shop.base + '/');
   const html = fs.readFileSync(new URL('../pages/baker.html', import.meta.url), 'utf8');

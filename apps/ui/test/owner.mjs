@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, actor, PNG, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, actor, PNG, until, openMenu, menuGo } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-owner';
 fs.mkdirSync(shots, { recursive: true });
@@ -12,7 +12,7 @@ const watch = (p, tag) => {
   p.on('console', (m) => m.type() === 'error' && !/status of 422/.test(m.text()) && errs.push(`${tag}: console ${m.text()}`));
 };
 const txt = (p, s) => p.locator(s).first().innerText();
-const tab = (p, v) => p.click(`nav.xtabs [data-v="${v}"]`);
+const tab = (p, v) => menuGo(p, v);
 try {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
@@ -21,7 +21,7 @@ try {
   await signInAs(page, shop.base, 'owner');
   await page.waitForSelector('#hello');
   await until(async () => /Amina/.test(await txt(page, '#hello')), 'greeting with the owner name');
-  assert.match(await txt(page, '.xnm'), /Amina/);
+  assert.match(await page.locator('.xnm').first().textContent(), /Amina/);
   // The "offline" bar must take no room while the shop is reachable (it once showed as a red strip).
   assert.equal(await page.evaluate(() => { const e = document.getElementById('offline'); return !e || e.getBoundingClientRect().height; }), 0, 'offline bar should be hidden when online');
   assert.match(await txt(page, '#reqs'), /All caught up/);
@@ -81,6 +81,14 @@ try {
   assert.match(await txt(page, '#qbox'), /Congratulations Asha/);
   await until(async () => page.evaluate(() => document.querySelector('#qbox img[data-ph]')?.naturalWidth > 0), 'photo loaded');
   assert.match(await txt(page, '#xbn'), /\d/, 'bell shows something needs you');
+  // The Overview puts "Needs you" first: the price request is a row there, and tapping it goes to Requests.
+  await tab(page, 'overview');
+  await until(async () => (await page.locator('#reqs .nrow').count()) > 0 && !(await page.locator('#nd.calm').count()), 'the price request listed under Needs you');
+  assert.match(await txt(page, '#reqs'), /Price for .*custom cake/);
+  const above = await page.evaluate(() => document.querySelector('#nd').compareDocumentPosition(document.querySelector('.rev')) & Node.DOCUMENT_POSITION_FOLLOWING);
+  assert.ok(above, 'Needs you comes before the revenue');
+  await page.click('#reqs .nrow >> nth=0');
+  await page.waitForSelector('#v-requests:not([hidden])');
   await page.fill('#qbox [data-k^="p-"]', '120000');
   // a live update arrives while the owner is typing: what is typed must survive
   await cashier.send('orders/create_order', { source: 'walk_in', fulfilment: 'pickup', customerName: 'Noise', deliveryDate: today });
@@ -204,7 +212,7 @@ try {
   await page.screenshot({ path: `${shots}/staff.png` });
 
   // settings
-  await page.click('#xset');
+  await menuGo(page, 'settings');
   await page.click('#dpn [data-d="sec"][data-s="shop"]');
   await page.fill('#dpn [data-k="sn"]', 'Cake City Test');
   await page.click('#dpn [data-d="secsave"]');
@@ -256,10 +264,12 @@ try {
   for (const v of ['overview', 'requests', 'catalogue', 'orders', 'stock', 'transactions', 'staff', 'reports']) {
     await tab(pp, v);
     await pp.waitForTimeout(150);
-    assert.equal(await pp.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `no sideways scroll on ${v}`);
+    const wide = await pp.evaluate(() => (document.documentElement.scrollWidth > innerWidth + 1 ? [...document.querySelectorAll('body *')].filter((e) => e.getBoundingClientRect().right > innerWidth + 1 && e.getClientRects().length).slice(0, 4).map((e) => `${e.tagName}#${e.id}.${String(e.className).slice(0, 30)} ${Math.round(e.getBoundingClientRect().right)}`) : []));
+    assert.deepEqual(wide, [], `no sideways scroll on ${v}`);
     await pp.screenshot({ path: `${shots}/phone-${v}.png` });
   }
 
+  await openMenu(page);
   await page.click('#xout');
   await page.waitForURL(shop.base + '/');
   const html = fs.readFileSync(new URL('../pages/owner.html', import.meta.url), 'utf8');

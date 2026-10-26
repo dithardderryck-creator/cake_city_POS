@@ -1,7 +1,7 @@
 // A till keeps selling when the shop server dies, shows a slip that says plainly the sale is not sent yet, and the sales
 // arrive once, in order, when the server is back. A sale edited on the device is refused, and the cashier is told.
 import assert from 'node:assert/strict';
-import { startShop, signInAs, loadPlaywright, until, PINS } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, until, PINS, menuGo, addToTicket } from './harness.mjs';
 const { chromium } = loadPlaywright();
 
 const shop = await startShop({ requireDevice: true });
@@ -58,7 +58,7 @@ try {
   const before = await instant();
 
   const fillTicket = async () => {
-    await page.locator('#tiles .tile:not([disabled])').first().click();
+    await addToTicket(page);
     await page.click('#pay [data-i="cash"]');
     await page.fill('#rcv', '99999999');
   };
@@ -143,8 +143,9 @@ try {
 
   /* 4. The price changes while the till is cut off. The sale is held for the owner, who approves it from the overview. */
   await until(() => page.evaluate(() => Cake.offlineStatus().canSell), 'a fresh offline pass after the refused one', 60000);
-  const comboId = await page.locator('#tiles .tile:not([disabled])').first().getAttribute('data-id');
   const grid = await read('catalogue_grid');
+  const firstCake = grid.filter((g) => !g.archived && !g.hidden && g.combinations.length).find((g) => g.combinations.some((c) => c.sellable));
+  const comboId = firstCake.combinations.find((c) => c.sellable).combinationId;
   const price = grid.flatMap((g) => g.combinations).find((c) => c.combinationId === comboId).price;
   await page.context().setOffline(true); // only this till loses the network; the server is fine
   // (an already open live connection can stay up in the browser; the sale itself finds the network gone)
@@ -170,7 +171,7 @@ try {
   await op.waitForSelector('#ofc', { state: 'hidden', timeout: 20000 });
 
   /* 5. The owner switches the rules on the settings screen. */
-  await op.click('#xset');
+  await menuGo(op, 'settings');
   await op.click('#dpn [data-d="sec"][data-s="offline"]');
   await op.waitForSelector('#dpn [data-k="oh"]');
   await op.fill('#dpn [data-k="oh"]', '6');

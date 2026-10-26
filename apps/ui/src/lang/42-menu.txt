@@ -1,0 +1,25 @@
+# The shared top bar and menu.
+Menu ||| Menyu
+Close menu ||| Funga menyu
+Shop ||| Duka
+Kitchen ||| Jikoni
+# Sell: one card per cake, then the choice of size and filling.
+{n} options ||| Chaguo {n}
+from {*} ||| kuanzia {*}
+Not made this way ||| Haitengenezwi hivi
+Add to ticket ||| Weka kwenye tiketi
+Add to ticket · {*} ||| Weka kwenye tiketi · {*}
+Nothing matches. Clear the search or pick All. ||| Hakuna kinacholingana. Futa utafutaji au chagua Zote.
+# Overview: what needs the owner comes first.
+Needs you ||| Inakuhitaji
+All caught up ||| Kila kitu kiko sawa
+Nothing is late, low or waiting for you. New requests from staff will appear here. ||| Hakuna kilichochelewa, kinachoisha wala kinachokusubiri. Maombi mapya kutoka kwa wafanyakazi yataonekana hapa.
+Late ||| Imechelewa
+Decision ||| Uamuzi
+Urgent ||| Dharura
+Waiting ||| Inasubiri
+Nothing for you to do ||| Huna cha kufanya
+Show all {n} ||| Onyesha zote {n}
+Show fewer ||| Onyesha chache
+{n} usage report waiting for Inventory to confirm ||| Ripoti {n} ya matumizi inasubiri Stoo ithibitishe
+{n} usage reports waiting for Inventory to confirm ||| Ripoti {n} za matumizi zinasubiri Stoo zithibitishe

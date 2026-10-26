@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, actor, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, actor, until, openMenu } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-inventory-edge';
 fs.mkdirSync(shots, { recursive: true });
@@ -157,7 +157,11 @@ try {
 
   // 7. theme toggle sticks across a reload
   const theme0 = await page.evaluate(() => document.documentElement.dataset.theme ?? '');
-  await page.click('#xtheme');
+  await openMenu(page);
+  await page.click('#xmn [data-acct]');
+  await page.waitForSelector('.cx-d');
+  await page.click(`.cx-d [data-th="${theme0 === 'dark' ? 'light' : 'dark'}"]`);
+  await page.click('.cx-d [data-x="close"]');
   const theme1 = await page.evaluate(() => document.documentElement.dataset.theme);
   assert.notEqual(theme1, theme0);
   await page.reload();

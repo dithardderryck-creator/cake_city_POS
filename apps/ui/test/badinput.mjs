@@ -2,7 +2,7 @@
 // Nothing may overflow the screen, run as code, show "NaN" or silently change an amount.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, actor, until } from './harness.mjs';
+import { startShop, signInAs, loadPlaywright, actor, until, menuGo, addToTicket } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-badinput';
 fs.mkdirSync(shots, { recursive: true });
@@ -56,10 +56,10 @@ try {
     watch(page, `${role}@${width}`);
     await signInAs(page, shop.base, role);
     await page.waitForTimeout(500);
-    const tabs = await page.locator(TABS[role]).evaluateAll((els) => els.map((e) => e.dataset.v));
+    const tabs = await page.locator('#xmn [data-id]').evaluateAll((els) => els.map((e) => e.dataset.id).filter((id) => !['settings', 'tickets'].includes(id)));
     assert.ok(tabs.length >= 3, `${role} has tabs`);
     for (const v of tabs) {
-      await page.locator(`${TABS[role]}[data-v="${v}"]`).first().click();
+      await menuGo(page, v);
       await page.waitForTimeout(350);
       const r = await page.evaluate(() => {
         const wide = [...document.querySelectorAll('*')]
@@ -99,7 +99,7 @@ try {
   assert.match(await login.locator('#pick').innerText(), /<img src=x/, 'the name is shown as plain text');
 
   // an order whose customer name is HTML shows as plain text in the open ticket
-  await own.locator('nav.xtabs [data-v="orders"]').first().click();
+  await menuGo(own, 'orders');
   await until(async () => /<img/.test(await txt(own, '#zboard')), 'the HTML name shown as plain text on the board');
   await own.click('#zboard [data-det]');
   await own.waitForSelector('#odp h2');
@@ -110,7 +110,7 @@ try {
   // ---- junk typed into the cashier's amount box ----
   await cash.locator('#tabs [data-v="sell"]').click();
   await cash.waitForSelector('#tiles .tile:not([disabled])');
-  await cash.locator('#tiles .tile:not([disabled])').first().click();
+  await addToTicket(cash);
   await cash.click('#pay [data-i="cash"]');
   const type = async (s) => {
     await cash.fill('#rcv', s);
