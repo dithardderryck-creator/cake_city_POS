@@ -63,7 +63,8 @@ try {
 
   /* Walking into the shop and tapping Check again opens the work screens. */
   await far.ctx.setGeolocation(NEAR);
-  await far.p.click('#cx-lb-again');
+  // The screen may already have re-checked on its own once the position moved, so the button can be gone.
+  await far.p.click('#cx-lb-again', { timeout: 3000 }).catch(() => {});
   await until(async () => !(await lobby(far.p)), 'lobby closes inside the fence');
   const ok = await far.p.evaluate(() => Cake.client.dispatch('orders/create_order', { source: 'walk_in', fulfilment: 'pickup', customerName: 'Walk-in', deliveryDate: '2030-01-01' }));
   assert.equal(ok.ok, true, JSON.stringify(ok));

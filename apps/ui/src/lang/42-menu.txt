@@ -23,3 +23,4 @@ Show all {n} ||| Onyesha zote {n}
 Show fewer ||| Onyesha chache
 {n} usage report waiting for Inventory to confirm ||| Ripoti {n} ya matumizi inasubiri Stoo ithibitishe
 {n} usage reports waiting for Inventory to confirm ||| Ripoti {n} za matumizi zinasubiri Stoo zithibitishe
+What the cashier can sell. Each cake is one row. Hidden items and items without a price never reach the counter. ||| Vitu ambavyo keshia anaweza kuuza. Kila keki iko kwenye safu moja. Vitu vilivyofichwa na vile visivyo na bei havifiki kaunta.

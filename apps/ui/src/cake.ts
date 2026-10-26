@@ -487,7 +487,7 @@ body{overflow-wrap:anywhere}
 .cx-ac{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surf);display:grid;gap:6px}.cx-ac.off{opacity:.75}
 .cx-ach{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.cx-ach b{overflow-wrap:anywhere;font-weight:600}
 .cx-st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--paper);color:var(--mute);white-space:nowrap}.cx-st.ok{background:var(--sage-s,#5E72471c);color:var(--sage,#5E7247)}.cx-st.bad{background:var(--risk-s,#B4452F18);color:var(--risk,#B4452F)}.cx-st.cop{background:var(--cop-s,#C47F3D1f);color:var(--cop-d,#9A5F2A)}
-.cx-bar{height:6px;border-radius:999px;background:var(--paper);overflow:hidden}.cx-bar i{display:block;height:100%;background:var(--cop)}.cx-bar.hi i{background:var(--risk,#B4452F)}
+.cx-pbar{height:6px;border-radius:999px;background:var(--paper);overflow:hidden}.cx-pbar i{display:block;height:100%;background:var(--cop)}.cx-pbar.hi i{background:var(--risk,#B4452F)}
 .cx-bad{color:var(--risk,#B4452F);font-size:13px}
 .cx-code{text-align:center;border:1px dashed var(--cop);border-radius:14px;padding:14px;background:var(--cop-s,#C47F3D1f)}.cx-code strong{display:block;font:700 28px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.14em;margin:8px 0}.cx-code a{color:var(--cop-d,#9A5F2A);font-weight:700;overflow-wrap:anywhere}
 .cx-ac .cx-a{margin-top:2px}.cx-ac .cx-b{min-height:36px;padding:0 12px;font-size:13px}
@@ -1024,7 +1024,7 @@ export function mountDrive(el: HTMLElement): () => void {
           a.usedBytes === null
             ? ''
             : a.limitBytes
-              ? `<div class="cx-bar ${pct! >= 90 ? 'hi' : ''}" role="img" aria-label="${pct}%"><i style="width:${pct}%"></i></div><p class="cx-m"><span>${fmtBytes(a.usedBytes)}</span> <span>of</span> <span>${fmtBytes(a.limitBytes)}</span> <span>used</span></p>`
+              ? `<div class="cx-pbar ${pct! >= 90 ? 'hi' : ''}" role="img" aria-label="${pct}%"><i style="width:${pct}%"></i></div><p class="cx-m"><span>${fmtBytes(a.usedBytes)}</span> <span>of</span> <span>${fmtBytes(a.limitBytes)}</span> <span>used</span></p>`
               : `<p class="cx-m"><span>${fmtBytes(a.usedBytes)}</span> <span>used</span></p>`;
         const last = d.accounts.length;
         return `<div class="cx-ac ${a.state === 'paused' ? 'off' : ''}" data-id="${esc(a.id)}">

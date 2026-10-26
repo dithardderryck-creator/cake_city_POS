@@ -153,7 +153,8 @@ nav.xtabs svg{flex:none;width:18px;height:18px}
 .cdn{font-size:13px;font-weight:600;color:var(--mute);white-space:nowrap}.risk .cdn,.cdn.risk{color:var(--risk)}.hot .cdn,.cdn.hot{color:var(--cop-d)}.risk .cdn{animation:pl 1.6s ease-in-out infinite}
 @keyframes pl{50%{opacity:.45}}@media(prefers-reduced-motion:reduce){.risk .cdn{animation:none}}
 #v-queue .split{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}#dt{position:sticky;top:calc(var(--hh,120px) + 16px);max-height:calc(100dvh - var(--hh,120px) - 32px);overflow:auto}
-.bk{display:none;margin-bottom:10px}.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bk{display:none;margin-bottom:10px}@media(max-width:900px){#udet.is-empty{display:none}}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .ph{display:flex;gap:10px;overflow-x:auto;margin:8px 0 4px}.ph div{flex:none;width:150px;height:96px;border-radius:12px;background:linear-gradient(135deg,var(--cop-s),var(--sage-s));border:1px solid var(--line);display:flex;align-items:flex-end;padding:8px;font-size:12px;color:var(--mute)}
 .rr{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
 .rm{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:calc(24px + env(safe-area-inset-top,0px)) clamp(16px,3vw,40px) 24px}.rm>div{max-width:760px;margin:0 auto}
@@ -217,8 +218,9 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 </nav>
 <main>
 <div id="ntc"></div>
-<section id="v-stock"><header><div><h1>Stock</h1><p class="sub" id="ssub"></p></div><div class="acts"><button class="b" data-a="nitem">New item</button><button class="find" id="open" aria-label="Search"><span>Search stock, reports</span><kbd>Ctrl K</kbd></button></div></header>
+<section id="v-stock"><header><div><h1>Stock</h1><p class="sub" id="ssub"></p></div></header>
 <div class="nd" id="sneed"></div>
+<div class="acts" style="margin:0 0 14px"><button class="b" data-a="nitem">New item</button><button class="find" id="open" aria-label="Search"><span>Search stock, reports</span><kbd>Ctrl K</kbd></button></div>
 <div class="seg" id="itabs" role="group" aria-label="Stock type"><button data-a="itab" data-k="ingredient" aria-pressed="true">Ingredients</button><button data-a="itab" data-k="packaging" aria-pressed="false">Packaging</button></div>
 <div class="sg" id="sg"></div></section>
 <section id="v-usage" hidden><header><div><h1>Usage reports</h1><p class="sub">Bakers report ranges. You confirm the exact amounts, and only then does stock drop.</p></div></header><div class="split"><div class="rl" id="ulist"></div><div class="card" id="udet"></div></div></section>
@@ -266,7 +268,7 @@ function newItem(){const d=Cake.dialog(`<h2>New stock item</h2><label for="ni-n"
 function ur(){const L=reports();if(!usel||!L.some(r=>r.reportId===usel))usel=L[0]?L[0].reportId:null;
  $("#ulist").innerHTML=L.map(r=>`<button class="rc" data-id="${esc(r.reportId)}" aria-selected="${r.reportId===usel}"><div class="row"><b>${esc(r.orderNumber)} · ${esc(r.cake.flavor)} cake</b><span class="tag ${r.status==="confirmed"?"":r.status==="sent_back"?"risk":"cop"}">${esc(r.statusLabel)}</span></div><span class="mute">From ${esc(r.reportedByName)} · ${esc(fmt(r.reportedAt))} · ${r.items.length} ingredient${r.items.length===1?"":"s"}</span></button>`).join("")||'<p class="empty">No usage reports yet.</p>';
  const r=L.find(x=>x.reportId===usel),sig=r?r.reportId+r.status:"";if(sig===udSig&&sig)return;udSig=sig;ud(r)}
-function ud(r){if(!r){$("#udet").innerHTML='<p class="empty">Select a report to confirm.</p>';return}const open=r.status==="reported"&&UIx.can.confirm;
+function ud(r){if(!r){$("#udet").classList.add("is-empty");$("#udet").innerHTML='<p class="empty">Select a report to confirm.</p>';return}$("#udet").classList.remove("is-empty");const open=r.status==="reported"&&UIx.can.confirm;
  $("#udet").innerHTML=`<div class="row"><h2>${esc(r.orderNumber)} · ${esc(r.cake.flavor)} cake</h2><span class="tag ${r.status==="confirmed"?"":r.status==="sent_back"?"risk":"cop"}">${esc(r.statusLabel)}</span></div><p class="mute" style="margin:2px 0 0">Reported by ${esc(r.reportedByName)} at ${esc(fmt(r.reportedAt))}.${open?" Stock only drops when you confirm.":""}</p>${r.note?`<p>${esc(r.note)}</p>`:""}${r.sentBackReason?`<div class="item risk" style="margin:8px 0"><small>Sent back: ${esc(r.sentBackReason)}</small></div>`:""}
  ${r.items.map(l=>`<div class="ln"><div><b>${esc(l.name)}</b>${l.extra?' <span class="tag">Extra</span>':""}<div class="mute">Baker's range ${esc(l.rangeText)}${l.suggestedText?" · expected "+esc(l.suggestedText):""} · on hand ${esc(l.onHandText)}</div></div>${open?`<div style="text-align:right"><input class="ux" data-i="${esc(l.ingredientId)}" type="number" step="any" min="0" placeholder="${mid(l)}" aria-label="Exact amount of ${esc(l.name)} in ${l.unit}"> <span class="mute">${l.unit}</span></div>`:`<b>${esc(l.confirmedText||"Not confirmed")}${l.confirmedText?" used":""}</b>`}</div>`).join("")}
  ${open?'<div class="btns"><button class="b p" data-a="uok" data-id="'+esc(r.reportId)+'">Confirm with my amounts</button><button class="b" data-a="uacc" data-id="'+esc(r.reportId)+'">Accept ranges as reported</button><button class="b r" data-a="usb" data-id="'+esc(r.reportId)+'">Send back</button></div><p class="mute">Leave a box empty to use the middle of the baker\'s range.</p>':""}`}
