@@ -148,7 +148,7 @@ nav.xtabs svg{flex:none;width:18px;height:18px}
 @media(max-width:560px){.zboard{padding:0 14px 10px;border-radius:20px}.ztw{max-width:none}}
 .s6{grid-column:span 6}
 .lr{display:grid;grid-template-columns:110px 1.8fr 1fr 100px 1fr;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.lr:last-child{border:0}
-.lk{background:none;border:0;padding:0;font-weight:600;color:var(--cop-d);text-decoration:underline;text-underline-offset:3px}
+.lk{background:none;border:0;padding:0;font-weight:600;color:var(--cop-d);text-decoration:underline;text-underline-offset:3px}.savebar{position:sticky;bottom:-24px;margin:16px -24px -24px;padding:12px 24px 24px;background:var(--bg);border-top:1px solid var(--line);z-index:2}.bk{display:none;min-height:44px;align-items:center;margin:-6px 0 4px}@media(max-width:900px){.bk{display:inline-flex}}
 .mrow{margin-top:14px}.mrow .row b{font-weight:500}
 .mxw{overflow-x:auto;margin-top:10px}.mx{width:100%;border-collapse:collapse;min-width:520px}.mx th,.mx td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line)}.mx th:first-child,.mx td:first-child{text-align:left}.mx th{color:var(--mute);font-weight:500;font-size:13px}.mx td.y{color:var(--sage);font-weight:700}
 .pn{padding:12px 14px;border-radius:12px;background:var(--cop-s);margin:12px 0}.pn b{font:600 26px Fraunces,serif;letter-spacing:.2em}
@@ -248,7 +248,7 @@ nav.xtabs svg{flex:none;width:18px;height:18px}
 <header><div><h1>Staff</h1><p class="sub">Everyone signs in with a PIN, so every action is tied to a named person. Only you manage staff and PINs.</p></div><button class="b p" id="sfnew">Add staff</button></header>
 <div class="split"><div class="rl" id="sflist"></div><div class="card" id="sfdet"></div></div>
 <section class="card" id="dvc" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Devices</h2><span class="tag" id="dvn"></span></div><p class="mute" style="margin:2px 0 10px">Only devices registered here can open the system. Make a one-time code, then type it on the new device's sign-in page.</p><div id="dvb"></div></section>
-<section class="card" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Audit log</h2><select class="pr" id="auf" aria-label="Filter by person" style="width:auto"></select></div><ul class="tl" id="aul" style="margin-top:10px"></ul></section>
+<section class="card" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Audit log</h2><select class="pr" id="auf" aria-label="Filter by person" style="width:auto"></select></div><ul class="tl" id="aul" style="margin-top:10px"></ul><button class="b" id="aum" hidden style="margin-top:10px">Show more</button></section>
 </section>
 <section id="v-reports" hidden>
 <header><div><h1>Reports</h1><p class="sub">How the shop is doing, and where money and stock are leaking.</p></div><div class="seg" id="rpr" role="group" aria-label="Range"><button aria-pressed="true" data-r="7">7 days</button><button aria-pressed="false" data-r="30">30 days</button></div></header>
@@ -560,15 +560,15 @@ $("#dpn").addEventListener("change",e=>{if(drMode==="day"&&e.target.hasAttribute
 $("#eod").onclick=dayOpen;
 
 /* ---------- staff ---------- */
-let sfs=null,sfm=null,auw="all";
+let sfs=null,sfm=null,auw="all",aun=25;
 const sst=u=>!u.active?["Deactivated","risk"]:u.locked?["Locked","cop"]:["Active",""];
 const LVL=[["off","Off"],["critical","Critical alerts only"],["all","All alerts"]];
 function sfr(){const L=D.staff||[],me=Cake.me();if(!sfs&&L.length)sfs=L[0].id;
  $("#sflist").innerHTML=L.map(u=>{const s=sst(u);return`<button class="rc" data-id="${E(u.id)}" aria-selected="${u.id===sfs&&!sfm}"><div class="row"><b>${E(u.name)}</b><span class="tag ${s[1]}">${s[0]}</span></div><span class="mute">${E(ROLE_L[u.role]||u.role)}</span></button>`}).join("");
  keep($("#sfdet"),()=>{const u=L.find(x=>x.id===sfs);
-  if(sfm==="add")$("#sfdet").innerHTML=`<h2>Add staff</h2><label class="fl"><span>Name</span><input data-k="an" placeholder="For example, Rehema" maxlength="60"></label><label class="fl"><span>Role</span><select data-k="ar"><option value="cashier">Cashier</option><option value="baker">Baker</option><option value="inventory">Inventory</option><option value="it">IT</option></select></label><label class="fl"><span>PIN (4 to 6 digits)</span><input data-k="ap" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Choose a PIN"></label><div class="btns"><button class="b p" data-s="create">Create account</button><button class="b" data-s="no">Cancel</button></div>`;
+  if(sfm==="add")$("#sfdet").innerHTML=`<button class="lk bk" data-s="back">← All staff</button><h2>Add staff</h2><label class="fl"><span>Name</span><input data-k="an" placeholder="For example, Rehema" maxlength="60"></label><label class="fl"><span>Role</span><select data-k="ar"><option value="cashier">Cashier</option><option value="baker">Baker</option><option value="inventory">Inventory</option><option value="it">IT</option></select></label><label class="fl"><span>PIN (4 to 6 digits)</span><input data-k="ap" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Choose a PIN"></label><div class="btns"><button class="b p" data-s="create">Create account</button><button class="b" data-s="no">Cancel</button></div>`;
   else if(u){const s=sst(u),own=u.role==="owner"||u.id===(me&&me.userId),hist=(D.audit||[]).filter(a=>a.who===u.name&&a.outcome==="ok").slice(0,4);
-   $("#sfdet").innerHTML=`<div class="row"><h2>${E(u.name)}</h2><span class="tag ${s[1]}">${s[0]}</span></div><p class="mute" style="margin:2px 0 0">${E(ROLE_L[u.role]||u.role)}</p>
+   $("#sfdet").innerHTML=`<button class="lk bk" data-s="back">← All staff</button><div class="row"><h2>${E(u.name)}</h2><span class="tag ${s[1]}">${s[0]}</span></div><p class="mute" style="margin:2px 0 0">${E(ROLE_L[u.role]||u.role)}</p>
    ${own?'<p class="mute">This is the owner account. It cannot be deactivated, removed or change role.</p>':`<label class="fl"><span>Role</span><select data-k="rl">${["cashier","baker","inventory","it"].map(r=>`<option value="${r}" ${r===u.role?"selected":""}>${ROLE_L[r]}</option>`).join("")}</select></label><div class="btns"><button class="b" data-s="role">Save role</button><button class="b ${u.active?"":"p"}" data-s="tog">${u.active?"Deactivate":"Reactivate"}</button><button class="b" data-s="del">Remove</button></div><p class="mute" style="margin-top:6px">Deactivate keeps the person and can be undone. Remove deletes them for good; their past sales and actions stay in the records under their name.</p>`}
    <label class="fl"><span>New PIN (4 to 6 digits)</span><input data-k="np" inputmode="numeric" maxlength="6" autocomplete="off"></label><div class="btns"><button class="b" data-s="pin">Set PIN</button><button class="b" data-s="sug">Suggest one</button></div>
    <h2 style="font-size:15px;margin-top:20px">Alerts outside the app</h2><label class="fl"><span>Phone</span><input data-k="ph" value="${E(u.contact.phone||"")}" inputmode="tel" maxlength="40"></label><label class="fl"><span>Text message</span><select data-k="sm">${LVL.map(x=>`<option value="${x[0]}" ${x[0]===u.contact.sms?"selected":""}>${x[1]}</option>`).join("")}</select></label><label class="fl"><span>WhatsApp</span><select data-k="wa">${LVL.map(x=>`<option value="${x[0]}" ${x[0]===u.contact.whatsapp?"selected":""}>${x[1]}</option>`).join("")}</select></label><div class="btns"><button class="b" data-s="contact">Save contact</button></div>
@@ -576,11 +576,15 @@ function sfr(){const L=D.staff||[],me=Cake.me();if(!sfs&&L.length)sfs=L[0].id;
   else $("#sfdet").innerHTML='<p class="empty">Pick someone to see their details.</p>'});
  const names=[...new Set((D.audit||[]).map(a=>a.who))];if(auw!=="all"&&!names.includes(auw))auw="all";
  $("#auf").innerHTML='<option value="all">Everyone</option>'+names.map(n=>`<option ${auw===n?"selected":""}>${E(n)}</option>`).join("");
- $("#aul").innerHTML=(D.audit||[]).filter(a=>auw==="all"||a.who===auw).slice(0,60).map(a=>`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span><b>${E(a.who)}</b>${a.role?` <span class="mute">(${E(ROLE_L[a.role]||a.role)})</span>`:""} · ${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`).join("")||'<li><span class="mute">No actions recorded for this person.</span></li>'}
-$("#sflist").onclick=e=>{const b=e.target.closest(".rc");if(!b)return;sfs=b.dataset.id;sfm=null;sfr()};
-$("#sfnew").onclick=()=>{sfm="add";sfr();const i=$("#sfdet [data-k=an]");i&&i.focus()};
-$("#auf").onchange=e=>{auw=e.target.value;sfr()};
-$("#sfdet").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const k=b.dataset.s,u=(D.staff||[]).find(x=>x.id===sfs),v=n=>($("#sfdet").querySelector(`[data-k="${n}"]`)||{value:""}).value.trim();
+ const al=(D.audit||[]).filter(a=>auw==="all"||a.who===auw);
+ $("#aul").innerHTML=al.slice(0,aun).map(a=>{const rl=a.role?ROLE_L[a.role]||a.role:"",said=a.summary.startsWith(a.who),who=said?"":`<b>${E(a.who)}</b>${rl&&!a.who.includes(rl)?` <span class="mute">(${E(rl)})</span>`:""} · `;return`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span>${who}${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`}).join("")||'<li><span class="mute">No actions recorded for this person.</span></li>';
+ $("#aum").hidden=al.length<=aun;}
+const toDet=()=>{if(matchMedia("(max-width:900px)").matches)$("#sfdet").scrollIntoView({behavior:"smooth",block:"start"})};
+$("#sflist").onclick=e=>{const b=e.target.closest(".rc");if(!b)return;sfs=b.dataset.id;sfm=null;sfr();toDet()};
+$("#sfnew").onclick=()=>{sfm="add";sfr();toDet();const i=$("#sfdet [data-k=an]");i&&i.focus({preventScroll:true})};
+$("#auf").onchange=e=>{auw=e.target.value;aun=25;sfr()};
+$("#aum").onclick=()=>{aun+=25;sfr()};
+$("#sfdet").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const k=b.dataset.s;if(k==="back"){$("#sflist").scrollIntoView({behavior:"smooth",block:"start"});return}const u=(D.staff||[]).find(x=>x.id===sfs),v=n=>($("#sfdet").querySelector(`[data-k="${n}"]`)||{value:""}).value.trim();
  if(k==="no"){sfm=null;sfr()}
  else if(k==="sug"){const n=crypto.getRandomValues(new Uint32Array(1))[0]%10000;$("#sfdet [data-k=np]").value=String(n).padStart(4,"0")}
  else if(k==="create"){const n=v("an"),p=v("ap");if(!n){Cake.toast("Enter a name.");return}if(!/^\d{4,6}$/.test(p)){Cake.toast("A PIN is 4 to 6 digits.");return}
@@ -598,7 +602,7 @@ function dvr(){const d=D.dev;if(!d){$("#dvb").innerHTML='<p class="mute">Loading
  if(dvcode&&(Date.parse(dvcode.expiresAt)<Date.now()||(dvcode.replaces?!d.devices.some(x=>x.id===dvcode.replaces):d.devices.some(x=>x.name===dvcode.name))))dvcode=null;
  $("#dvn").textContent=d.devices.length+" registered";
  keep($("#dvb"),()=>{
-  $("#dvb").innerHTML=(d.required?"":'<p class="tag risk" style="white-space:normal">The device check is switched off on this server, so any device can sign in. Turn it on with REQUIRE_DEVICE=1.</p>')
+  $("#dvb").innerHTML=(d.required?"":'<p class="tag risk" style="white-space:normal">The device check is switched off on this server, so any device can sign in. Ask whoever looks after the server to turn it on.</p>')
   +(d.devices.length?'<ul class="list">'+d.devices.map(x=>`<li><div class="row" style="flex-wrap:wrap;gap:8px"><div><b>${E(x.name)}</b>${x.isThis?' <span class="tag cop">This device</span>':""}<br><span class="mute">Added by ${E(x.createdByName)} · ${E(when(x.createdAt))} · ${x.lastSeenAt?"last used "+E(when(x.lastSeenAt)):"not used yet"}</span></div><div class="btns" style="margin:0"><button class="b" data-v="ren" data-id="${E(x.id)}">Rename</button>${x.isThis?"":`<button class="b" data-v="rep" data-id="${E(x.id)}" title="For a browser that lost its registration">Re-register</button><button class="b" data-v="rev" data-id="${E(x.id)}">Revoke</button>`}</div></div></li>`).join("")+"</ul>":'<p class="empty">No devices are registered yet. Make a code below, then register the first one.</p>')
   +(dvcode?`<div class="card" style="margin:12px 0;background:var(--cop-s);text-align:center"><p class="mute" style="margin:0">Code for ${E(dvcode.name)}${dvcode.replaces?" (replaces the old registration once used)":""}. Type it on that device. It works once, until ${E(hhmm(dvcode.expiresAt))}.</p><div class="big num" style="letter-spacing:.2em" id="dvcode">${E(dvcode.code)}</div><div class="btns" style="justify-content:center"><button class="b" data-v="done">Done</button></div></div>`:"")
   +(d.openCodes.length?'<h2 style="font-size:15px;margin-top:14px">Waiting for a device</h2><ul class="list">'+d.openCodes.map(c=>`<li><div class="row"><span><b>${E(c.name)}</b> <span class="mute">· expires ${E(hhmm(c.expiresAt))}</span></span><button class="b" data-v="cx" data-id="${E(c.id)}">Cancel code</button></div></li>`).join("")+"</ul>":"")
@@ -666,7 +670,7 @@ function renderSettings(){const s=D.shop;if(!s)return;if(setSec!=="online")Cake.
  if(!setSec){drawer(`<div class="row"><h2>Settings</h2><button class="b" data-d="close">Close</button></div><p class="mute" style="margin:2px 0 12px">Shop-wide rules. Your own PIN, alerts and theme are under your name at the top.</p>
  <div class="seclist">${SECS.map(([k,t,d])=>{const c=secChip(k,s);return`<button class="secrow" data-d="sec" data-s="${k}"><span><b>${t}</b><small class="mute">${d}</small></span>${c?`<span class="tag ${c==="On"?"":"cop"}">${c}</span>`:""}<span aria-hidden="true">›</span></button>`}).join("")}</div>`);return}
  const row=SECS.find(x=>x[0]===setSec);
- drawer(`<div class="row"><button class="b" data-d="secback">‹ Settings</button><button class="b" data-d="close">Close</button></div><h2 style="margin:14px 0 4px">${row[1]}</h2>${secBody[setSec](s)}${setSec==="online"?"":`<div class="btns"><button class="b p" data-d="secsave">Save</button></div>`}`);if(setSec==="online")Cake.mountDrive($("#dpn #drv"))}
+ drawer(`<div class="row"><button class="b" data-d="secback">‹ Settings</button><button class="b" data-d="close">Close</button></div><h2 style="margin:14px 0 4px">${row[1]}</h2>${secBody[setSec](s)}${setSec==="online"?"":`<div class="btns savebar"><button class="b p" data-d="secsave">Save</button></div>`}`);if(setSec==="online")Cake.mountDrive($("#dpn #drv"))}
 async function saveSettings(){const v=n=>($("#dpn").querySelector(`[data-k="${n}"]`)||{value:""}),t=n=>v(n).value.trim(),k=setSec;
  if(k==="shop"){if(!t("sn")){Cake.toast("The shop needs a name.");return}await Cake.send("settings/update",{shopName:t("sn"),shopAddress:t("sa")||null,shopPhone:t("sp")||null,receiptFooter:t("sf")||null},"Shop details saved")}
  else if(k==="language")await Cake.send("settings/update",{language:v("sl").value},"Language saved")

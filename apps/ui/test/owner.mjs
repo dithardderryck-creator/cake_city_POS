@@ -209,6 +209,15 @@ try {
   await page.click('#sfdet [data-s="tog"]');
   await until(async () => /Deactivated/.test(await txt(page, '#sflist .rc:has-text("Rehema")')), 'deactivated');
   assert.match(await txt(page, '#aul'), /Rehema/, 'audit log lists it');
+  // The audit log shows the latest 25 and offers more; the person's name is not repeated in each line.
+  const auRows = await page.locator('#aul li').count();
+  assert.ok(auRows <= 25, 'audit log is capped at 25 rows, got ' + auRows);
+  if (auRows === 25) {
+    assert.equal(await page.locator('#aum').isVisible(), true, 'Show more is offered');
+    await page.click('#aum');
+    assert.ok((await page.locator('#aul li').count()) > 25, 'Show more adds rows');
+  }
+  assert.doesNotMatch(await txt(page, '#aul'), /\((Owner|Cashier|Baker|Inventory|IT)\)[^\n]*\((Owner|Cashier|Baker|Inventory|IT)\)/, 'a name and role are not repeated');
   await page.screenshot({ path: `${shots}/staff.png` });
 
   // settings

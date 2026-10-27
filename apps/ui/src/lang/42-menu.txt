@@ -24,3 +24,6 @@ Show fewer ||| Onyesha chache
 {n} usage report waiting for Inventory to confirm ||| Ripoti {n} ya matumizi inasubiri Stoo ithibitishe
 {n} usage reports waiting for Inventory to confirm ||| Ripoti {n} za matumizi zinasubiri Stoo zithibitishe
 What the cashier can sell. Each cake is one row. Hidden items and items without a price never reach the counter. ||| Vitu ambavyo keshia anaweza kuuza. Kila keki iko kwenye safu moja. Vitu vilivyofichwa na vile visivyo na bei havifiki kaunta.
+← All staff ||| ← Wafanyakazi wote
+Show more ||| Onyesha zaidi
+The device check is switched off on this server, so any device can sign in. Ask whoever looks after the server to turn it on. ||| Ukaguzi wa vifaa umezimwa kwenye seva hii, kwa hiyo kifaa chochote kinaweza kuingia. Mwombe anayetunza seva auwashe.
