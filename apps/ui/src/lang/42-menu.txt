@@ -27,3 +27,75 @@ What the cashier can sell. Each cake is one row. Hidden items and items without 
 ← All staff ||| ← Wafanyakazi wote
 Show more ||| Onyesha zaidi
 The device check is switched off on this server, so any device can sign in. Ask whoever looks after the server to turn it on. ||| Ukaguzi wa vifaa umezimwa kwenye seva hii, kwa hiyo kifaa chochote kinaweza kuingia. Mwombe anayetunza seva auwashe.
+Health ||| Afya
+Records ||| Rekodi
+Backups ||| Nakala rudufu
+Watch ||| Fuatilia
+Connect ||| Unganisha
+Devices and location ||| Vifaa na mahali
+Backups and Google ||| Nakala rudufu na Google
+Backups and sync ||| Nakala rudufu na usawazishaji
+Sync and backups ||| Usawazishaji na nakala rudufu
+Devices and tills ||| Vifaa na kaunta
+Errors and sign-ins ||| Hitilafu na kuingia
+Server ||| Seva
+System details ||| Maelezo ya mfumo
+Normal ||| Kawaida
+Nothing needs you. Everything is working. ||| Hakuna kinachokuhitaji. Kila kitu kinafanya kazi.
+What needs you first, then how each part of the shop system is doing. ||| Kinachokuhitaji kwanza, kisha hali ya kila sehemu ya mfumo wa duka.
+What was done in the shop system, by whom, newest first. This is a plain list for now; sealing every record so it cannot be changed unseen comes next. ||| Kilichofanywa kwenye mfumo wa duka, na nani, vya karibuni kwanza. Kwa sasa ni orodha ya kawaida; kufunga kila rekodi ili isibadilishwe bila kuonekana kunafuata.
+Who did what ||| Nani alifanya nini
+Everything ||| Kila kitu
+Only refused ||| Zilizokataliwa tu
+Send changes now ||| Tuma mabadiliko sasa
+Send a full copy ||| Tuma nakala kamili
+Waiting to upload ||| Inasubiri kupakiwa
+Backup file ||| Faili ya nakala rudufu
+Last problem ||| Tatizo la mwisho
+Last good backup ||| Nakala rudufu ya mwisho iliyofaulu
+Last good backup: {*} ||| Nakala rudufu ya mwisho iliyofaulu: {*}
+Last good backup: {*} · {*} waiting ||| Nakala rudufu ya mwisho iliyofaulu: {*} · {*} zinasubiri
+None yet ||| Bado hakuna
+none yet ||| bado hakuna
+Copies of the shop's records, and where they go. ||| Nakala za rekodi za duka, na zinakokwenda.
+{n} failed ||| {n} zimeshindwa
+{n} of {n} seen ||| {n} kati ya {n} zimeonekana
+{n} signed in ||| {n} wameingia
+{n} refused since the server started ||| {n} zimekataliwa tangu seva ilipowashwa
+{n} refused since the server started · {n} failed ||| {n} zimekataliwa tangu seva ilipowashwa · {n} zimeshindwa
+All registered devices used today ||| Vifaa vyote vilivyosajiliwa vimetumika leo
+{*} quiet for a day or more ||| {*} kimekaa kimya kwa siku moja au zaidi
+{n} device quiet ||| Kifaa {n} kimekaa kimya
+{n} devices quiet ||| Vifaa {n} vimekaa kimya
+{n} of {n} registered devices seen in the last hour. ||| Vifaa {n} kati ya {n} vilivyosajiliwa vimeonekana saa iliyopita.
+{n} of {n} registered devices seen in the last hour. {*} has been quiet for a day or more. ||| Vifaa {n} kati ya {n} vilivyosajiliwa vimeonekana saa iliyopita. {*} kimekaa kimya kwa siku moja au zaidi.
+{n} of {n} registered devices seen in the last hour. {*} have been quiet for a day or more. ||| Vifaa {n} kati ya {n} vilivyosajiliwa vimeonekana saa iliyopita. {*} vimekaa kimya kwa siku moja au zaidi.
+No devices are registered yet. ||| Bado hakuna kifaa kilichosajiliwa.
+Let in ||| Mruhusu aingie
+Let back in ||| Ameruhusiwa kuingia tena
+{*} is locked out ||| {*} amefungiwa
+Too many wrong PINs. Locked until {*} ||| PIN mbaya mara nyingi. Amefungiwa hadi {*}
+Sign-in ||| Kuingia
+Sync ||| Usawazishaji
+Google needs a look ||| Google inahitaji kuangaliwa
+Google needs a look: {*} ||| Google inahitaji kuangaliwa: {*}
+Backups and the Drive copy may be paused ||| Nakala rudufu na nakala ya Drive zinaweza kuwa zimesimama
+The last backup failed ||| Nakala rudufu ya mwisho imeshindwa
+{n} change failed to sync ||| Badiliko {n} limeshindwa kusawazishwa
+{n} changes failed to sync ||| Mabadiliko {n} yameshindwa kusawazishwa
+They are kept and will be tried again ||| Yamehifadhiwa na yatajaribiwa tena
+{*} not seen for {*} ||| {*} hakijaonekana kwa {*}
+Last seen {*} ||| Kilionekana mara ya mwisho {*}
+Never used since it was registered ||| Hakijatumika tangu kilipowekwa
+a while ||| muda
+{n} hours ||| saa {n}
+{n} minutes ||| dakika {n}
+{n} sent, {n} still waiting ||| {n} zimetumwa, {n} bado zinasubiri
+{n} sent. Nothing is waiting. ||| {n} zimetumwa. Hakuna kinachosubiri.
+Nothing was waiting. ||| Hakuna kilichokuwa kinasubiri.
+{n} records queued to send ||| Rekodi {n} zimewekwa kwenye foleni ya kutumwa
+Let {*} back in after a lockout ||| Amemruhusu {*} aingie tena baada ya kufungiwa
+{*} is not locked out. ||| {*} hajafungiwa.
+version {*} ||| toleo {*}
+schema {n} ||| schema {n}
+{*} MB, schema {*} · version {*} ||| {*} MB, schema {*} · toleo {*}

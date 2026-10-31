@@ -1,4 +1,5 @@
 import type { PushSubscriptionRecord, Staff } from '../domain';
+import type { LoginState } from './pin';
 import { DomainError, type Registry } from '../intents';
 
 const PIN = /^\d{4,6}$/;
@@ -78,6 +79,23 @@ export const staffIntents = {
       await ctx.store.delete('loginState', staff.id);
       for (const sub of await ctx.store.find<PushSubscriptionRecord>('pushSubscriptions', { where: { userId: staff.id } })) await ctx.store.delete('pushSubscriptions', sub.id);
       return { summary: `Removed ${staff.name}`, target: staff.id, events: [{ type: 'StaffRemoved', payload: { userId: staff.id } }] };
+    },
+  },
+
+  'staff/unlock': {
+    circuit: 'Staff',
+    roles: ['owner', 'it'],
+    validate: async (p, ctx) => {
+      const target = await ctx.store.get<Staff>('staff', p.userId);
+      if (!target || target.removedAt) return ['That person no longer exists.'];
+      const st = await ctx.store.get<LoginState>('loginState', p.userId);
+      if (!st?.lockedUntil || Date.parse(st.lockedUntil) <= ctx.clock.now().getTime()) return [`${target.name} is not locked out.`];
+      return [];
+    },
+    handle: async (p, ctx) => {
+      const staff = (await ctx.store.get<Staff>('staff', p.userId))!;
+      await ctx.store.put<LoginState>('loginState', { id: staff.id, failures: 0, lockCount: 0 });
+      return { summary: `Let ${staff.name} back in after a lockout`, target: staff.id };
     },
   },
 

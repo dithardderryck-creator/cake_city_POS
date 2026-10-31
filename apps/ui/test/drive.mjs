@@ -92,6 +92,7 @@ try {
 
   /* IT sees and manages the same accounts, and sees when one is full. */
   const it = await open('it');
+  await it.click('nav.xtabs [data-v="backups"]');
   await it.waitForSelector('#drv .cx-ac[data-id]');
   assert.deepEqual(await emails(it), ['b@example.com', 'owner@example.com']);
   g.setLimit('b@example.com', 5 * MB);

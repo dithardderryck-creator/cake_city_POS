@@ -124,6 +124,14 @@ Allowed: **owner**
 | --- | --- | --- | --- |
 | `userId` | string | yes | min length 1, max length 64 |
 
+#### `staff/unlock`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `userId` | string | yes | min length 1, max length 64 |
+
 #### `staff/set_role`
 
 Allowed: **owner**
@@ -1175,7 +1183,7 @@ _No fields. Send an empty object `{}`._
 
 #### `audit_view`
 
-Allowed: **owner**
+Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 

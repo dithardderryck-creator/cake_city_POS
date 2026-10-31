@@ -96,6 +96,7 @@ try {
   /* IT is never held, and can switch the check off. */
   const itp = await page('it', FAR);
   assert.equal(await lobby(itp.p), false, 'IT is never held');
+  await itp.p.click('nav.xtabs [data-v="devices"]');
   await itp.p.waitForSelector('#locb [data-k="le"]');
   await itp.p.uncheck('#locb [data-k="le"]');
   await itp.p.click('#locb [data-v="save"]');

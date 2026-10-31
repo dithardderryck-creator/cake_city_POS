@@ -263,6 +263,10 @@ export interface PanelMapData {
   activeSessions: number;
   backup: BackupStatus | null;
   system: { label: string; value: string }[];
+  /** People shut out by wrong PINs right now. */
+  lockedOut: { id: string; name: string; role: Role; until: string }[];
+  /** Registered devices seen in the last hour, and the ones that have been quiet for a day or more. */
+  selling: { state: 'normal'; devices: number; online: number; quiet: { name: string; since: string | null }[] };
 }
 
 export interface StaffSigninRow {
@@ -1791,7 +1795,7 @@ export const feeds: FeedRegistry = {
   },
 
   audit_view: {
-    roles: ['owner'],
+    roles: ['owner', 'it'],
     build: async ({ store }) =>
       (await store.find<AuditEntry>('audit', { orderBy: { field: 'at', dir: 'desc' }, limit: 200 })).map((a) => ({
         id: a.id,
@@ -1814,6 +1818,9 @@ export const feeds: FeedRegistry = {
         terminals.system ? terminals.system.info() : Promise.resolve([]),
       ]);
       const nowMs = clock.now().getTime();
+      const [staffAll, logins, devsAll] = await Promise.all([store.list<Staff>('staff'), store.list<LoginState>('loginState'), store.list<Device>('devices')]);
+      const locks = new Map(logins.filter((l) => l.lockedUntil && Date.parse(l.lockedUntil) > nowMs).map((l) => [l.id, l.lockedUntil!]));
+      const devs = devsAll.filter((d) => !d.revokedAt);
       const s = stats();
       const live = [...s.entries()].map(([name, st]) => ({ name, status: 'live' as const, ...st }));
       const planned = PLANNED_CIRCUITS.map((name) => ({
@@ -1853,6 +1860,17 @@ export const feeds: FeedRegistry = {
         activeSessions: sessions.filter((x) => Date.parse(x.expiresAt) > nowMs).length,
         backup,
         system,
+        lockedOut: staffAll
+          .filter((p) => !p.removedAt && locks.has(p.id))
+          .map((p) => ({ id: p.id, name: p.name, role: p.role, until: locks.get(p.id)! })),
+        selling: {
+          state: 'normal' as const,
+          devices: devs.length,
+          online: devs.filter((d) => d.lastSeenAt && nowMs - Date.parse(d.lastSeenAt) <= 3_600_000).length,
+          quiet: devs
+            .filter((d) => !d.lastSeenAt || nowMs - Date.parse(d.lastSeenAt) >= 86_400_000)
+            .map((d) => ({ name: d.name, since: d.lastSeenAt ?? null })),
+        },
       };
     },
   },

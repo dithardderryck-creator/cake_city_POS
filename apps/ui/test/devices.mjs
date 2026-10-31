@@ -148,6 +148,7 @@ try {
   await itp.waitForSelector('#pick button');
   await signInAs(itp, shop.base, 'it');
   await itp.waitForURL('**/it.html');
+  await itp.click('nav.xtabs [data-v="devices"]');
   await itp.waitForSelector('#dvb .list');
   assert.match(await itp.innerText('#dvb'), /Back phone/);
   await itp.screenshot({ path: `${shots}/it-devices.png` });

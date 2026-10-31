@@ -13,12 +13,7 @@
 button,input{font:inherit;color:inherit}button{cursor:pointer}
 :focus-visible{outline:2px solid var(--cop);outline-offset:2px}
 h1,h2,.num{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
-.bar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
-.bar>div{display:flex;align-items:center;gap:12px;max-width:1100px;margin:0 auto;padding:12px clamp(16px,3vw,32px)}
-.brand{font:600 20px Fraunces,serif;margin-right:auto}.brand i{font-style:normal;color:var(--cop)}
-.who{display:flex;align-items:center;gap:10px;color:var(--mute)}.who b{color:var(--ink);font-weight:600}
 .tag{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--paper);color:var(--mute);font-size:12px;font-weight:600}.tag.cop{background:var(--cop-s);color:var(--cop-d)}.tag.risk{background:var(--risk-s);color:var(--risk)}.tag.ok{background:var(--sage-s);color:var(--sage)}
-.ib{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surf);color:var(--mute);transition:border-color .3s,color .3s}.ib:hover{border-color:var(--cop);color:var(--ink)}.ib svg{width:18px;height:18px}
 main{max-width:1100px;margin:0 auto;padding:24px clamp(16px,3vw,32px) 56px}
 h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01em}.sub{color:var(--mute);margin:2px 0 22px}
 h2{font-size:17px;font-weight:600;margin:0}
@@ -36,37 +31,129 @@ input:focus-visible{border-color:var(--cop)}
 .kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 18px;margin:12px 0 0}.kv dt{color:var(--mute)}.kv dd{margin:0}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;opacity:0;transition:all .4s var(--ease);z-index:30;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-@media(max-width:560px){.who .nm{display:none}}
+html{scroll-padding-top:calc(var(--hh,120px) + 8px)}
+nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:11;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:4px clamp(16px,3vw,40px)}
+nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
+nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
+nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}
+@container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}nav.xtabs button{padding:5px 2px;font-size:12px;min-height:38px}}
+@media(max-width:540px){nav.xtabs{position:static}}
+main>section[hidden]{display:none}
+.ck{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px}
+.ck .card{margin:0;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:104px;cursor:pointer;font:inherit;color:inherit}
+.ck .card:hover{border-color:var(--cop)}
+.nd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}.nd:first-child{border-top:0}
+.nd .go{background:none;border:0;padding:0;text-align:left;flex:1 1 220px;min-width:0}
+.sell{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.audl{list-style:none;margin:10px 0 0;padding:0}.audl li{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.audl li:first-child{border-top:0}.audl time{min-width:90px;color:var(--mute);flex:none}
+.tag.warn{background:#F6E3CB;color:#7A4A18}
 </style>
 <link rel="stylesheet" href="/forms.css">
 </head>
 <body>
-<div class="bar"><div>
-<div class="brand">Cake <i>POS</i></div>
-<div class="who"><span class="tag cop">IT</span><b class="nm" id="nm"></b></div>
-<button class="ib" id="theme" aria-label="Switch theme" title="Switch theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-<button class="ib" id="out" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
-</div></div>
+<div class="xhead"></div>
+<nav class="xtabs" aria-label="Main">
+<button data-v="health" aria-current="page">Health</button>
+<button data-v="devices">Devices</button>
+<button data-v="records">Records</button>
+<button data-v="backups">Backups</button>
+</nav>
 <main>
+<div id="ntc"></div>
+
+<section id="v-health">
+<h1 id="hi">Health</h1>
+<p class="sub">What needs you first, then how each part of the shop system is doing.</p>
+<section class="card" id="sell"><div class="sell"><div><h2>Selling</h2><p class="mute" id="sellt" style="margin:2px 0 0"></p></div><span class="tag" id="sells"></span></div></section>
+<section class="card" id="nd"><div class="row"><h2>Needs you</h2><span class="tag" id="ndn"></span></div><div id="ndb"></div></section>
+<div class="ck" id="ck"></div>
+<section class="card" id="sys"><div class="row"><h2>System details</h2><span class="tag" id="sst"></span></div><dl class="kv" id="skv"></dl></section>
+</section>
+
+<section id="v-devices" hidden>
 <h1>Devices</h1>
 <p class="sub">Which phones, tablets and computers may open the shop system. Switching wifi or mobile data never signs a device out: it is recognised by what it keeps, not by where it is.</p>
 <section class="card" id="dvc"><div class="row"><h2>Registered devices</h2><span class="tag" id="dvn"></span></div><div id="dvb"></div></section>
 <section class="card" id="loc"><div class="row"><h2>Location check</h2><span class="tag" id="locs"></span></div><div id="locb"></div></section>
+</section>
+
+<section id="v-records" hidden>
+<h1>Records</h1>
+<p class="sub">What was done in the shop system, by whom, newest first. This is a plain list for now; sealing every record so it cannot be changed unseen comes next.</p>
+<section class="card"><div class="row"><h2>Who did what</h2><label class="mute" style="display:flex;gap:8px;align-items:center">Show <select id="auf" style="min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px"><option value="all">Everything</option><option value="bad">Only refused</option></select></label></div><ul class="audl" id="aul"></ul><div class="btns" style="margin-top:12px"><button class="b" id="aum" hidden>Show more</button></div></section>
+</section>
+
+<section id="v-backups" hidden>
+<h1>Backups</h1>
+<p class="sub">Copies of the shop's records, and where they go.</p>
+<section class="card" id="bk"><div class="row"><h2>Backups and sync</h2><span class="tag" id="bks"></span></div><dl class="kv" id="bkv"></dl><div class="btns" style="margin-top:14px"><button class="b" data-v="flush">Send changes now</button><button class="b" data-v="full">Send a full copy</button></div></section>
 <section class="card" id="drc"><div class="row"><h2>Google accounts</h2></div><div id="drv"></div></section>
-<section class="card" id="sys"><div class="row"><h2>System</h2><span class="tag" id="sst"></span></div><dl class="kv" id="skv"></dl></section>
+</section>
 </main>
 <script src="/cake.js"></script>
 <script>
-const $=s=>document.querySelector(s),E=Cake.esc,xroot=document.documentElement;
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],E=Cake.esc,xroot=document.documentElement;
 const hhmm=iso=>new Date(iso).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 const when=iso=>{const d=new Date(iso);return d.toDateString()===new Date().toDateString()?hhmm(iso):d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+hhmm(iso)};
-async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return await fn()}finally{b.disabled=false}}
+const ago=iso=>{if(!iso)return"never";const m=Math.max(0,Math.round((Date.now()-Date.parse(iso))/60000));return m<2?"just now":m<60?m+" minutes ago":m<1440?Math.round(m/60)+" hours ago":Math.round(m/1440)+" days ago"};
+async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return await fn()}finally{if(b.isConnected)b.disabled=false}}
 try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
-$("#theme").onclick=()=>{const dark=xroot.dataset.theme?xroot.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;xroot.dataset.theme=dark?"light":"dark";try{localStorage.setItem("theme",xroot.dataset.theme)}catch(e){}};
-$("#out").onclick=()=>Cake.signOut();
+let D={},view="health",CH=null;
+const TABS=["health","devices","records","backups"];
+function go(v){if(!TABS.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records")aur();scrollTo(0,0)}
+$$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
+
+/* ---------- health ---------- */
+function needs(){const m=D.map,out=[];if(!m)return out;
+ const dr=D.drv;if(dr)for(const a of dr.accounts)if(["needs_signin","error","unreachable","full"].includes(a.state))out.push({k:"g"+a.id,t:"Google needs a look"+(a.email?": "+a.email:""),s:a.problem||"Backups and the Drive copy may be paused",tag:"Backups",go:"backups"});
+ for(const p of m.lockedOut)out.push({k:"l"+p.id,t:p.name+" is locked out",s:"Too many wrong PINs. Locked until "+hhmm(p.until),tag:"Sign-in",risk:1,unlock:p.id});
+ if(m.backup&&m.backup.lastError)out.push({k:"b",t:"The last backup failed",s:m.backup.lastError,tag:"Backups",risk:1,go:"backups"});
+ if(m.outbox.failed>0)out.push({k:"o",t:m.outbox.failed+(m.outbox.failed===1?" change failed":" changes failed")+" to sync",s:"They are kept and will be tried again",tag:"Sync",risk:1,go:"backups"});
+ for(const q of m.selling.quiet)out.push({k:"q"+q.name,t:q.name+" not seen for "+(q.since?ago(q.since).replace(" ago",""):"a while"),s:q.since?"Last seen "+when(q.since):"Never used since it was registered",tag:"Devices",go:"devices"});
+ return out}
+function hr(){const m=D.map;if(!m)return;
+ const sl=m.selling,off=sl.devices-sl.online;
+ $("#sells").className="tag "+(sl.quiet.length?"warn":"ok");$("#sells").textContent=sl.quiet.length?sl.quiet.length+(sl.quiet.length===1?" device quiet":" devices quiet"):"Normal";
+ $("#sellt").textContent=sl.devices?sl.online+" of "+sl.devices+" registered devices seen in the last hour"+(sl.quiet.length?". "+sl.quiet.map(q=>q.name).join(", ")+(sl.quiet.length===1?" has":" have")+" been quiet for a day or more.":"."):"No devices are registered yet.";
+ const n=needs();$("#ndn").className="tag "+(n.length?"warn":"ok");$("#ndn").textContent=n.length?String(n.length):"Clear";CH&&CH.setBadge(n.length);
+ $("#ndb").innerHTML=n.length?n.map(x=>`<div class="nd"><button class="go" ${x.go?`data-go="${x.go}"`:""} ${x.unlock?"disabled":""} style="${x.go?"cursor:pointer":"cursor:default"}"><b>${E(x.t)}</b><br><span class="mute"><span class="tag ${x.risk?"risk":"warn"}" style="margin-right:6px">${E(x.tag)}</span>${E(x.s)}</span></button>${x.unlock?`<button class="b" data-unlock="${E(x.unlock)}">Let in</button>`:""}</div>`).join(""):'<p class="empty">Nothing needs you. Everything is working.</p>';
+ const bad=m.outbox.failed>0||(m.backup&&m.backup.lastError),gOk=!D.drv||D.drv.accounts.every(a=>a.state==="ok"||a.state==="paused"||a.state==="unknown");
+ const denied=m.circuits.reduce((a,c)=>a+c.denied+c.invalid,0),errs=m.circuits.reduce((a,c)=>a+c.errors,0);
+ const sysv=l=>(m.system.find(x=>x.label===l)||{}).value||"";
+ const tl=(c,t)=>`<span class="tag ${c}">${E(t)}</span>`;
+ $("#ck").innerHTML=[
+  ["backups","Sync and backups",tl(bad||!gOk?"risk":"ok",bad?"Failing":!gOk?"Google needs a look":"Working"),"Last good backup: "+(m.backup&&m.backup.lastOkAt?when(m.backup.lastOkAt):"none yet")+" · "+m.outbox.pending+" waiting"],
+  ["devices","Devices and tills",tl(off>0||m.selling.quiet.length?"warn":"ok",sl.online+" of "+sl.devices+" seen"),sl.quiet.length?sl.quiet[0].name+" quiet for a day or more":"All registered devices used today"],
+  ["records","Errors and sign-ins",tl(errs?"risk":"ok",m.activeSessions+" signed in"),denied+" refused since the server started · "+errs+" failed"],
+  ["health","Server",tl("ok",sysv("Uptime")||"Running"),(sysv("Database")||"")+(sysv("Version")?" · version "+sysv("Version"):"")]
+ ].map(c=>`<button class="card" data-go="${c[0]}"><span class="row"><b style="font-size:15px">${E(c[1])}</b>${c[2]}</span><span class="mute">${E(c[3])}</span></button>`).join("");
+ $("#sst").className="tag "+(bad?"risk":"ok");$("#sst").textContent=bad?"Needs a look":"All good";
+ const rows=[["Signed in now",String(m.activeSessions)],["Changes waiting to sync",String(m.outbox.pending)],["Failed syncs",String(m.outbox.failed)],...m.system.map(s=>[s.label,s.value])];
+ $("#skv").innerHTML=rows.map(r=>`<dt>${E(r[0])}</dt><dd>${E(r[1])}</dd>`).join("");
+ bkr()}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g&&g.dataset.go)return go(g.dataset.go);
+ const u=e.target.closest("[data-unlock]");if(u)guard(u,()=>Cake.send("staff/unlock",{userId:u.dataset.unlock},"Let back in"))});
+
+/* ---------- backups ---------- */
+function bkr(){const m=D.map;if(!m)return;const b=m.backup,bad=m.outbox.failed>0||(b&&b.lastError);
+ $("#bks").className="tag "+(bad?"risk":"ok");$("#bks").textContent=bad?"Needs a look":"Working";
+ const rows=[["Last good backup",b&&b.lastOkAt?when(b.lastOkAt):"None yet"],["Backup file",b&&b.lastFile?b.lastFile:"None yet"],["Waiting to upload",String(b?b.pendingUploads:0)],["Changes waiting to sync",String(m.outbox.pending)],["Failed syncs",String(m.outbox.failed)]];
+ if(b&&b.lastError)rows.splice(1,0,["Last problem",b.lastError]);
+ $("#bkv").innerHTML=rows.map(r=>`<dt>${E(r[0])}</dt><dd>${E(r[1])}</dd>`).join("")}
+$("#bk").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;
+ if(b.dataset.v==="flush")guard(b,async()=>{const r=await Cake.send("sync/flush",{});if(r.ok)Cake.toast(r.data.pending?r.data.sent+" sent, "+r.data.pending+" still waiting":(r.data.sent?r.data.sent+" sent. Nothing is waiting.":"Nothing was waiting."))});
+ else if(b.dataset.v==="full"){if(!confirm("Send a full copy? Every record is queued for the online database. It can take a while on a slow connection."))return;guard(b,async()=>{const r=await Cake.send("sync/full_copy",{});if(r.ok)Cake.toast(r.data.queued+" records queued to send")})}};
+
+/* ---------- records ---------- */
+const ROLE_L={owner:"Owner",cashier:"Cashier",baker:"Baker",inventory:"Inventory",it:"IT"};
+let AU=null,auw="all",aun=25;
+function aur(){if(!AU)return;const al=AU.filter(a=>auw==="all"||a.outcome!=="ok");
+ $("#aul").innerHTML=al.slice(0,aun).map(a=>{const said=a.summary.startsWith(a.who),who=said?"":`<b>${E(a.who)}</b>${a.role&&!a.who.includes(ROLE_L[a.role]||a.role)?` <span class="mute">(${E(ROLE_L[a.role]||a.role)})</span>`:""} · `;return`<li style="flex-wrap:wrap"><time>${E(when(a.at))}</time><span>${who}${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`}).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>';
+ $("#aum").hidden=al.length<=aun}
+$("#auf").onchange=e=>{auw=e.target.value;aun=25;aur()};$("#aum").onclick=()=>{aun+=25;aur()};
 
 /* ---------- devices ---------- */
-let D={},dvcode=null;
+let dvcode=null;
 function dvr(){const d=D.dev;if(!d)return;
  if(dvcode&&(Date.parse(dvcode.expiresAt)<Date.now()||(dvcode.replaces?!d.devices.some(x=>x.id===dvcode.replaces):d.devices.some(x=>x.name===dvcode.name))))dvcode=null;
  $("#dvn").textContent=d.devices.length+" registered";
@@ -107,18 +194,20 @@ $("#loc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=
  else if(k==="save")guard(b,async()=>{const lr=$("#locb [data-k=lr]").value.trim();if(lr===""||!Number.isInteger(+lr)||+lr<30||+lr>2000){Cake.toast("The distance is a whole number of metres, 30 to 2000.");return}
   await Cake.send("settings/set_location",{enabled:$("#locb [data-k=le]").checked,radiusM:+lr},"Location check saved")})};
 
-/* ---------- system ---------- */
-function sysr(){const m=D.map;if(!m)return;
- const bad=m.outbox.failed>0||(m.backup&&m.backup.lastError);
- $("#sst").className="tag "+(bad?"risk":"ok");$("#sst").textContent=bad?"Needs a look":"All good";
- const rows=[["Signed in now",String(m.activeSessions)],["Changes waiting to sync",String(m.outbox.pending)],["Failed syncs",String(m.outbox.failed)],...m.system.map(s=>[s.label,s.value])];
- $("#skv").innerHTML=rows.map(r=>`<dt>${E(r[0])}</dt><dd>${E(r[1])}</dd>`).join("")}
 
-(async()=>{const me=await Cake.boot("it");$("#nm").textContent=me.name;
+/* shared header */
+const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
+(async()=>{const me=await Cake.boot("it");
+ CH=Cake.mountChrome({groups:[{title:"Watch",items:[{id:"health",label:"Health"},{id:"records",label:"Records"}]},{title:"Connect",items:[{id:"devices",label:"Devices and location"},{id:"backups",label:"Backups and Google"}]}],go,bell:"health"});CH.setPage(view);
+ Cake.mountNotice($("#ntc"));
+ $("#hi").textContent="Good "+(new Date().getHours()<12?"morning":new Date().getHours()<18?"afternoon":"evening")+", "+me.name.split(" ")[0];
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
  Cake.feed("location_check",{},d=>{D.loc=d;locr()});
+ Cake.feed("drive_accounts",{},d=>{D.drv=d;hr()});
  Cake.mountDrive($("#drv"));
- Cake.feed("panel_map",{},d=>{D.map=d;sysr()})})();
+ Cake.feed("audit_view",{},d=>{AU=d;if(view==="records")aur()});
+ Cake.feed("panel_map",{},d=>{D.map=d;hr()});
+ go("health")})();
 </script>
 </body>
 </html>
