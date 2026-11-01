@@ -130,6 +130,18 @@ export const recordIntents = {
       return { summary: r.ok ? `Checked the record chain (${p.full ? 'everything' : 'what is new'}): it matches` : `Checked the record chain (${p.full ? 'everything' : 'what is new'}): it does NOT match`, data: r };
     },
   },
+
+  'records/drive_check': {
+    circuit: 'Records',
+    roles: ['it'],
+    validate: async (_p, ctx) => (ctx.terminals.fingerprint ? [] : ['No copy of the records is kept on Drive on this server.']),
+    handle: async (_p, ctx) => {
+      const st = await ctx.terminals.fingerprint!.run({ force: true });
+      const said =
+        st.state === 'ok' ? 'they match' : st.state === 'mismatch' ? 'they do NOT match' : st.state === 'off' ? 'no Google account is switched on' : st.state === 'error' ? 'Drive could not be reached' : 'nothing to compare yet';
+      return { summary: `Compared the records with Drive: ${said}`, data: st };
+    },
+  },
 } satisfies Partial<Registry>;
 
 export const recordFeeds = {

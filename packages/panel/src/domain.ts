@@ -428,7 +428,7 @@ export interface UsageReport {
 /** The alerts about the shop, which the owner can tune. */
 export type ShopAlertKind = 'low_stock' | 'stockout' | 'usage_waiting' | 'order_not_started' | 'quote_waiting' | 'overdue_delivery' | 'count_difference' | 'request_waiting' | 'offline_held';
 /** The alerts about the system itself. They are for IT only: the owner never sees them and cannot tune them. */
-export type SystemAlertKind = 'system_sync' | 'system_backup' | 'system_google' | 'system_pins' | 'system_space' | 'system_chain';
+export type SystemAlertKind = 'system_sync' | 'system_backup' | 'system_google' | 'system_pins' | 'system_space' | 'system_chain' | 'system_drive_match' | 'system_drive_late';
 export type AlertKind = ShopAlertKind | SystemAlertKind;
 export type AlertSeverity = 'warning' | 'critical';
 

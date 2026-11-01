@@ -23,7 +23,7 @@ h1{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:0;letter-spacing:-.01
 .find:hover{border-color:var(--cop)}.find kbd{margin-left:auto;font:500 11px inherit;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
 .card{background:var(--surf);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:20px}
-#sysn:not([hidden]){display:flex;align-items:center;gap:12px}
+#sysn:not([hidden]),#drm:not([hidden]){display:flex;align-items:center;gap:12px}
 .rev{grid-column:span 8}.due{grid-column:span 4}.stock{grid-column:span 5}.req{grid-column:span 7}.act{grid-column:span 12}
 h2{font-size:17px;font-weight:600;margin:0}
 .row{display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -182,6 +182,7 @@ nav.xtabs svg{flex:none;width:18px;height:18px}
   </header>
   <section class="card" id="ofc" hidden style="margin-bottom:16px;border-left:3px solid var(--risk)"><div class="row" style="flex-wrap:wrap"><h2>Offline sales to review</h2><span class="tag risk" id="ofn"></span></div><p class="mute" style="margin:2px 0 10px">These were sold at a till while the shop server could not be reached, but could not be recorded as they were. Nothing is lost: decide on each one.</p><div id="ofb"></div></section>
   <section class="card" id="sysn" hidden style="margin-bottom:16px;background:var(--paper);padding:14px 18px"><span aria-hidden="true" style="width:32px;height:32px;border-radius:50%;background:var(--surf);display:grid;place-items:center;flex:none"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:var(--mute);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 11v6M12 7v.01"/></svg></span><span><b>A system problem has been open for a day</b><br><span class="mute">IT has been told.</span></span></section>
+  <section class="card" id="drm" hidden style="margin-bottom:16px;background:var(--paper);padding:14px 18px"><span aria-hidden="true" id="drd" style="width:14px;height:14px;border-radius:50%;background:var(--mute);flex:none"></span><span><b id="drt"></b><br><span class="mute" id="drs"></span></span></section>
   <section class="card need" id="nd" aria-labelledby="ndh">
     <div class="row"><h2 id="ndh">Needs you</h2><span class="tag cop" id="reqn"></span></div>
     <div id="reqs"></div>
@@ -748,6 +749,7 @@ function xclock(){const d=new Date();$("#date").textContent=d.toLocaleDateString
  Cake.feed("location_check",{},d=>{D.loc=d;if(drMode==="settings"&&setSec==="location")keep($("#dpn"),renderSettings)});
  Cake.feed("alert_settings",{},d=>{D.alertset=d});
  Cake.feed("system_notice",{},d=>{$("#sysn").hidden=!d.openForDay});
+ Cake.feed("drive_match",{},d=>{const m={ok:d.matchedToday?["Records matched Drive today","The shop's records agree with the copy kept in your Google Drive.","var(--sage)"]:["Records have not been compared with Drive today","They matched the last time it checked.","var(--mute)"],mismatch:["Records do NOT match Drive","IT has been told. Do not ignore this.","var(--risk)"],error:["Could not compare records with Drive",d.error||"It will try again soon.","var(--cop)"],waiting:["Records are waiting to be compared with Drive","The first copy is saved soon after the shop starts selling.","var(--mute)"],off:["Records are not copied to Drive yet","Connect a Google account so the shop keeps a second copy.","var(--mute)"]}[d.state];$("#drt").textContent=m[0];$("#drs").textContent=m[1];$("#drd").style.background=m[2];$("#drm").hidden=false});
  subReports();subLedger();go("overview")})();
 </script>
 </body>

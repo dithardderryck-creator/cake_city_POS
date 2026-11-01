@@ -48,6 +48,7 @@ try {
   assert.match(await owner.locator('#dpn [data-s="online"]').innerText(), /Google accounts/);
   await owner.click('#dpn [data-s="online"]');
   await owner.waitForSelector('#drv');
+  await until(async () => /not copied to Drive yet/.test((await owner.locator('#drt').textContent()) ?? ''), 'the owner is told no copy is kept on Drive yet');
   await until(async () => /No Google account is connected yet/.test(await owner.locator('#drv').innerText()), 'empty state');
   // Without the Google client details nothing can be connected, and the screen says what to do.
   assert.match(await owner.locator('#drv').innerText(), /Set up Google first/);
@@ -113,6 +114,20 @@ try {
   await rows(it).nth(0).locator('[data-x="remove"]').click();
   await until(async () => (await emails(it)).length === 1, 'the account is disconnected');
   assert.deepEqual(await emails(it), ['owner@example.com']);
+
+  /* The records get a second copy on Drive: IT compares now, and the owner's Overview says they matched today. */
+  await it.click('nav.xtabs [data-v="records"]');
+  await it.waitForSelector('#rdc');
+  await it.click('#rdn');
+  await until(async () => /Matches/.test(await it.locator('#rdt').innerText()), 'the Drive copy matches');
+  assert.match(await it.locator('#rdv').innerText(), /Matched today\s*Yes/);
+  const names = [...g.accountFiles('owner@example.com').values()].map((f) => f.name);
+  assert.ok(names.some((n) => /^chain_\d{4}-\d{2}-\d{2}_s\d{10}_[0-9a-f]{64}\.txt$/.test(n)), 'the fingerprint file is on Drive');
+  await owner.reload();
+  await until(async () => /Records matched Drive today/.test((await owner.locator('#drt').textContent()) ?? ''), 'the owner sees that the records matched Drive today');
+  await it.click('nav.xtabs [data-v="records"]');
+  await it.selectOption('#auf', 'all');
+  await until(async () => /Compared the records with Drive: they match/.test(await it.locator('#aul').innerText()), 'the comparison is written in the records');
 
   assert.deepEqual(errs, [], 'no page errors');
   console.log('google accounts ok');

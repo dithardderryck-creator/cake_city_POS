@@ -216,3 +216,48 @@ Everything your IT person did in the system, newest first. You can read it here,
 Nothing yet ||| Bado hakuna
 IT has not done anything yet. ||| IT bado hajafanya chochote.
 The system ||| Mfumo
+Records matched Drive today ||| Rekodi zililingana na Drive leo
+The shop's records agree with the copy kept in your Google Drive. ||| Rekodi za duka zinalingana na nakala iliyo kwenye Google Drive yako.
+Records have not been compared with Drive today ||| Rekodi hazijalinganishwa na Drive leo
+They matched the last time it checked. ||| Zililingana mara ya mwisho ilipokagua.
+Records do NOT match Drive ||| Rekodi HAZILINGANI na Drive
+IT has been told. Do not ignore this. ||| IT ameambiwa. Usipuuze hili.
+Could not compare records with Drive ||| Imeshindwa kulinganisha rekodi na Drive
+It will try again soon. ||| Itajaribu tena hivi karibuni.
+Records are waiting to be compared with Drive ||| Rekodi zinasubiri kulinganishwa na Drive
+The first copy is saved soon after the shop starts selling. ||| Nakala ya kwanza huhifadhiwa muda mfupi baada ya duka kuanza kuuza.
+Records are not copied to Drive yet ||| Rekodi bado hazinakiliwi kwenye Drive
+Connect a Google account so the shop keeps a second copy. ||| Unganisha akaunti ya Google ili duka liwe na nakala ya pili.
+Copy on Drive ||| Nakala kwenye Drive
+Not reached ||| Haikufikiwa
+Nothing to compare yet ||| Bado hakuna cha kulinganisha
+Not set up ||| Haijaandaliwa
+What Drive remembers agrees with the records here. ||| Anachokumbuka Drive kinalingana na rekodi zilizopo hapa.
+A fingerprint saved on Drive does not agree with the records here. Do not clear it. Tell the owner. ||| Alama ya kidole iliyohifadhiwa kwenye Drive hailingani na rekodi zilizopo hapa. Usiifute. Mwambie mmiliki.
+Drive could not be reached just now. It will try again soon. ||| Drive haikufikiwa sasa hivi. Itajaribu tena hivi karibuni.
+The first fingerprint is saved soon after the shop starts selling. ||| Alama ya kidole ya kwanza huhifadhiwa muda mfupi baada ya duka kuanza kuuza.
+No Google account is switched on, so no copy of the fingerprint is kept. Connect one under Backups. ||| Hakuna akaunti ya Google iliyowashwa, kwa hiyo hakuna nakala ya alama ya kidole. Unganisha moja chini ya Nakala rudufu.
+Last saved ||| Ilihifadhiwa mwisho
+Last compared ||| Ililinganishwa mwisho
+Matched today ||| Ililingana leo
+Yes ||| Ndiyo
+No ||| Hapana
+Nothing new has reached Drive for over a day ||| Hakuna kipya kilichofika Drive kwa zaidi ya siku moja
+{*} ({n} compared) ||| {*} ({n} zimelinganishwa)
+Compare with Drive now ||| Linganisha na Drive sasa
+The records match the copy on Drive. ||| Rekodi zinalingana na nakala iliyo kwenye Drive.
+The records do NOT match Drive. See the Records page. ||| Rekodi HAZILINGANI na Drive. Tazama ukurasa wa Rekodi.
+Drive could not be compared just now. ||| Drive haikuweza kulinganishwa sasa hivi.
+Compared the records with Drive: they match ||| Imelinganisha rekodi na Drive: zinalingana
+Compared the records with Drive: they do NOT match ||| Imelinganisha rekodi na Drive: HAZILINGANI
+Compared the records with Drive: no Google account is switched on ||| Imelinganisha rekodi na Drive: hakuna akaunti ya Google iliyowashwa
+Compared the records with Drive: Drive could not be reached ||| Imelinganisha rekodi na Drive: Drive haikufikiwa
+Compared the records with Drive: nothing to compare yet ||| Imelinganisha rekodi na Drive: bado hakuna cha kulinganisha
+Compared the records with Drive (daily): they match ||| Imelinganisha rekodi na Drive (kila siku): zinalingana
+Compared the records with Drive (automatic): they do NOT match. {*} ||| Imelinganisha rekodi na Drive (kiotomatiki): HAZILINGANI. {*}
+Compared the records with Drive (automatic): they match again ||| Imelinganisha rekodi na Drive (kiotomatiki): zinalingana tena
+The records do not match the copy on Drive ||| Rekodi hazilingani na nakala iliyo kwenye Drive
+{*} Open Records to see what the comparison found. ||| {*} Fungua Rekodi uone ulinganisho ulipata nini.
+No new record fingerprint has reached Drive for a day ||| Hakuna alama mpya ya kidole ya rekodi iliyofika Drive kwa siku moja
+Check that a Google account is connected and working. ||| Hakikisha akaunti ya Google imeunganishwa na inafanya kazi.
+No copy of the records is kept on Drive on this server. ||| Hakuna nakala ya rekodi inayohifadhiwa kwenye Drive kwenye seva hii.

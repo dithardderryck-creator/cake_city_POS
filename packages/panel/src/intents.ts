@@ -45,6 +45,7 @@ export interface IntentMap {
   'records/open': { seq: number };
   /** Checks the sealed chain now. By default only what is new since the last good check. */
   'records/verify': { full?: boolean };
+  'records/drive_check': Record<string, never>;
   /** Change what someone does in the shop. Not for the owner, and nobody can be made owner this way. Ends their sign-ins. */
   'staff/set_role': { userId: Id; role: Exclude<Role, 'owner'> };
 

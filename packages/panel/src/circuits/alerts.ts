@@ -1,7 +1,7 @@
 import type { ChainCheck, HeldAction, Alert, AlertKind, ShopAlertKind, SystemAlertKind, AlertSettings, Staff, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
 import type { Registry } from '../intents';
 import { DomainError } from '../intents';
-import type { Clock, Ids, Store, Terminals } from '../ports';
+import type { Clock, FingerprintStatus, Ids, Store, Terminals } from '../ports';
 import type { LoginState } from './pin';
 import { buildForecasts } from '../forecast';
 import { daysBetween, todayLocal } from './dates';
@@ -24,6 +24,8 @@ export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   system_pins: 'Sign-in',
   system_space: 'Space',
   system_chain: 'Records',
+  system_drive_match: 'Records',
+  system_drive_late: 'Records',
 };
 
 export const isSystemKind = (k: AlertKind): k is SystemAlertKind => k.startsWith('system_');
@@ -233,10 +235,11 @@ export interface SystemFacts {
   backupError: string | null;
   google: { id: string; email: string | null; state: string; problem: string | null }[];
   space: { freeBytes: number; totalBytes: number } | null;
+  fingerprint: FingerprintStatus | null;
 }
 
 export async function readSystemFacts(terminals: Terminals): Promise<SystemFacts> {
-  const facts: SystemFacts = { backupError: null, google: [], space: null };
+  const facts: SystemFacts = { backupError: null, google: [], space: null, fingerprint: null };
   try {
     facts.backupError = (await terminals.backup?.status())?.lastError ?? null;
   } catch {
@@ -245,6 +248,11 @@ export async function readSystemFacts(terminals: Terminals): Promise<SystemFacts
   try {
     const d = await terminals.drive?.status();
     facts.google = (d?.accounts ?? []).map((a) => ({ id: a.id, email: a.email, state: a.state, problem: a.problem }));
+  } catch {
+    /* as above */
+  }
+  try {
+    facts.fingerprint = (await terminals.fingerprint?.status()) ?? null;
   } catch {
     /* as above */
   }
@@ -262,6 +270,9 @@ export async function systemAlerts(store: Store, now: Date, f: SystemFacts): Pro
   const base = { to: ['it'] as Role[], screen: 'health' };
   const chain = await store.get<ChainCheck>('chainChecks', 'last');
   if (chain && !chain.ok) out.push({ ...base, dedupeKey: 'system_chain', kind: 'system_chain', title: 'The sealed records do not match', body: `${chain.problems[0] ?? 'A record was changed or removed.'} Open Records to see what the check found.`, screen: 'records' });
+  const fp = f.fingerprint;
+  if (fp?.state === 'mismatch') out.push({ ...base, dedupeKey: 'system_drive_match', kind: 'system_drive_match', title: 'The records do not match the copy on Drive', body: `${fp.problems[0] ?? 'A fingerprint on Drive differs from the records.'} Open Records to see what the comparison found.`, screen: 'records' });
+  if (fp?.late) out.push({ ...base, dedupeKey: 'system_drive_late', kind: 'system_drive_late', title: 'No new record fingerprint has reached Drive for a day', body: fp.error ?? 'Check that a Google account is connected and working.', screen: 'backups' });
   const failed = (await store.find<OutboxItem>('outbox', { where: { status: 'failed' } })).filter((o) => o.kind === 'sync').length;
   if (failed > 0) out.push({ ...base, dedupeKey: 'system_sync', kind: 'system_sync', title: `${plural(failed, 'change', 'changes')} could not be synced`, body: 'They are kept and will be tried again. Check the online database connection.', screen: 'backups' });
   if (f.backupError) out.push({ ...base, dedupeKey: 'system_backup', kind: 'system_backup', title: 'The last backup failed', body: f.backupError, screen: 'backups' });

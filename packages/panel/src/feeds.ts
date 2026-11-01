@@ -50,7 +50,7 @@ import { buildForecasts, type ForecastRow } from './forecast';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
-import type { BackupStatus, Clock, DriveStatus, LogRow, Store, Terminals } from './ports';
+import type { BackupStatus, Clock, DriveStatus, FingerprintStatus, LogRow, Store, Terminals } from './ports';
 import {
   PAYMENT_LABEL,
   PAYMENT_TONE,
@@ -699,6 +699,8 @@ export interface FeedMap {
   panel_map: { params: Record<string, never>; data: PanelMapData };
   /** For the owner: has a system problem been open for a day? It never says what, because IT looks after that. */
   system_notice: { params: Record<string, never>; data: { openForDay: boolean } };
+  /** Whether the records match the copy kept on Drive. For the owner (who owns the Drive account) and IT. Null when no copy is kept yet. */
+  drive_match: { params: Record<string, never>; data: FingerprintStatus };
   /** The sealed records, newest first, a page at a time. For IT. */
   records_view: { params: { before?: number; kind?: 'all' | 'refused' | 'opened' }; data: RecordsViewData };
   /** For the owner: everything IT did, read only. */
@@ -1866,6 +1868,18 @@ export const feeds: FeedRegistry = {
       if (!terminals.logs) return { available: false, rows: [], note: 'This server does not keep a log file.' };
       const r = await terminals.logs.recent({ level: p.level ?? 'all', sinceMs: (p.hours ?? 24) * 3_600_000, limit: 200 });
       return { available: true, rows: r.rows, note: r.note };
+    },
+  },
+
+  drive_match: {
+    roles: ['owner', 'it'],
+    build: async ({ terminals }) => {
+      const off: FingerprintStatus = { state: 'off', savedAt: null, savedSeq: null, comparedAt: null, matchedAt: null, matchedToday: false, checked: 0, problems: [], error: null, late: false };
+      try {
+        return (await terminals.fingerprint?.status()) ?? off;
+      } catch {
+        return { ...off, state: 'error', error: 'The Drive copy could not be read just now.' };
+      }
     },
   },
 

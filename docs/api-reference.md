@@ -702,6 +702,12 @@ Allowed: **it**
 | --- | --- | --- | --- |
 | `full` | boolean | no |  |
 
+#### `records/drive_check`
+
+Allowed: **it**
+
+_No fields. Send an empty object `{}`._
+
 ### Messages
 
 #### `requests/send`
@@ -1234,6 +1240,12 @@ Allowed: **it**
 | --- | --- | --- | --- |
 | `level` | "all" \| "warn" \| "error" | no |  |
 | `hours` | integer | no | min 1, max 72 |
+
+#### `drive_match`
+
+Allowed: **owner, it**
+
+_No fields. Send an empty object `{}`._
 
 #### `system_notice`
 

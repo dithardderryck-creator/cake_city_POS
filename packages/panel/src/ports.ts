@@ -206,6 +206,32 @@ export interface DriveTerminal {
   test(accountId?: string): Promise<DriveResult>;
 }
 
+/** Where the record fingerprint copy kept on Google Drive stands. Never holds a secret: a fingerprint is only a short code. */
+export interface FingerprintStatus {
+  /** off: no Google account switched on. waiting: not compared yet. ok: matched. mismatch: Drive and the records disagree. error: Drive could not be reached or read. */
+  state: 'off' | 'waiting' | 'ok' | 'mismatch' | 'error';
+  savedAt: string | null;
+  savedSeq: number | null;
+  comparedAt: string | null;
+  /** When the last comparison found everything matching. */
+  matchedAt: string | null;
+  /** The last matching comparison was today (shop time). */
+  matchedToday: boolean;
+  /** How many Drive fingerprints the last comparison looked at. */
+  checked: number;
+  problems: string[];
+  error: string | null;
+  /** Records have moved on but no new fingerprint has reached Drive for more than a day. */
+  late: boolean;
+}
+
+/** Terminal: the copy of the chain's fingerprint kept on the shop's Google Drive. */
+export interface FingerprintTerminal {
+  status(): Promise<FingerprintStatus>;
+  /** Saves the newest fingerprint and compares Drive with the records. Without `force` it only acts when it is due. */
+  run(o?: { force?: boolean }): Promise<FingerprintStatus>;
+}
+
 /** One line of the server's log, for IT. Secrets are already hidden before they reach the file. */
 export interface LogRow {
   at: string;
@@ -223,6 +249,7 @@ export interface LogTerminal {
 export interface Terminals {
   logs?: LogTerminal;
   drive?: DriveTerminal;
+  fingerprint?: FingerprintTerminal;
   messages?: MessageTerminal;
   push?: PushTerminal;
   sync?: SyncTerminal;

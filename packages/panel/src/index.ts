@@ -46,6 +46,8 @@ export {
   type BackupStatus,
   type SystemTerminal,
   type DriveTerminal,
+  type FingerprintTerminal,
+  type FingerprintStatus,
   type DriveStatus,
   type DriveAccountView,
   type DriveAccountState,

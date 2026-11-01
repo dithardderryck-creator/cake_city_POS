@@ -3,8 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { createMessenger } from './messaging';
 import { createPushTerminal, loadOrCreateVapid } from './push';
-import { createPanel, type Panel, type PinHasher, type Terminals } from '@cake-pos/panel';
+import { appendAudit, createIds, createPanel, type Panel, type PinHasher, type Terminals } from '@cake-pos/panel';
 import { createArchiveService, type ArchiveService } from './archive';
+import { createFingerprintService } from './fingerprint';
 import { createBackupService, createDriveUploader, createFolderUploader, type BackupService, type BackupUploader } from './backup';
 import { createHttpSyncTerminal } from './online-sync';
 import { openDrive } from './cloud';
@@ -118,6 +119,18 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       log,
     });
 
+    // A second copy of the record chain's newest fingerprint on Drive, compared with the records every few hours.
+    const fpIds = createIds();
+    const fingerprint = createFingerprintService({
+      store: db,
+      drive: () => (drive.active() ? { client: drive.client, folderName: drive.folderName() } : null),
+      statePath: path.join(config.dataDir, 'fingerprint-state.json'),
+      log,
+      audit: (summary, outcome) =>
+        panel.exclusive(() => appendAudit({ store: db, ids: fpIds, clock: { now: () => new Date() } }, { actorName: 'The system', intent: 'records/drive_check', summary, outcome })),
+    });
+    terminals.fingerprint = fingerprint;
+
     // Texts and phone notifications. Each is optional; the panel says plainly when one is not set up.
     const messenger = createMessenger(config.messaging);
     if (messenger) terminals.messages = messenger;
@@ -173,6 +186,10 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
     const driveTimer = setInterval(() => void driveCheck(), 30 * 60_000);
     driveTimer.unref();
     archive.start();
+    const fingerprintRun = () => (drive.active() ? fingerprint.run().catch((err) => log.warn('Comparing the records with Drive failed', errorFields(err))) : Promise.resolve());
+    void fingerprintRun();
+    const fingerprintTimer = setInterval(() => void fingerprintRun(), 10 * 60_000);
+    fingerprintTimer.unref();
     const maintain = () =>
       panel
         .maintain()
@@ -232,6 +249,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
           clearInterval(alertTimer);
           clearInterval(deliverTimer);
           clearInterval(driveTimer);
+          clearInterval(fingerprintTimer);
           if (syncTimer) clearInterval(syncTimer);
           backup.stop();
           archive.stop();

@@ -84,6 +84,7 @@ main>section[hidden]{display:none}
 <h1>Records</h1>
 <p class="sub">What was done in the shop system, by whom, newest first. Every record is sealed to the one before it, so a change made afterwards shows up as a mismatch. Money and stock stay hidden until you open them, and opening is recorded too.</p>
 <section class="card" id="rcs"><div class="row" style="flex-wrap:wrap"><h2>Seal</h2><span class="tag" id="rct"></span></div><p class="mute" id="rcp" style="margin:6px 0 0"></p><dl class="kv" id="rcv"></dl><ul class="list" id="rcx" hidden></ul><div class="btns" style="margin-top:14px"><button class="b" id="rcn">Check now</button><button class="b" id="rca">Check everything</button></div></section>
+<section class="card" id="rdc"><div class="row" style="flex-wrap:wrap"><h2>Copy on Drive</h2><span class="tag" id="rdt"></span></div><p class="mute" id="rdp" style="margin:6px 0 0"></p><dl class="kv" id="rdv"></dl><ul class="list" id="rdx" hidden></ul><div class="btns" style="margin-top:14px"><button class="b" id="rdn">Compare with Drive now</button></div></section>
 <section class="card"><div class="row" style="flex-wrap:wrap"><h2>Who did what</h2><label class="mute" style="display:flex;gap:8px;align-items:center">Show <select id="auf" style="min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px"><option value="all">Everything</option><option value="refused">Only refused</option><option value="opened">Only opened</option></select></label></div><ul class="audl" id="aul"></ul><div class="btns" style="margin-top:12px"><button class="b" id="aum" hidden>Show more</button></div></section>
 </section>
 
@@ -192,13 +193,22 @@ function rcr(){const d=RC;if(!d){$("#aul").innerHTML='<li><span class="mute">Loa
  const rows=[...d.rows,...RX.filter(x=>!d.rows.some(y=>y.seq===x.seq))];
  $("#aul").innerHTML=rows.map(a=>{const rl=a.role?ROLE_L[a.role]||a.role:"",who=`<b>${E(a.who)}</b>${rl&&!a.who.includes(rl)?` <span class="mute">(${E(rl)})</span>`:""}`;
   const body=a.sealed?`<button class="b" data-seq="${a.seq}" style="min-height:34px;padding:0 12px"><span aria-hidden="true">🔒</span> <span>${E(a.kind)}</span> <span>sealed, tap to open</span></button>`:E(a.summary||(a.detailsGone?"Details are in the archive.":a.kind));
-  return`<li style="flex-wrap:wrap"><time>${E(when(a.at))}</time><span>${who} · ${body}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""} <span class="mute" style="font-size:12px">${E(a.ref)}</span></span></li>`}).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>';
+  return`<li style="flex-wrap:wrap"><time>${E(when(a.at))}</time><span>${who} · ${body}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":a.outcome==="error"?"Problem":"Refused"}</span>`:""} <span class="mute" style="font-size:12px">${E(a.ref)}</span></span></li>`}).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>';
  $("#aum").hidden=RN==null}
 $("#auf").onchange=e=>{auw=e.target.value;rcsub()};
 $("#aum").onclick=e=>guard(e.currentTarget,async()=>{const r=await Cake.read("records_view",{kind:auw,before:RN});if(r){RX.push(...r.rows);RN=r.nextBefore;rcr()}});
 $("#aul").onclick=e=>{const b=e.target.closest("[data-seq]");if(b)guard(b,async()=>{const r=await Cake.send("records/open",{seq:+b.dataset.seq});if(!r.ok)return;const o=r.data,rl=o.role?ROLE_L[o.role]||o.role:"";
   const dg=Cake.dialog(`<h2 style="margin:0 0 6px">${E(o.kind)}</h2><p class="mute" style="margin:0 0 10px">${E(when(o.at))} · ${E(o.who)}${rl?" ("+E(rl)+")":""} · ${E(o.ref)}</p><p style="margin:0 0 10px">${E(o.summary||"The details are in the archive.")}</p><p style="margin:0 0 14px"><span class="tag ${o.intact===null?"warn":o.intact?"ok":"risk"}">${o.intact===null?"Details not here to compare":o.intact?"Matches its seal":"Does NOT match its seal"}</span></p><div class="btns"><button class="b p" data-close>Close</button></div>`);
   dg.el.querySelector("[data-close]").onclick=dg.close})};
+let DM=null;
+function rdr(){const d=DM;if(!d)return;
+ const T={ok:["ok","Matches"],mismatch:["risk","Does not match"],error:["warn","Not reached"],waiting:["warn","Nothing to compare yet"],off:["","Not set up"]}[d.state];
+ $("#rdt").className="tag "+T[0];$("#rdt").textContent=T[1];
+ $("#rdp").textContent={ok:"What Drive remembers agrees with the records here.",mismatch:"A fingerprint saved on Drive does not agree with the records here. Do not clear it. Tell the owner.",error:d.error||"Drive could not be reached just now. It will try again soon.",waiting:"The first fingerprint is saved soon after the shop starts selling.",off:"No Google account is switched on, so no copy of the fingerprint is kept. Connect one under Backups."}[d.state];
+ $("#rdv").innerHTML=d.state==="off"?"":[["Last saved",d.savedAt?when(d.savedAt):"Not yet"],["Last compared",d.comparedAt?when(d.comparedAt)+" ("+Cake.num(d.checked)+" compared)":"Not yet"],["Matched today",d.matchedToday?"Yes":"No"]].map(r=>`<dt>${E(r[0])}</dt><dd>${E(r[1])}</dd>`).join("")+(d.late?`<dt>Late</dt><dd>Nothing new has reached Drive for over a day</dd>`:"");
+ $("#rdx").hidden=!d.problems.length;$("#rdx").innerHTML=d.problems.map(x=>`<li><span class="tag risk" style="margin-right:6px">Mismatch</span>${E(x)}</li>`).join("");
+ $("#rdn").disabled=d.state==="off"}
+$("#rdn").onclick=e=>guard(e.currentTarget,async()=>{const r=await Cake.send("records/drive_check",{});if(r.ok)Cake.toast(r.data.state==="ok"?"The records match the copy on Drive.":r.data.state==="mismatch"?"The records do NOT match Drive. See the Records page.":"Drive could not be compared just now.")});
 $("#rcn").onclick=e=>guard(e.currentTarget,async()=>{const r=await Cake.send("records/verify",{});if(r.ok)Cake.toast(r.data.ok?"Everything new matches its seal.":"Something does not match. See the Records page.")});
 $("#rca").onclick=e=>guard(e.currentTarget,async()=>{const r=await Cake.send("records/verify",{full:true});if(r.ok)Cake.toast(r.data.ok?"Everything matches its seal.":"Something does not match. See the Records page.")});
 
@@ -255,6 +265,7 @@ const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.
  Cake.feed("location_check",{},d=>{D.loc=d;locr()});
  Cake.feed("drive_accounts",{},d=>{D.drv=d;hr()});
  Cake.mountDrive($("#drv"));
+ Cake.feed("drive_match",{},d=>{DM=d;rdr()});
  Cake.feed("sessions_view",{},d=>{D.ses=d;ser()});
  Cake.feed("alert_inbox",{},d=>{D.al=d;hr()});
  Cake.feed("panel_map",{},d=>{D.map=d;hr()});
