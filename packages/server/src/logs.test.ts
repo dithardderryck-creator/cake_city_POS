@@ -38,7 +38,7 @@ describe('reading the server log for IT', () => {
     log.close();
     return new Promise<void>((resolve) =>
       setTimeout(() => {
-        const r = readRecentLogs(dir, { level: 'all', sinceMs: 3_600_000 * 24 }, Date.now());
+        const r = readRecentLogs(dir, { level: 'all', sinceMs: 3_600_000 * 24, limit: 50 }, Date.now());
         expect(JSON.stringify(r.rows)).not.toMatch(/1234|abc/);
         expect(r.rows[0]!.detail).toMatch(/Neema/);
         expect(readRecentLogs(path.join(dir, 'nope'), { level: 'all', sinceMs: 1000, limit: 5 }).note).toMatch(/No log files/);

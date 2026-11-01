@@ -1,4 +1,4 @@
-import type { HeldAction, Alert, AlertKind, ShopAlertKind, SystemAlertKind, AlertSettings, Staff, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
+import type { ChainCheck, HeldAction, Alert, AlertKind, ShopAlertKind, SystemAlertKind, AlertSettings, Staff, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
 import type { Registry } from '../intents';
 import { DomainError } from '../intents';
 import type { Clock, Ids, Store, Terminals } from '../ports';
@@ -23,6 +23,7 @@ export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   system_google: 'Google',
   system_pins: 'Sign-in',
   system_space: 'Space',
+  system_chain: 'Records',
 };
 
 export const isSystemKind = (k: AlertKind): k is SystemAlertKind => k.startsWith('system_');
@@ -259,6 +260,8 @@ export async function readSystemFacts(terminals: Terminals): Promise<SystemFacts
 export async function systemAlerts(store: Store, now: Date, f: SystemFacts): Promise<DesiredAlert[]> {
   const out: DesiredAlert[] = [];
   const base = { to: ['it'] as Role[], screen: 'health' };
+  const chain = await store.get<ChainCheck>('chainChecks', 'last');
+  if (chain && !chain.ok) out.push({ ...base, dedupeKey: 'system_chain', kind: 'system_chain', title: 'The sealed records do not match', body: `${chain.problems[0] ?? 'A record was changed or removed.'} Open Records to see what the check found.`, screen: 'records' });
   const failed = (await store.find<OutboxItem>('outbox', { where: { status: 'failed' } })).filter((o) => o.kind === 'sync').length;
   if (failed > 0) out.push({ ...base, dedupeKey: 'system_sync', kind: 'system_sync', title: `${plural(failed, 'change', 'changes')} could not be synced`, body: 'They are kept and will be tried again. Check the online database connection.', screen: 'backups' });
   if (f.backupError) out.push({ ...base, dedupeKey: 'system_backup', kind: 'system_backup', title: 'The last backup failed', body: f.backupError, screen: 'backups' });

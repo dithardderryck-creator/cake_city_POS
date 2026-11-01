@@ -684,6 +684,24 @@ Allowed: **owner**
 | `requestWaitHours` | integer | no | min 1, max 72 |
 | `critical` | object | no |  |
 
+### Records
+
+#### `records/open`
+
+Allowed: **it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `seq` | integer | yes | min 1, max 9007199254740991 |
+
+#### `records/verify`
+
+Allowed: **it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `full` | boolean | no |  |
+
 ### Messages
 
 #### `requests/send`
@@ -990,6 +1008,21 @@ Allowed: **owner, cashier**
 #### `announcements`
 
 Allowed: **owner, cashier, baker, inventory, it**
+
+_No fields. Send an empty object `{}`._
+
+#### `records_view`
+
+Allowed: **it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `before` | integer | no | min 1, max 9007199254740991 |
+| `kind` | "all" \| "refused" \| "opened" | no |  |
+
+#### `it_activity`
+
+Allowed: **owner**
 
 _No fields. Send an empty object `{}`._
 

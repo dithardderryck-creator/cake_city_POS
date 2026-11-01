@@ -70,6 +70,7 @@ import { batchFeeds, type BatchLogData } from './circuits/batches';
 import { daysLeftInfo } from './days-left';
 import { reportFeeds, type ReportsData, type ReportsParams } from './circuits/reports';
 import { countFeeds, type CountSessionData } from './circuits/count';
+import { recordFeeds, type ItActivityData, type RecordsViewData } from './circuits/records';
 import { announcementFeeds, type AnnouncementsData } from './circuits/announcements';
 import { moneyFeeds, type PaymentsLedgerData, type ReceiptData } from './circuits/money-feeds';
 import { dayCloseFeeds, type DayReportData } from './circuits/day-close';
@@ -698,6 +699,10 @@ export interface FeedMap {
   panel_map: { params: Record<string, never>; data: PanelMapData };
   /** For the owner: has a system problem been open for a day? It never says what, because IT looks after that. */
   system_notice: { params: Record<string, never>; data: { openForDay: boolean } };
+  /** The sealed records, newest first, a page at a time. For IT. */
+  records_view: { params: { before?: number; kind?: 'all' | 'refused' | 'opened' }; data: RecordsViewData };
+  /** For the owner: everything IT did, read only. */
+  it_activity: { params: Record<string, never>; data: ItActivityData };
   /** Everyone signed in right now, for IT. No tokens: the list says who and where, never how to get in. */
   sessions_view: { params: Record<string, never>; data: SessionsViewData };
   /** The newest lines of the server's log, for IT. */
@@ -908,6 +913,7 @@ export const feeds: FeedRegistry = {
   ...moneyFeeds,
   ...dayCloseFeeds,
   ...announcementFeeds,
+  ...recordFeeds,
   ...countFeeds,
   ...batchFeeds,
   ...reportFeeds,

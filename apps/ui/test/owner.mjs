@@ -219,6 +219,10 @@ try {
     assert.ok((await page.locator('#aul li').count()) > 25, 'Show more adds rows');
   }
   assert.doesNotMatch(await txt(page, '#aul'), /\((Owner|Cashier|Baker|Inventory|IT)\)[^\n]*\((Owner|Cashier|Baker|Inventory|IT)\)/, 'a name and role are not repeated');
+  // What IT did: read-only, and it shows Ibrahim's unlock-free actions as a list with no controls.
+  await page.waitForSelector('#itl li');
+  assert.match(await txt(page, '#itn'), /action|Nothing/);
+  assert.equal(await page.locator('#itc button:not(#itm)').count(), 0, 'What IT did has no controls');
   await page.screenshot({ path: `${shots}/staff.png` });
 
   // settings

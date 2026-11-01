@@ -1,5 +1,5 @@
 import { flushChanges, withChangeLog, type Change, type FlushResult } from './changelog';
-import type { Alert, AuditEntry, Device, PairingCode, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
+import type { Alert, AuditEntry, ChainCheck, ChainHead, Device, PairingCode, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
 import { feeds, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } from './feeds';
 import {
   DomainError,
@@ -28,6 +28,8 @@ import { requestIntents } from './circuits/requests';
 import { announcementIntents } from './circuits/announcements';
 import { countIntents } from './circuits/count';
 import { batchIntents } from './circuits/batches';
+import { appendAudit, verifyChain } from './circuits/seal';
+import { recordIntents } from './circuits/records';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, readSystemFacts, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents, loadSettings } from './circuits/settings';
 import { placeIntents, heldInLobby, LOBBY_INTENTS, LOBBY_FEEDS, LOBBY_MESSAGE, type PlaceReport } from './circuits/place';
@@ -184,6 +186,7 @@ const registry = {
   ...recipeIntents,
   ...usageIntents,
   ...alertIntents,
+  ...recordIntents,
   ...requestIntents,
   ...announcementIntents,
   ...countIntents,
@@ -389,7 +392,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
   /* ---------- Breaker 3: audit ---------- */
 
   async function writeAudit(entry: Omit<AuditEntry, 'id' | 'at'>) {
-    await store.put<AuditEntry>('audit', { id: ids.next('aud'), at: now(), ...entry });
+    await appendAudit({ store, ids, clock }, entry);
   }
 
   async function enqueueSync(intent: string, target: string | undefined) {
@@ -632,9 +635,22 @@ export function createPanel(options: PanelOptions = {}): Panel {
     return { ok: true, mime: meta.mime, bytes: base64ToBytes(data.data) };
   }
 
+  /** Once a day the whole of what is new in the chain is checked, so a change is noticed even if nobody looks. */
+  async function chainCheckIfDue() {
+    const head = await store.get<ChainHead>('chainHead', 'head');
+    if (!head) return;
+    const last = await store.get<ChainCheck>('chainChecks', 'last');
+    if (last && clock.now().getTime() - Date.parse(last.at) < 23 * 3_600_000) return;
+    await store.transaction(async () => {
+      const r = await verifyChain({ store, ids, clock });
+      await appendAudit({ store, ids, clock }, { actorName: 'The system', intent: 'records/verify', summary: r.ok ? 'Checked the record chain (daily): it matches' : `Checked the record chain (daily): it does NOT match. ${r.problems[0] ?? ''}`.trim(), outcome: r.ok ? 'ok' : 'error' });
+    });
+  }
+
   const tick: Panel['tick'] = () =>
     serial(async () => {
       try {
+        await chainCheckIfDue().catch((err) => options.onError?.(err, { intent: 'records/check' }));
         const system = await readSystemFacts(terminals);
         const r = await store.transaction(() => reconcileAlerts({ store, ids, clock, system }));
         for (const e of alertEvents(r)) {

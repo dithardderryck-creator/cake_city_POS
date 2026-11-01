@@ -383,8 +383,8 @@ describe('offline sync outbox', () => {
     const sent = await p.dispatch('sync/flush', {}, os.data.sessionId);
     expect(sent.ok).toBe(true);
     expect(pushed[0]).toBeGreaterThan(0);
-    // The audit line for the first flush is itself a change, so a manual flush right after may carry that one line.
+    // The audit line for the first flush, and its seal, are changes too, so a manual flush right after may carry those two.
     const again = await p.dispatch('sync/flush', {}, os.data.sessionId);
-    expect(again.ok && again.summary).toMatch(/up to date|Sent 1 changes/);
+    expect(again.ok && again.summary).toMatch(/up to date|Sent [12] changes/);
   });
 });

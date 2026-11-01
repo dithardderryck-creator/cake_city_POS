@@ -61,6 +61,8 @@ export const schemas = {
   'staff/set_active': z.strictObject({ userId: id, active: z.boolean() }),
   'staff/delete': z.strictObject({ userId: id }),
   'staff/unlock': z.strictObject({ userId: id }),
+  'records/open': z.strictObject({ seq: z.number().int().min(1) }),
+  'records/verify': z.strictObject({ full: z.boolean().optional() }),
   'staff/set_role': z.strictObject({ userId: id, role: z.enum(['cashier', 'baker', 'inventory', 'it']) }),
 
   'catalogue/create_option_group': z.strictObject({
@@ -328,6 +330,8 @@ export const feedSchemas = {
   audit_view: empty,
   panel_map: empty,
   system_notice: empty,
+  records_view: z.strictObject({ before: z.number().int().min(1).optional(), kind: z.enum(['all', 'refused', 'opened']).optional() }),
+  it_activity: empty,
   sessions_view: empty,
   logs_view: z.strictObject({ level: z.enum(['all', 'warn', 'error']).optional(), hours: z.number().int().min(1).max(72).optional() }),
 } as const;

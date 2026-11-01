@@ -62,6 +62,28 @@ try {
   assert.equal(row.split('Ibrahim').length - 1, 1, 'the name is said once');
   await it.screenshot({ path: `${shots}/records-phone.png`, fullPage: true });
 
+  // The seal: a status card, a check on demand, money kept behind a lock until opened (and opening is written down).
+  await it.waitForSelector('#rcv dt');
+  assert.match(await txt(it, '#rcv'), /Sealed records/);
+  await it.click('#rcn');
+  await until(async () => /Matches/.test(await txt(it, '#rct')), 'the check says it matches');
+  assert.match(await txt(it, '#rcv'), /what is new/, 'the last check is shown');
+  await it.click('#rca');
+  await until(async () => /everything/.test(await txt(it, '#rcv')), 'a full check is shown');
+  const locks = it.locator('#aul [data-seq]');
+  assert.ok((await locks.count()) > 0, 'money rows are sealed behind a lock');
+  assert.doesNotMatch(await txt(it, '#aul'), /TSh \d/, 'no money amounts shown before opening');
+  await locks.first().click();
+  await it.waitForSelector('.cx-d .tag');
+  assert.match(await it.locator('.cx-d').innerText(), /Matches its seal/);
+  await it.screenshot({ path: `${shots}/records-open-phone.png` });
+  await it.click('.cx-d [data-close]');
+  await it.selectOption('#auf', 'opened');
+  await until(async () => /Opened record/.test(await txt(it, '#aul')), 'opening was written down');
+  assert.equal(await it.locator('#aul [data-seq]').count(), 0, 'the opened filter shows no locked rows');
+  await it.selectOption('#auf', 'all');
+  await it.waitForSelector('#aul [data-seq]');
+
   // Sessions: who is signed in, with no token or PIN anywhere on the page.
   await menuGo(it, 'sessions');
   await it.waitForSelector('#v-sessions:not([hidden]) #sel li');

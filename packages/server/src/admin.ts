@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { codeHash, createIds, createSecrets, newPairingCode, showCode, type AuditEntry, type PairingCode, type PinHasher, type Role, type Staff, type Store } from '@cake-pos/panel';
+import { appendAudit, codeHash, createIds, createSecrets, newPairingCode, showCode, type AuditEntry, type PairingCode, type PinHasher, type Role, type Staff, type Store } from '@cake-pos/panel';
 import { stamp, verifyBackupFile } from './backup';
 import { serverRunning } from './lock';
 
@@ -8,15 +8,7 @@ const ids = createIds();
 const PIN = /^\d{4,6}$/;
 
 async function audit(store: Store, summary: string, intent: string, target?: string) {
-  await store.put<AuditEntry>('audit', {
-    id: ids.next('aud'),
-    at: new Date().toISOString(),
-    actorName: 'Admin tool on the server',
-    intent,
-    target,
-    summary,
-    outcome: 'ok',
-  });
+  await appendAudit({ store, ids, clock: { now: () => new Date() } }, { actorName: 'Admin tool on the server', intent, target, summary, outcome: 'ok' });
 }
 
 /**

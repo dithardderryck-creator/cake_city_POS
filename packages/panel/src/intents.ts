@@ -41,6 +41,10 @@ export interface IntentMap {
   'staff/delete': { userId: Id };
   /** Lets someone who was locked out by wrong PINs try again now. Owner and IT. It does not change the PIN. */
   'staff/unlock': { userId: Id };
+  /** IT opens a sealed record. No approval is needed, and the opening is itself sealed. */
+  'records/open': { seq: number };
+  /** Checks the sealed chain now. By default only what is new since the last good check. */
+  'records/verify': { full?: boolean };
   /** Change what someone does in the shop. Not for the owner, and nobody can be made owner this way. Ends their sign-ins. */
   'staff/set_role': { userId: Id; role: Exclude<Role, 'owner'> };
 
@@ -251,7 +255,7 @@ export interface IntentMap {
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Devices' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync' | 'Offline';
+export type CircuitName = 'Auth' | 'Devices' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync' | 'Offline' | 'Records';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [

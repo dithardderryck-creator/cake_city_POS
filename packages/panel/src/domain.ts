@@ -428,7 +428,7 @@ export interface UsageReport {
 /** The alerts about the shop, which the owner can tune. */
 export type ShopAlertKind = 'low_stock' | 'stockout' | 'usage_waiting' | 'order_not_started' | 'quote_waiting' | 'overdue_delivery' | 'count_difference' | 'request_waiting' | 'offline_held';
 /** The alerts about the system itself. They are for IT only: the owner never sees them and cannot tune them. */
-export type SystemAlertKind = 'system_sync' | 'system_backup' | 'system_google' | 'system_pins' | 'system_space';
+export type SystemAlertKind = 'system_sync' | 'system_backup' | 'system_google' | 'system_pins' | 'system_space' | 'system_chain';
 export type AlertKind = ShopAlertKind | SystemAlertKind;
 export type AlertSeverity = 'warning' | 'critical';
 
@@ -736,6 +736,49 @@ export interface AuditEntry {
   target?: string;
   summary: string;
   outcome: 'ok' | 'denied' | 'invalid' | 'error';
+}
+
+/** One link of the sealed chain: the fingerprint of one audit entry, joined to the link before it. It holds no details, only references. */
+export interface ChainLink {
+  /** "c" and the sequence number, padded so the links sort in order. */
+  id: Id;
+  seq: number;
+  at: string;
+  auditId: Id;
+  /** What kind of action it was (the intent name). */
+  kind: string;
+  actorId?: Id;
+  outcome: AuditEntry['outcome'];
+  /** The fingerprint of the audit entry as it was written. */
+  entryHash: string;
+  /** The hash of the link before this one. */
+  prev: string;
+  hash: string;
+}
+
+/** Where the chain ends now. One record, id "head". */
+export interface ChainHead {
+  id: 'head';
+  seq: number;
+  hash: string;
+  /** When sealing began on this database. Audit entries before this are not sealed. */
+  since: string;
+  /** How many activity entries already existed when sealing began. They are not sealed, and this number is what stops more being slipped in among them. */
+  unsealed?: number;
+}
+
+/** The result of a check. "last" is the latest check; "good" is the furthest point that was proven intact, so the next check can start from it. */
+export interface ChainCheck {
+  id: 'last' | 'good';
+  at: string;
+  ok: boolean;
+  mode: 'new' | 'full';
+  upTo: number;
+  hashAtUpTo: string;
+  checked: number;
+  /** Links whose details are no longer in the activity record (moved to the archive or removed). */
+  detailsGone: number;
+  problems: string[];
 }
 
 export interface OutboxItem {

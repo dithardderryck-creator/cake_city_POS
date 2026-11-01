@@ -1,3 +1,4 @@
+import { appendAudit } from './circuits/seal';
 import { z } from 'zod';
 import type { AuditEntry, Device, HeldAction, OfflinePass, OfflineSeen, Role, Session, Staff } from './domain';
 import type { DispatchResult, IntentMap } from './intents';
@@ -76,7 +77,7 @@ export function createReplayer(d: ReplayDeps) {
   const now = () => d.clock.now().toISOString();
 
   async function audit(entry: Omit<AuditEntry, 'id' | 'at'>) {
-    await d.store.put<AuditEntry>('audit', { id: d.ids.next('aud'), at: now(), ...entry });
+    await appendAudit({ store: d.store, ids: d.ids, clock: d.clock }, entry);
   }
 
   /** A refusal that someone should be able to see later: written to the audit trail as a security event. */

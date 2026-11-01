@@ -152,3 +152,67 @@ just now ||| sasa hivi
 {n} hours ago ||| saa {n} zilizopita
 {n} days ago ||| siku {n} zilizopita
 never ||| kamwe
+What was done in the shop system, by whom, newest first. Every record is sealed to the one before it, so a change made afterwards shows up as a mismatch. Money and stock stay hidden until you open them, and opening is recorded too. ||| Kilichofanywa kwenye mfumo wa duka, na nani, vya karibuni kwanza. Kila rekodi imefungwa kwa muhuri na ile iliyotangulia, kwa hiyo mabadiliko ya baadaye yanaonekana kama kutolingana. Pesa na hisa hufichwa hadi uzifungue, na kufungua kunarekodiwa pia.
+Seal ||| Muhuri
+Matches ||| Inalingana
+Does not match ||| Haolingani
+Not checked yet ||| Bado haijakaguliwa
+Not started ||| Haijaanza
+Sealing has not started yet. It begins with the first thing anyone does. ||| Kuweka muhuri bado hakujaanza. Huanza na jambo la kwanza analofanya yeyote.
+Something in the sealed records is different from when it was sealed. Do not clear it. Tell the owner. ||| Kuna kitu kwenye rekodi zilizowekwa muhuri kimebadilika tangu zilipofungwa. Usikifute. Mwambie mmiliki.
+Everything sealed so far matches what was written down at the time. ||| Kila kilichowekwa muhuri hadi sasa kinalingana na kilichoandikwa wakati huo.
+Sealed records ||| Rekodi zenye muhuri
+Sealing began ||| Muhuri ulianza
+Latest seal ||| Muhuri wa mwisho
+Last check ||| Ukaguzi wa mwisho
+Moved to the archive ||| Zilizohamishiwa kwenye hifadhi
+{n} (the seal still holds) ||| {n} (muhuri bado unashikilia)
+Not known ||| Haijulikani
+None ||| Hakuna
+Not yet ||| Bado
+{*} (everything, {n} checked) ||| {*} (kila kitu, {n} zimekaguliwa)
+{*} (what is new, {n} checked) ||| {*} (vipya, {n} zimekaguliwa)
+Mismatch ||| Kutolingana
+Check now ||| Kagua sasa
+Check everything ||| Kagua kila kitu
+Only opened ||| Zilizofunguliwa tu
+Show ||| Onyesha
+sealed, tap to open ||| imefungwa, gusa kufungua
+Details are in the archive. ||| Maelezo yako kwenye hifadhi.
+The details are in the archive. ||| Maelezo yako kwenye hifadhi.
+Details not here to compare ||| Maelezo hayapo kulinganisha
+Matches its seal ||| Inalingana na muhuri wake
+Does NOT match its seal ||| HAILINGANI na muhuri wake
+Everything new matches its seal. ||| Vipya vyote vinalingana na muhuri wake.
+Everything matches its seal. ||| Kila kitu kinalingana na muhuri wake.
+Something does not match. See the Records page. ||| Kuna kisicholingana. Tazama ukurasa wa Rekodi.
+New order ||| Oda mpya
+Sale ||| Mauzo
+Order line added ||| Mstari wa oda umeongezwa
+Custom cake added ||| Keki maalum imeongezwa
+Payment ||| Malipo
+Refund ||| Marejesho
+Order progress ||| Maendeleo ya oda
+Order cancelled ||| Oda imefutwa
+Stock received ||| Hisa imepokelewa
+Stock written off ||| Hisa imeondolewa
+Stock count ||| Hesabu ya hisa
+Day closed ||| Siku imefungwa
+Price change ||| Mabadiliko ya bei
+Offline sale ||| Mauzo ya nje ya mtandao
+Opened record {*} ||| Imefungua rekodi {*}
+Checked the record chain (everything): it matches ||| Imekagua mnyororo wa rekodi (kila kitu): inalingana
+Checked the record chain (what is new): it matches ||| Imekagua mnyororo wa rekodi (vipya): inalingana
+Checked the record chain (everything): it does NOT match ||| Imekagua mnyororo wa rekodi (kila kitu): HAILINGANI
+Checked the record chain (what is new): it does NOT match ||| Imekagua mnyororo wa rekodi (vipya): HAILINGANI
+Checked the record chain (daily): it matches ||| Imekagua mnyororo wa rekodi (kila siku): inalingana
+Checked the record chain (daily): it does NOT match. {*} ||| Imekagua mnyororo wa rekodi (kila siku): HAILINGANI. {*}
+The sealed records do not match ||| Rekodi zenye muhuri hazilingani
+{*} Open Records to see what the check found. ||| {*} Fungua Rekodi uone ukaguzi ulipata nini.
+What IT did ||| Alichofanya IT
+Everything your IT person did in the system, newest first. You can read it here, not change it. ||| Kila alichofanya mtu wako wa IT kwenye mfumo, vya karibuni kwanza. Unaweza kusoma hapa, si kubadilisha.
+{n} actions ||| hatua {n}
+{n} action ||| hatua {n}
+Nothing yet ||| Bado hakuna
+IT has not done anything yet. ||| IT bado hajafanya chochote.
+The system ||| Mfumo

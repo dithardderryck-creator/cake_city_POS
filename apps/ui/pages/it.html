@@ -82,8 +82,9 @@ main>section[hidden]{display:none}
 
 <section id="v-records" hidden>
 <h1>Records</h1>
-<p class="sub">What was done in the shop system, by whom, newest first. This is a plain list for now; sealing every record so it cannot be changed unseen comes next.</p>
-<section class="card"><div class="row"><h2>Who did what</h2><label class="mute" style="display:flex;gap:8px;align-items:center">Show <select id="auf" style="min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px"><option value="all">Everything</option><option value="bad">Only refused</option></select></label></div><ul class="audl" id="aul"></ul><div class="btns" style="margin-top:12px"><button class="b" id="aum" hidden>Show more</button></div></section>
+<p class="sub">What was done in the shop system, by whom, newest first. Every record is sealed to the one before it, so a change made afterwards shows up as a mismatch. Money and stock stay hidden until you open them, and opening is recorded too.</p>
+<section class="card" id="rcs"><div class="row" style="flex-wrap:wrap"><h2>Seal</h2><span class="tag" id="rct"></span></div><p class="mute" id="rcp" style="margin:6px 0 0"></p><dl class="kv" id="rcv"></dl><ul class="list" id="rcx" hidden></ul><div class="btns" style="margin-top:14px"><button class="b" id="rcn">Check now</button><button class="b" id="rca">Check everything</button></div></section>
+<section class="card"><div class="row" style="flex-wrap:wrap"><h2>Who did what</h2><label class="mute" style="display:flex;gap:8px;align-items:center">Show <select id="auf" style="min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px"><option value="all">Everything</option><option value="refused">Only refused</option><option value="opened">Only opened</option></select></label></div><ul class="audl" id="aul"></ul><div class="btns" style="margin-top:12px"><button class="b" id="aum" hidden>Show more</button></div></section>
 </section>
 
 <section id="v-sessions" hidden>
@@ -118,7 +119,7 @@ async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return a
 try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
 let D={},view="health",CH=null;
 const TABS=["health","devices","records","backups"],PAGES=TABS.concat(["sessions","logs"]);
-function go(v){if(!PAGES.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records")aur();if(v==="logs")lgsub();scrollTo(0,0)}
+function go(v){if(!PAGES.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records"&&!rcstop)rcsub();if(v==="logs")lgsub();scrollTo(0,0)}
 $$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
 
 /* ---------- health ---------- */
@@ -179,11 +180,27 @@ $("#lgl").onchange=lgsub;$("#lgh").onchange=lgsub;$("#lgq").oninput=lgr;$("#lgr"
 
 /* ---------- records ---------- */
 const ROLE_L={owner:"Owner",cashier:"Cashier",baker:"Baker",inventory:"Inventory",it:"IT"};
-let AU=null,auw="all",aun=25;
-function aur(){if(!AU)return;const al=AU.filter(a=>auw==="all"||a.outcome!=="ok");
- $("#aul").innerHTML=al.slice(0,aun).map(a=>{const said=a.summary.startsWith(a.who),who=said?"":`<b>${E(a.who)}</b>${a.role&&!a.who.includes(ROLE_L[a.role]||a.role)?` <span class="mute">(${E(ROLE_L[a.role]||a.role)})</span>`:""} · `;return`<li style="flex-wrap:wrap"><time>${E(when(a.at))}</time><span>${who}${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`}).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>';
- $("#aum").hidden=al.length<=aun}
-$("#auf").onchange=e=>{auw=e.target.value;aun=25;aur()};$("#aum").onclick=()=>{aun+=25;aur()};
+let RC=null,RX=[],RN=null,rcstop=null,auw="all";
+function rcsub(){rcstop&&rcstop();RX=[];RN=null;RC=null;rcr();rcstop=Cake.feed("records_view",{kind:auw},d=>{RC=d;if(!RX.length)RN=d.nextBefore;rcr()})}
+function rcr(){const d=RC;if(!d){$("#aul").innerHTML='<li><span class="mute">Loading…</span></li>';$("#aum").hidden=true;return}
+ const c=d.chain,k=c.check;
+ $("#rct").className="tag "+(k?(k.ok?"ok":"risk"):"warn");
+ $("#rct").textContent=k?(k.ok?"Matches":"Does not match"):(c.sealed?"Not checked yet":"Not started");
+ $("#rcp").textContent=!c.sealed?"Sealing has not started yet. It begins with the first thing anyone does.":(k&&!k.ok?"Something in the sealed records is different from when it was sealed. Do not clear it. Tell the owner.":"Everything sealed so far matches what was written down at the time.");
+ $("#rcv").innerHTML=c.sealed?[["Sealed records",Cake.num(c.sealed)],["Sealing began",c.since?new Date(c.since).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"Not known"],["Latest seal",c.headRef||"None"],["Last check",k?when(k.at)+" ("+(k.mode==="full"?"everything":"what is new")+", "+Cake.num(k.checked)+" checked)":"Not yet"]].map(r=>`<dt>${E(r[0])}</dt><dd>${E(r[1])}</dd>`).join("")+(k&&k.detailsGone?`<dt>Moved to the archive</dt><dd>${E(Cake.num(k.detailsGone))} (the seal still holds)</dd>`:""):"";
+ const pr=k&&!k.ok?k.problems:[];$("#rcx").hidden=!pr.length;$("#rcx").innerHTML=pr.map(x=>`<li><span class="tag risk" style="margin-right:6px">Mismatch</span>${E(x)}</li>`).join("");
+ const rows=[...d.rows,...RX.filter(x=>!d.rows.some(y=>y.seq===x.seq))];
+ $("#aul").innerHTML=rows.map(a=>{const rl=a.role?ROLE_L[a.role]||a.role:"",who=`<b>${E(a.who)}</b>${rl&&!a.who.includes(rl)?` <span class="mute">(${E(rl)})</span>`:""}`;
+  const body=a.sealed?`<button class="b" data-seq="${a.seq}" style="min-height:34px;padding:0 12px"><span aria-hidden="true">🔒</span> <span>${E(a.kind)}</span> <span>sealed, tap to open</span></button>`:E(a.summary||(a.detailsGone?"Details are in the archive.":a.kind));
+  return`<li style="flex-wrap:wrap"><time>${E(when(a.at))}</time><span>${who} · ${body}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""} <span class="mute" style="font-size:12px">${E(a.ref)}</span></span></li>`}).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>';
+ $("#aum").hidden=RN==null}
+$("#auf").onchange=e=>{auw=e.target.value;rcsub()};
+$("#aum").onclick=e=>guard(e.currentTarget,async()=>{const r=await Cake.read("records_view",{kind:auw,before:RN});if(r){RX.push(...r.rows);RN=r.nextBefore;rcr()}});
+$("#aul").onclick=e=>{const b=e.target.closest("[data-seq]");if(b)guard(b,async()=>{const r=await Cake.send("records/open",{seq:+b.dataset.seq});if(!r.ok)return;const o=r.data,rl=o.role?ROLE_L[o.role]||o.role:"";
+  const dg=Cake.dialog(`<h2 style="margin:0 0 6px">${E(o.kind)}</h2><p class="mute" style="margin:0 0 10px">${E(when(o.at))} · ${E(o.who)}${rl?" ("+E(rl)+")":""} · ${E(o.ref)}</p><p style="margin:0 0 10px">${E(o.summary||"The details are in the archive.")}</p><p style="margin:0 0 14px"><span class="tag ${o.intact===null?"warn":o.intact?"ok":"risk"}">${o.intact===null?"Details not here to compare":o.intact?"Matches its seal":"Does NOT match its seal"}</span></p><div class="btns"><button class="b p" data-close>Close</button></div>`);
+  dg.el.querySelector("[data-close]").onclick=dg.close})};
+$("#rcn").onclick=e=>guard(e.currentTarget,async()=>{const r=await Cake.send("records/verify",{});if(r.ok)Cake.toast(r.data.ok?"Everything new matches its seal.":"Something does not match. See the Records page.")});
+$("#rca").onclick=e=>guard(e.currentTarget,async()=>{const r=await Cake.send("records/verify",{full:true});if(r.ok)Cake.toast(r.data.ok?"Everything matches its seal.":"Something does not match. See the Records page.")});
 
 /* ---------- devices ---------- */
 let dvcode=null;
@@ -238,7 +255,6 @@ const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.
  Cake.feed("location_check",{},d=>{D.loc=d;locr()});
  Cake.feed("drive_accounts",{},d=>{D.drv=d;hr()});
  Cake.mountDrive($("#drv"));
- Cake.feed("audit_view",{},d=>{AU=d;if(view==="records")aur()});
  Cake.feed("sessions_view",{},d=>{D.ses=d;ser()});
  Cake.feed("alert_inbox",{},d=>{D.al=d;hr()});
  Cake.feed("panel_map",{},d=>{D.map=d;hr()});

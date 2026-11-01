@@ -250,6 +250,7 @@ nav.xtabs svg{flex:none;width:18px;height:18px}
 <header><div><h1>Staff</h1><p class="sub">Everyone signs in with a PIN, so every action is tied to a named person. Only you manage staff and PINs.</p></div><button class="b p" id="sfnew">Add staff</button></header>
 <div class="split"><div class="rl" id="sflist"></div><div class="card" id="sfdet"></div></div>
 <section class="card" id="dvc" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Devices</h2><span class="tag" id="dvn"></span></div><p class="mute" style="margin:2px 0 10px">Only devices registered here can open the system. Make a one-time code, then type it on the new device's sign-in page.</p><div id="dvb"></div></section>
+<section class="card" id="itc" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>What IT did</h2><span class="tag" id="itn"></span></div><p class="mute" style="margin:2px 0 10px">Everything your IT person did in the system, newest first. You can read it here, not change it.</p><ul class="tl" id="itl"></ul><button class="b" id="itm" hidden style="margin-top:10px">Show more</button></section>
 <section class="card" style="margin-top:16px"><div class="row" style="flex-wrap:wrap"><h2>Audit log</h2><select class="pr" id="auf" aria-label="Filter by person" style="width:auto"></select></div><ul class="tl" id="aul" style="margin-top:10px"></ul><button class="b" id="aum" hidden style="margin-top:10px">Show more</button></section>
 </section>
 <section id="v-reports" hidden>
@@ -562,7 +563,9 @@ $("#dpn").addEventListener("change",e=>{if(drMode==="day"&&e.target.hasAttribute
 $("#eod").onclick=dayOpen;
 
 /* ---------- staff ---------- */
-let sfs=null,sfm=null,auw="all",aun=25;
+let sfs=null,sfm=null,auw="all",aun=25,ITA=null,itn=25;
+function itr(){const r=ITA?ITA.rows:[];$("#itn").textContent=r.length?r.length+(r.length===1?" action":" actions"):"Nothing yet";$("#itl").innerHTML=r.slice(0,itn).map(a=>`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span><b>${E(a.who)}</b> · ${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`).join("")||'<li><span class="mute">IT has not done anything yet.</span></li>';$("#itm").hidden=r.length<=itn}
+$("#itm").onclick=()=>{itn+=25;itr()};
 const sst=u=>!u.active?["Deactivated","risk"]:u.locked?["Locked","cop"]:["Active",""];
 const LVL=[["off","Off"],["critical","Critical alerts only"],["all","All alerts"]];
 function sfr(){const L=D.staff||[],me=Cake.me();if(!sfs&&L.length)sfs=L[0].id;
@@ -739,6 +742,7 @@ function xclock(){const d=new Date();$("#date").textContent=d.toLocaleDateString
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
  Cake.feed("offline_review",{},d=>{D.off=d;ofr()});
  Cake.feed("audit_view",{},d=>{D.audit=d;ov();cr();sfr()});
+ Cake.feed("it_activity",{},d=>{ITA=d;itr()});
  Cake.feed("shop_settings",{},d=>{D.shop=d;SHOP=d.shopName;orr();if(drMode==="settings"&&setSec!=="online")keep($("#dpn"),renderSettings)});
  Cake.feed("drive_accounts",{},d=>{D.drv=d;if(drMode==="settings"&&!setSec)keep($("#dpn"),renderSettings)});
  Cake.feed("location_check",{},d=>{D.loc=d;if(drMode==="settings"&&setSec==="location")keep($("#dpn"),renderSettings)});

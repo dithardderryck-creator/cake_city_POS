@@ -42,6 +42,9 @@ export const COLLECTIONS = [
   'serverKeys',
   'offlineLog',
   'dayCloses',
+  'chain',
+  'chainHead',
+  'chainChecks',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
