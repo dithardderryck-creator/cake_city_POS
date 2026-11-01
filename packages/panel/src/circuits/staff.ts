@@ -1,4 +1,4 @@
-import type { PushSubscriptionRecord, Staff } from '../domain';
+import type { Alert, PushSubscriptionRecord, Staff } from '../domain';
 import type { LoginState } from './pin';
 import { DomainError, type Registry } from '../intents';
 
@@ -95,6 +95,9 @@ export const staffIntents = {
     handle: async (p, ctx) => {
       const staff = (await ctx.store.get<Staff>('staff', p.userId))!;
       await ctx.store.put<LoginState>('loginState', { id: staff.id, failures: 0, lockCount: 0 });
+      // The lock is gone, so its alert is too, without waiting for the next check.
+      for (const a of await ctx.store.find<Alert>('alerts', { where: { dedupeKey: `system_pins:${staff.id}`, status: 'open' } }))
+        await ctx.store.put<Alert>('alerts', { ...a, status: 'resolved', resolvedAt: ctx.now(), resolvedBy: 'system', updatedAt: ctx.now() });
       return { summary: `Let ${staff.name} back in after a lockout`, target: staff.id };
     },
   },

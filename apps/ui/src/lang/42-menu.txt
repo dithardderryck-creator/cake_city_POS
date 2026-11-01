@@ -99,3 +99,18 @@ Let {*} back in after a lockout ||| Amemruhusu {*} aingie tena baada ya kufungiw
 version {*} ||| toleo {*}
 schema {n} ||| schema {n}
 {*} MB, schema {*} · version {*} ||| {*} MB, schema {*} · toleo {*}
+{n} change could not be synced ||| Badiliko {n} haliwezi kusawazishwa
+{n} changes could not be synced ||| Mabadiliko {n} hayawezi kusawazishwa
+They are kept and will be tried again. Check the online database connection. ||| Yamehifadhiwa na yatajaribiwa tena. Angalia muunganisho wa hifadhidata ya mtandaoni.
+Backups and the Drive copy may be paused. ||| Nakala rudufu na nakala ya Drive zinaweza kuwa zimesimama.
+Too many wrong PINs. They can be let in from here. ||| PIN mbaya mara nyingi. Wanaweza kuruhusiwa kuingia kutoka hapa.
+The disk is nearly full ||| Diski imejaa karibu kabisa
+{n} MB is left ({n}%). Free some space before backups and sales fail. ||| MB {n} zimebaki ({n}%). Futa vitu upate nafasi kabla nakala rudufu na mauzo hayajashindwa.
+Disk nearly full ||| Diski imejaa karibu kabisa
+{n}% disk free ||| Diski ina nafasi {n}%
+{n}% disk free · {*} ||| Diski ina nafasi {n}% · {*}
+Backup ||| Nakala rudufu
+Google ||| Google
+Space ||| Nafasi
+A system problem has been open for a day ||| Tatizo la mfumo limekuwa wazi kwa siku moja
+IT has been told. ||| IT ameambiwa.

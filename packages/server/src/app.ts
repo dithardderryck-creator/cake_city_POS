@@ -141,6 +141,14 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
     const http = createHttpServer({ panel, log, config, version: VERSION });
     const scheme = config.tls ? 'https' : 'http';
     terminals.system = {
+      space: async () => {
+        try {
+          const st = fs.statfsSync(config.dataDir);
+          return { freeBytes: Number(st.bavail) * Number(st.bsize), totalBytes: Number(st.blocks) * Number(st.bsize) };
+        } catch {
+          return null;
+        }
+      },
       info: async () => [
         { label: 'Version', value: VERSION },
         { label: 'Uptime', value: duration(process.uptime()) },

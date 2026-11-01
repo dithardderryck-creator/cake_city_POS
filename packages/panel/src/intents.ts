@@ -1,5 +1,5 @@
 import type { UnitCode } from './units';
-import type { AlertKind, MessageLevel, REQUEST_CATEGORIES } from './domain';
+import type { ShopAlertKind, MessageLevel, REQUEST_CATEGORIES } from './domain';
 import type { Device, CakeSpecInput, Id, IngredientUnit, LineStatus, PaymentMethod, PaymentStatus, OrderStatus, Role, RuleScaling, Session } from './domain';
 import type { Clock, Ids, PinHasher, Secrets, Store, Terminals } from './ports';
 
@@ -195,7 +195,7 @@ export interface IntentMap {
     countDifference?: number;
     urgentRequestMinutes?: number;
     requestWaitHours?: number;
-    critical?: Partial<Record<AlertKind, boolean>>;
+    critical?: Partial<Record<ShopAlertKind, boolean>>;
   };
 
   /** Change where alerts reach a person. The owner can change anyone; everyone else only themselves. `phone: null` removes it. */

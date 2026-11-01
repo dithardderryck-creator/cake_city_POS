@@ -645,7 +645,7 @@ Allowed: **owner, inventory**
 
 #### `alerts/mark_seen`
 
-Allowed: **owner, cashier, baker, inventory**
+Allowed: **owner, cashier, baker, inventory, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -653,7 +653,7 @@ Allowed: **owner, cashier, baker, inventory**
 
 #### `alerts/acknowledge`
 
-Allowed: **owner, cashier, baker, inventory**
+Allowed: **owner, cashier, baker, inventory, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -661,7 +661,7 @@ Allowed: **owner, cashier, baker, inventory**
 
 #### `alerts/snooze`
 
-Allowed: **owner, cashier, baker, inventory**
+Allowed: **owner, cashier, baker, inventory, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -1132,7 +1132,7 @@ Allowed: **owner, baker**
 
 #### `alert_inbox`
 
-Allowed: **owner, cashier, baker, inventory**
+Allowed: **owner, cashier, baker, inventory, it**
 
 _No fields. Send an empty object `{}`._
 
@@ -1184,6 +1184,12 @@ _No fields. Send an empty object `{}`._
 #### `audit_view`
 
 Allowed: **owner, it**
+
+_No fields. Send an empty object `{}`._
+
+#### `system_notice`
+
+Allowed: **owner**
 
 _No fields. Send an empty object `{}`._
 

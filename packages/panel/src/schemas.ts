@@ -327,6 +327,7 @@ export const feedSchemas = {
   stock_forecast: z.strictObject({ ingredientId: id.optional(), horizonDays: z.number().int().min(1).max(30).optional() }),
   audit_view: empty,
   panel_map: empty,
+  system_notice: empty,
 } as const;
 
 type FeedBoth<K extends FeedName> = [z.infer<(typeof feedSchemas)[K]>] extends [FeedMap[K]['params']]

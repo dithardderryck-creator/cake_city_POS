@@ -82,3 +82,111 @@ describe('the Selling line', () => {
     expect((await panel.feed('panel_map', {}, cashier)).ok).toBe(false);
   });
 });
+
+describe('alerts for IT only', () => {
+  let facts: { backupError: string | null; google: { id: string; email: string | null; state: string; problem: string | null }[]; space: { freeBytes: number; totalBytes: number } | null };
+  let ticking: Panel;
+  beforeEach(async () => {
+    facts = { backupError: null, google: [], space: { freeBytes: 60e9, totalBytes: 100e9 } };
+    ticking = createPanel({
+      store,
+      clock,
+      terminals: {
+        backup: { status: async () => ({ lastOkAt: null, lastError: facts.backupError, pendingUploads: 0, lastFile: null }) },
+        system: { info: async () => [], space: async () => facts.space },
+        drive: { status: async () => ({ clientReady: true, clientFrom: 'saved', folderName: 'Cake POS', accounts: facts.google.map((g, i) => ({ ...g, connectedAt: '2026-10-01T00:00:00Z', state: g.state as 'ok', usedBytes: null, limitBytes: null, checkedAt: null, lastOkAt: null, position: i + 1 })), connect: null, problem: null }) } as never,
+      },
+    });
+  });
+  const open = async (role: string) => {
+    const sid = await signInWith(ticking, role);
+    const r = await ticking.feed('alert_inbox', {}, sid);
+    return r.ok ? r.data.open : null;
+  };
+  async function signInWith(p: Panel, role: string) {
+    return ok<{ sessionId: string }>(await p.dispatch('auth/sign_in', { userId: await id(role), pin: DEMO_STAFF.find((s) => s.role === role)!.pin })).sessionId;
+  }
+
+  it('says nothing when everything is fine', async () => {
+    await ticking.tick();
+    expect(await open('it')).toEqual([]);
+  });
+
+  it('raises a backup, Google and low-space alert for IT, and clears each when it is fixed', async () => {
+    facts.backupError = 'Could not write the backup file.';
+    facts.google = [{ id: 'g1', email: 'shop@example.com', state: 'needs_signin', problem: 'Sign in again.' }];
+    facts.space = { freeBytes: 4e9, totalBytes: 100e9 };
+    await ticking.tick();
+    const titles = ((await open('it')) ?? []).map((a) => a.title);
+    expect(titles).toEqual(expect.arrayContaining(['The last backup failed', 'Google needs a look: shop@example.com', 'The disk is nearly full']));
+    facts.backupError = null;
+    facts.google = [];
+    facts.space = { freeBytes: 60e9, totalBytes: 100e9 };
+    await ticking.tick();
+    expect(await open('it')).toEqual([]);
+  });
+
+  it('raises one alert for a person who is locked out, and Let in closes it at once', async () => {
+    const baker = await lockOut('baker');
+    await ticking.tick();
+    const mine = (await open('it'))!.filter((a) => a.kind === 'system_pins');
+    expect(mine.map((a) => a.title)).toEqual(['Neema (Baker) is locked out']);
+    const sid = await signInWith(ticking, 'it');
+    ok(await ticking.dispatch('staff/unlock', { userId: baker }, sid));
+    expect((await open('it'))!.filter((a) => a.kind === 'system_pins')).toEqual([]);
+  });
+
+  it('a failed sync raises an alert, but a failed message does not', async () => {
+    await store.put('outbox', { id: 'o1', kind: 'sms', payload: {}, createdAt: '2026-10-27T08:00:00Z', attempts: 5, status: 'failed' });
+    await ticking.tick();
+    expect(await open('it')).toEqual([]);
+    await store.put('outbox', { id: 'o2', kind: 'sync', payload: {}, createdAt: '2026-10-27T08:00:00Z', attempts: 5, status: 'failed' });
+    await ticking.tick();
+    expect((await open('it'))!.map((a) => a.title)).toEqual(['1 change could not be synced']);
+  });
+
+  it('keeps system alerts away from the owner and everyone else', async () => {
+    facts.backupError = 'Disk error.';
+    await lockOut('baker');
+    await ticking.tick();
+    expect((await open('it'))!.length).toBe(2);
+    for (const role of ['owner', 'cashier', 'inventory']) expect(await open(role)).toEqual([]);
+    const sid = await signInWith(ticking, 'owner');
+    const nav = await ticking.feed('navigation', {}, sid);
+    expect(nav.ok && nav.data.find((n) => n.id === 'alerts')?.badge).toBeUndefined();
+  });
+
+  it('an alert the timer has not looked at again is neither raised nor cleared by ordinary work', async () => {
+    facts.backupError = 'Disk error.';
+    await ticking.tick();
+    const cashier = await signInWith(ticking, 'cashier');
+    await ticking.dispatch('orders/create_order', { source: 'walk_in', fulfilment: 'pickup', customerName: 'Joe', deliveryDate: '2026-10-27' }, cashier);
+    expect((await open('it'))!.map((a) => a.title)).toEqual(['The last backup failed']);
+  });
+
+  it('shows the owner one quiet line, only after a problem has been open a day, and not what it is', async () => {
+    facts.backupError = 'Disk error.';
+    await ticking.tick();
+    const owner = await signInWith(ticking, 'owner');
+    expect((await ticking.feed('system_notice', {}, owner)).ok && (await ticking.feed('system_notice', {}, owner) as { data: { openForDay: boolean } }).data.openForDay).toBe(false);
+    t += 25 * 3_600_000;
+    await ticking.tick();
+    const owner2 = await signInWith(ticking, 'owner');
+    const n = await ticking.feed('system_notice', {}, owner2);
+    expect(n.ok && n.data).toEqual({ openForDay: true });
+    facts.backupError = null;
+    await ticking.tick();
+    const gone = await ticking.feed('system_notice', {}, owner2);
+    expect(gone.ok && gone.data.openForDay).toBe(false);
+    expect((await ticking.feed('system_notice', {}, await signInWith(ticking, 'cashier'))).ok).toBe(false);
+  });
+
+  it('lets IT see the alert and take it', async () => {
+    facts.backupError = 'Disk error.';
+    await ticking.tick();
+    const sid = await signInWith(ticking, 'it');
+    const [a] = (await open('it'))!;
+    ok(await ticking.dispatch('alerts/mark_seen', { alertIds: [a!.alertId] }, sid));
+    ok(await ticking.dispatch('alerts/acknowledge', { alertId: a!.alertId }, sid));
+  });
+});

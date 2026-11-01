@@ -25,6 +25,7 @@ try {
   // The "offline" bar must take no room while the shop is reachable (it once showed as a red strip).
   assert.equal(await page.evaluate(() => { const e = document.getElementById('offline'); return !e || e.getBoundingClientRect().height; }), 0, 'offline bar should be hidden when online');
   assert.match(await txt(page, '#reqs'), /All caught up/);
+  assert.equal(await page.locator('#sysn').isVisible(), false, 'the system line stays away while nothing has been wrong for a day');
   await page.screenshot({ path: `${shots}/overview-empty.png` });
 
   const cashier = await actor(browser, shop, 'cashier', watch);

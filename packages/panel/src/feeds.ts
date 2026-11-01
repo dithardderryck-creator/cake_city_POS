@@ -44,7 +44,7 @@ import { heldInLobby, type PlaceReport } from './circuits/place';
 import { quickSaleTotal } from './circuits/orders';
 import { DomainError } from './intents';
 import { BASE_UNIT_FOR, formatQty, unitTable } from './units';
-import { ALERT_KINDS, ALERT_KIND_LABEL, canSeeAlert, loadAlertSettings } from './circuits/alerts';
+import { ALERT_KINDS, ALERT_KIND_LABEL, SYSTEM_PROBLEM_DAY_MS, canSeeAlert, isSystemKind, loadAlertSettings } from './circuits/alerts';
 import { ROLE_LABEL, canSeeRequest, isFinal, isTarget, needsPerson, requestActions, type RequestAction } from './circuits/requests';
 import { buildForecasts, type ForecastRow } from './forecast';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
@@ -265,6 +265,8 @@ export interface PanelMapData {
   system: { label: string; value: string }[];
   /** People shut out by wrong PINs right now. */
   lockedOut: { id: string; name: string; role: Role; until: string }[];
+  /** Room left on the disk, when the machine can say. */
+  space: { freeMb: number; freePct: number } | null;
   /** Registered devices seen in the last hour, and the ones that have been quiet for a day or more. */
   selling: { state: 'normal'; devices: number; online: number; quiet: { name: string; since: string | null }[] };
 }
@@ -694,6 +696,8 @@ export interface FeedMap {
   stock_forecast: { params: { ingredientId?: string; horizonDays?: number }; data: StockForecastData };
   audit_view: { params: Record<string, never>; data: AuditRow[] };
   panel_map: { params: Record<string, never>; data: PanelMapData };
+  /** For the owner: has a system problem been open for a day? It never says what, because IT looks after that. */
+  system_notice: { params: Record<string, never>; data: { openForDay: boolean } };
 }
 export type FeedName = keyof FeedMap;
 
@@ -1526,7 +1530,7 @@ export const feeds: FeedRegistry = {
   },
 
   alert_inbox: {
-    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ store, session, clock }) => {
       const me = session!;
       const nowIso = clock.now().toISOString();
@@ -1808,9 +1812,19 @@ export const feeds: FeedRegistry = {
       })),
   },
 
+  system_notice: {
+    roles: ['owner'],
+    build: async ({ store, clock }) => {
+      const nowMs = clock.now().getTime();
+      const open = await store.find<Alert>('alerts', { where: { status: 'open' } });
+      return { openForDay: open.some((a) => isSystemKind(a.kind) && nowMs - Date.parse(a.createdAt) >= SYSTEM_PROBLEM_DAY_MS) };
+    },
+  },
+
   panel_map: {
     roles: ['it'],
     build: async ({ store, stats, terminals, clock }) => {
+      const space = await Promise.resolve(terminals.system?.space?.()).catch(() => null);
       const [outbox, sessions, backup, system] = await Promise.all([
         store.list<OutboxItem>('outbox'),
         store.list<{ id: string; expiresAt: string }>('sessions'),
@@ -1860,6 +1874,7 @@ export const feeds: FeedRegistry = {
         activeSessions: sessions.filter((x) => Date.parse(x.expiresAt) > nowMs).length,
         backup,
         system,
+        space: space ? { freeMb: Math.round(space.freeBytes / 1_048_576), freePct: Math.round((space.freeBytes / Math.max(1, space.totalBytes)) * 100) } : null,
         lockedOut: staffAll
           .filter((p) => !p.removedAt && locks.has(p.id))
           .map((p) => ({ id: p.id, name: p.name, role: p.role, until: locks.get(p.id)! })),

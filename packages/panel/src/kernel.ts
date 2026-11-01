@@ -28,7 +28,7 @@ import { requestIntents } from './circuits/requests';
 import { announcementIntents } from './circuits/announcements';
 import { countIntents } from './circuits/count';
 import { batchIntents } from './circuits/batches';
-import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, reconcileAlerts } from './circuits/alerts';
+import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, readSystemFacts, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents, loadSettings } from './circuits/settings';
 import { placeIntents, heldInLobby, LOBBY_INTENTS, LOBBY_FEEDS, LOBBY_MESSAGE, type PlaceReport } from './circuits/place';
 import { paymentIntents } from './circuits/payments';
@@ -635,7 +635,8 @@ export function createPanel(options: PanelOptions = {}): Panel {
   const tick: Panel['tick'] = () =>
     serial(async () => {
       try {
-        const r = await store.transaction(() => reconcileAlerts({ store, ids, clock }));
+        const system = await readSystemFacts(terminals);
+        const r = await store.transaction(() => reconcileAlerts({ store, ids, clock, system }));
         for (const e of alertEvents(r)) {
           const event: PanelEvent = { type: e.type, at: now(), payload: e.payload ?? {} };
           for (const l of eventListeners) l(event);

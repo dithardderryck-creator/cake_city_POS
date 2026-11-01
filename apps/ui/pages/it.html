@@ -105,17 +105,18 @@ $$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
 
 /* ---------- health ---------- */
 function needs(){const m=D.map,out=[];if(!m)return out;
- const dr=D.drv;if(dr)for(const a of dr.accounts)if(["needs_signin","error","unreachable","full"].includes(a.state))out.push({k:"g"+a.id,t:"Google needs a look"+(a.email?": "+a.email:""),s:a.problem||"Backups and the Drive copy may be paused",tag:"Backups",go:"backups"});
+ // Alerts the system raised (sync, backup, Google, space). Locked-out people come straight from the live map so the row is there at once.
+ if(D.al)for(const a of D.al.open)if(a.kind!=="system_pins")out.push({k:a.alertId,t:a.title,s:a.body,tag:a.kindLabel,risk:a.kind==="system_backup"||a.kind==="system_space"?1:0,go:a.screen==="health"?"":a.screen});
  for(const p of m.lockedOut)out.push({k:"l"+p.id,t:p.name+" is locked out",s:"Too many wrong PINs. Locked until "+hhmm(p.until),tag:"Sign-in",risk:1,unlock:p.id});
- if(m.backup&&m.backup.lastError)out.push({k:"b",t:"The last backup failed",s:m.backup.lastError,tag:"Backups",risk:1,go:"backups"});
- if(m.outbox.failed>0)out.push({k:"o",t:m.outbox.failed+(m.outbox.failed===1?" change failed":" changes failed")+" to sync",s:"They are kept and will be tried again",tag:"Sync",risk:1,go:"backups"});
- for(const q of m.selling.quiet)out.push({k:"q"+q.name,t:q.name+" not seen for "+(q.since?ago(q.since).replace(" ago",""):"a while"),s:q.since?"Last seen "+when(q.since):"Never used since it was registered",tag:"Devices",go:"devices"});
  return out}
+function quiet(){const m=D.map;return m?m.selling.quiet.map(q=>({k:"q"+q.name,t:q.name+" not seen for "+(q.since?ago(q.since).replace(" ago",""):"a while"),s:q.since?"Last seen "+when(q.since):"Never used since it was registered",tag:"Devices",go:"devices"})):[]}
+let lastBell=-1,marked=new Set();
 function hr(){const m=D.map;if(!m)return;
  const sl=m.selling,off=sl.devices-sl.online;
  $("#sells").className="tag "+(sl.quiet.length?"warn":"ok");$("#sells").textContent=sl.quiet.length?sl.quiet.length+(sl.quiet.length===1?" device quiet":" devices quiet"):"Normal";
  $("#sellt").textContent=sl.devices?sl.online+" of "+sl.devices+" registered devices seen in the last hour"+(sl.quiet.length?". "+sl.quiet.map(q=>q.name).join(", ")+(sl.quiet.length===1?" has":" have")+" been quiet for a day or more.":"."):"No devices are registered yet.";
- const n=needs();$("#ndn").className="tag "+(n.length?"warn":"ok");$("#ndn").textContent=n.length?String(n.length):"Clear";CH&&CH.setBadge(n.length);
+ const bell=needs(),n=bell.concat(quiet());$("#ndn").className="tag "+(n.length?"warn":"ok");$("#ndn").textContent=n.length?String(n.length):"Clear";if(CH){CH.setBadge(bell.length);if(lastBell>=0&&bell.length>lastBell)CH.ring();lastBell=bell.length}
+ if(view==="health"&&D.al){const ids=D.al.open.filter(a=>!a.seen&&!marked.has(a.alertId)).map(a=>a.alertId);if(ids.length){ids.forEach(i=>marked.add(i));Cake.send("alerts/mark_seen",{alertIds:ids})}}
  $("#ndb").innerHTML=n.length?n.map(x=>`<div class="nd"><button class="go" ${x.go?`data-go="${x.go}"`:""} ${x.unlock?"disabled":""} style="${x.go?"cursor:pointer":"cursor:default"}"><b>${E(x.t)}</b><br><span class="mute"><span class="tag ${x.risk?"risk":"warn"}" style="margin-right:6px">${E(x.tag)}</span>${E(x.s)}</span></button>${x.unlock?`<button class="b" data-unlock="${E(x.unlock)}">Let in</button>`:""}</div>`).join(""):'<p class="empty">Nothing needs you. Everything is working.</p>';
  const bad=m.outbox.failed>0||(m.backup&&m.backup.lastError),gOk=!D.drv||D.drv.accounts.every(a=>a.state==="ok"||a.state==="paused"||a.state==="unknown");
  const denied=m.circuits.reduce((a,c)=>a+c.denied+c.invalid,0),errs=m.circuits.reduce((a,c)=>a+c.errors,0);
@@ -125,7 +126,7 @@ function hr(){const m=D.map;if(!m)return;
   ["backups","Sync and backups",tl(bad||!gOk?"risk":"ok",bad?"Failing":!gOk?"Google needs a look":"Working"),"Last good backup: "+(m.backup&&m.backup.lastOkAt?when(m.backup.lastOkAt):"none yet")+" · "+m.outbox.pending+" waiting"],
   ["devices","Devices and tills",tl(off>0||m.selling.quiet.length?"warn":"ok",sl.online+" of "+sl.devices+" seen"),sl.quiet.length?sl.quiet[0].name+" quiet for a day or more":"All registered devices used today"],
   ["records","Errors and sign-ins",tl(errs?"risk":"ok",m.activeSessions+" signed in"),denied+" refused since the server started · "+errs+" failed"],
-  ["health","Server",tl("ok",sysv("Uptime")||"Running"),(sysv("Database")||"")+(sysv("Version")?" · version "+sysv("Version"):"")]
+  ["health","Server",tl(m.space&&m.space.freePct<10?"risk":"ok",m.space&&m.space.freePct<10?"Disk nearly full":sysv("Uptime")||"Running"),(m.space?m.space.freePct+"% disk free · ":"")+(sysv("Database")||"")+(sysv("Version")?" · version "+sysv("Version"):"")]
  ].map(c=>`<button class="card" data-go="${c[0]}"><span class="row"><b style="font-size:15px">${E(c[1])}</b>${c[2]}</span><span class="mute">${E(c[3])}</span></button>`).join("");
  $("#sst").className="tag "+(bad?"risk":"ok");$("#sst").textContent=bad?"Needs a look":"All good";
  const rows=[["Signed in now",String(m.activeSessions)],["Changes waiting to sync",String(m.outbox.pending)],["Failed syncs",String(m.outbox.failed)],...m.system.map(s=>[s.label,s.value])];
@@ -206,6 +207,7 @@ const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.
  Cake.feed("drive_accounts",{},d=>{D.drv=d;hr()});
  Cake.mountDrive($("#drv"));
  Cake.feed("audit_view",{},d=>{AU=d;if(view==="records")aur()});
+ Cake.feed("alert_inbox",{},d=>{D.al=d;hr()});
  Cake.feed("panel_map",{},d=>{D.map=d;hr()});
  go("health")})();
 </script>

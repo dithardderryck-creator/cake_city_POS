@@ -35,7 +35,9 @@ The theme, language, PIN and contact details are in **My account**. The alert so
 
 ## The IT page
 
-Health opens first: a **Selling** line (registered devices seen in the last hour, and any quiet for a day or more), **Needs you** (Google accounts that need a look, people locked out with a **Let in** button, a failed backup, failed syncs, quiet devices), four check cards that open their tab, and the system details. **Records** is the plain list of who did what for now; sealing the records is a later phase. **Backups** has the two sync buttons and the Google accounts. The design and build order are in the IT spec (phases 1 to 8).
+Health opens first: a **Selling** line (registered devices seen in the last hour, and any quiet for a day or more), **Needs you** (the system's alerts for IT, people locked out with a **Let in** button, and devices quiet for a day), four check cards that open their tab, and the system details. **Records** is the plain list of who did what for now; sealing the records is a later phase. **Backups** has the two sync buttons and the Google accounts. The design and build order are in the IT spec (phases 1 to 8).
+
+**Alerts for IT** are raised by the one-minute check from what the machine says: failed syncs, a failed backup, a Google account that needs signing in or is full, someone locked out by wrong PINs, and a nearly full disk (under 10% or 500 MB). They reach IT only, in the bell and by the channels IT chose, never the owner. A quiet device only shows on Health, with no ring. When one has been open for a day, the owner's Overview shows one line, "A system problem has been open for a day. IT has been told.", and no detail; it goes when the problem is fixed.
 
 ## Two screens that changed
 

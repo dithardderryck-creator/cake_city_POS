@@ -114,6 +114,8 @@ export interface BackupTerminal {
 /** Terminal: facts about the machine the panel runs on, for the IT panel map. */
 export interface SystemTerminal {
   info(): Promise<Array<{ label: string; value: string }>>;
+  /** Room left on the disk the data lives on. Null when this machine cannot say. */
+  space?(): Promise<{ freeBytes: number; totalBytes: number } | null>;
 }
 
 /** What a terminal says after trying to send. `retry` says whether trying again later could help. */

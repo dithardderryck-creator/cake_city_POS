@@ -1,11 +1,12 @@
-import type { HeldAction, Alert, AlertKind, AlertSettings, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
+import type { HeldAction, Alert, AlertKind, ShopAlertKind, SystemAlertKind, AlertSettings, Staff, CountDifference, Ingredient, Order, OrderLine, OutboxItem, Product, Quote, Role, StaffRequest, UsageReport, Combination } from '../domain';
 import type { Registry } from '../intents';
 import { DomainError } from '../intents';
-import type { Clock, Ids, Store } from '../ports';
+import type { Clock, Ids, Store, Terminals } from '../ports';
+import type { LoginState } from './pin';
 import { buildForecasts } from '../forecast';
 import { daysBetween, todayLocal } from './dates';
 
-export const ALERT_KINDS: AlertKind[] = ['low_stock', 'stockout', 'usage_waiting', 'order_not_started', 'quote_waiting', 'overdue_delivery', 'count_difference', 'request_waiting', 'offline_held'];
+export const ALERT_KINDS: ShopAlertKind[] = ['low_stock', 'stockout', 'usage_waiting', 'order_not_started', 'quote_waiting', 'overdue_delivery', 'count_difference', 'request_waiting', 'offline_held'];
 
 export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   low_stock: 'Low stock',
@@ -17,7 +18,18 @@ export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   count_difference: 'Count difference',
   request_waiting: 'Request waiting',
   offline_held: 'Offline sale to review',
+  system_sync: 'Sync',
+  system_backup: 'Backup',
+  system_google: 'Google',
+  system_pins: 'Sign-in',
+  system_space: 'Space',
 };
+
+export const isSystemKind = (k: AlertKind): k is SystemAlertKind => k.startsWith('system_');
+/** A problem is "open for a day" for the owner's quiet line once it has been open this long. */
+export const SYSTEM_PROBLEM_DAY_MS = 24 * 3_600_000;
+const LOW_SPACE_PCT = 10;
+const LOW_SPACE_BYTES = 500 * 1_048_576;
 
 /** Defaults proposed in blueprint section 8 (A-11). The owner can change every one. */
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
@@ -211,6 +223,63 @@ export interface AlertEnv {
   store: Store;
   ids: Ids;
   clock: Clock;
+  /** What the machine says about itself. Only the timer reads it; when it is absent the system alerts are left exactly as they are. */
+  system?: SystemFacts;
+}
+
+/** What the backup, Google and disk terminals said just now. Read outside the transaction, so a slow disk never holds up a sale. */
+export interface SystemFacts {
+  backupError: string | null;
+  google: { id: string; email: string | null; state: string; problem: string | null }[];
+  space: { freeBytes: number; totalBytes: number } | null;
+}
+
+export async function readSystemFacts(terminals: Terminals): Promise<SystemFacts> {
+  const facts: SystemFacts = { backupError: null, google: [], space: null };
+  try {
+    facts.backupError = (await terminals.backup?.status())?.lastError ?? null;
+  } catch {
+    /* A terminal that cannot answer raises nothing here; the Health page says it is unreachable. */
+  }
+  try {
+    const d = await terminals.drive?.status();
+    facts.google = (d?.accounts ?? []).map((a) => ({ id: a.id, email: a.email, state: a.state, problem: a.problem }));
+  } catch {
+    /* as above */
+  }
+  try {
+    facts.space = (await terminals.system?.space?.()) ?? null;
+  } catch {
+    /* as above */
+  }
+  return facts;
+}
+
+/** What is wrong with the system itself right now. For IT only. */
+export async function systemAlerts(store: Store, now: Date, f: SystemFacts): Promise<DesiredAlert[]> {
+  const out: DesiredAlert[] = [];
+  const base = { to: ['it'] as Role[], screen: 'health' };
+  const failed = (await store.find<OutboxItem>('outbox', { where: { status: 'failed' } })).filter((o) => o.kind === 'sync').length;
+  if (failed > 0) out.push({ ...base, dedupeKey: 'system_sync', kind: 'system_sync', title: `${plural(failed, 'change', 'changes')} could not be synced`, body: 'They are kept and will be tried again. Check the online database connection.', screen: 'backups' });
+  if (f.backupError) out.push({ ...base, dedupeKey: 'system_backup', kind: 'system_backup', title: 'The last backup failed', body: f.backupError, screen: 'backups' });
+  for (const g of f.google)
+    if (['needs_signin', 'error', 'unreachable', 'full'].includes(g.state))
+      out.push({ ...base, dedupeKey: `system_google:${g.id}`, kind: 'system_google', title: `Google needs a look${g.email ? `: ${g.email}` : ''}`, body: g.problem ?? 'Backups and the Drive copy may be paused.', screen: 'backups' });
+  const locked = (await store.list<LoginState>('loginState')).filter((l) => l.lockedUntil && Date.parse(l.lockedUntil) > now.getTime());
+  if (locked.length) {
+    const people = await store.list<Staff>('staff');
+    for (const l of locked) {
+      const who = people.find((p) => p.id === l.id);
+      if (!who || who.removedAt) continue;
+      out.push({ ...base, dedupeKey: `system_pins:${l.id}`, kind: 'system_pins', title: `${who.name} is locked out`, body: 'Too many wrong PINs. They can be let in from here.', targetId: l.id });
+    }
+  }
+  if (f.space) {
+    const pct = (f.space.freeBytes / Math.max(1, f.space.totalBytes)) * 100;
+    if (pct < LOW_SPACE_PCT || f.space.freeBytes < LOW_SPACE_BYTES)
+      out.push({ ...base, dedupeKey: 'system_space', kind: 'system_space', title: 'The disk is nearly full', body: `${Math.round(f.space.freeBytes / 1_048_576)} MB is left (${Math.round(pct)}%). Free some space before backups and sales fail.`, screen: 'health' });
+  }
+  return out;
 }
 
 export interface ReconcileResult {
@@ -231,7 +300,7 @@ export async function reconcileAlerts(env: AlertEnv): Promise<ReconcileResult> {
   const now = clock.now();
   const at = now.toISOString();
   const settings = await loadAlertSettings(store);
-  const desired = await desiredAlerts(store, now, settings);
+  const desired = [...(await desiredAlerts(store, now, settings)), ...(env.system ? await systemAlerts(store, now, env.system) : [])];
   const open = await store.find<Alert>('alerts', { where: { status: 'open' } });
   const raised: Alert[] = [];
   const resolved: Alert[] = [];
@@ -239,7 +308,8 @@ export async function reconcileAlerts(env: AlertEnv): Promise<ReconcileResult> {
 
   for (const d of desired) {
     wanted.add(d.dedupeKey);
-    const critical = !!d.critical || settings.critical[d.kind];
+    const sys = isSystemKind(d.kind);
+    const critical = !sys && (!!d.critical || settings.critical[d.kind as ShopAlertKind]);
     const to = [...new Set<Role>(critical ? [...d.to, 'owner'] : d.to)];
     const severity = critical ? 'critical' : 'warning';
     const existing = open.find((a) => a.dedupeKey === d.dedupeKey);
@@ -259,6 +329,8 @@ export async function reconcileAlerts(env: AlertEnv): Promise<ReconcileResult> {
 
   for (const a of open) {
     if (wanted.has(a.dedupeKey)) continue;
+    // Without a fresh reading of the machine, a system alert is neither raised nor cleared.
+    if (isSystemKind(a.kind) && !env.system) continue;
     const done: Alert = { ...a, status: 'resolved', resolvedAt: at, resolvedBy: 'system', updatedAt: at };
     await store.put('alerts', done);
     resolved.push(done);
@@ -267,7 +339,7 @@ export async function reconcileAlerts(env: AlertEnv): Promise<ReconcileResult> {
 }
 
 /** Who may see an alert: the people it is for, and always the owner. */
-export const canSeeAlert = (a: Pick<Alert, 'to'>, role: Role) => role === 'owner' || a.to.includes(role);
+export const canSeeAlert = (a: Pick<Alert, 'to' | 'kind'>, role: Role) => (isSystemKind(a.kind) ? role === 'it' : role === 'owner' || a.to.includes(role));
 
 const raisedEvents = (r: ReconcileResult) => [
   ...r.raised.map((a) => ({ type: 'AlertRaised', payload: { alertId: a.id, kind: a.kind, severity: a.severity, to: a.to } })),
@@ -280,7 +352,7 @@ const HOURS = { min: 1, max: 72 };
 export const alertIntents = {
   'alerts/mark_seen': {
     circuit: 'Alerts',
-    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     validate: async (p, ctx) => {
       if (p.alertIds.length === 0) return ['Choose an alert.'];
       for (const id of p.alertIds) {
@@ -304,7 +376,7 @@ export const alertIntents = {
 
   'alerts/acknowledge': {
     circuit: 'Alerts',
-    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     validate: async (p, ctx) => {
       const a = await ctx.store.get<Alert>('alerts', p.alertId);
       if (!a || !canSeeAlert(a, ctx.session!.role)) return ['That alert is not available.'];
@@ -329,7 +401,7 @@ export const alertIntents = {
 
   'alerts/snooze': {
     circuit: 'Alerts',
-    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     validate: async (p, ctx) => {
       const a = await ctx.store.get<Alert>('alerts', p.alertId);
       if (!a || !canSeeAlert(a, ctx.session!.role)) return ['That alert is not available.'];
@@ -362,7 +434,7 @@ export const alertIntents = {
       whole(p.urgentRequestMinutes, 'Minutes before an urgent request is escalated', 1, 240);
       whole(p.requestWaitHours, 'Hours a request may wait', 1, 72);
       if (Object.values(p).every((v) => v === undefined)) errors.push('Choose a setting to change.');
-      for (const k of Object.keys(p.critical ?? {})) if (!ALERT_KINDS.includes(k as AlertKind)) errors.push(`"${k}" is not an alert type.`);
+      for (const k of Object.keys(p.critical ?? {})) if (!ALERT_KINDS.includes(k as ShopAlertKind)) errors.push(`"${k}" is not an alert type.`);
       return errors;
     },
     handle: async (p, ctx) => {
