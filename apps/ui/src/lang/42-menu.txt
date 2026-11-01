@@ -114,3 +114,41 @@ Google ||| Google
 Space ||| Nafasi
 A system problem has been open for a day ||| Tatizo la mfumo limekuwa wazi kwa siku moja
 IT has been told. ||| IT ameambiwa.
+Logs ||| Kumbukumbu za seva
+Sessions ||| Vikao vya kuingia
+Fix and control ||| Rekebisha na dhibiti
+Signed in now ||| Walioingia sasa
+Everyone signed in right now. Nobody is shown with a PIN or a key, only who, where and when. ||| Kila aliyeingia sasa hivi. Hakuna anayeonyeshwa na PIN wala ufunguo, ni nani, wapi na lini tu.
+Everyone signed in right now. Nobody is shown with a PIN or a key, only who, where and when. A person is signed out after {n} hours without use. ||| Kila aliyeingia sasa hivi. Hakuna anayeonyeshwa na PIN wala ufunguo, ni nani, wapi na lini tu. Mtu hutolewa baada ya saa {n} bila kutumia.
+{n} person ||| Mtu {n}
+{n} people ||| Watu {n}
+Device not recorded ||| Kifaa hakijarekodiwa
+Nobody is signed in. ||| Hakuna aliyeingia.
+{*} · signed in {*} · last active {*} ||| {*} · aliingia {*} · alitumia mara ya mwisho {*}
+Device not recorded · signed in {*} · last active {*} ||| Kifaa hakijarekodiwa · aliingia {*} · alitumia mara ya mwisho {*}
+The newest lines of the server's log. Secrets such as PINs and keys are hidden before they are written. ||| Mistari mipya zaidi ya kumbukumbu za seva. Siri kama PIN na funguo hufichwa kabla ya kuandikwa.
+Server log ||| Kumbukumbu za seva
+Refresh ||| Onyesha upya
+From ||| Kuanzia
+Warnings and errors ||| Maonyo na makosa
+Errors only ||| Makosa tu
+the last hour ||| saa iliyopita
+the last 6 hours ||| saa 6 zilizopita
+the last day ||| siku iliyopita
+the last 3 days ||| siku 3 zilizopita
+Search these lines ||| Tafuta mistari hii
+Loading… ||| Inapakia…
+{n} line ||| Mstari {n}
+{n} lines ||| Mistari {n}
+{n} lines. {*} ||| Mistari {n}. {*}
+{n} line. {*} ||| Mstari {n}. {*}
+No log files yet. ||| Bado hakuna faili za kumbukumbu.
+This server does not keep a log file. ||| Seva hii haihifadhi faili ya kumbukumbu.
+Nothing was logged in that time. ||| Hakuna kilichoandikwa katika muda huo.
+Showing the newest {n}. ||| Inaonyesha {n} za karibuni.
+Very old lines in a large file were skipped. ||| Mistari ya zamani sana katika faili kubwa iliruka.
+just now ||| sasa hivi
+{n} minutes ago ||| dakika {n} zilizopita
+{n} hours ago ||| saa {n} zilizopita
+{n} days ago ||| siku {n} zilizopita
+never ||| kamwe

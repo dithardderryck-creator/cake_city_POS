@@ -50,7 +50,7 @@ import { buildForecasts, type ForecastRow } from './forecast';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
-import type { BackupStatus, Clock, DriveStatus, Store, Terminals } from './ports';
+import type { BackupStatus, Clock, DriveStatus, LogRow, Store, Terminals } from './ports';
 import {
   PAYMENT_LABEL,
   PAYMENT_TONE,
@@ -698,6 +698,20 @@ export interface FeedMap {
   panel_map: { params: Record<string, never>; data: PanelMapData };
   /** For the owner: has a system problem been open for a day? It never says what, because IT looks after that. */
   system_notice: { params: Record<string, never>; data: { openForDay: boolean } };
+  /** Everyone signed in right now, for IT. No tokens: the list says who and where, never how to get in. */
+  sessions_view: { params: Record<string, never>; data: SessionsViewData };
+  /** The newest lines of the server's log, for IT. */
+  logs_view: { params: { level?: 'all' | 'warn' | 'error'; hours?: number }; data: LogsViewData };
+}
+
+export interface SessionsViewData {
+  idleHours: number;
+  rows: { userId: string; name: string; role: Role; deviceName: string | null; signedInAt: string; lastSeenAt: string; endsAt: string }[];
+}
+export interface LogsViewData {
+  available: boolean;
+  rows: LogRow[];
+  note: string | null;
 }
 export type FeedName = keyof FeedMap;
 
@@ -1810,6 +1824,43 @@ export const feeds: FeedRegistry = {
         summary: a.summary,
         outcome: a.outcome,
       })),
+  },
+
+  sessions_view: {
+    roles: ['it'],
+    build: async ({ store, clock, config }) => {
+      const nowMs = clock.now().getTime();
+      const [recs, people, devs] = await Promise.all([
+        store.list<{ id: string; userId: string; createdAt: string; lastSeenAt: string; expiresAt: string; deviceId?: string }>('sessions'),
+        store.list<Staff>('staff'),
+        store.list<Device>('devices'),
+      ]);
+      const rows = recs
+        .filter((r) => Date.parse(r.expiresAt) > nowMs && nowMs - Date.parse(r.lastSeenAt) <= config.sessionIdleMs)
+        .map((r) => {
+          const who = people.find((p) => p.id === r.userId);
+          return {
+            userId: r.userId,
+            name: who?.name ?? 'Unknown',
+            role: (who?.role ?? 'cashier') as Role,
+            deviceName: devs.find((d) => d.id === r.deviceId)?.name ?? null,
+            signedInAt: r.createdAt,
+            lastSeenAt: r.lastSeenAt,
+            endsAt: new Date(Math.min(Date.parse(r.expiresAt), Date.parse(r.lastSeenAt) + config.sessionIdleMs)).toISOString(),
+          };
+        })
+        .sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt));
+      return { idleHours: Math.round(config.sessionIdleMs / 3_600_000), rows };
+    },
+  },
+
+  logs_view: {
+    roles: ['it'],
+    build: async ({ terminals }, p) => {
+      if (!terminals.logs) return { available: false, rows: [], note: 'This server does not keep a log file.' };
+      const r = await terminals.logs.recent({ level: p.level ?? 'all', sinceMs: (p.hours ?? 24) * 3_600_000, limit: 200 });
+      return { available: true, rows: r.rows, note: r.note };
+    },
   },
 
   system_notice: {

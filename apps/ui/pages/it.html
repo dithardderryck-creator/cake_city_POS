@@ -39,6 +39,9 @@ nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-wei
 @container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}nav.xtabs button{padding:5px 2px;font-size:12px;min-height:38px}}
 @media(max-width:540px){nav.xtabs{position:static}}
 main>section[hidden]{display:none}
+.card select{min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px}
+.logl{list-style:none;margin:6px 0 0;padding:0}.logl li{padding:9px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:start}.logl li:first-child{border-top:0}
+.logl time{color:var(--mute);font-size:12px;white-space:nowrap}.logl .m{overflow-wrap:anywhere}.logl .d{grid-column:2;color:var(--mute);font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
 .ck{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px}
 .ck .card{margin:0;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:104px;cursor:pointer;font:inherit;color:inherit}
 .ck .card:hover{border-color:var(--cop)}
@@ -83,6 +86,21 @@ main>section[hidden]{display:none}
 <section class="card"><div class="row"><h2>Who did what</h2><label class="mute" style="display:flex;gap:8px;align-items:center">Show <select id="auf" style="min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px"><option value="all">Everything</option><option value="bad">Only refused</option></select></label></div><ul class="audl" id="aul"></ul><div class="btns" style="margin-top:12px"><button class="b" id="aum" hidden>Show more</button></div></section>
 </section>
 
+<section id="v-sessions" hidden>
+<h1>Sessions</h1>
+<p class="sub" id="sesub">Everyone signed in right now. Nobody is shown with a PIN or a key, only who, where and when.</p>
+<section class="card"><div class="row"><h2>Signed in now</h2><span class="tag" id="sen"></span></div><ul class="list" id="sel"></ul></section>
+</section>
+
+<section id="v-logs" hidden>
+<h1>Logs</h1>
+<p class="sub">The newest lines of the server's log. Secrets such as PINs and keys are hidden before they are written.</p>
+<section class="card"><div class="row" style="flex-wrap:wrap"><h2>Server log</h2><button class="b" id="lgr">Refresh</button></div>
+<div class="btns" style="margin:12px 0"><label class="mute" style="display:flex;gap:8px;align-items:center">Show <select id="lgl"><option value="all">Everything</option><option value="warn">Warnings and errors</option><option value="error">Errors only</option></select></label><label class="mute" style="display:flex;gap:8px;align-items:center">From <select id="lgh"><option value="1">the last hour</option><option value="6">the last 6 hours</option><option value="24" selected>the last day</option><option value="72">the last 3 days</option></select></label></div>
+<input id="lgq" type="search" placeholder="Search these lines" autocomplete="off" aria-label="Search these lines">
+<p class="mute" id="lgn" style="margin:10px 0 0"></p><ul class="logl" id="lgb"></ul></section>
+</section>
+
 <section id="v-backups" hidden>
 <h1>Backups</h1>
 <p class="sub">Copies of the shop's records, and where they go.</p>
@@ -99,8 +117,8 @@ const ago=iso=>{if(!iso)return"never";const m=Math.max(0,Math.round((Date.now()-
 async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return await fn()}finally{if(b.isConnected)b.disabled=false}}
 try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
 let D={},view="health",CH=null;
-const TABS=["health","devices","records","backups"];
-function go(v){if(!TABS.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records")aur();scrollTo(0,0)}
+const TABS=["health","devices","records","backups"],PAGES=TABS.concat(["sessions","logs"]);
+function go(v){if(!PAGES.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records")aur();if(v==="logs")lgsub();scrollTo(0,0)}
 $$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
 
 /* ---------- health ---------- */
@@ -144,6 +162,20 @@ function bkr(){const m=D.map;if(!m)return;const b=m.backup,bad=m.outbox.failed>0
 $("#bk").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;
  if(b.dataset.v==="flush")guard(b,async()=>{const r=await Cake.send("sync/flush",{});if(r.ok)Cake.toast(r.data.pending?r.data.sent+" sent, "+r.data.pending+" still waiting":(r.data.sent?r.data.sent+" sent. Nothing is waiting.":"Nothing was waiting."))});
  else if(b.dataset.v==="full"){if(!confirm("Send a full copy? Every record is queued for the online database. It can take a while on a slow connection."))return;guard(b,async()=>{const r=await Cake.send("sync/full_copy",{});if(r.ok)Cake.toast(r.data.queued+" records queued to send")})}};
+
+/* ---------- sessions ---------- */
+function ser(){const d=D.ses;if(!d)return;$("#sen").textContent=d.rows.length+(d.rows.length===1?" person":" people");
+ $("#sesub").textContent="Everyone signed in right now. Nobody is shown with a PIN or a key, only who, where and when. A person is signed out after "+d.idleHours+" hours without use.";
+ $("#sel").innerHTML=d.rows.map(r=>`<li><div><b>${E(r.name)}</b>${r.name.includes(ROLE_L[r.role]||r.role)?"":` <span class="tag">${E(ROLE_L[r.role]||r.role)}</span>`}<br><span class="mute">${r.deviceName?E(r.deviceName):"Device not recorded"} · signed in ${E(when(r.signedInAt))} · last active ${E(ago(r.lastSeenAt))}</span></div></li>`).join("")||'<li><span class="mute">Nobody is signed in.</span></li>'}
+
+/* ---------- logs ---------- */
+let lgstop=null,LG=null;
+function lgsub(){lgstop&&lgstop();LG=null;lgr();lgstop=Cake.feed("logs_view",{level:$("#lgl").value,hours:+$("#lgh").value},d=>{LG=d;lgr()})}
+function lgr(){const d=LG;if(!d){$("#lgb").innerHTML="";$("#lgn").textContent="Loading…";return}
+ const q=$("#lgq").value.trim().toLowerCase(),rows=d.rows.filter(r=>!q||(r.message+" "+r.detail).toLowerCase().includes(q));
+ $("#lgn").textContent=!d.available?d.note:rows.length+(rows.length===1?" line":" lines")+(d.note?". "+d.note:"");
+ $("#lgb").innerHTML=rows.map(r=>`<li><time>${E(when(r.at))}</time><span class="m"><span class="tag ${r.level==="error"?"risk":r.level==="warn"?"warn":""}" style="margin-right:6px">${E(r.level)}</span>${E(r.message)}</span>${r.detail?`<span class="d">${E(r.detail)}</span>`:""}</li>`).join("")}
+$("#lgl").onchange=lgsub;$("#lgh").onchange=lgsub;$("#lgq").oninput=lgr;$("#lgr").onclick=lgsub;
 
 /* ---------- records ---------- */
 const ROLE_L={owner:"Owner",cashier:"Cashier",baker:"Baker",inventory:"Inventory",it:"IT"};
@@ -199,7 +231,7 @@ $("#loc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=
 /* shared header */
 const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
 (async()=>{const me=await Cake.boot("it");
- CH=Cake.mountChrome({groups:[{title:"Watch",items:[{id:"health",label:"Health"},{id:"records",label:"Records"}]},{title:"Connect",items:[{id:"devices",label:"Devices and location"},{id:"backups",label:"Backups and Google"}]}],go,bell:"health"});CH.setPage(view);
+ CH=Cake.mountChrome({groups:[{title:"Watch",items:[{id:"health",label:"Health"},{id:"records",label:"Records"},{id:"logs",label:"Logs"}]},{title:"Fix and control",items:[{id:"sessions",label:"Sessions"}]},{title:"Connect",items:[{id:"devices",label:"Devices and location"},{id:"backups",label:"Backups and Google"}]}],go,bell:"health"});CH.setPage(view);
  Cake.mountNotice($("#ntc"));
  $("#hi").textContent="Good "+(new Date().getHours()<12?"morning":new Date().getHours()<18?"afternoon":"evening")+", "+me.name.split(" ")[0];
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
@@ -207,6 +239,7 @@ const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.
  Cake.feed("drive_accounts",{},d=>{D.drv=d;hr()});
  Cake.mountDrive($("#drv"));
  Cake.feed("audit_view",{},d=>{AU=d;if(view==="records")aur()});
+ Cake.feed("sessions_view",{},d=>{D.ses=d;ser()});
  Cake.feed("alert_inbox",{},d=>{D.al=d;hr()});
  Cake.feed("panel_map",{},d=>{D.map=d;hr()});
  go("health")})();

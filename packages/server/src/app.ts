@@ -13,7 +13,7 @@ import type { DriveDeps } from './google-drive';
 import type { ServerConfig } from './config';
 import { createHttpServer } from './http';
 import { acquireLock } from './lock';
-import { errorFields, type Logger } from './log';
+import { errorFields, readRecentLogs, type Logger } from './log';
 import { createScryptHasher } from './scrypt';
 import { prepareTestCopy, testCopyBanner } from './test-copy';
 import { openSqliteStore, SCHEMA_VERSION, type SqliteStore } from './sqlite-store';
@@ -140,6 +140,7 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
     };
     const http = createHttpServer({ panel, log, config, version: VERSION });
     const scheme = config.tls ? 'https' : 'http';
+    terminals.logs = { recent: async (o) => readRecentLogs(path.join(config.dataDir, 'logs'), o) };
     terminals.system = {
       space: async () => {
         try {

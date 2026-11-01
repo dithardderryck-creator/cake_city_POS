@@ -62,6 +62,25 @@ try {
   assert.equal(row.split('Ibrahim').length - 1, 1, 'the name is said once');
   await it.screenshot({ path: `${shots}/records-phone.png`, fullPage: true });
 
+  // Sessions: who is signed in, with no token or PIN anywhere on the page.
+  await menuGo(it, 'sessions');
+  await it.waitForSelector('#v-sessions:not([hidden]) #sel li');
+  assert.match(await txt(it, '#sel'), /Ibrahim/);
+  assert.match(await txt(it, '#sen'), /\d+ (person|people)/);
+  assert.doesNotMatch(await it.locator('#v-sessions').innerText(), /token|pin hash/i);
+  await it.screenshot({ path: `${shots}/sessions-phone.png`, fullPage: true });
+
+  // Logs: a note or lines, the filters change the question asked, and the search narrows what is shown.
+  await menuGo(it, 'logs');
+  await it.waitForSelector('#v-logs:not([hidden])');
+  await until(async () => !/Loading/.test(await txt(it, '#lgn')), 'the log answers');
+  await it.selectOption('#lgl', 'error');
+  await until(async () => !/Loading/.test(await txt(it, '#lgn')), 'the log answers for errors only');
+  await it.fill('#lgq', 'zzzz-nothing-matches');
+  assert.equal(await it.locator('#lgb li').count(), 0);
+  await it.fill('#lgq', '');
+  await it.screenshot({ path: `${shots}/logs-phone.png`, fullPage: true });
+
   // Backups: both sync buttons answer.
   await it.click('nav.xtabs [data-v="backups"]');
   await it.waitForSelector('#bkv');
@@ -73,7 +92,7 @@ try {
   await it.screenshot({ path: `${shots}/backups-phone.png`, fullPage: true });
 
   // No sideways scroll on any tab.
-  for (const v of ['health', 'devices', 'records', 'backups']) {
+  for (const v of ['health', 'devices', 'records', 'backups', 'sessions', 'logs']) {
     await menuGo(it, v);
     await it.waitForTimeout(150);
     const wide = await it.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
@@ -83,7 +102,7 @@ try {
   // The menu has the shared groups, My account and Sign out, like every other role.
   await openMenu(it);
   const menu = await it.locator('#xmn').innerText();
-  for (const w of ['WATCH', 'CONNECT', 'My account', 'Sign out']) assert.match(menu.replace(/\n/g, ' '), new RegExp(w, 'i'), w);
+  for (const w of ['WATCH', 'FIX AND CONTROL', 'CONNECT', 'Logs', 'Sessions', 'My account', 'Sign out']) assert.match(menu.replace(/\n/g, ' '), new RegExp(w, 'i'), w);
   await it.click('#xout');
   await it.waitForURL(shop.base + '/');
 

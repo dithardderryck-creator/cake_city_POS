@@ -190,3 +190,46 @@ describe('alerts for IT only', () => {
     ok(await ticking.dispatch('alerts/acknowledge', { alertId: a!.alertId }, sid));
   });
 });
+
+describe('Sessions and Logs, read-only for IT', () => {
+  it('lists who is signed in now, with their device, and never a token', async () => {
+    await signIn('cashier');
+    await signIn('baker');
+    const it = await signIn('it');
+    const r = await panel.feed('sessions_view', {}, it);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.rows.map((x) => x.role).sort()).toEqual(['baker', 'cashier', 'it']);
+    expect(JSON.stringify(r.data)).not.toMatch(/token|"id"/i);
+    expect(r.data.rows.every((x) => x.endsAt > x.lastSeenAt)).toBe(true);
+  });
+
+  it('drops a session once it has been idle too long', async () => {
+    await signIn('cashier');
+    t += 11 * 3_600_000;
+    const it = await signIn('it');
+    const r = await panel.feed('sessions_view', {}, it);
+    expect(r.ok && r.data.rows.map((x) => x.role)).toEqual(['it']);
+  });
+
+  it('is for IT only, for sessions and logs', async () => {
+    for (const role of ['owner', 'cashier', 'baker', 'inventory']) {
+      const sid = await signIn(role);
+      expect((await panel.feed('sessions_view', {}, sid)).ok).toBe(false);
+      expect((await panel.feed('logs_view', {}, sid)).ok).toBe(false);
+    }
+  });
+
+  it('says plainly when the server keeps no log, and passes the filters to the log reader', async () => {
+    const it = await signIn('it');
+    const none = await panel.feed('logs_view', {}, it);
+    expect(none.ok && none.data).toMatchObject({ available: false, rows: [] });
+    const seen: unknown[] = [];
+    const withLogs = createPanel({ store, clock, terminals: { logs: { recent: async (o) => (seen.push(o), { rows: [{ at: '2026-10-27T08:00:00Z', level: 'error', message: 'Backup failed', detail: '' }], note: null }) } } });
+    const sid = ok<{ sessionId: string }>(await withLogs.dispatch('auth/sign_in', { userId: await id('it'), pin: '9999' })).sessionId;
+    const r = await withLogs.feed('logs_view', { level: 'error', hours: 6 }, sid);
+    expect(r.ok && r.data.rows[0]!.message).toBe('Backup failed');
+    expect(seen).toEqual([{ level: 'error', sinceMs: 6 * 3_600_000, limit: 200 }]);
+    expect((await withLogs.feed('logs_view', { level: 'bad' } as never, sid)).ok).toBe(false);
+  });
+});

@@ -71,3 +71,60 @@ export function createLogger(options: { level: Level; dir?: string; stdout?: boo
 }
 
 export const silentLogger: Logger = { debug() {}, info() {}, warn() {}, error() {}, close() {} };
+
+const LEVEL_NUM: Record<string, number> = { debug: 10, info: 20, warn: 30, error: 40 };
+const TAIL_BYTES = 1_048_576;
+
+/**
+ * The newest lines of the server's log files, newest first. Reads only the end of each day's file,
+ * so a big log never loads whole. Lines that are not JSON are skipped.
+ */
+export function readRecentLogs(dir: string, o: { level: 'all' | 'warn' | 'error'; sinceMs: number; limit: number }, now = Date.now()): { rows: LogRowOut[]; note: string | null } {
+  const rows: LogRowOut[] = [];
+  let cut = false;
+  const min = o.level === 'all' ? 0 : LEVEL_NUM[o.level]!;
+  const from = now - o.sinceMs;
+  if (!fs.existsSync(dir)) return { rows, note: 'No log files yet.' };
+  const files = fs.readdirSync(dir).filter((f) => /^server-\d{4}-\d{2}-\d{2}\.log$/.test(f)).sort().reverse();
+  for (const f of files) {
+    const day = Date.parse(f.slice(7, 17) + 'T23:59:59Z');
+    if (day < from) break;
+    const full = path.join(dir, f);
+    const size = fs.statSync(full).size;
+    const fd = fs.openSync(full, 'r');
+    try {
+      const start = Math.max(0, size - TAIL_BYTES);
+      if (start > 0) cut = true;
+      const buf = Buffer.alloc(size - start);
+      fs.readSync(fd, buf, 0, buf.length, start);
+      const lines = buf.toString('utf8').split('\n');
+      if (start > 0) lines.shift();
+      for (const line of lines.reverse()) {
+        if (!line.trim()) continue;
+        let j: Record<string, unknown>;
+        try {
+          j = JSON.parse(line) as Record<string, unknown>;
+        } catch {
+          continue;
+        }
+        const level = String(j.level);
+        const at = String(j.time);
+        if ((LEVEL_NUM[level] ?? 0) < min || Date.parse(at) < from) continue;
+        const { time: _t, level: _l, msg, stack: _s, ...rest } = j;
+        const detail = Object.keys(rest).length ? JSON.stringify(rest) : '';
+        rows.push({ at, level: level as LogRowOut['level'], message: String(msg), detail: detail.length > 240 ? detail.slice(0, 237) + '...' : detail });
+        if (rows.length >= o.limit) return { rows, note: `Showing the newest ${o.limit}.` };
+      }
+    } finally {
+      fs.closeSync(fd);
+    }
+  }
+  return { rows, note: cut ? 'Very old lines in a large file were skipped.' : rows.length ? null : 'Nothing was logged in that time.' };
+}
+
+export interface LogRowOut {
+  at: string;
+  level: 'debug' | 'info' | 'warn' | 'error';
+  message: string;
+  detail: string;
+}

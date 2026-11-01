@@ -203,7 +203,22 @@ export interface DriveTerminal {
   test(accountId?: string): Promise<DriveResult>;
 }
 
+/** One line of the server's log, for IT. Secrets are already hidden before they reach the file. */
+export interface LogRow {
+  at: string;
+  level: 'debug' | 'info' | 'warn' | 'error';
+  message: string;
+  /** The other facts on the line, shortened. Stack traces are left out. */
+  detail: string;
+}
+
+/** Terminal: the server's own log, read-only. */
+export interface LogTerminal {
+  recent(o: { level: 'all' | 'warn' | 'error'; sinceMs: number; limit: number }): Promise<{ rows: LogRow[]; note: string | null }>;
+}
+
 export interface Terminals {
+  logs?: LogTerminal;
   drive?: DriveTerminal;
   messages?: MessageTerminal;
   push?: PushTerminal;

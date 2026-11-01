@@ -328,6 +328,8 @@ export const feedSchemas = {
   audit_view: empty,
   panel_map: empty,
   system_notice: empty,
+  sessions_view: empty,
+  logs_view: z.strictObject({ level: z.enum(['all', 'warn', 'error']).optional(), hours: z.number().int().min(1).max(72).optional() }),
 } as const;
 
 type FeedBoth<K extends FeedName> = [z.infer<(typeof feedSchemas)[K]>] extends [FeedMap[K]['params']]

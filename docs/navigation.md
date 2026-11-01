@@ -29,13 +29,15 @@ One page of words and places, so the same thing is called the same thing everywh
 | Cashier | Sell, Orders, Custom cakes, Today's sales | **Today** Sell, Open tickets, Orders, Custom cakes, Requests. **Money** Today's sales |
 | Baker | Queue, Tickets, Batches, Usage reports, Requests | **Today** Queue, Tickets, Requests. **Kitchen** Batches, Usage reports |
 | Inventory | Stock, Usage reports, Daily count, Requests | **Today** Stock, Usage reports, Daily count, Requests |
-| IT | Health, Devices, Records, Backups | **Watch** Health, Records. **Connect** Devices and location, Backups and Google. The bell opens Health and counts what needs IT. Console arrives with a later phase |
+| IT | Health, Devices, Records, Backups | **Watch** Health, Records, Logs. **Fix and control** Sessions. **Connect** Devices and location, Backups and Google. The bell opens Health and counts what needs IT. Console arrives with a later phase |
 
 The theme, language, PIN and contact details are in **My account**. The alert sound switch (baker and inventory) is in the menu above Sign out.
 
 ## The IT page
 
 Health opens first: a **Selling** line (registered devices seen in the last hour, and any quiet for a day or more), **Needs you** (the system's alerts for IT, people locked out with a **Let in** button, and devices quiet for a day), four check cards that open their tab, and the system details. **Records** is the plain list of who did what for now; sealing the records is a later phase. **Backups** has the two sync buttons and the Google accounts. The design and build order are in the IT spec (phases 1 to 8).
+
+**Sessions** lists everyone signed in now (name, role, device, when they signed in and were last active), read-only and with no token or PIN. **Logs** shows the newest 200 lines of the server's log, filtered by level and time and searchable; it is read-only too, and secrets are hidden when the line is written. Ending sessions and the other changing operations come in phase 6, each with a preview.
 
 **Alerts for IT** are raised by the one-minute check from what the machine says: failed syncs, a failed backup, a Google account that needs signing in or is full, someone locked out by wrong PINs, and a nearly full disk (under 10% or 500 MB). They reach IT only, in the bell and by the channels IT chose, never the owner. A quiet device only shows on Health, with no ring. When one has been open for a day, the owner's Overview shows one line, "A system problem has been open for a day. IT has been told.", and no detail; it goes when the problem is fixed.
 

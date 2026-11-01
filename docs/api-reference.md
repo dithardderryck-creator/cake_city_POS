@@ -1187,6 +1187,21 @@ Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 
+#### `sessions_view`
+
+Allowed: **it**
+
+_No fields. Send an empty object `{}`._
+
+#### `logs_view`
+
+Allowed: **it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `level` | "all" \| "warn" \| "error" | no |  |
+| `hours` | integer | no | min 1, max 72 |
+
 #### `system_notice`
 
 Allowed: **owner**
