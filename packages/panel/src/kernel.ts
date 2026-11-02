@@ -1,6 +1,6 @@
 import { flushChanges, withChangeLog, type Change, type FlushResult } from './changelog';
 import type { Alert, AuditEntry, ChainCheck, ChainHead, Device, PairingCode, OutboxItem, PanelEvent, Photo, PhotoData, Role, Session, Staff } from './domain';
-import { feeds, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } from './feeds';
+import { feeds, type ChangePreview, type CircuitStat, type FeedCtx, type FeedMap, type FeedName } from './feeds';
 import {
   DomainError,
   type CircuitName,
@@ -30,6 +30,7 @@ import { countIntents } from './circuits/count';
 import { batchIntents } from './circuits/batches';
 import { appendAudit, verifyChain } from './circuits/seal';
 import { recordIntents } from './circuits/records';
+import { opsIntents, SELLING_INTENTS, loadMaintenance, pausedMessage } from './circuits/ops';
 import { RESOLVED_ALERT_TTL_MS, alertEvents, alertIntents, readSystemFacts, reconcileAlerts } from './circuits/alerts';
 import { settingsIntents, loadSettings } from './circuits/settings';
 import { placeIntents, heldInLobby, LOBBY_INTENTS, LOBBY_FEEDS, LOBBY_MESSAGE, type PlaceReport } from './circuits/place';
@@ -187,6 +188,7 @@ const registry = {
   ...usageIntents,
   ...alertIntents,
   ...recordIntents,
+  ...opsIntents,
   ...requestIntents,
   ...announcementIntents,
   ...countIntents,
@@ -484,6 +486,15 @@ export function createPanel(options: PanelOptions = {}): Panel {
       }
     }
 
+    // Selling can be paused on purpose. The offline replayer asks the same question for sales waiting on a till.
+    if (SELLING_INTENTS.has(type) && !internal) {
+      const paused = await loadMaintenance(store);
+      if (paused) {
+        bump(stat, 'denied');
+        return fail('forbidden', [pausedMessage(paused)]);
+      }
+    }
+
     // Shape check: what actually arrived, not what the types promise.
     const parsed = schemas[type].safeParse(cleanPayload(payload ?? {}));
     if (!parsed.success) {
@@ -569,6 +580,23 @@ export function createPanel(options: PanelOptions = {}): Panel {
 
   /* ---------- feeds ---------- */
 
+  /** What an instruction would do for this person, without doing it: the same role, shape and rule checks as the real thing. */
+  async function previewInner(type: string, payload: unknown, session: Session | null, device: Device | null): Promise<ChangePreview> {
+    const no = (...problems: string[]): ChangePreview => ({ ok: false, problems, lines: [], confirmName: null });
+    const def = (registry as Record<string, IntentDef<unknown> | undefined>)[type];
+    if (!def) return no(`Unknown instruction ${type}.`);
+    if (def.roles !== 'public' && (!session || !def.roles.includes(session.role))) return no('Your role cannot do this.');
+    const parsed = (schemas as Record<string, { safeParse: (v: unknown) => { success: boolean; data?: unknown; error?: unknown } }>)[type]!.safeParse(cleanPayload((payload ?? {}) as Record<string, unknown>));
+    if (!parsed.success) return no(...describeSchemaProblems(parsed.error as Parameters<typeof describeSchemaProblems>[0]));
+    const ctx = makeCtx(session, undefined, device);
+    const paused = SELLING_INTENTS.has(type) ? await loadMaintenance(store) : null;
+    if (paused) return no(pausedMessage(paused));
+    const errors = def.validate ? await def.validate(parsed.data, ctx) : [];
+    if (errors.length) return no(...errors);
+    const pv = def.preview ? await def.preview(parsed.data, ctx) : { lines: [] as string[] };
+    return { ok: true, problems: [], lines: pv.lines, confirmName: pv.confirmName ?? null };
+  }
+
   async function feedInner<K extends FeedName>(name: K, params: FeedMap[K]['params'], token: string | undefined, deviceToken?: string): Promise<FeedResult<FeedMap[K]['data']>> {
     const def = feeds[name];
     if (!def) return { ok: false, error: { code: 'invalid', messages: [`Unknown feed ${String(name)}.`] } };
@@ -583,7 +611,16 @@ export function createPanel(options: PanelOptions = {}): Panel {
     }
     const device = await resolveDevice(deviceToken);
     if (def.device === 'required' && config.requireDevice && !device) return { ok: false, error: { code: 'forbidden', messages: [NOT_REGISTERED] } };
-    const ctx: FeedCtx = { store, config, clock, terminals, session, device, stats: () => stats };
+    const ctx: FeedCtx = {
+      store,
+      config,
+      clock,
+      terminals,
+      session,
+      device,
+      stats: () => stats,
+      preview: (intent, payload) => previewInner(intent, payload, session, device),
+    };
     try {
       const built = await (def.build as (c: FeedCtx, p: FeedMap[K]['params']) => Promise<FeedMap[K]['data']>)(ctx, parsed.data as FeedMap[K]['params']);
       return { ok: true, data: built };
@@ -673,6 +710,10 @@ export function createPanel(options: PanelOptions = {}): Panel {
     runAs: (session, at, type, payload, requestId, device) => dispatchInner(type, payload, undefined, { requestId }, { session, at, device }),
     serial,
     resolveDevice,
+    paused: async () => {
+      const m = await loadMaintenance(store);
+      return m ? pausedMessage(m) : null;
+    },
     changed: scheduleRefresh,
     onError: (err) => options.onError?.(err, { intent: 'offline/replay' }),
   });

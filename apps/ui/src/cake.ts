@@ -255,7 +255,7 @@ export async function boot(allowed: Role | Role[]): Promise<SessionInfo> {
   // Roles without the shop settings feed (IT) ask the server which language the shop uses.
   void client.deviceStatus().then((d) => followShopLanguage(d?.language));
   // The shop's own settings (currency, accepted payment methods, thresholds) come from the server, never from the page.
-  if (s.role !== 'it') {
+  {
     await new Promise<void>((done) => {
       feed('shop_settings', {}, (d) => {
         shop = d;
@@ -517,6 +517,54 @@ export function dialog(html: string): { el: HTMLElement; close: () => void } {
   return { el: ov.firstElementChild as HTMLElement, close };
 }
 
+export interface ConfirmOptions {
+  title: string;
+  okLabel: string;
+  /** Said after it went through. */
+  okMessage?: string;
+}
+
+/**
+ * Shows what an instruction would do, in plain words, and sends it only when the person confirms. When the change cannot
+ * easily be undone the person types the name first. Returns the outcome, or null when it was cancelled or could not be done.
+ */
+export async function confirmChange<K extends IntentName>(type: K, payload: IntentMap[K], o: ConfirmOptions): Promise<SendOutcome | null> {
+  const pv = await read('change_preview', { intent: type, payload: payload as Record<string, unknown> });
+  if (!pv) return null;
+  if (!pv.ok) {
+    toast(pv.problems[0] ?? 'That cannot be done now.');
+    return null;
+  }
+  const need = pv.confirmName;
+  return new Promise((resolve) => {
+    const d = dialog(
+      `<h2>${esc(o.title)}</h2>${pv.lines.map((l) => `<p class="cx-m">${esc(l)}</p>`).join('')}${need ? `<label>Type the name to confirm: ${esc(need)}<input data-cc autocomplete="off" autocapitalize="off"></label>` : ''}<div class="cx-g" style="margin-top:16px;justify-content:flex-end"><button class="b" data-no>Cancel</button><button class="b p" data-ok${need ? ' disabled' : ''}>${esc(o.okLabel)}</button></div>`,
+    );
+    let done = false;
+    const finish = (r: SendOutcome | null) => {
+      if (done) return;
+      done = true;
+      clearInterval(watch);
+      d.close();
+      resolve(r);
+    };
+    // Tapping outside closes the dialog without a button, so notice that too.
+    const watch = setInterval(() => !d.el.isConnected && finish(null), 250);
+    const ok = d.el.querySelector<HTMLButtonElement>('[data-ok]')!;
+    const typed = d.el.querySelector<HTMLInputElement>('[data-cc]');
+    typed?.addEventListener('input', () => {
+      ok.disabled = typed.value.trim().toLowerCase() !== need!.trim().toLowerCase();
+    });
+    d.el.querySelector('[data-no]')!.addEventListener('click', () => finish(null));
+    ok.addEventListener('click', async () => {
+      ok.disabled = true;
+      const r = await send(type, payload, o.okMessage);
+      finish(r.ok ? r : null);
+    });
+    typed?.focus();
+  });
+}
+
 /**
  * Shows what the owner has announced. Announcements that ask for it show an "I have read this" button.
  * Showing one counts as seeing it. Returns a function that stops it.
@@ -533,23 +581,38 @@ export function mountNotice(el: HTMLElement): () => void {
       if (!r.ok) b.disabled = false;
     });
   });
-  return feed('announcements', {}, (d) => {
+  // Selling can be paused on purpose. Every screen says so, so nobody wonders why a sale will not go through.
+  let alive = true;
+  let rows: FeedMap['announcements']['data']['rows'] = [];
+  let paused: { message: string | null } | null = null;
+  const draw = () => {
+    const shown = rows.slice(0, 3);
+    el.hidden = shown.length === 0 && !paused;
+    el.innerHTML =
+      (paused ? `<div class="cx-n" data-paused style="border-color:var(--risk)"><div><b>Selling is paused</b>${paused.message ? `<small>${esc(paused.message)}</small>` : ''}<small>Sales made offline wait on the till and are sent when it ends.</small></div></div>` : '') +
+      shown
+        .map((a) => `<div class="cx-n"><div>${esc(a.text)}<small>${esc(a.postedByName)} · ${esc(clock(a.createdAt))}</small></div>${a.needsAck ? `<button data-ack="${esc(a.announcementId)}">I have read this</button>` : ''}</div>`)
+        .join('') + (rows.length > 3 ? `<div class="cx-m">${rows.length - 3} more announcements</div>` : '');
+  };
+  onShop((s) => {
+    if (!alive) return;
+    paused = s.maintenance?.on ? { message: s.maintenance.message } : null;
+    draw();
+  });
+  const stop = feed('announcements', {}, (d) => {
     for (const a of d.rows) {
       if (!a.seenByMe && !told.has(a.announcementId)) {
         told.add(a.announcementId);
         void client.dispatch('announcements/mark_seen', { announcementId: a.announcementId });
       }
     }
-    const rows = d.rows.slice(0, 3);
-    el.hidden = rows.length === 0;
-    el.innerHTML =
-      rows
-        .map(
-          (a) =>
-            `<div class="cx-n"><div>${esc(a.text)}<small>${esc(a.postedByName)} · ${esc(clock(a.createdAt))}</small></div>${a.needsAck ? `<button data-ack="${esc(a.announcementId)}">I have read this</button>` : ''}</div>`,
-        )
-        .join('') + (d.rows.length > 3 ? `<div class="cx-m">${d.rows.length - 3} more announcements</div>` : '');
+    rows = d.rows;
+    draw();
   });
+  return () => {
+    alive = false;
+    stop();
+  };
 }
 
 export interface RequestsCounts {

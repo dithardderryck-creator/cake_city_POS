@@ -46,6 +46,9 @@ export interface IntentMap {
   /** Checks the sealed chain now. By default only what is new since the last good check. */
   'records/verify': { full?: boolean };
   'records/drive_check': Record<string, never>;
+  'sessions/end': { userId: Id };
+  'maintenance/set': { on: boolean; message?: string };
+  'account/ack_notice': Record<string, never>;
   /** Change what someone does in the shop. Not for the owner, and nobody can be made owner this way. Ends their sign-ins. */
   'staff/set_role': { userId: Id; role: Exclude<Role, 'owner'> };
 
@@ -256,7 +259,7 @@ export interface IntentMap {
 }
 export type IntentName = keyof IntentMap;
 
-export type CircuitName = 'Auth' | 'Devices' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync' | 'Offline' | 'Records';
+export type CircuitName = 'Auth' | 'Devices' | 'Staff' | 'Catalogue' | 'Stock' | 'Orders' | 'Quotes' | 'Settings' | 'Inventory' | 'Recipes' | 'Usage' | 'Alerts' | 'Notify' | 'Payments' | 'Messages' | 'Sync' | 'Offline' | 'Records' | 'Operations';
 
 /** Circuits from the blueprint that are planned but not built yet. Shown honestly on the panel map. */
 export const PLANNED_CIRCUITS = [
@@ -333,9 +336,17 @@ export interface HandlerResult {
   failure?: { code: 'forbidden' | 'invalid'; messages: string[] };
 }
 
+/** The effect of an instruction, before it is carried out. A name to type is asked for when it cannot easily be undone. */
+export interface Preview {
+  lines: string[];
+  confirmName?: string;
+}
+
 export interface IntentDef<P> {
   circuit: CircuitName;
   roles: Role[] | 'public';
+  /** What this would do, in plain words, without doing it. Shown before IT or the owner confirms. Must not write. */
+  preview?: (payload: P, ctx: HandlerCtx) => Promise<Preview> | Preview;
   validate?: (payload: P, ctx: HandlerCtx) => Promise<string[]> | string[];
   handle: (payload: P, ctx: HandlerCtx) => Promise<HandlerResult>;
   /** The answer holds a secret, so it is never remembered for retries. */

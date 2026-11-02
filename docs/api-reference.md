@@ -90,7 +90,7 @@ Allowed: **owner, it**
 
 #### `staff/create`
 
-Allowed: **owner**
+Allowed: **owner, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -100,7 +100,7 @@ Allowed: **owner**
 
 #### `staff/set_pin`
 
-Allowed: **owner**
+Allowed: **owner, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -109,7 +109,7 @@ Allowed: **owner**
 
 #### `staff/set_active`
 
-Allowed: **owner**
+Allowed: **owner, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -118,7 +118,7 @@ Allowed: **owner**
 
 #### `staff/delete`
 
-Allowed: **owner**
+Allowed: **owner, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -134,7 +134,7 @@ Allowed: **owner, it**
 
 #### `staff/set_role`
 
-Allowed: **owner**
+Allowed: **owner, it**
 
 | Field | Type | Required | Limits |
 | --- | --- | --- | --- |
@@ -708,6 +708,33 @@ Allowed: **it**
 
 _No fields. Send an empty object `{}`._
 
+### Operations
+
+#### `sessions/end`
+
+Allowed: **it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `userId` | string | yes | min length 1, max length 64 |
+
+#### `maintenance/set`
+
+Allowed: **it, owner**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `on` | boolean | yes |  |
+| `message` | string | no | max length 140 |
+
+### Staff
+
+#### `account/ack_notice`
+
+Allowed: **owner**
+
+_No fields. Send an empty object `{}`._
+
 ### Messages
 
 #### `requests/send`
@@ -1090,7 +1117,7 @@ _No fields. Send an empty object `{}`._
 
 #### `staff_list`
 
-Allowed: **owner**
+Allowed: **owner, it**
 
 _No fields. Send an empty object `{}`._
 
@@ -1130,7 +1157,7 @@ _No fields. Send an empty object `{}`._
 
 #### `shop_settings`
 
-Allowed: **owner, cashier, baker, inventory**
+Allowed: **owner, cashier, baker, inventory, it**
 
 _No fields. Send an empty object `{}`._
 
@@ -1240,6 +1267,21 @@ Allowed: **it**
 | --- | --- | --- | --- |
 | `level` | "all" \| "warn" \| "error" | no |  |
 | `hours` | integer | no | min 1, max 72 |
+
+#### `account_notice`
+
+Allowed: **owner**
+
+_No fields. Send an empty object `{}`._
+
+#### `change_preview`
+
+Allowed: **owner, it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `intent` | string | yes | min length 1, max length 60 |
+| `payload` | object | yes |  |
 
 #### `drive_match`
 

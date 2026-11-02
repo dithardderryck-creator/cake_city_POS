@@ -67,6 +67,8 @@ export interface ReplayDeps {
   /** Everything that touches the store happens one at a time. */
   serial<T>(fn: () => Promise<T>): Promise<T>;
   resolveDevice(deviceToken: string | undefined): Promise<Device | null>;
+  /** While selling is paused on purpose: the words to show, so the till keeps its queue and sends again later. */
+  paused(): Promise<string | null>;
   changed(): void;
   onError(err: unknown): void;
 }
@@ -121,6 +123,12 @@ export function createReplayer(d: ReplayDeps) {
     }
 
     const results: ReplayItemResult[] = [];
+    const paused = await d.serial(() => d.paused());
+    if (paused) {
+      // Not a verdict on these sales: the till keeps them and sends again.
+      const a = actions[0];
+      return { ok: true, results: a ? [{ seq: a.seq, requestId: a.requestId, status: 'retry', message: paused }] : [] };
+    }
     for (const a of actions) {
       const r = await d.serial(() => one(passId, device, a).catch((err): ReplayItemResult => {
         d.onError(err);

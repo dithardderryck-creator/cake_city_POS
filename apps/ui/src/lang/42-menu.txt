@@ -261,3 +261,77 @@ The records do not match the copy on Drive ||| Rekodi hazilingani na nakala iliy
 No new record fingerprint has reached Drive for a day ||| Hakuna alama mpya ya kidole ya rekodi iliyofika Drive kwa siku moja
 Check that a Google account is connected and working. ||| Hakikisha akaunti ya Google imeunganishwa na inafanya kazi.
 No copy of the records is kept on Drive on this server. ||| Hakuna nakala ya rekodi inayohifadhiwa kwenye Drive kwenye seva hii.
+Selling is paused ||| Mauzo yamesimamishwa
+Sales made offline wait on the till and are sent when it ends. ||| Mauzo yaliyofanywa bila mtandao yanasubiri kwenye kaunta na yatatumwa yakiisha.
+Type the name to confirm: {*} ||| Andika jina ili kuthibitisha: {*}
+Signs {*} out of {n} sign-in. ||| Inamtoa {*} kwenye ingizo {n}.
+Signs {*} out of {n} sign-ins. ||| Inamtoa {*} kwenye maingizo {n}.
+Devices: {*}. ||| Vifaa: {*}.
+Nothing they already sent is lost. They can sign in again with their PIN. ||| Hakuna walichokwisha tuma kinachopotea. Wanaweza kuingia tena kwa PIN yao.
+Stops new sales and payments on every till that can reach the server. ||| Inasimamisha mauzo na malipo mapya kwenye kila kaunta inayofikia seva.
+A notice appears on every screen. Making things, stock and counts carry on. ||| Tangazo linaonekana kwenye kila skrini. Kutengeneza, hisa na hesabu vinaendelea.
+Sales made offline wait on the till and are sent when selling resumes. ||| Mauzo yaliyofanywa bila mtandao yanasubiri kwenye kaunta na yatatumwa mauzo yakirudi.
+Selling starts again on every till. Waiting offline sales are sent. ||| Mauzo yanaanza tena kwenye kila kaunta. Mauzo yanayosubiri yatatumwa.
+Sets a new PIN for {*} ({*}). ||| Inaweka PIN mpya kwa {*} ({*}).
+{*} is signed out everywhere and uses the new PIN from now on. ||| {*} anatolewa kila mahali na atatumia PIN mpya kuanzia sasa.
+{*} sees a note on the Overview that IT changed the PIN. ||| {*} ataona ujumbe kwenye Muhtasari kwamba IT amebadilisha PIN.
+{*} can sign in again with their PIN. ||| {*} anaweza kuingia tena kwa PIN yake.
+{*} is signed out everywhere and can no longer sign in. ||| {*} anatolewa kila mahali na hawezi tena kuingia.
+Their past work stays under their name. You can turn them back on later. ||| Kazi zao za zamani zinabaki chini ya jina lao. Unaweza kuwawasha tena baadaye.
+Removes {*} for good: no PIN, no contact details, no sign-ins. ||| Inamwondoa {*} kabisa: hakuna PIN, hakuna mawasiliano, hakuna kuingia.
+Their past orders, payments and records stay under their name. ||| Oda, malipo na rekodi zao za zamani zinabaki chini ya jina lao.
+This cannot be undone. ||| Hili haliwezi kurudishwa.
+Changes {*} from {*} to {*}. ||| Inabadilisha {*} kutoka {*} kuwa {*}.
+{*} is signed out and sees the {*} screens next time. ||| {*} anatolewa na ataona skrini za {*} wakati ujao.
+Sign {*} out? ||| Mtoe {*}?
+Sign out ||| Toka
+Signed out ||| Ametolewa
+Pause selling ||| Simamisha mauzo
+Resume selling ||| Rudisha mauzo
+Pause selling? ||| Simamisha mauzo?
+Resume selling? ||| Rudisha mauzo?
+Selling resumed ||| Mauzo yamerudi
+Paused ||| Yamesimamishwa
+Selling is paused. Sales made offline wait on the till. ||| Mauzo yamesimamishwa. Mauzo yaliyofanywa bila mtandao yanasubiri kwenye kaunta.
+Selling is paused: {*}. Sales made offline wait on the till. ||| Mauzo yamesimamishwa: {*}. Mauzo yaliyofanywa bila mtandao yanasubiri kwenye kaunta.
+Selling is paused: {*}. Your sales are not lost. Try again when it is over. ||| Mauzo yamesimamishwa: {*}. Mauzo yako hayajapotea. Jaribu tena yakiisha.
+Selling is paused. Your sales are not lost. Try again when it is over. ||| Mauzo yamesimamishwa. Mauzo yako hayajapotea. Jaribu tena yakiisha.
+Selling is already paused. ||| Mauzo tayari yamesimamishwa.
+Selling is not paused. ||| Mauzo hayajasimamishwa.
+Keep the message under 140 characters. ||| Weka ujumbe chini ya herufi 140.
+That is you. Use Sign out in the menu. ||| Huyo ni wewe. Tumia Toka kwenye menyu.
+{*} is not signed in anywhere. ||| {*} hajaingia popote.
+Only an owner can add another owner. ||| Ni mmiliki tu anayeweza kumwongeza mmiliki mwingine.
+Staff access ||| Ufikiaji wa wafanyakazi
+Who can sign in, and as what. Every change is shown to you first, written in the records and sealed. When you change the owner's PIN, the owner is told. ||| Nani anaweza kuingia, na kama nani. Kila badiliko linaonyeshwa kwako kwanza, linaandikwa kwenye rekodi na kuwekwa muhuri. Ukibadilisha PIN ya mmiliki, mmiliki anaambiwa.
+People ||| Watu
+Add someone ||| Ongeza mtu
+Add person ||| Ongeza mtu
+Turned off ||| Amezimwa
+Locked out ||| Amefungiwa
+New PIN ||| PIN mpya
+Turn off ||| Zima
+Turn on ||| Washa
+Change role ||| Badilisha jukumu
+Nobody yet. ||| Bado hakuna.
+Person added ||| Mtu ameongezwa
+PIN changed ||| PIN imebadilishwa
+Turned on ||| Amewashwa
+Role changed ||| Jukumu limebadilishwa
+Removed ||| Ameondolewa
+Set a new PIN for {*}? ||| Weka PIN mpya kwa {*}?
+Set PIN ||| Weka PIN
+Turn off {*}? ||| Zima {*}?
+Turn on {*}? ||| Washa {*}?
+Change the role of {*}? ||| Badilisha jukumu la {*}?
+Remove {*}? ||| Mwondoe {*}?
+Your PIN was changed by {*} ||| PIN yako ilibadilishwa na {*}
+On {*}. If you did not ask for this, tell someone you trust. ||| Tarehe {*}. Kama hukuomba hili, mwambie mtu unayemwamini.
+Got it ||| Nimeelewa
+Signed {*} out of {n} sign-in ||| Amemtoa {*} kwenye ingizo {n}
+Signed {*} out of {n} sign-ins ||| Amemtoa {*} kwenye maingizo {n}
+Paused selling: {*} ||| Amesimamisha mauzo: {*}
+Paused selling ||| Amesimamisha mauzo
+Saw the note about the change to the account ||| Ameona ujumbe kuhusu mabadiliko ya akaunti
+Role for {*} ||| Jukumu la {*}
+Your PIN was changed by ||| PIN yako ilibadilishwa na

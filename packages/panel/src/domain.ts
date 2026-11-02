@@ -78,6 +78,17 @@ export interface Staff {
   contact?: StaffContact;
   /** The language this person chose for their own screens. Absent means they follow the shop's language. */
   language?: 'en' | 'sw';
+  /** Set when IT changed this owner's PIN, until the owner has seen the note. Never set for anyone else. */
+  itChange?: { at: string; by: string; what: 'pin' };
+}
+
+/** Selling is paused on purpose (for a restore, an upgrade or a repair). One record, local to this server. */
+export interface Maintenance {
+  id: 'state';
+  on: boolean;
+  message: string | null;
+  since: string;
+  byName: string;
 }
 
 /** A phone or browser that has agreed to receive notifications from this shop. Only that person's own devices. */

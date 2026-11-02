@@ -178,6 +178,20 @@ describe('offline pass', () => {
     expect(await derivePassKey('AAAA', 'p1', 'u1', 'd2')).not.toBe(a);
   });
 
+  it('keeps sales on the till while selling is paused on purpose, and sends them once it resumes', async () => {
+    await enableOffline();
+    const till = await getPass();
+    const [a] = await queue(till, [{ payload: sale() }]);
+    await signIn('owner', devA);
+    ok(await send('owner', 'maintenance/set', { on: true, message: 'Back at 2 pm' }));
+    const held = results(await replay(till, [a]));
+    expect(held.map((x) => x.status)).toEqual(['retry']);
+    expect(held[0]!.message).toMatch(/Selling is paused: Back at 2 pm/);
+    expect(await orders()).toHaveLength(0);
+    ok(await send('owner', 'maintenance/set', { on: false }));
+    expect(statuses(await replay(till, [a]))).toEqual(['done']);
+  });
+
   it('survives a restart of the server: the master key was kept', async () => {
     await enableOffline();
     const till = await getPass();

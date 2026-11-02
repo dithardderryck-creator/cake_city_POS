@@ -64,6 +64,9 @@ export const schemas = {
   'records/open': z.strictObject({ seq: z.number().int().min(1) }),
   'records/verify': z.strictObject({ full: z.boolean().optional() }),
   'records/drive_check': empty,
+  'sessions/end': z.strictObject({ userId: id }),
+  'maintenance/set': z.strictObject({ on: z.boolean(), message: z.string().max(140).optional() }),
+  'account/ack_notice': empty,
   'staff/set_role': z.strictObject({ userId: id, role: z.enum(['cashier', 'baker', 'inventory', 'it']) }),
 
   'catalogue/create_option_group': z.strictObject({
@@ -332,6 +335,8 @@ export const feedSchemas = {
   panel_map: empty,
   system_notice: empty,
   drive_match: empty,
+  account_notice: empty,
+  change_preview: z.strictObject({ intent: z.string().min(1).max(60), payload: z.record(z.string(), z.unknown()) }),
   records_view: z.strictObject({ before: z.number().int().min(1).optional(), kind: z.enum(['all', 'refused', 'opened']).optional() }),
   it_activity: empty,
   sessions_view: empty,

@@ -7,9 +7,10 @@ const PIN = /^\d{4,6}$/;
 export const staffIntents = {
   'staff/create': {
     circuit: 'Staff',
-    roles: ['owner'],
+    roles: ['owner', 'it'],
     validate: async (p, ctx) => {
       const errors: string[] = [];
+      if (ctx.session!.role === 'it' && p.role === 'owner') errors.push('Only an owner can add another owner.');
       if (!p.name.trim()) errors.push('Enter the person’s name.');
       if (!PIN.test(p.pin)) errors.push('The PIN must be 4 to 6 digits.');
       const all = await ctx.store.list<Staff>('staff');
@@ -27,12 +28,25 @@ export const staffIntents = {
 
   'staff/set_pin': {
     circuit: 'Staff',
-    roles: ['owner'],
-    validate: (p) => (PIN.test(p.pin) ? [] : ['The PIN must be 4 to 6 digits.']),
+    roles: ['owner', 'it'],
+    validate: async (p, ctx) => {
+      if (!PIN.test(p.pin)) return ['The PIN must be 4 to 6 digits.'];
+      const t = await ctx.store.get<Staff>('staff', p.userId);
+      return t && !t.removedAt ? [] : ['That person no longer exists.'];
+    },
+    preview: async (p, ctx) => {
+      const t = (await ctx.store.get<Staff>('staff', p.userId))!;
+      const owner = t.role === 'owner' && ctx.session!.role === 'it';
+      return {
+        lines: [`Sets a new PIN for ${t.name} (${t.role}).`, `${t.name} is signed out everywhere and uses the new PIN from now on.`, ...(owner ? [`${t.name} sees a note on the Overview that IT changed the PIN.`] : [])],
+        ...(owner ? { confirmName: t.name } : {}),
+      };
+    },
     handle: async (p, ctx) => {
       const staff = await ctx.store.get<Staff>('staff', p.userId);
       if (!staff) throw new DomainError('invalid', ['That person no longer exists.']);
-      await ctx.store.put('staff', { ...staff, pinHash: await ctx.hasher.hash(staff.id, p.pin) });
+      const byIt = ctx.session!.role === 'it' && staff.role === 'owner';
+      await ctx.store.put<Staff>('staff', { ...staff, pinHash: await ctx.hasher.hash(staff.id, p.pin), ...(byIt ? { itChange: { at: ctx.now(), by: ctx.session!.name, what: 'pin' as const } } : {}) });
       await ctx.store.put('loginState', { id: staff.id, failures: 0, lockCount: 0 });
       await ctx.revokeSessions(staff.id, staff.id === ctx.session!.userId ? ctx.sessionId : undefined);
       return { summary: `Reset the PIN for ${staff.name}`, target: staff.id };
@@ -41,7 +55,14 @@ export const staffIntents = {
 
   'staff/set_active': {
     circuit: 'Staff',
-    roles: ['owner'],
+    roles: ['owner', 'it'],
+    preview: async (p, ctx) => {
+      const t = (await ctx.store.get<Staff>('staff', p.userId))!;
+      return {
+        lines: p.active ? [`${t.name} can sign in again with their PIN.`] : [`${t.name} is signed out everywhere and can no longer sign in.`, 'Their past work stays under their name. You can turn them back on later.'],
+        ...(!p.active && t.role === 'owner' ? { confirmName: t.name } : {}),
+      };
+    },
     validate: async (p, ctx) => {
       if (!p.active && p.userId === ctx.session!.userId) return ['You cannot turn off your own account.'];
       const all = await ctx.store.list<Staff>('staff');
@@ -61,7 +82,11 @@ export const staffIntents = {
 
   'staff/delete': {
     circuit: 'Staff',
-    roles: ['owner'],
+    roles: ['owner', 'it'],
+    preview: async (p, ctx) => {
+      const t = (await ctx.store.get<Staff>('staff', p.userId))!;
+      return { lines: [`Removes ${t.name} for good: no PIN, no contact details, no sign-ins.`, 'Their past orders, payments and records stay under their name.', 'This cannot be undone.'], confirmName: t.name };
+    },
     validate: async (p, ctx) => {
       const target = await ctx.store.get<Staff>('staff', p.userId);
       if (!target || target.removedAt) return ['That person is already removed.'];
@@ -104,7 +129,11 @@ export const staffIntents = {
 
   'staff/set_role': {
     circuit: 'Staff',
-    roles: ['owner'],
+    roles: ['owner', 'it'],
+    preview: async (p, ctx) => {
+      const t = (await ctx.store.get<Staff>('staff', p.userId))!;
+      return { lines: [`Changes ${t.name} from ${t.role} to ${p.role}.`, `${t.name} is signed out and sees the ${p.role} screens next time.`] };
+    },
     validate: async (p, ctx) => {
       const target = await ctx.store.get<Staff>('staff', p.userId);
       if (!target) return ['That person no longer exists.'];

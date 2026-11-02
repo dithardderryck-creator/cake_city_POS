@@ -114,17 +114,93 @@ try {
   await it.screenshot({ path: `${shots}/backups-phone.png`, fullPage: true });
 
   // No sideways scroll on any tab.
-  for (const v of ['health', 'devices', 'records', 'backups', 'sessions', 'logs']) {
+  for (const v of ['health', 'devices', 'records', 'backups', 'sessions', 'staff', 'logs']) {
     await menuGo(it, v);
     await it.waitForTimeout(150);
     const wide = await it.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
     assert.equal(wide, false, `no sideways scroll on ${v}`);
   }
 
+  // Operations that change things all show what they will do first. Pausing selling reaches every screen.
+  const sp = await (await browser.newContext({ viewport: { width: 390, height: 800 } })).newPage();
+  watch(sp, 'seller');
+  await signInAs(sp, shop.base, 'cashier');
+  await menuGo(it, 'health');
+  it.once('dialog', (d) => d.accept('Back at 2 pm'));
+  await it.click('#sellb');
+  await it.waitForSelector('.cx-d [data-ok]');
+  assert.match(await it.locator('.cx-d').innerText(), /Stops new sales/);
+  await it.click('.cx-d [data-ok]');
+  await until(async () => /Paused/.test(await txt(it, '#sells')), 'selling shows as paused');
+  assert.match(await txt(it, '#sellt'), /Back at 2 pm/);
+  await until(async () => (await sp.locator('.cx-n[data-paused]').count()) > 0, 'the cashier screen says selling is paused');
+  const refusedSale = await sp.evaluate(async () => (await Cake.client.dispatch('orders/quick_sale', { items: [{ combinationId: 'x', qty: 1 }], method: 'cash' })).error?.messages.join(' '));
+  assert.match(refusedSale, /Selling is paused: Back at 2 pm/);
+  await it.screenshot({ path: `${shots}/paused-phone.png`, fullPage: true });
+  await it.click('#sellb');
+  await it.waitForSelector('.cx-d [data-ok]');
+  await it.click('.cx-d [data-ok]');
+  await until(async () => /Normal/.test(await txt(it, '#sells')), 'selling is back to normal');
+  await until(async () => (await sp.locator('.cx-n[data-paused]').count()) === 0, 'the notice goes away');
+
+  // Sessions: sign the cashier out, after the preview. IT's own row has no button.
+  await menuGo(it, 'sessions');
+  await it.waitForSelector('#sel [data-end]');
+  assert.equal(await it.locator('#sel li', { hasText: /Ibrahim/ }).locator('[data-end]').count(), 0, 'no sign-out button on your own row');
+  await it.locator('#sel li', { hasText: /Baraka/ }).locator('[data-end]').click();
+  await it.waitForSelector('.cx-d [data-ok]');
+  assert.match(await it.locator('.cx-d').innerText(), /Signs Baraka.* out of 1 sign-in/);
+  await it.click('.cx-d [data-no]');
+  assert.equal(await sp.evaluate(async () => (await Cake.client.feed('me', {})).ok), true, 'cancelling changes nothing');
+  await it.locator('#sel li', { hasText: /Baraka/ }).locator('[data-end]').click();
+  await it.waitForSelector('.cx-d [data-ok]');
+  await it.click('.cx-d [data-ok]');
+  await until(async () => !(await sp.evaluate(async () => (await Cake.client.feed('me', {})).ok)), 'the cashier is signed out');
+
+  // Staff access: add, change a PIN, remove (the name is typed first), and the owner's PIN asks for her name and tells her.
+  await menuGo(it, 'staff');
+  await it.waitForSelector('#sfl li');
+  await it.fill('#sfa', 'Salma');
+  await it.fill('#sfp', '5555');
+  await it.click('#sfadd');
+  await until(async () => /Salma/.test(await txt(it, '#sfl')), 'the new person is listed');
+  it.once('dialog', (d) => d.accept('6666'));
+  await it.locator('#sfl li', { hasText: /Salma/ }).locator('[data-sf="pin"]').click();
+  await it.waitForSelector('.cx-d [data-ok]');
+  assert.match(await it.locator('.cx-d').innerText(), /signed out everywhere/);
+  assert.equal(await it.locator('.cx-d [data-cc]').count(), 0, 'no name needed for a cashier');
+  await it.click('.cx-d [data-ok]');
+  await it.locator('#sfl li', { hasText: /Salma/ }).locator('[data-sf="del"]').click();
+  await it.waitForSelector('.cx-d [data-cc]');
+  assert.equal(await it.locator('.cx-d [data-ok]').isDisabled(), true, 'removing waits for the name');
+  await it.fill('.cx-d [data-cc]', 'Salma');
+  await it.click('.cx-d [data-ok]');
+  await until(async () => !/Salma/.test(await txt(it, '#sfl')), 'the person is removed');
+  it.once('dialog', (d) => d.accept('2468'));
+  await it.locator('#sfl li', { hasText: /Amina/ }).locator('[data-sf="pin"]').click();
+  await it.waitForSelector('.cx-d [data-cc]');
+  assert.match(await it.locator('.cx-d').innerText(), /sees a note on the Overview/);
+  assert.equal(await it.locator('.cx-d [data-ok]').isDisabled(), true);
+  await it.fill('.cx-d [data-cc]', 'Amina (Owner)');
+  await it.click('.cx-d [data-ok]');
+  await until(async () => (await it.locator('.cx-d').count()) === 0, 'the dialog closes');
+  await it.screenshot({ path: `${shots}/staff-phone.png`, fullPage: true });
+  const op = await (await browser.newContext()).newPage();
+  watch(op, 'owner');
+  await op.goto(shop.base + '/');
+  await op.locator('#pick button', { hasText: /owner$/i }).first().click();
+  for (const d of '2468') await op.click(`#pad button[data-k="${d}"]`);
+  await op.click('#ok');
+  await op.waitForURL('**/owner.html');
+  await until(async () => !(await op.locator('#pcn').isHidden()), 'the owner is told her PIN was changed');
+  assert.match(await op.locator('#pcb').innerText(), /Ibrahim/);
+  await op.click('#pck');
+  await until(async () => op.locator('#pcn').isHidden(), 'the note goes away once seen');
+
   // The menu has the shared groups, My account and Sign out, like every other role.
   await openMenu(it);
   const menu = await it.locator('#xmn').innerText();
-  for (const w of ['WATCH', 'FIX AND CONTROL', 'CONNECT', 'Logs', 'Sessions', 'My account', 'Sign out']) assert.match(menu.replace(/\n/g, ' '), new RegExp(w, 'i'), w);
+  for (const w of ['WATCH', 'FIX AND CONTROL', 'CONNECT', 'Logs', 'Sessions', 'Staff access', 'My account', 'Sign out']) assert.match(menu.replace(/\n/g, ' '), new RegExp(w, 'i'), w);
   await it.click('#xout');
   await it.waitForURL(shop.base + '/');
 

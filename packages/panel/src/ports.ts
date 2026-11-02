@@ -45,6 +45,7 @@ export const COLLECTIONS = [
   'chain',
   'chainHead',
   'chainChecks',
+  'maintenance',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 

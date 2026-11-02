@@ -68,6 +68,7 @@ import {
 import { loadOrderBundle } from './circuits/orders';
 import { batchFeeds, type BatchLogData } from './circuits/batches';
 import { daysLeftInfo } from './days-left';
+import { loadMaintenance } from './circuits/ops';
 import { reportFeeds, type ReportsData, type ReportsParams } from './circuits/reports';
 import { countFeeds, type CountSessionData } from './circuits/count';
 import { recordFeeds, type ItActivityData, type RecordsViewData } from './circuits/records';
@@ -269,7 +270,7 @@ export interface PanelMapData {
   /** Room left on the disk, when the machine can say. */
   space: { freeMb: number; freePct: number } | null;
   /** Registered devices seen in the last hour, and the ones that have been quiet for a day or more. */
-  selling: { state: 'normal'; devices: number; online: number; quiet: { name: string; since: string | null }[] };
+  selling: { state: 'normal' | 'paused'; message: string | null; devices: number; online: number; quiet: { name: string; since: string | null }[] };
 }
 
 export interface StaffSigninRow {
@@ -615,6 +616,8 @@ export interface ShopSettingsData {
   /** The location check, without the shop's exact spot (staff do not need it). */
   locationCheck: { enabled: boolean; radiusM: number; spotSet: boolean };
   can: { edit: boolean; location: boolean };
+  /** Selling is paused on purpose. Every screen shows a notice while this is on. */
+  maintenance: { on: boolean; message: string | null; since: string | null };
 }
 
 /** The language one person sees: their own choice if they made one, otherwise the shop's. */
@@ -701,6 +704,10 @@ export interface FeedMap {
   system_notice: { params: Record<string, never>; data: { openForDay: boolean } };
   /** Whether the records match the copy kept on Drive. For the owner (who owns the Drive account) and IT. Null when no copy is kept yet. */
   drive_match: { params: Record<string, never>; data: FingerprintStatus };
+  /** For the owner: a note when IT changed her PIN, until she has seen it. */
+  account_notice: { params: Record<string, never>; data: { pinChanged: { at: string; by: string } | null } };
+  /** What an instruction would do, without doing it. For IT and the owner, before they confirm. */
+  change_preview: { params: { intent: string; payload: Record<string, unknown> }; data: ChangePreview };
   /** The sealed records, newest first, a page at a time. For IT. */
   records_view: { params: { before?: number; kind?: 'all' | 'refused' | 'opened' }; data: RecordsViewData };
   /** For the owner: everything IT did, read only. */
@@ -730,8 +737,19 @@ export interface CircuitStat {
   lastActivityAt: string | null;
 }
 
+/** The answer to "what would this do?": the plain-words effect, or why it cannot be done. */
+export interface ChangePreview {
+  ok: boolean;
+  problems: string[];
+  lines: string[];
+  /** When set, the person must type this name before the change is sent. */
+  confirmName: string | null;
+}
+
 export interface FeedCtx {
   store: Store;
+  /** Works out the effect of an instruction for the person asking, writing nothing. */
+  preview: (intent: string, payload: unknown) => Promise<ChangePreview>;
   config: PanelConfig;
   clock: Clock;
   terminals: Terminals;
@@ -992,7 +1010,7 @@ export const feeds: FeedRegistry = {
   },
 
   staff_list: {
-    roles: ['owner'],
+    roles: ['owner', 'it'],
     build: async ({ store, clock }) => {
       const [staff, states] = await Promise.all([store.list<Staff>('staff'), store.list<LoginState>('loginState')]);
       const nowMs = clock.now().getTime();
@@ -1343,7 +1361,7 @@ export const feeds: FeedRegistry = {
   },
 
   shop_settings: {
-    roles: ['owner', 'cashier', 'baker', 'inventory'],
+    roles: ['owner', 'cashier', 'baker', 'inventory', 'it'],
     build: async ({ store, session, config }) => {
       const s = await loadSettings(store);
       return {
@@ -1366,6 +1384,7 @@ export const feeds: FeedRegistry = {
         language: s.language,
         locationCheck: { enabled: s.locationCheckEnabled, radiusM: s.locationRadiusM, spotSet: s.shopLat !== undefined && s.shopLng !== undefined },
         can: { edit: session?.role === 'owner', location: session?.role === 'owner' || session?.role === 'it' },
+        maintenance: await loadMaintenance(store).then((m) => ({ on: !!m, message: m?.message ?? null, since: m?.since ?? null })),
       };
     },
   },
@@ -1871,6 +1890,19 @@ export const feeds: FeedRegistry = {
     },
   },
 
+  account_notice: {
+    roles: ['owner'],
+    build: async ({ store, session }) => {
+      const me = session ? await store.get<Staff>('staff', session.userId) : undefined;
+      return { pinChanged: me?.itChange ? { at: me.itChange.at, by: me.itChange.by } : null };
+    },
+  },
+
+  change_preview: {
+    roles: ['owner', 'it'],
+    build: async (ctx, p) => ctx.preview(p.intent, p.payload),
+  },
+
   drive_match: {
     roles: ['owner', 'it'],
     build: async ({ terminals }) => {
@@ -1903,6 +1935,7 @@ export const feeds: FeedRegistry = {
         terminals.system ? terminals.system.info() : Promise.resolve([]),
       ]);
       const nowMs = clock.now().getTime();
+      const maint = await loadMaintenance(store);
       const [staffAll, logins, devsAll] = await Promise.all([store.list<Staff>('staff'), store.list<LoginState>('loginState'), store.list<Device>('devices')]);
       const locks = new Map(logins.filter((l) => l.lockedUntil && Date.parse(l.lockedUntil) > nowMs).map((l) => [l.id, l.lockedUntil!]));
       const devs = devsAll.filter((d) => !d.revokedAt);
@@ -1950,7 +1983,8 @@ export const feeds: FeedRegistry = {
           .filter((p) => !p.removedAt && locks.has(p.id))
           .map((p) => ({ id: p.id, name: p.name, role: p.role, until: locks.get(p.id)! })),
         selling: {
-          state: 'normal' as const,
+          state: maint ? ('paused' as const) : ('normal' as const),
+          message: maint?.message ?? null,
           devices: devs.length,
           online: devs.filter((d) => d.lastSeenAt && nowMs - Date.parse(d.lastSeenAt) <= 3_600_000).length,
           quiet: devs

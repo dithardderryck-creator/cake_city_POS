@@ -47,6 +47,7 @@ main>section[hidden]{display:none}
 .ck .card:hover{border-color:var(--cop)}
 .nd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}.nd:first-child{border-top:0}
 .nd .go{background:none;border:0;padding:0;text-align:left;flex:1 1 220px;min-width:0}
+.sel{min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px}
 .sell{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .audl{list-style:none;margin:10px 0 0;padding:0}.audl li{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.audl li:first-child{border-top:0}.audl time{min-width:90px;color:var(--mute);flex:none}
 .tag.warn{background:#F6E3CB;color:#7A4A18}
@@ -67,7 +68,7 @@ main>section[hidden]{display:none}
 <section id="v-health">
 <h1 id="hi">Health</h1>
 <p class="sub">What needs you first, then how each part of the shop system is doing.</p>
-<section class="card" id="sell"><div class="sell"><div><h2>Selling</h2><p class="mute" id="sellt" style="margin:2px 0 0"></p></div><span class="tag" id="sells"></span></div></section>
+<section class="card" id="sell"><div class="sell"><div><h2>Selling</h2><p class="mute" id="sellt" style="margin:2px 0 0"></p></div><span class="tag" id="sells"></span></div><div class="btns" style="margin-top:12px"><button class="b" id="sellb">Pause selling</button></div></section>
 <section class="card" id="nd"><div class="row"><h2>Needs you</h2><span class="tag" id="ndn"></span></div><div id="ndb"></div></section>
 <div class="ck" id="ck"></div>
 <section class="card" id="sys"><div class="row"><h2>System details</h2><span class="tag" id="sst"></span></div><dl class="kv" id="skv"></dl></section>
@@ -92,6 +93,13 @@ main>section[hidden]{display:none}
 <h1>Sessions</h1>
 <p class="sub" id="sesub">Everyone signed in right now. Nobody is shown with a PIN or a key, only who, where and when.</p>
 <section class="card"><div class="row"><h2>Signed in now</h2><span class="tag" id="sen"></span></div><ul class="list" id="sel"></ul></section>
+</section>
+
+<section id="v-staff" hidden>
+<h1>Staff access</h1>
+<p class="sub">Who can sign in, and as what. Every change is shown to you first, written in the records and sealed. When you change the owner's PIN, the owner is told.</p>
+<section class="card"><div class="row"><h2>People</h2><span class="tag" id="sfn"></span></div><ul class="list" id="sfl"></ul></section>
+<section class="card"><h2>Add someone</h2><label class="fl"><span>Name</span><input id="sfa" maxlength="60" autocomplete="off"></label><label class="fl" style="margin-top:10px"><span>Role</span><select class="sel" id="sfr"><option value="cashier">Cashier</option><option value="baker">Baker</option><option value="inventory">Inventory</option><option value="it">IT</option></select></label><label class="fl" style="margin-top:10px"><span>PIN (4 to 6 digits)</span><input id="sfp" inputmode="numeric" maxlength="6" autocomplete="off"></label><div class="btns" style="margin-top:14px"><button class="b p" id="sfadd">Add person</button></div></section>
 </section>
 
 <section id="v-logs" hidden>
@@ -119,7 +127,7 @@ const ago=iso=>{if(!iso)return"never";const m=Math.max(0,Math.round((Date.now()-
 async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return await fn()}finally{if(b.isConnected)b.disabled=false}}
 try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
 let D={},view="health",CH=null;
-const TABS=["health","devices","records","backups"],PAGES=TABS.concat(["sessions","logs"]);
+const TABS=["health","devices","records","backups"],PAGES=TABS.concat(["sessions","staff","logs"]);
 function go(v){if(!PAGES.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records"&&!rcstop)rcsub();if(v==="logs")lgsub();scrollTo(0,0)}
 $$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
 
@@ -133,8 +141,8 @@ function quiet(){const m=D.map;return m?m.selling.quiet.map(q=>({k:"q"+q.name,t:
 let lastBell=-1,marked=new Set();
 function hr(){const m=D.map;if(!m)return;
  const sl=m.selling,off=sl.devices-sl.online;
- $("#sells").className="tag "+(sl.quiet.length?"warn":"ok");$("#sells").textContent=sl.quiet.length?sl.quiet.length+(sl.quiet.length===1?" device quiet":" devices quiet"):"Normal";
- $("#sellt").textContent=sl.devices?sl.online+" of "+sl.devices+" registered devices seen in the last hour"+(sl.quiet.length?". "+sl.quiet.map(q=>q.name).join(", ")+(sl.quiet.length===1?" has":" have")+" been quiet for a day or more.":"."):"No devices are registered yet.";
+ const pz=sl.state==="paused";$("#sells").className="tag "+(pz?"risk":sl.quiet.length?"warn":"ok");$("#sells").textContent=pz?"Paused":sl.quiet.length?sl.quiet.length+(sl.quiet.length===1?" device quiet":" devices quiet"):"Normal";$("#sellb").textContent=pz?"Resume selling":"Pause selling";
+ $("#sellt").textContent=pz?"Selling is paused"+(sl.message?": "+sl.message:"")+". Sales made offline wait on the till.":sl.devices?sl.online+" of "+sl.devices+" registered devices seen in the last hour"+(sl.quiet.length?". "+sl.quiet.map(q=>q.name).join(", ")+(sl.quiet.length===1?" has":" have")+" been quiet for a day or more.":"."):"No devices are registered yet.";
  const bell=needs(),n=bell.concat(quiet());$("#ndn").className="tag "+(n.length?"warn":"ok");$("#ndn").textContent=n.length?String(n.length):"Clear";if(CH){CH.setBadge(bell.length);if(lastBell>=0&&bell.length>lastBell)CH.ring();lastBell=bell.length}
  if(view==="health"&&D.al){const ids=D.al.open.filter(a=>!a.seen&&!marked.has(a.alertId)).map(a=>a.alertId);if(ids.length){ids.forEach(i=>marked.add(i));Cake.send("alerts/mark_seen",{alertIds:ids})}}
  $("#ndb").innerHTML=n.length?n.map(x=>`<div class="nd"><button class="go" ${x.go?`data-go="${x.go}"`:""} ${x.unlock?"disabled":""} style="${x.go?"cursor:pointer":"cursor:default"}"><b>${E(x.t)}</b><br><span class="mute"><span class="tag ${x.risk?"risk":"warn"}" style="margin-right:6px">${E(x.tag)}</span>${E(x.s)}</span></button>${x.unlock?`<button class="b" data-unlock="${E(x.unlock)}">Let in</button>`:""}</div>`).join(""):'<p class="empty">Nothing needs you. Everything is working.</p>';
@@ -168,7 +176,30 @@ $("#bk").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;
 /* ---------- sessions ---------- */
 function ser(){const d=D.ses;if(!d)return;$("#sen").textContent=d.rows.length+(d.rows.length===1?" person":" people");
  $("#sesub").textContent="Everyone signed in right now. Nobody is shown with a PIN or a key, only who, where and when. A person is signed out after "+d.idleHours+" hours without use.";
- $("#sel").innerHTML=d.rows.map(r=>`<li><div><b>${E(r.name)}</b>${r.name.includes(ROLE_L[r.role]||r.role)?"":` <span class="tag">${E(ROLE_L[r.role]||r.role)}</span>`}<br><span class="mute">${r.deviceName?E(r.deviceName):"Device not recorded"} · signed in ${E(when(r.signedInAt))} · last active ${E(ago(r.lastSeenAt))}</span></div></li>`).join("")||'<li><span class="mute">Nobody is signed in.</span></li>'}
+ $("#sel").innerHTML=d.rows.map(r=>`<li><div><b>${E(r.name)}</b>${r.name.includes(ROLE_L[r.role]||r.role)?"":` <span class="tag">${E(ROLE_L[r.role]||r.role)}</span>`}<br><span class="mute">${r.deviceName?E(r.deviceName):"Device not recorded"} · signed in ${E(when(r.signedInAt))} · last active ${E(ago(r.lastSeenAt))}</span></div>${r.userId===(Cake.me()||{}).userId?"":`<button class="b" data-end="${E(r.userId)}" data-nm="${E(r.name)}">Sign out</button>`}</li>`).join("")||'<li><span class="mute">Nobody is signed in.</span></li>'}
+
+$("#sel").onclick=e=>{const b=e.target.closest("[data-end]");if(b)guard(b,()=>Cake.confirmChange("sessions/end",{userId:b.dataset.end},{title:"Sign "+b.dataset.nm+" out?",okLabel:"Sign out",okMessage:"Signed out"}))};
+$("#sellb").onclick=e=>guard(e.currentTarget,async()=>{const pz=D.map&&D.map.selling.state==="paused";
+ if(pz){await Cake.confirmChange("maintenance/set",{on:false},{title:"Resume selling?",okLabel:"Resume selling",okMessage:"Selling resumed"});return}
+ const m=prompt("Tell staff why. It shows on every screen. You can leave it empty.","");if(m===null)return;
+ await Cake.confirmChange("maintenance/set",{on:true,...(m.trim()?{message:m.trim()}:{})},{title:"Pause selling?",okLabel:"Pause selling",okMessage:"Selling is paused"})});
+
+/* ---------- staff access ---------- */
+let SF=null;
+const SFR=[["cashier","Cashier"],["baker","Baker"],["inventory","Inventory"],["it","IT"]];
+function sfr(){const d=SF;if(!d)return;$("#sfn").textContent=d.length+(d.length===1?" person":" people");
+ $("#sfl").innerHTML=d.map(u=>{const self=u.id===(Cake.me()||{}).userId,ow=u.role==="owner";
+  return`<li><div><b>${E(u.name)}</b>${u.name.includes(ROLE_L[u.role]||u.role)?"":` <span class="tag">${E(ROLE_L[u.role]||u.role)}</span>`}${u.active?"":' <span class="tag warn">Turned off</span>'}${u.locked?' <span class="tag risk">Locked out</span>':""}</div>
+  <div class="btns" style="margin-top:8px"><button class="b" data-sf="pin" data-id="${E(u.id)}">New PIN</button>${self?"":`<button class="b" data-sf="act" data-id="${E(u.id)}">${u.active?"Turn off":"Turn on"}</button>`}${ow||self?"":`<select class="sel" data-sr="${E(u.id)}" aria-label="Role for ${E(u.name)}">${SFR.map(r=>`<option value="${r[0]}" ${r[0]===u.role?"selected":""}>${r[1]}</option>`).join("")}</select><button class="b" data-sf="role" data-id="${E(u.id)}">Change role</button><button class="b" data-sf="del" data-id="${E(u.id)}">Remove</button>`}</div></li>`}).join("")||'<li><span class="mute">Nobody yet.</span></li>'}
+$("#sfl").onclick=e=>{const b=e.target.closest("[data-sf]");if(!b||!SF)return;const u=SF.find(x=>x.id===b.dataset.id);if(!u)return;const k=b.dataset.sf;
+ guard(b,async()=>{
+  if(k==="pin"){const v=prompt("New PIN for "+u.name+" (4 to 6 digits)","");if(v===null)return;if(!/^\d{4,6}$/.test(v.trim())){Cake.toast("The PIN must be 4 to 6 digits.");return}
+   await Cake.confirmChange("staff/set_pin",{userId:u.id,pin:v.trim()},{title:"Set a new PIN for "+u.name+"?",okLabel:"Set PIN",okMessage:"PIN changed"})}
+  else if(k==="act")await Cake.confirmChange("staff/set_active",{userId:u.id,active:!u.active},{title:(u.active?"Turn off ":"Turn on ")+u.name+"?",okLabel:u.active?"Turn off":"Turn on",okMessage:u.active?"Turned off":"Turned on"});
+  else if(k==="role"){const r=$("#sfl [data-sr=\""+u.id+"\"]").value;await Cake.confirmChange("staff/set_role",{userId:u.id,role:r},{title:"Change the role of "+u.name+"?",okLabel:"Change role",okMessage:"Role changed"})}
+  else if(k==="del")await Cake.confirmChange("staff/delete",{userId:u.id},{title:"Remove "+u.name+"?",okLabel:"Remove",okMessage:"Removed"})})};
+$("#sfadd").onclick=e=>guard(e.currentTarget,async()=>{const n=$("#sfa").value.trim(),p=$("#sfp").value.trim();if(!n){Cake.toast("Enter the person's name.");return}if(!/^\d{4,6}$/.test(p)){Cake.toast("The PIN must be 4 to 6 digits.");return}
+ const r=await Cake.send("staff/create",{name:n,role:$("#sfr").value,pin:p},"Person added");if(r.ok){$("#sfa").value="";$("#sfp").value=""}});
 
 /* ---------- logs ---------- */
 let lgstop=null,LG=null;
@@ -258,7 +289,7 @@ $("#loc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=
 /* shared header */
 const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
 (async()=>{const me=await Cake.boot("it");
- CH=Cake.mountChrome({groups:[{title:"Watch",items:[{id:"health",label:"Health"},{id:"records",label:"Records"},{id:"logs",label:"Logs"}]},{title:"Fix and control",items:[{id:"sessions",label:"Sessions"}]},{title:"Connect",items:[{id:"devices",label:"Devices and location"},{id:"backups",label:"Backups and Google"}]}],go,bell:"health"});CH.setPage(view);
+ CH=Cake.mountChrome({groups:[{title:"Watch",items:[{id:"health",label:"Health"},{id:"records",label:"Records"},{id:"logs",label:"Logs"}]},{title:"Fix and control",items:[{id:"sessions",label:"Sessions"},{id:"staff",label:"Staff access"}]},{title:"Connect",items:[{id:"devices",label:"Devices and location"},{id:"backups",label:"Backups and Google"}]}],go,bell:"health"});CH.setPage(view);
  Cake.mountNotice($("#ntc"));
  $("#hi").textContent="Good "+(new Date().getHours()<12?"morning":new Date().getHours()<18?"afternoon":"evening")+", "+me.name.split(" ")[0];
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
@@ -267,6 +298,7 @@ const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.
  Cake.mountDrive($("#drv"));
  Cake.feed("drive_match",{},d=>{DM=d;rdr()});
  Cake.feed("sessions_view",{},d=>{D.ses=d;ser()});
+ Cake.feed("staff_list",{},d=>{SF=d;sfr()});
  Cake.feed("alert_inbox",{},d=>{D.al=d;hr()});
  Cake.feed("panel_map",{},d=>{D.map=d;hr()});
  go("health")})();
