@@ -101,6 +101,12 @@ export const opsIntents = {
     },
   },
 
+  'console/ran': {
+    circuit: 'Operations',
+    roles: ['it'],
+    handle: async (p) => ({ summary: `Console: ${p.line}`, skipSync: true }),
+  },
+
   'restore/start': {
     circuit: 'Operations',
     roles: ['it'],

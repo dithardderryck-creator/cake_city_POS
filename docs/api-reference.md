@@ -743,6 +743,14 @@ Allowed: **it, owner**
 
 _No fields. Send an empty object `{}`._
 
+#### `console/ran`
+
+Allowed: **it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `line` | string | yes | min length 1, max length 300 |
+
 #### `restore/start`
 
 Allowed: **it**

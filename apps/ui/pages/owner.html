@@ -276,6 +276,8 @@ nav.xtabs svg{flex:none;width:18px;height:18px}
 <script src="/cake.js"></script>
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+/* A Console line from IT keeps the command as typed, so only the word before it is translated. */
+const SM=t=>t&&t.startsWith("Console: ")?`<span>Console:</span> <span data-notr>${Cake.esc(t.slice(9))}</span>`:Cake.esc(t);
 const E=Cake.esc,M=Cake.money,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
 const D={};            // the latest data of every feed this page listens to
 const ROLE_L={owner:"Owner",cashier:"Cashier",baker:"Baker",inventory:"Inventory",it:"IT"};
@@ -345,7 +347,7 @@ function ov(){
   all=lt.concat(rq,q,ls),shown=ndAll?all:all.slice(0,5),chev='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
  $("#nd").classList.toggle("calm",!all.length&&!n);$("#reqn").textContent=all.length||"";
  $("#reqs").innerHTML=(all.length||n)?shown.map(x=>`<button class="nrow" ${x.o?`data-o="${E(x.o)}"`:`data-go="${x.go}"`}><span><b>${E(x.t)}</b><small><span class="tag ${x.c}">${E(x.k)}</span>${E(x.m)}</small></span>${chev}</button>`).join("")+(all.length>5?`<button class="b nmore" data-more>${ndAll?"Show fewer":"Show all "+all.length}</button>`:"")+(n?`<div class="nrow still"><span><b>${n} usage report${n>1?"s":""} waiting for Inventory to confirm</b><small><span class="tag">Waiting</span>Nothing for you to do</small></span></div>`:""):'<span class="ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l5 4.5 9-10"/></svg></span><span><b style="color:var(--ink)">All caught up</b><br>Nothing is late, low or waiting for you. New requests from staff will appear here.</span>';
- $("#afeed").innerHTML=((D.audit||[]).filter(a=>a.outcome==="ok").slice(0,8).map(a=>`<div><time>${E(when(a.at))}</time><span><b>${E(a.who)}</b>: ${E(a.summary)}</span></div>`).join(""))||'<p class="empty">Nothing yet today.</p>';
+ $("#afeed").innerHTML=((D.audit||[]).filter(a=>a.outcome==="ok").slice(0,8).map(a=>`<div><time>${E(when(a.at))}</time><span><b>${E(a.who)}</b>: ${SM(a.summary)}</span></div>`).join(""))||'<p class="empty">Nothing yet today.</p>';
  badge()}
 $("#duel").onclick=e=>{const i=e.target.closest("[data-o]");if(i){go("orders");oopen(i.dataset.o)}};
 $("#reqs").onclick=e=>{const m=e.target.closest("[data-more]");if(m){ndAll=!ndAll;ov();return}const o=e.target.closest("[data-o]");if(o){go("orders");oopen(o.dataset.o);return}const g=e.target.closest("[data-go]");if(g)go(g.dataset.go)};
@@ -566,7 +568,7 @@ $("#eod").onclick=dayOpen;
 
 /* ---------- staff ---------- */
 let sfs=null,sfm=null,auw="all",aun=25,ITA=null,itn=25;
-function itr(){const r=ITA?ITA.rows:[];$("#itn").textContent=r.length?r.length+(r.length===1?" action":" actions"):"Nothing yet";$("#itl").innerHTML=r.slice(0,itn).map(a=>`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span><b>${E(a.who)}</b> · ${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`).join("")||'<li><span class="mute">IT has not done anything yet.</span></li>';$("#itm").hidden=r.length<=itn}
+function itr(){const r=ITA?ITA.rows:[];$("#itn").textContent=r.length?r.length+(r.length===1?" action":" actions"):"Nothing yet";$("#itl").innerHTML=r.slice(0,itn).map(a=>`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span><b>${E(a.who)}</b> · ${SM(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`).join("")||'<li><span class="mute">IT has not done anything yet.</span></li>';$("#itm").hidden=r.length<=itn}
 $("#itm").onclick=()=>{itn+=25;itr()};
 const sst=u=>!u.active?["Deactivated","risk"]:u.locked?["Locked","cop"]:["Active",""];
 const LVL=[["off","Off"],["critical","Critical alerts only"],["all","All alerts"]];
@@ -579,12 +581,12 @@ function sfr(){const L=D.staff||[],me=Cake.me();if(!sfs&&L.length)sfs=L[0].id;
    ${own?'<p class="mute">This is the owner account. It cannot be deactivated, removed or change role.</p>':`<label class="fl"><span>Role</span><select data-k="rl">${["cashier","baker","inventory","it"].map(r=>`<option value="${r}" ${r===u.role?"selected":""}>${ROLE_L[r]}</option>`).join("")}</select></label><div class="btns"><button class="b" data-s="role">Save role</button><button class="b ${u.active?"":"p"}" data-s="tog">${u.active?"Deactivate":"Reactivate"}</button><button class="b" data-s="del">Remove</button></div><p class="mute" style="margin-top:6px">Deactivate keeps the person and can be undone. Remove deletes them for good; their past sales and actions stay in the records under their name.</p>`}
    <label class="fl"><span>New PIN (4 to 6 digits)</span><input data-k="np" inputmode="numeric" maxlength="6" autocomplete="off"></label><div class="btns"><button class="b" data-s="pin">Set PIN</button><button class="b" data-s="sug">Suggest one</button></div>
    <h2 style="font-size:15px;margin-top:20px">Alerts outside the app</h2><label class="fl"><span>Phone</span><input data-k="ph" value="${E(u.contact.phone||"")}" inputmode="tel" maxlength="40"></label><label class="fl"><span>Text message</span><select data-k="sm">${LVL.map(x=>`<option value="${x[0]}" ${x[0]===u.contact.sms?"selected":""}>${x[1]}</option>`).join("")}</select></label><label class="fl"><span>WhatsApp</span><select data-k="wa">${LVL.map(x=>`<option value="${x[0]}" ${x[0]===u.contact.whatsapp?"selected":""}>${x[1]}</option>`).join("")}</select></label><div class="btns"><button class="b" data-s="contact">Save contact</button></div>
-   <h2 style="font-size:15px;margin-top:20px">Recent actions</h2><ul class="tl">${hist.map(a=>`<li><time>${E(when(a.at))}</time><span>${E(a.summary)}</span></li>`).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>'}</ul>`}
+   <h2 style="font-size:15px;margin-top:20px">Recent actions</h2><ul class="tl">${hist.map(a=>`<li><time>${E(when(a.at))}</time><span>${SM(a.summary)}</span></li>`).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>'}</ul>`}
   else $("#sfdet").innerHTML='<p class="empty">Pick someone to see their details.</p>'});
  const names=[...new Set((D.audit||[]).map(a=>a.who))];if(auw!=="all"&&!names.includes(auw))auw="all";
  $("#auf").innerHTML='<option value="all">Everyone</option>'+names.map(n=>`<option ${auw===n?"selected":""}>${E(n)}</option>`).join("");
  const al=(D.audit||[]).filter(a=>auw==="all"||a.who===auw);
- $("#aul").innerHTML=al.slice(0,aun).map(a=>{const rl=a.role?ROLE_L[a.role]||a.role:"",said=a.summary.startsWith(a.who),who=said?"":`<b>${E(a.who)}</b>${rl&&!a.who.includes(rl)?` <span class="mute">(${E(rl)})</span>`:""} · `;return`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span>${who}${E(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`}).join("")||'<li><span class="mute">No actions recorded for this person.</span></li>';
+ $("#aul").innerHTML=al.slice(0,aun).map(a=>{const rl=a.role?ROLE_L[a.role]||a.role:"",said=a.summary.startsWith(a.who),who=said?"":`<b>${E(a.who)}</b>${rl&&!a.who.includes(rl)?` <span class="mute">(${E(rl)})</span>`:""} · `;return`<li style="flex-wrap:wrap"><time style="min-width:90px">${E(when(a.at))}</time><span>${who}${SM(a.summary)}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":"Refused"}</span>`:""}</span></li>`}).join("")||'<li><span class="mute">No actions recorded for this person.</span></li>';
  $("#aum").hidden=al.length<=aun;}
 const toDet=()=>{if(matchMedia("(max-width:900px)").matches)$("#sfdet").scrollIntoView({behavior:"smooth",block:"start"})};
 $("#sflist").onclick=e=>{const b=e.target.closest(".rc");if(!b)return;sfs=b.dataset.id;sfm=null;sfr();toDet()};

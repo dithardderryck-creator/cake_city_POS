@@ -8,6 +8,7 @@ import type { ClientResult, FeedMap, FeedName, IntentMap, IntentName, Role, Sess
 import { buildChrome } from './chrome';
 import type { Chrome, ChromeOptions } from './chrome';
 import * as i18n from './i18n';
+import * as cons from './console';
 import type { Lang } from './i18n';
 
 i18n.early();
@@ -522,6 +523,8 @@ export interface ConfirmOptions {
   okLabel: string;
   /** Said after it went through. */
   okMessage?: string;
+  /** Ask for this name to be typed even when the server's preview does not (the Console does this for destructive commands). */
+  typeName?: string;
 }
 
 /**
@@ -535,7 +538,7 @@ export async function confirmChange<K extends IntentName>(type: K, payload: Inte
     toast(pv.problems[0] ?? 'That cannot be done now.');
     return null;
   }
-  const need = pv.confirmName;
+  const need = pv.confirmName ?? o.typeName ?? null;
   return new Promise((resolve) => {
     const d = dialog(
       `<h2>${esc(o.title)}</h2>${pv.lines.map((l) => `<p class="cx-m">${esc(l)}</p>`).join('')}${need ? `<label>Type the name to confirm: ${esc(need)}<input data-cc autocomplete="off" autocapitalize="off"></label>` : ''}<div class="cx-g" style="margin-top:16px;justify-content:flex-end"><button class="b" data-no>Cancel</button><button class="b p" data-ok${need ? ' disabled' : ''}>${esc(o.okLabel)}</button></div>`,
@@ -1187,4 +1190,47 @@ export function mountDrive(el: HTMLElement): () => void {
     el.innerHTML = '';
   };
   return unmountDrive;
+}
+
+
+/* ---------- the Console (IT) ---------- */
+
+let consoleData: cons.ConsoleData = { staff: [], devices: [], sessions: [], points: [] };
+
+/** Reads the names the Console matches typed words against. Call when the tab opens and after each command. */
+export async function consoleLoad(): Promise<void> {
+  const [staff, dev, ses, pts] = await Promise.all([client.feed('staff_list', {}), client.feed('device_list', {}), client.feed('sessions_view', {}), client.feed('restore_points', {})]);
+  consoleData = {
+    staff: staff.ok ? staff.data.map((u) => ({ id: u.id, name: u.name, role: u.role, active: u.active })) : consoleData.staff,
+    devices: dev.ok ? dev.data.devices.map((x) => ({ id: x.id, name: x.name })) : consoleData.devices,
+    sessions: ses.ok ? ses.data.rows.map((r) => ({ userId: r.userId, name: r.name })) : consoleData.sessions,
+    points: pts.ok ? [...pts.data.points].sort((a, b) => b.madeAt.localeCompare(a.madeAt)).map((p) => ({ file: p.file, madeAt: p.madeAt })) : consoleData.points,
+  };
+}
+
+export const consoleSuggest = (line: string): string[] => cons.suggest(line, consoleData);
+export const consoleCommands = (): { insert: string; usage: string; what: string }[] => cons.SPECS.map((s) => ({ insert: s.words.join(' ') + (s.args.some((a) => !a.optional) ? ' ' : ''), usage: cons.usage(s), what: s.what }));
+
+/** Runs one typed command. Returns the lines to print. Changes show their preview first and may be cancelled. */
+export async function consoleRun(line: string): Promise<cons.Line[]> {
+  await consoleLoad();
+  const quiet = async (type: IntentName, payload: unknown): Promise<cons.Done> => {
+    const r: ClientResult = await client.dispatch(type, payload as never);
+    return r.ok ? { ok: true, data: r.data } : { ok: false, message: r.error.messages.join(' ') || 'That did not work.' };
+  };
+  const out = await cons.run(cons.plan(line, consoleData), {
+    read: async (name, params) => {
+      const r = await client.feed(name, params);
+      return r.ok ? r.data : null;
+    },
+    send: quiet as cons.Io['send'],
+    confirm: (async (type: IntentName, payload: unknown, o: ConfirmOptions) => {
+      const r = await confirmChange(type, payload as never, o);
+      return r ? { ok: true, data: r.data } : null;
+    }) as cons.Io['confirm'],
+  });
+  // The command, as the Console understood it, goes into the sealed records.
+  if (out.ran) await client.dispatch('console/ran', { line: out.ran });
+  await consoleLoad();
+  return out.lines;
 }

@@ -144,3 +144,22 @@ describe('IT looks after staff access', () => {
     ok(await send('it', 'staff/delete', { userId: cashier.id }));
   });
 });
+
+describe('the Console writing down a command', () => {
+  it('is for IT only, changes nothing, and is sealed with the command as the Console understood it', async () => {
+    const before = await store.list<Staff>('staff');
+    ok(await send('it', 'console/ran', { line: 'devices revoke "Counter tablet"' }));
+    expect(bad(await send('owner', 'console/ran', { line: 'status' }))).toMatch(/role cannot/);
+    expect(bad(await send('cashier', 'console/ran', { line: 'status' }))).toMatch(/role cannot/);
+    expect(bad(await send('it', 'console/ran', { line: '' }))).not.toBe('');
+    expect(bad(await send('it', 'console/ran', { line: 'x'.repeat(301) }))).not.toBe('');
+    expect(await store.list<Staff>('staff')).toEqual(before);
+    const log = await panel.feed('records_view', {}, sid.it);
+    expect(log.ok && log.data.rows.some((x) => x.summary === 'Console: devices revoke "Counter tablet"')).toBe(true);
+  });
+  it('is not synced to the online database', async () => {
+    const n = (await store.list('outbox')).length;
+    ok(await send('it', 'console/ran', { line: 'status' }));
+    expect((await store.list('outbox')).length).toBe(n);
+  });
+});

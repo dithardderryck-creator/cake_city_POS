@@ -65,6 +65,7 @@ export const schemas = {
   'records/verify': z.strictObject({ full: z.boolean().optional() }),
   'records/drive_check': empty,
   'sessions/end': z.strictObject({ userId: id }),
+  'console/ran': z.strictObject({ line: z.string().min(1).max(300) }),
   'maintenance/set': z.strictObject({ on: z.boolean(), message: z.string().max(140).optional() }),
   'account/ack_notice': empty,
   'backup/run_now': empty,

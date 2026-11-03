@@ -369,3 +369,118 @@ Started a backup now ||| Imeanza kuhifadhi nakala sasa
 Started a restore from backup {*} ||| Imeanza kurudisha nakala {*}
 Restored to backup {*} (made {*}). Removed {n} sealed records made on {*} ||| Imerudisha nakala {*} (iliyohifadhiwa {*}). Imeondoa rekodi {n} zenye muhuri zilizofanywa tarehe {*}
 Restored to backup {*} (made {*}). Removed {n} sealed records ||| Imerudisha nakala {*} (iliyohifadhiwa {*}). Imeondoa rekodi {n} zenye muhuri
+Console ||| Konsoli
+Run ||| Endesha
+Command ||| Amri
+Type a command ||| Andika amri
+All commands ||| Amri zote
+device ||| kifaa
+person ||| mtu
+signed-in person ||| mtu aliyeingia
+Revoked ||| Amefutiwa ruhusa
+Signed in ||| Ameingia
+Last used ||| Ilitumika mara ya mwisho
+Disk free ||| Nafasi ya diski iliyobaki
+device not recorded ||| kifaa hakijarekodiwa
+this device ||| kifaa hiki
+Sealed records and size ||| Rekodi zenye muhuri na ukubwa
+Type a command. Anything that changes something shows you what it will do first, and the dangerous ones ask you to type the name. PINs and keys have no command, so they cannot be typed or shown here. Each command is written in the sealed records. ||| Andika amri. Kila amri inayobadilisha kitu inakuonyesha kwanza itakachofanya, na zile hatari zinakuomba uandike jina. PIN na funguo hazina amri, kwa hiyo haziwezi kuandikwa wala kuonyeshwa hapa. Kila amri inaandikwa kwenye rekodi zenye muhuri.
+Type help to see the commands. Start typing and the likely commands appear under the box. ||| Andika help kuona amri. Anza kuandika na amri zinazowezekana zitaonekana chini ya kisanduku.
+Console: ||| Konsoli:
+Lists the commands. Add a word to narrow them, such as: help devices ||| Inaorodhesha amri. Ongeza neno kupunguza orodha, kwa mfano: help devices
+Clears this screen. ||| Inafuta skrini hii.
+How the system is doing: selling, devices, backups and disk. ||| Hali ya mfumo: mauzo, vifaa, nakala rudufu na diski.
+Lists the registered devices. ||| Inaorodhesha vifaa vilivyosajiliwa.
+Makes a one-time code to register a new device. ||| Inatengeneza msimbo wa mara moja wa kusajili kifaa kipya.
+Renames a device. ||| Inabadilisha jina la kifaa.
+Switches a device off. You type its name to confirm. ||| Inazima kifaa. Unaandika jina lake kuthibitisha.
+Lists who is signed in. ||| Inaorodhesha walioingia.
+Signs a person out everywhere. ||| Inamtoa mtu kila mahali alipoingia.
+Lists the people who can sign in. ||| Inaorodhesha watu wanaoweza kuingia.
+Lets a locked-out person try again. ||| Inamruhusu aliyefungiwa ajaribu tena.
+Turns a person's access off. ||| Inazima ruhusa ya mtu.
+Turns a person's access back on. ||| Inawasha tena ruhusa ya mtu.
+Changes what a person does: cashier, baker, inventory or it. ||| Inabadilisha kazi ya mtu: cashier, baker, inventory au it.
+Shows whether selling is paused. ||| Inaonyesha kama mauzo yamesimamishwa.
+Pauses selling and shows your message on every screen. ||| Inasimamisha mauzo na kuonyesha ujumbe wako kwenye kila skrini.
+Lets selling carry on. ||| Inaruhusu mauzo yaendelee.
+Lists the open system alerts. ||| Inaorodhesha tahadhari za mfumo zilizo wazi.
+Shows the newest server log lines. Use errors or warnings to narrow them. ||| Inaonyesha mistari mipya ya kumbukumbu ya seva. Tumia errors au warnings kupunguza.
+Lists the newest sealed records. Use refused or opened to narrow them. ||| Inaorodhesha rekodi mpya zenye muhuri. Tumia refused au opened kupunguza.
+Opens one sealed record. The opening is recorded too. ||| Inafungua rekodi moja yenye muhuri. Kufungua nako kunarekodiwa.
+Checks the sealed records now. Add full to check everything. ||| Inakagua rekodi zenye muhuri sasa. Ongeza full kukagua zote.
+Compares the records with the copy on Drive. ||| Inalinganisha rekodi na nakala iliyo kwenye Drive.
+Lists the backups kept on the server. ||| Inaorodhesha nakala rudufu zilizohifadhiwa kwenye seva.
+Takes a backup now. ||| Inahifadhi nakala rudufu sasa.
+Puts a backup back, using its number from backups. Selling must be paused first. ||| Inarudisha nakala rudufu, kwa kutumia namba yake kutoka backups. Mauzo lazima yasimamishwe kwanza.
+Sends the waiting changes to the online database now. ||| Inatuma mabadiliko yanayosubiri kwenye hifadhidata ya mtandaoni sasa.
+Sends every record to the online database again. ||| Inatuma rekodi zote kwenye hifadhidata ya mtandaoni tena.
+No command matches that word. Type help to see them all. ||| Hakuna amri inayolingana na neno hilo. Andika help kuziona zote.
+A quote was opened and not closed. ||| Alama ya nukuu ilifunguliwa lakini haikufungwa.
+Type a command, or help to see them. ||| Andika amri, au help kuziona.
+That is not a complete command. Try one of: ||| Hiyo si amri kamili. Jaribu mojawapo ya hizi:
+That is not a command. Type help to see them. ||| Hiyo si amri. Andika help kuziona.
+Something is missing. Use: ||| Kuna kitu kinakosekana. Tumia:
+There is too much after that. Use: ||| Kuna maneno mengi mno baada ya hapo. Tumia:
+Use records, records refused or records opened. ||| Tumia records, records refused au records opened.
+Give the record number, a whole number from the records list. ||| Toa namba ya rekodi, namba nzima kutoka kwenye orodha ya rekodi.
+Use records verify or records verify full. ||| Tumia records verify au records verify full.
+Name the device, for example: devices code "Counter tablet" ||| Taja jina la kifaa, kwa mfano: devices code "Counter tablet"
+Give the new name. ||| Toa jina jipya.
+The role is one of: cashier, baker, inventory, it. ||| Jukumu ni mojawapo ya: cashier, baker, inventory, it.
+No backup has that number. See backups for the list. ||| Hakuna nakala yenye namba hiyo. Angalia backups kwa orodha.
+No backups are kept on this server yet. ||| Bado hakuna nakala rudufu zilizohifadhiwa kwenye seva hii.
+More than one {*} matches. Type more of the name: ||| Zaidi ya {*} mmoja analingana. Andika jina zaidi:
+No {*} matches: ||| Hakuna {*} anayelingana:
+Use --since with hours or days, such as 1h or 2d. ||| Tumia --since pamoja na saa au siku, kwa mfano 1h au 2d.
+Logs go back at most 72 hours (3d). ||| Kumbukumbu zinarudi nyuma hadi saa 72 (3d).
+Say which part after --part, such as sync. ||| Taja sehemu baada ya --part, kwa mfano sync.
+Not understood in logs: ||| Haieleweki kwenye logs:
+Cancelled. Nothing was changed. ||| Imeghairiwa. Hakuna kilichobadilishwa.
+Code for {*}. Type it on that device. It works once, until ||| Msimbo wa {*}. Uandike kwenye kifaa hicho. Unafanya kazi mara moja, hadi
+Details not here to compare. ||| Maelezo hayapo hapa ya kulinganisha.
+Matches its seal. ||| Inalingana na muhuri wake.
+Does NOT match its seal. ||| HAILINGANI na muhuri wake.
+Everything checked matches its seal. ||| Kila kilichokaguliwa kinalingana na muhuri wake.
+Something does not match its seal. Do not clear it. Tell the owner. ||| Kuna kitu hakilingani na muhuri wake. Usikifute. Mwambie mmiliki.
+The records match the copy on Drive. ||| Rekodi zinalingana na nakala iliyo kwenye Drive.
+The records do NOT match Drive. See the Records page. ||| Rekodi HAZILINGANI na Drive. Angalia ukurasa wa Rekodi.
+No Google account is switched on, so there is no copy to compare. ||| Hakuna akaunti ya Google iliyowashwa, kwa hiyo hakuna nakala ya kulinganisha.
+Drive could not be compared just now. ||| Drive haikuweza kulinganishwa sasa hivi.
+Backup started. It appears in backups in a moment. ||| Nakala rudufu imeanza. Itaonekana kwenye backups baada ya muda mfupi.
+{n} sent, {n} still waiting. ||| {n} zimetumwa, {n} bado zinasubiri.
+{n} sent. Nothing is waiting. ||| {n} zimetumwa. Hakuna kinachosubiri.
+Done. ||| Imekamilika.
+Code made ||| Msimbo umetengenezwa
+Renamed ||| Jina limebadilishwa
+{*} was revoked ||| {*} amefutiwa ruhusa
+Queued to send ||| Imewekwa kwenye foleni ya kutuma
+Selling is open. ||| Mauzo yako wazi.
+Paused: {*} ||| Yamesimamishwa: {*}
+Paused ||| Yamesimamishwa
+Devices seen in the last hour ||| Vifaa vilivyoonekana saa iliyopita
+Not used yet ||| Bado halijatumika
+Code waiting for a device ||| Msimbo unasubiri kifaa
+No alerts are open. ||| Hakuna tahadhari zilizo wazi.
+This could not be loaded just now. ||| Hii haikuweza kupakiwa sasa hivi.
+Showing the newest 25. Narrow it with --since or --part. ||| Inaonyesha 25 za hivi karibuni. Punguza kwa --since au --part.
+Nothing recorded yet. ||| Bado hakuna kilichorekodiwa.
+Sealed, open it with records open {n} ||| Imefungwa muhuri, ifungue kwa records open {n}
+{n} registered devices ||| Vifaa {n} vilivyosajiliwa
+1 registered device ||| Kifaa 1 kilichosajiliwa
+{n} people signed in ||| Watu {n} walioingia
+1 person signed in ||| Mtu 1 ameingia
+{n} people ||| Watu {n}
+1 person ||| Mtu 1
+{n} open alerts ||| Tahadhari {n} zilizo wazi
+1 open alert ||| Tahadhari 1 iliyo wazi
+{n} backups kept ||| Nakala rudufu {n} zimehifadhiwa
+1 backup kept ||| Nakala rudufu 1 imehifadhiwa
+{n} lines ||| Mistari {n}
+1 line ||| Mstari 1
+Make a code for {*}? ||| Tengeneza msimbo wa {*}?
+Rename {*} to {*}? ||| Badilisha jina la {*} kuwa {*}?
+Make the code ||| Tengeneza msimbo
+Send every record again? ||| Tuma rekodi zote tena?
+Send everything ||| Tuma zote
+Revoke this device? ||| Futa ruhusa ya kifaa hiki?

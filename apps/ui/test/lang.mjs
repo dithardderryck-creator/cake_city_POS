@@ -65,6 +65,18 @@ async function sweep(page, role) {
   };
   await visit(null);
   for (const v of tabs) await visit(v);
+  // IT's Console prints sentences of its own: run the commands that print something and check those too.
+  if (role === 'it') {
+    await page.locator('nav [data-v="console"]').first().click();
+    for (const c of ['help', 'status', 'devices', 'sessions', 'staff', 'alerts', 'maintenance', 'backups', 'logs', 'records', 'records refused', 'records verify', 'records drive', 'sync now', 'wibble', 'devices revoke zzz', 'sessions kill zzz', 'backup restore 99', 'records open 0', 'devices rename']) {
+      const had = await page.locator('#csl li').count();
+      await page.fill('#csi', c);
+      await page.press('#csi', 'Enter');
+      await until(async () => (await page.locator('#csl li').count()) > had, 'console answers ' + c);
+    }
+    await page.waitForTimeout(500);
+    for (const l of await englishLines(page)) found.set(l, 'console');
+  }
   // My account, opened from the name at the top.
   if (await page.locator('#xmenu').count()) {
     await openMenu(page);

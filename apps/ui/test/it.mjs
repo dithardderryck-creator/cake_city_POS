@@ -33,7 +33,7 @@ try {
   await it.waitForSelector('#ndb .nd');
   assert.match(await it.locator('.xnm').first().textContent(), /Ibrahim/);
   assert.match(await txt(it, '#hi'), /Good (morning|afternoon|evening), Ibrahim/);
-  assert.equal(await it.locator('nav.xtabs button').count(), 4, 'Health, Devices, Records, Backups');
+  assert.equal(await it.locator('nav.xtabs button').count(), 5, 'Health, Devices, Records, Backups, Console');
   assert.match(await txt(it, '#sells'), /Normal/);
   assert.match(await txt(it, '#ndb'), /Neema.* is locked out/);
   assert.equal(await it.locator('#xbn').textContent(), '1', 'the bell counts what needs him');
@@ -232,6 +232,93 @@ try {
   await until(async () => /Restored to backup cakepos-/.test(await it.locator('#aul').innerText()), 'the restore is written in the records');
   assert.match(await txt(it, '#rct'), /Matches|Not checked/);
   await it.evaluate(async () => void (await Cake.client.dispatch('maintenance/set', { on: false })));
+
+  // Console: commands over the same actions. Suggestions, reads, a preview before every change, the name typed for a revoke,
+  // and each command that ran written in the sealed records (never raw text that was not a command).
+  await menuGo(it, 'console');
+  await it.waitForSelector('#csi');
+  const cmd = async (text) => {
+    const had = await it.locator('#csl li').count();
+    await it.fill('#csi', text);
+    await it.press('#csi', 'Enter');
+    return had;
+  };
+  const lastOut = async () => it.locator('#csl li').last().innerText();
+  await it.fill('#csi', 'dev');
+  await until(async () => (await it.locator('#css button').count()) > 0, 'suggestions appear under the box');
+  assert.ok((await it.locator('#css button').allInnerTexts()).includes('devices'));
+  await it.fill('#csi', '');
+  let had = await cmd('status');
+  await until(async () => (await it.locator('#csl li').count()) > had, 'status prints');
+  assert.match(await lastOut(), /Selling[\s\S]*Normal/);
+  assert.match(await lastOut(), /Disk free|Signed in now/);
+  had = await cmd('wibble');
+  await until(async () => (await it.locator('#csl li').count()) > had, 'an unknown command is answered');
+  assert.match(await lastOut(), /not a command/);
+  had = await cmd('staff pin Baraka 1234');
+  await until(async () => (await it.locator('#csl li').count()) > had, 'a PIN command does not exist');
+  assert.match(await lastOut(), /not a (complete )?command/);
+  // A code for a new device, then that device registered and revoked from the Console.
+  had = await cmd('devices code "Salma tablet"');
+  await it.waitForSelector('.cx-d [data-ok]');
+  assert.match(await it.locator('.cx-d').innerText(), /Make a code for Salma tablet/);
+  await it.click('.cx-d [data-ok]');
+  await until(async () => /Code for Salma tablet/.test(await lastOut()), 'the code is printed');
+  const code = (await lastOut()).match(/[0-9A-Z]{4}-[0-9A-Z]{4}/)[0];
+  const dp = await (await browser.newContext()).newPage();
+  watch(dp, 'device');
+  await dp.goto(shop.base + '/');
+  await dp.waitForSelector('#pick button');
+  assert.equal((await dp.evaluate((c) => Cake.pairDevice(c), code)).name, 'Salma tablet');
+  // The server will not revoke the only registered device, so a second one is registered too.
+  const code2 = await it.evaluate(async () => (await Cake.client.dispatch('devices/create_code', { name: 'Hamisi phone' })).data.code);
+  const dp2 = await (await browser.newContext()).newPage();
+  watch(dp2, 'device2');
+  await dp2.goto(shop.base + '/');
+  await dp2.waitForSelector('#pick button');
+  assert.equal((await dp2.evaluate((c) => Cake.pairDevice(c), code2)).name, 'Hamisi phone');
+  had = await cmd('devices revoke salma');
+  await it.waitForSelector('.cx-d [data-cc]');
+  assert.match(await it.locator('.cx-d').innerText(), /Revoke Salma tablet/);
+  assert.equal(await it.locator('.cx-d [data-ok]').isDisabled(), true, 'the name must be typed first');
+  await it.click('.cx-d [data-no]');
+  await until(async () => /Cancelled/.test(await lastOut()), 'cancelling changes nothing');
+  assert.equal(await dp.evaluate(() => Cake.deviceStatus().then((x) => !!x && x.ok !== false)), true);
+  await cmd('devices revoke salma');
+  await it.waitForSelector('.cx-d [data-cc]');
+  await it.fill('.cx-d [data-cc]', 'Salma tablet');
+  await it.click('.cx-d [data-ok]');
+  await until(async () => /Salma tablet was revoked/.test(await lastOut()), 'the revoke goes through once the name is typed');
+  // Pausing selling, seen in status, and lifting it.
+  had = await cmd('maintenance on "Back at 2 pm"');
+  await it.waitForSelector('.cx-d [data-ok]');
+  await it.click('.cx-d [data-ok]');
+  await until(async () => /Selling is paused/.test(await lastOut()), 'selling is paused');
+  await cmd('status');
+  await until(async () => /Paused: Back at 2 pm/.test(await lastOut()), 'status shows the pause and its message');
+  await cmd('maintenance off');
+  await it.waitForSelector('.cx-d [data-ok]');
+  await it.click('.cx-d [data-ok]');
+  await until(async () => /Selling resumed/.test(await lastOut()), 'selling is resumed');
+  had = await cmd('records verify');
+  await until(async () => /matches its seal/.test(await lastOut()), 'the chain check runs');
+  had = await cmd('help backup');
+  await until(async () => (await it.locator('#csl li').count()) > had, 'help answers');
+  assert.match(await lastOut(), /backup restore/);
+  await it.screenshot({ path: `${shots}/console-phone.png`, fullPage: true });
+  await it.setViewportSize({ width: 1100, height: 800 });
+  await it.screenshot({ path: `${shots}/console-wide.png`, fullPage: true });
+  await it.setViewportSize({ width: 390, height: 800 });
+  // What ran is in the sealed records; what was not a command is not.
+  await menuGo(it, 'records');
+  await until(async () => /Console: devices revoke "Salma tablet"/.test(await it.locator('#aul').innerText()), 'the revoke command is sealed');
+  const trail = await it.locator('#aul').innerText();
+  assert.match(trail, /Console: maintenance on "Back at 2 pm"/);
+  assert.match(trail, /Console: records verify/);
+  assert.ok(!/wibble|1234/.test(trail), 'text that was not a command is never sealed');
+  await menuGo(it, 'console');
+  await cmd('clear');
+  await until(async () => (await it.locator('#csl li').count()) === 0, 'clear empties the screen');
 
   // The menu has the shared groups, My account and Sign out, like every other role.
   await openMenu(it);

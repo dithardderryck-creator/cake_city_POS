@@ -36,7 +36,7 @@ nav.xtabs{container-type:inline-size;position:sticky;top:var(--ht,64px);z-index:
 nav.xtabs button{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--mute);white-space:nowrap;transition:background .3s var(--ease),color .3s}
 nav.xtabs button:hover{background:var(--paper);color:var(--ink)}
 nav.xtabs button[aria-current]{background:var(--cop-s);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--cop)}
-@container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}nav.xtabs button{padding:5px 2px;font-size:12px;min-height:38px}}
+@container (max-width:500px){nav.xtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}nav.xtabs button{padding:5px 2px;font-size:12px;min-height:38px}}
 @media(max-width:540px){nav.xtabs{position:static}}
 main>section[hidden]{display:none}
 .card select{min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 8px}
@@ -51,6 +51,19 @@ main>section[hidden]{display:none}
 .sell{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .audl{list-style:none;margin:10px 0 0;padding:0}.audl li{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.audl li:first-child{border-top:0}.audl time{min-width:90px;color:var(--mute);flex:none}
 .tag.warn{background:#F6E3CB;color:#7A4A18}
+.csl{list-style:none;margin:0;padding:0;max-height:52vh;min-height:140px;overflow:auto;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
+.csl li{padding:8px 0;border-top:1px solid var(--line)}.csl li:first-child{border-top:0}
+.csl .cc{font-weight:700}.csl .cc::before{content:"> ";color:var(--cop-d)}
+.csl .cl{margin-left:14px}.csl .cl b{font-weight:600}
+.csl .ok{color:var(--sage)}.csl .risk{color:var(--risk)}.csl .warn{color:#7A4A18}.csl .mute{color:var(--mute)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .csl .warn{color:#e3b878}}
+:root[data-theme="dark"] .csl .warn{color:#e3b878}
+.csr{display:flex;gap:8px;align-items:center;margin-top:12px}.csr .csp{font:700 15px ui-monospace,Menlo,Consolas,monospace;color:var(--cop-d)}
+.csr input{flex:1;min-width:0;font:16px ui-monospace,Menlo,Consolas,monospace}
+.css{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.css:empty{display:none}
+.css button,.csa button{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px;min-height:34px;font:12px ui-monospace,Menlo,Consolas,monospace;text-align:left}
+.css button:hover,.csa button:hover{border-color:var(--cop)}
+.csa{display:grid;gap:8px;margin-top:10px}.csa button{border-radius:12px;display:block;width:100%}.csa button span{display:block;font:12px "Plus Jakarta Sans",system-ui,sans-serif;color:var(--mute);margin-top:2px}
 </style>
 <link rel="stylesheet" href="/forms.css">
 </head>
@@ -61,6 +74,7 @@ main>section[hidden]{display:none}
 <button data-v="devices">Devices</button>
 <button data-v="records">Records</button>
 <button data-v="backups">Backups</button>
+<button data-v="console">Console</button>
 </nav>
 <main>
 <div id="ntc"></div>
@@ -111,6 +125,17 @@ main>section[hidden]{display:none}
 <p class="mute" id="lgn" style="margin:10px 0 0"></p><ul class="logl" id="lgb"></ul></section>
 </section>
 
+<section id="v-console" hidden>
+<h1>Console</h1>
+<p class="sub">Type a command. Anything that changes something shows you what it will do first, and the dangerous ones ask you to type the name. PINs and keys have no command, so they cannot be typed or shown here. Each command is written in the sealed records.</p>
+<section class="card" id="csc">
+<ul class="csl" id="csl" aria-live="polite"></ul>
+<form class="csr" id="csf" autocomplete="off"><span class="csp" data-notr aria-hidden="true">&gt;</span><input id="csi" maxlength="200" placeholder="Type a command" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Command"><button class="b p" id="csg" type="submit">Run</button></form>
+<div class="css" id="css" data-notr></div>
+<details style="margin-top:14px"><summary class="mute">All commands</summary><div class="csa" id="csa"></div></details>
+</section>
+</section>
+
 <section id="v-backups" hidden>
 <h1>Backups</h1>
 <p class="sub">Copies of the shop's records, and where they go.</p>
@@ -128,8 +153,8 @@ const ago=iso=>{if(!iso)return"never";const m=Math.max(0,Math.round((Date.now()-
 async function guard(b,fn){if(!b||b.disabled)return;b.disabled=true;try{return await fn()}finally{if(b.isConnected)b.disabled=false}}
 try{const t=localStorage.getItem("theme");if(t)xroot.dataset.theme=t}catch(e){}
 let D={},view="health",CH=null;
-const TABS=["health","devices","records","backups"],PAGES=TABS.concat(["sessions","staff","logs"]);
-function go(v){if(!PAGES.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records"&&!rcstop)rcsub();if(v==="logs")lgsub();scrollTo(0,0)}
+const TABS=["health","devices","records","backups","console"],PAGES=TABS.concat(["sessions","staff","logs"]);
+function go(v){if(!PAGES.includes(v))v="health";view=v;CH&&CH.setPage(v);$$("main>section[id^=v-]").forEach(x=>x.hidden=x.id!=="v-"+v);$$("nav.xtabs button").forEach(x=>x.dataset.v===v?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current"));if(v==="records"&&!rcstop)rcsub();if(v==="logs")lgsub();if(v==="console")csopen();scrollTo(0,0)}
 $$("nav.xtabs button").forEach(x=>x.onclick=()=>go(x.dataset.v));
 
 /* ---------- health ---------- */
@@ -226,6 +251,24 @@ function lgr(){const d=LG;if(!d){$("#lgb").innerHTML="";$("#lgn").textContent="L
  $("#lgb").innerHTML=rows.map(r=>`<li><time>${E(when(r.at))}</time><span class="m"><span class="tag ${r.level==="error"?"risk":r.level==="warn"?"warn":""}" style="margin-right:6px">${E(r.level)}</span>${E(r.message)}</span>${r.detail?`<span class="d">${E(r.detail)}</span>`:""}</li>`).join("")}
 $("#lgl").onchange=lgsub;$("#lgh").onchange=lgsub;$("#lgq").oninput=lgr;$("#lgr").onclick=lgsub;
 
+/* ---------- console ---------- */
+let csbusy=false,cshist=[],cshi=-1,csstart=false;
+function csadd(cmd,lines){const li=document.createElement("li");li.innerHTML=`<div class="cc" data-notr>${E(cmd)}</div>`+lines.map(l=>{const a=l.t?`<span>${E(l.t)}</span>`:"",b=l.v?`<b${l.first||l.raw?" data-notr":""}>${E(l.v)}</b>`:"";return`<div class="cl ${l.tone||""}">${l.first?b+" "+a:a+" "+b}</div>`}).join("");$("#csl").appendChild(li);$("#csl").scrollTop=1e6}
+function cssug(){const v=$("#csi").value;$("#css").innerHTML=v.trim()?Cake.consoleSuggest(v).map(s=>`<button type="button" data-s="${E(s)}">${E(s)}</button>`).join(""):""}
+async function csopen(){if(!csstart){csstart=true;$("#csa").innerHTML=Cake.consoleCommands().map(c=>`<button type="button" data-i="${E(c.insert)}"><code data-notr>${E(c.usage)}</code><span>${E(c.what)}</span></button>`).join("");
+  csadd("help",[{t:"Type help to see the commands. Start typing and the likely commands appear under the box.",tone:"mute"}])}
+ await Cake.consoleLoad();if(matchMedia("(pointer:fine)").matches)$("#csi").focus()}
+$("#csf").onsubmit=async e=>{e.preventDefault();const v=$("#csi").value.trim();if(!v||csbusy)return;
+ $("#csi").value="";$("#css").innerHTML="";cshist.unshift(v);cshi=-1;
+ if(v.toLowerCase()==="clear"){$("#csl").innerHTML="";return}
+ csbusy=true;$("#csg").disabled=true;try{csadd(v,await Cake.consoleRun(v))}finally{csbusy=false;$("#csg").disabled=false;if(matchMedia("(pointer:fine)").matches)$("#csi").focus()}};
+$("#csi").oninput=cssug;
+$("#csi").onkeydown=e=>{if(e.key==="ArrowUp"&&cshist.length){e.preventDefault();cshi=Math.min(cshi+1,cshist.length-1);$("#csi").value=cshist[cshi];cssug()}
+ else if(e.key==="ArrowDown"){e.preventDefault();cshi=Math.max(cshi-1,-1);$("#csi").value=cshi<0?"":cshist[cshi];cssug()}
+ else if(e.key==="Tab"&&!e.shiftKey){const s=Cake.consoleSuggest($("#csi").value);if(s.length){e.preventDefault();$("#csi").value=s[0];cssug()}}};
+$("#css").onclick=e=>{const b=e.target.closest("[data-s]");if(b){$("#csi").value=b.dataset.s;$("#csi").focus();cssug()}};
+$("#csa").onclick=e=>{const b=e.target.closest("[data-i]");if(b){$("#csi").value=b.dataset.i;$("#csi").focus();cssug();scrollTo(0,0)}};
+
 /* ---------- records ---------- */
 const ROLE_L={owner:"Owner",cashier:"Cashier",baker:"Baker",inventory:"Inventory",it:"IT"};
 let RC=null,RX=[],RN=null,rcstop=null,auw="all";
@@ -239,7 +282,7 @@ function rcr(){const d=RC;if(!d){$("#aul").innerHTML='<li><span class="mute">Loa
  const pr=k&&!k.ok?k.problems:[];$("#rcx").hidden=!pr.length;$("#rcx").innerHTML=pr.map(x=>`<li><span class="tag risk" style="margin-right:6px">Mismatch</span>${E(x)}</li>`).join("");
  const rows=[...d.rows,...RX.filter(x=>!d.rows.some(y=>y.seq===x.seq))];
  $("#aul").innerHTML=rows.map(a=>{const rl=a.role?ROLE_L[a.role]||a.role:"",who=`<b>${E(a.who)}</b>${rl&&!a.who.includes(rl)?` <span class="mute">(${E(rl)})</span>`:""}`;
-  const body=a.sealed?`<button class="b" data-seq="${a.seq}" style="min-height:34px;padding:0 12px"><span aria-hidden="true">🔒</span> <span>${E(a.kind)}</span> <span>sealed, tap to open</span></button>`:E(a.summary||(a.detailsGone?"Details are in the archive.":a.kind));
+  const body=a.sealed?`<button class="b" data-seq="${a.seq}" style="min-height:34px;padding:0 12px"><span aria-hidden="true">🔒</span> <span>${E(a.kind)}</span> <span>sealed, tap to open</span></button>`:(a.summary&&a.summary.startsWith("Console: ")?`<span>Console:</span> <span data-notr>${E(a.summary.slice(9))}</span>`:E(a.summary||(a.detailsGone?"Details are in the archive.":a.kind)));
   return`<li style="flex-wrap:wrap"><time>${E(when(a.at))}</time><span>${who} · ${body}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":a.outcome==="error"?"Problem":"Refused"}</span>`:""} <span class="mute" style="font-size:12px">${E(a.ref)}</span></span></li>`}).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>';
  $("#aum").hidden=RN==null}
 $("#auf").onchange=e=>{auw=e.target.value;rcsub()};
@@ -305,7 +348,7 @@ $("#loc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=
 /* shared header */
 const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.style.setProperty("--ht",t+"px");xroot.style.setProperty("--hh",(t+(getComputedStyle(xtb).position==="sticky"?xtb.offsetHeight:0))+"px")};xh();new ResizeObserver(xh).observe(xhd);new ResizeObserver(xh).observe(xtb);
 (async()=>{const me=await Cake.boot("it");
- CH=Cake.mountChrome({groups:[{title:"Watch",items:[{id:"health",label:"Health"},{id:"records",label:"Records"},{id:"logs",label:"Logs"}]},{title:"Fix and control",items:[{id:"sessions",label:"Sessions"},{id:"staff",label:"Staff access"}]},{title:"Connect",items:[{id:"devices",label:"Devices and location"},{id:"backups",label:"Backups and Google"}]}],go,bell:"health"});CH.setPage(view);
+ CH=Cake.mountChrome({groups:[{title:"Watch",items:[{id:"health",label:"Health"},{id:"records",label:"Records"},{id:"logs",label:"Logs"}]},{title:"Fix and control",items:[{id:"console",label:"Console"},{id:"sessions",label:"Sessions"},{id:"staff",label:"Staff access"}]},{title:"Connect",items:[{id:"devices",label:"Devices and location"},{id:"backups",label:"Backups and Google"}]}],go,bell:"health"});CH.setPage(view);
  Cake.mountNotice($("#ntc"));
  $("#hi").textContent="Good "+(new Date().getHours()<12?"morning":new Date().getHours()<18?"afternoon":"evening")+", "+me.name.split(" ")[0];
  Cake.feed("device_list",{},d=>{D.dev=d;dvr()});
