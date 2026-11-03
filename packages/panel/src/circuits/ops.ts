@@ -1,4 +1,5 @@
 import type { Maintenance, Staff } from '../domain';
+import { hhmm, todayLocal } from './dates';
 import type { Registry } from '../intents';
 import type { Store } from '../ports';
 
@@ -86,6 +87,50 @@ export const opsIntents = {
         await ctx.store.put<Staff>('staff', rest);
       }
       return { summary: 'Saw the note about the change to the account', target: me.id, skipSync: true };
+    },
+  },
+
+  'backup/run_now': {
+    circuit: 'Operations',
+    roles: ['it', 'owner'],
+    validate: (_p, ctx) => (ctx.terminals.backup?.runNow ? [] : ['This server cannot take a backup from here.']),
+    handle: async (_p, ctx) => {
+      // The backup waits its turn behind this request, so it is not awaited here.
+      void ctx.terminals.backup!.runNow!().catch(() => undefined);
+      return { summary: 'Started a backup now', skipSync: true };
+    },
+  },
+
+  'restore/start': {
+    circuit: 'Operations',
+    roles: ['it'],
+    validate: async (p, ctx) => {
+      const t = ctx.terminals.restore;
+      if (!t) return ['This server cannot restore a backup from here.'];
+      if (!(await loadMaintenance(ctx.store))) return ['Pause selling first, so nothing new arrives while the records are being replaced.'];
+      if ((await t.status()).state === 'running') return ['A restore is already running.'];
+      const plan = await t.plan(p.file);
+      return plan.ok ? [] : [plan.problem ?? 'That backup cannot be used.'];
+    },
+    preview: async (p, ctx) => {
+      const plan = await ctx.terminals.restore!.plan(p.file);
+      const when = plan.madeAt ? `${todayLocal(new Date(plan.madeAt))} ${hhmm(plan.madeAt)}` : 'an unknown time';
+      return {
+        lines: [
+          `Replaces the shop's records with the backup made on ${when}.`,
+          plan.discardedRecords > 0 || plan.ordersSince > 0 || plan.paymentsSince > 0
+            ? `Removes ${plan.discardedRecords} sealed records, ${plan.ordersSince} orders and ${plan.paymentsSince} payments made since${plan.discardedDays.length ? ` (${plan.discardedDays.join(', ')})` : ''}.`
+            : 'Nothing newer than this backup is lost.',
+          'A fresh copy of the current records is saved first, so this can be undone by hand.',
+          'Staff accounts, devices, shop settings and sign-ins stay as they are now.',
+          'The records get a line saying they were restored, so the gap is explained. Selling stays paused until you resume it.',
+        ],
+        confirmName: p.file.replace(/\.sqlite$/, ''),
+      };
+    },
+    handle: async (p, ctx) => {
+      await ctx.terminals.restore!.start(p.file, ctx.session!.name);
+      return { summary: `Started a restore from backup ${p.file}`, skipSync: true };
     },
   },
 } satisfies Partial<Registry>;

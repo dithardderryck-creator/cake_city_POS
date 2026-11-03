@@ -197,6 +197,42 @@ try {
   await op.click('#pck');
   await until(async () => op.locator('#pcn').isHidden(), 'the note goes away once seen');
 
+  // Backups: back up now, then put an earlier backup back. Selling has to be paused, the name is typed, and the gap is explained.
+  await menuGo(it, 'backups');
+  await it.waitForSelector('#rsc');
+  const listed = await it.locator('#rsl [data-rs]').count();
+  await it.click('#bkn');
+  await until(async () => (await it.locator('#rsl [data-rs]').count()) > listed, 'the new backup is listed', 20000);
+  assert.equal(await it.locator('#rsl [data-rs]').first().isDisabled(), true, 'restoring waits for selling to be paused');
+  await menuGo(it, 'records');
+  const sealedNum = async () => Number((await it.locator('#rcv dd').first().innerText()).replace(/,/g, ''));
+  await until(async () => (await sealedNum()) > 0, 'the sealed count shows');
+  await it.waitForTimeout(500);
+  const n1 = await sealedNum();
+  await it.evaluate(async () => {
+    for (const on of [true, false, true]) await Cake.client.dispatch('maintenance/set', { on });
+  });
+  await until(async () => (await sealedNum()) === n1 + 3, 'three more records are sealed after the backup');
+  await menuGo(it, 'backups');
+  await until(async () => !(await it.locator('#rsl [data-rs]').first().isDisabled()), 'restoring opens once selling is paused');
+  await it.locator('#rsl [data-rs]').first().click();
+  await it.waitForSelector('.cx-d [data-cc]');
+  const rtext = await it.locator('.cx-d').innerText();
+  assert.match(rtext, /Removes 3 sealed records/);
+  assert.match(rtext, /fresh copy of the current records is saved first/);
+  assert.equal(await it.locator('.cx-d [data-ok]').isDisabled(), true, 'the backup name must be typed');
+  const need = (await it.locator('.cx-d label').innerText()).split(': ').pop().trim();
+  await it.fill('.cx-d [data-cc]', need);
+  await it.click('.cx-d [data-ok]');
+  await until(async () => /Done/.test(await it.locator('#rst').innerText()), 'the restore finishes', 30000);
+  assert.match(await it.locator('#rsh').innerText(), /saved as cakepos-/);
+  await it.screenshot({ path: `${shots}/restore-phone.png`, fullPage: true });
+  await menuGo(it, 'records');
+  await until(async () => (await sealedNum()) === n1 + 1, 'the records are back with one line that says so');
+  await until(async () => /Restored to backup cakepos-/.test(await it.locator('#aul').innerText()), 'the restore is written in the records');
+  assert.match(await txt(it, '#rct'), /Matches|Not checked/);
+  await it.evaluate(async () => void (await Cake.client.dispatch('maintenance/set', { on: false })));
+
   // The menu has the shared groups, My account and Sign out, like every other role.
   await openMenu(it);
   const menu = await it.locator('#xmn').innerText();

@@ -41,8 +41,10 @@ interface State {
   lastRunAt: string | null;
   /** The day an automatic "they match" line was last written to the activity record, so there is one a day. */
   auditedDay: string | null;
+  /** Restores that replaced the newest records: fingerprints saved before then for records past `keepUpTo` are explained. */
+  restores: { at: string; keepUpTo: number }[];
 }
-const blank = (): State => ({ savedAt: null, savedSeq: null, comparedAt: null, matchedAt: null, state: 'waiting', checked: 0, problems: [], error: null, lastRunAt: null, auditedDay: null });
+const blank = (): State => ({ savedAt: null, savedSeq: null, comparedAt: null, matchedAt: null, state: 'waiting', checked: 0, problems: [], error: null, lastRunAt: null, auditedDay: null, restores: [] });
 
 export interface FingerprintOptions {
   store: Store;
@@ -138,6 +140,8 @@ export function createFingerprintService(o: FingerprintOptions): FingerprintTerm
       const m = NAME.exec(f.name);
       if (!m || m[1]! < cutoff) continue;
       const seq = Number(m[2]);
+      const made = f.createdTime ? Date.parse(f.createdTime) : NaN;
+      if (st.restores.some((r) => seq > r.keepUpTo && made < Date.parse(r.at))) continue; // saved for records a restore replaced
       found.set(seq, [...(found.get(seq) ?? []), { hash: m[3]!, day: m[1]! }]);
     }
     const seqs = [...found.keys()].sort((a, b) => b - a).slice(0, COMPARE_MAX);
@@ -205,6 +209,13 @@ export function createFingerprintService(o: FingerprintOptions): FingerprintTerm
 
   return {
     status: view,
+    noteRestore(info) {
+      st.restores = [...st.restores, info].slice(-20);
+      st.savedSeq = null;
+      st.state = 'waiting';
+      st.problems = [];
+      save();
+    },
     run(opts) {
       // One run at a time: a person pressing the button while the timer is mid-way gets that run's answer.
       if (running) return running;

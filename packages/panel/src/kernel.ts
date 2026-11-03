@@ -152,6 +152,8 @@ export interface Panel {
   tick(): Promise<{ raised: number; resolved: number }>;
   /** Run something while no instruction or feed is running. Used for consistent backups. */
   exclusive<T>(fn: () => Promise<T>): Promise<T>;
+  /** Tell every open screen to read its feeds again, after something changed the records from outside (a restore). */
+  refresh(): void;
 }
 
 interface SessionRecord {
@@ -710,6 +712,11 @@ export function createPanel(options: PanelOptions = {}): Panel {
     runAs: (session, at, type, payload, requestId, device) => dispatchInner(type, payload, undefined, { requestId }, { session, at, device }),
     serial,
     resolveDevice,
+    resolveRevoked: async (deviceToken) => {
+      if (!deviceToken || deviceToken.length > 200) return null;
+      const [dev] = await store.find<Device>('devices', { where: { tokenHash: await deviceTokenHash(deviceToken) }, limit: 1 });
+      return dev?.revokedAt ? dev : null;
+    },
     paused: async () => {
       const m = await loadMaintenance(store);
       return m ? pausedMessage(m) : null;
@@ -756,6 +763,7 @@ export function createPanel(options: PanelOptions = {}): Panel {
       return () => eventListeners.delete(l);
     },
     exclusive: (fn) => serial(fn),
+    refresh: () => scheduleRefresh(),
     syncNow: () => flushChanges(store, terminals.sync),
     deliver: async () => {
       if (delivering) return { sent: 0, failed: 0, retrying: 0 };

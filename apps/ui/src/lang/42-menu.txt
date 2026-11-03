@@ -335,3 +335,37 @@ Paused selling ||| Amesimamisha mauzo
 Saw the note about the change to the account ||| Ameona ujumbe kuhusu mabadiliko ya akaunti
 Role for {*} ||| Jukumu la {*}
 Your PIN was changed by ||| PIN yako ilibadilishwa na
+Back up now ||| Hifadhi nakala sasa
+Backup started ||| Nakala imeanza kuhifadhiwa
+Restore a backup ||| Rudisha nakala
+Puts the shop's records back as they were when a backup was made. Selling must be paused first. A fresh copy of the current records is saved before anything is replaced, and people, devices and settings stay as they are. ||| Inarudisha rekodi za duka kama zilivyokuwa nakala ilipohifadhiwa. Mauzo lazima yasimamishwe kwanza. Nakala mpya ya rekodi za sasa huhifadhiwa kabla ya kubadilisha chochote, na watu, vifaa na mipangilio vinabaki kama vilivyo sasa.
+Not available ||| Haipatikani
+Restoring… ||| Inarudisha…
+Did not happen ||| Haikufanyika
+Ready ||| Tayari
+Done ||| Imekamilika
+This server cannot restore a backup from here. ||| Seva hii haiwezi kurudisha nakala kutoka hapa.
+Selling is paused. You can restore now. ||| Mauzo yamesimamishwa. Unaweza kurudisha sasa.
+Selling is open. Pause it on the Health page first. ||| Mauzo yako wazi. Yasimamishe kwenye ukurasa wa Afya kwanza.
+{n} sealed records ||| Rekodi {n} zenye muhuri
+{n} KB ||| KB {n}
+No backups are kept on this server yet. ||| Bado hakuna nakala zilizohifadhiwa kwenye seva hii.
+Restore ||| Rudisha
+Restore this backup? ||| Kurudisha nakala hii?
+Restoring. This takes a moment. ||| Inarudisha. Itachukua muda mfupi.
+Pause selling first, so nothing new arrives while the records are being replaced. ||| Simamisha mauzo kwanza, ili kisiingie kitu kipya wakati rekodi zinabadilishwa.
+A restore is already running. ||| Kurudisha nakala tayari kunaendelea.
+That is not one of the backups on this server. ||| Hiyo si moja ya nakala zilizopo kwenye seva hii.
+That backup did not pass its health check, so it cannot be used. ||| Nakala hiyo haikupita ukaguzi wa afya, kwa hiyo haiwezi kutumika.
+This server cannot take a backup from here. ||| Seva hii haiwezi kuhifadhi nakala kutoka hapa.
+Replaces the shop's records with the backup made on {*}. ||| Inabadilisha rekodi za duka kwa nakala iliyohifadhiwa {*}.
+Removes {n} sealed records, {n} orders and {n} payments made since. ||| Inaondoa rekodi {n} zenye muhuri, oda {n} na malipo {n} yaliyofanywa baadaye.
+Removes {n} sealed records, {n} orders and {n} payments made since ({*}). ||| Inaondoa rekodi {n} zenye muhuri, oda {n} na malipo {n} yaliyofanywa baadaye ({*}).
+Nothing newer than this backup is lost. ||| Hakuna kilicho kipya kuliko nakala hii kinachopotea.
+A fresh copy of the current records is saved first, so this can be undone by hand. ||| Nakala mpya ya rekodi za sasa huhifadhiwa kwanza, ili hili liweze kurudishwa kwa mkono.
+Staff accounts, devices, shop settings and sign-ins stay as they are now. ||| Akaunti za wafanyakazi, vifaa, mipangilio ya duka na maingizo vinabaki kama vilivyo sasa.
+The records get a line saying they were restored, so the gap is explained. Selling stays paused until you resume it. ||| Rekodi zinapata mstari unaosema zilirudishwa, ili pengo lieleweke. Mauzo yanabaki yamesimamishwa hadi uyarudishe.
+Started a backup now ||| Imeanza kuhifadhi nakala sasa
+Started a restore from backup {*} ||| Imeanza kurudisha nakala {*}
+Restored to backup {*} (made {*}). Removed {n} sealed records made on {*} ||| Imerudisha nakala {*} (iliyohifadhiwa {*}). Imeondoa rekodi {n} zenye muhuri zilizofanywa tarehe {*}
+Restored to backup {*} (made {*}). Removed {n} sealed records ||| Imerudisha nakala {*} (iliyohifadhiwa {*}). Imeondoa rekodi {n} zenye muhuri

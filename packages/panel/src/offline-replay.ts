@@ -67,6 +67,8 @@ export interface ReplayDeps {
   /** Everything that touches the store happens one at a time. */
   serial<T>(fn: () => Promise<T>): Promise<T>;
   resolveDevice(deviceToken: string | undefined): Promise<Device | null>;
+  /** The device a secret belongs to even if it has been revoked since. Its unsent sales are held for the owner, not thrown away. */
+  resolveRevoked(deviceToken: string | undefined): Promise<Device | null>;
   /** While selling is paused on purpose: the words to show, so the till keeps its queue and sends again later. */
   paused(): Promise<string | null>;
   changed(): void;
@@ -95,7 +97,7 @@ export function createReplayer(d: ReplayDeps) {
     const { passId, actions } = parsed.data as ReplayInput;
 
     // Who is asking: the registered device. Without it nothing below is even looked at.
-    const device = await d.serial(() => d.resolveDevice(deviceToken));
+    const device = (await d.serial(() => d.resolveDevice(deviceToken))) ?? (await d.serial(() => d.resolveRevoked(deviceToken)));
     if (!device) {
       await d.serial(() => refuse('the request did not come from a registered device'));
       return { ok: false, error: { code: 'forbidden', messages: ['This device is not registered, so its offline sales cannot be accepted.'] } };
@@ -149,10 +151,12 @@ export function createReplayer(d: ReplayDeps) {
     const who = { userId: pass.userId, name: pass.userName, role: (person?.role ?? 'cashier') as Role };
     // The person may have been switched off or the device revoked while the queue was being sent.
     const liveDevice = await d.store.get<Device>('devices', device.id);
-    if (!person || !person.active || !(OFFLINE_ROLES as readonly string[]).includes(person.role) || !liveDevice || liveDevice.revokedAt) {
+    if (!person || !person.active || !(OFFLINE_ROLES as readonly string[]).includes(person.role) || !liveDevice) {
       await refuse(`sale ${a.seq} from "${device.name}": the person or the device is no longer allowed`, who);
       return { ...base, status: 'rejected', message: 'Refused: the person or the till is no longer allowed to sell.' };
     }
+    // A till that was revoked while sales were waiting on it: a sale that is genuine is the owner's to judge, not to lose.
+    const revokedAt = liveDevice.revokedAt;
 
     const key = await d.passKey(pass.id, pass.userId, pass.deviceId);
     const prevTag = a.seq < pass.nextSeq ? null : pass.lastTag;
@@ -183,6 +187,7 @@ export function createReplayer(d: ReplayDeps) {
     const nowMs = d.clock.now().getTime();
     const sentMs = Date.parse(a.queuedAt);
     const reasons: string[] = [];
+    if (revokedAt) reasons.push(sentMs <= Date.parse(revokedAt) ? 'This till was switched off in the system before its sales were sent. Check this sale before accepting it.' : 'This sale was made after the till was switched off in the system.');
     if (!(QUEUEABLE as readonly string[]).includes(a.type)) reasons.push('This kind of action is not allowed offline.');
     if (sentMs < Date.parse(pass.issuedAt) - CLOCK_SKEW_MS) reasons.push('The till says it was made before it was given permission to sell offline.');
     if (sentMs > Date.parse(pass.expiresAt) + CLOCK_SKEW_MS) reasons.push('It was made after the offline permission ran out.');

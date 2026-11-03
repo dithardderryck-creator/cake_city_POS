@@ -113,6 +113,48 @@ export interface BackupStatus {
 /** Terminal: backups. Read-only view for the panel map. */
 export interface BackupTerminal {
   status(): Promise<BackupStatus>;
+  /** Takes a backup now. The caller does not wait for it. */
+  runNow?(): Promise<unknown>;
+}
+
+/** A backup that can be put back. */
+export interface RestorePoint {
+  file: string;
+  madeAt: string;
+  sizeKb: number;
+  /** How many records were sealed in the chain when it was made. */
+  sealed: number;
+}
+/** What putting a backup back would do, worked out without doing it. */
+export interface RestorePlan {
+  ok: boolean;
+  problem: string | null;
+  file: string;
+  madeAt: string | null;
+  sealedThen: number;
+  sealedNow: number;
+  /** Sealed records made after the backup, which would be removed. */
+  discardedRecords: number;
+  /** The shop days those records were made on (newest first, at most 14). */
+  discardedDays: string[];
+  ordersSince: number;
+  paymentsSince: number;
+}
+export interface RestoreStatus {
+  state: 'idle' | 'running' | 'done' | 'failed';
+  file: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  message: string | null;
+  discardedDays: string[];
+}
+/** Terminal: putting a backup back in place of the shop's records, as a job that runs just after the request. */
+export interface RestoreTerminal {
+  list(): Promise<RestorePoint[]>;
+  plan(file: string): Promise<RestorePlan>;
+  /** Starts the job and returns at once; `status` tells how it went. */
+  start(file: string, by: string): Promise<void>;
+  status(): Promise<RestoreStatus>;
 }
 
 /** Terminal: facts about the machine the panel runs on, for the IT panel map. */
@@ -231,6 +273,8 @@ export interface FingerprintTerminal {
   status(): Promise<FingerprintStatus>;
   /** Saves the newest fingerprint and compares Drive with the records. Without `force` it only acts when it is due. */
   run(o?: { force?: boolean }): Promise<FingerprintStatus>;
+  /** The records after this many sealed ones were replaced by a restore at this moment. Older fingerprints for them are then explained, not a mismatch. */
+  noteRestore?(info: { keepUpTo: number; at: string }): void;
 }
 
 /** One line of the server's log, for IT. Secrets are already hidden before they reach the file. */
@@ -251,6 +295,7 @@ export interface Terminals {
   logs?: LogTerminal;
   drive?: DriveTerminal;
   fingerprint?: FingerprintTerminal;
+  restore?: RestoreTerminal;
   messages?: MessageTerminal;
   push?: PushTerminal;
   sync?: SyncTerminal;

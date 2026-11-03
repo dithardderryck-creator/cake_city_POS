@@ -50,7 +50,7 @@ import { buildForecasts, type ForecastRow } from './forecast';
 import { MAX_PHOTOS_PER_CAKE } from './circuits/custom';
 import type { LoginState } from './circuits/pin';
 import { PLANNED_CIRCUITS, type CircuitName, type PanelConfig } from './intents';
-import type { BackupStatus, Clock, DriveStatus, FingerprintStatus, LogRow, Store, Terminals } from './ports';
+import type { BackupStatus, Clock, DriveStatus, FingerprintStatus, LogRow, RestorePoint, RestoreStatus, Store, Terminals } from './ports';
 import {
   PAYMENT_LABEL,
   PAYMENT_TONE,
@@ -705,6 +705,7 @@ export interface FeedMap {
   /** Whether the records match the copy kept on Drive. For the owner (who owns the Drive account) and IT. Null when no copy is kept yet. */
   drive_match: { params: Record<string, never>; data: FingerprintStatus };
   /** For the owner: a note when IT changed her PIN, until she has seen it. */
+  restore_points: { params: Record<string, never>; data: RestorePointsData };
   account_notice: { params: Record<string, never>; data: { pinChanged: { at: string; by: string } | null } };
   /** What an instruction would do, without doing it. For IT and the owner, before they confirm. */
   change_preview: { params: { intent: string; payload: Record<string, unknown> }; data: ChangePreview };
@@ -735,6 +736,14 @@ export interface CircuitStat {
   invalid: number;
   errors: number;
   lastActivityAt: string | null;
+}
+
+export interface RestorePointsData {
+  available: boolean;
+  points: RestorePoint[];
+  status: RestoreStatus;
+  /** Selling is paused, which a restore needs. */
+  paused: boolean;
 }
 
 /** The answer to "what would this do?": the plain-words effect, or why it cannot be done. */
@@ -1887,6 +1896,17 @@ export const feeds: FeedRegistry = {
       if (!terminals.logs) return { available: false, rows: [], note: 'This server does not keep a log file.' };
       const r = await terminals.logs.recent({ level: p.level ?? 'all', sinceMs: (p.hours ?? 24) * 3_600_000, limit: 200 });
       return { available: true, rows: r.rows, note: r.note };
+    },
+  },
+
+  restore_points: {
+    roles: ['it'],
+    build: async ({ store, terminals }) => {
+      const idle: RestoreStatus = { state: 'idle', file: null, startedAt: null, finishedAt: null, message: null, discardedDays: [] };
+      const t = terminals.restore;
+      if (!t) return { available: false, points: [], status: idle, paused: !!(await loadMaintenance(store)) };
+      const [points, status] = await Promise.all([t.list().catch(() => []), t.status().catch(() => idle)]);
+      return { available: true, points: points.sort((a, b) => b.madeAt.localeCompare(a.madeAt)), status, paused: !!(await loadMaintenance(store)) };
     },
   },
 

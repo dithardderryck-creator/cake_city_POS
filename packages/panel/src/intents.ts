@@ -49,6 +49,8 @@ export interface IntentMap {
   'sessions/end': { userId: Id };
   'maintenance/set': { on: boolean; message?: string };
   'account/ack_notice': Record<string, never>;
+  'backup/run_now': Record<string, never>;
+  'restore/start': { file: string };
   /** Change what someone does in the shop. Not for the owner, and nobody can be made owner this way. Ends their sign-ins. */
   'staff/set_role': { userId: Id; role: Exclude<Role, 'owner'> };
 

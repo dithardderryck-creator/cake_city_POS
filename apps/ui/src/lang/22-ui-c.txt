@@ -34,7 +34,7 @@ Resume count ||| Endelea na hesabu
 Review ||| Kagua
 Review count ||| Kagua hesabu
 Revoke ||| Futa ruhusa
-Revoke {*}? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet will be refused. ||| Kufuta ruhusa ya {*}? Kila aliyeingia kwenye kifaa hicho ataondolewa sasa, na hakitaweza kufungua mfumo tena hadi kisajiliwe kwa msimbo mpya. Mauzo yoyote ya nje ya mtandao ambayo bado hayajatumwa yatakataliwa.
+Revoke {*}? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet are kept for the owner to check. ||| Kufuta ruhusa ya {*}? Kila aliyeingia kwenye kifaa hicho ataondolewa sasa, na hakitaweza kufungua mfumo tena hadi kisajiliwe kwa msimbo mpya. Mauzo yoyote ya nje ya mtandao ambayo bado hayajatumwa yatahifadhiwa ili mmiliki ayakague.
 Revoked devices ({n}) ||| Vifaa vilivyofutiwa ruhusa ({n})
 Revoked the device "{*}" ||| Imefuta ruhusa ya kifaa "{*}"
 Ribbon ||| Utepe

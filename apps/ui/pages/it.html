@@ -114,7 +114,8 @@ main>section[hidden]{display:none}
 <section id="v-backups" hidden>
 <h1>Backups</h1>
 <p class="sub">Copies of the shop's records, and where they go.</p>
-<section class="card" id="bk"><div class="row"><h2>Backups and sync</h2><span class="tag" id="bks"></span></div><dl class="kv" id="bkv"></dl><div class="btns" style="margin-top:14px"><button class="b" data-v="flush">Send changes now</button><button class="b" data-v="full">Send a full copy</button></div></section>
+<section class="card" id="bk"><div class="row"><h2>Backups and sync</h2><span class="tag" id="bks"></span></div><dl class="kv" id="bkv"></dl><div class="btns" style="margin-top:14px"><button class="b p" id="bkn">Back up now</button><button class="b" data-v="flush">Send changes now</button><button class="b" data-v="full">Send a full copy</button></div></section>
+<section class="card" id="rsc"><div class="row" style="flex-wrap:wrap"><h2>Restore a backup</h2><span class="tag" id="rst"></span></div><p class="mute" style="margin:6px 0 0">Puts the shop's records back as they were when a backup was made. Selling must be paused first. A fresh copy of the current records is saved before anything is replaced, and people, devices and settings stay as they are.</p><p class="mute" id="rsh" style="margin:8px 0 0"></p><ul class="list" id="rsl"></ul></section>
 <section class="card" id="drc"><div class="row"><h2>Google accounts</h2></div><div id="drv"></div></section>
 </section>
 </main>
@@ -183,6 +184,21 @@ $("#sellb").onclick=e=>guard(e.currentTarget,async()=>{const pz=D.map&&D.map.sel
  if(pz){await Cake.confirmChange("maintenance/set",{on:false},{title:"Resume selling?",okLabel:"Resume selling",okMessage:"Selling resumed"});return}
  const m=prompt("Tell staff why. It shows on every screen. You can leave it empty.","");if(m===null)return;
  await Cake.confirmChange("maintenance/set",{on:true,...(m.trim()?{message:m.trim()}:{})},{title:"Pause selling?",okLabel:"Pause selling",okMessage:"Selling is paused"})});
+
+/* ---------- backups: back up now, restore ---------- */
+let RP=null,rptimer=null;
+function rpr(){const d=RP;if(!d)return;
+ const st=d.status;
+ $("#rst").className="tag "+(st.state==="running"?"warn":st.state==="failed"?"risk":st.state==="done"?"ok":"");
+ $("#rst").textContent=!d.available?"Not available":st.state==="running"?"Restoring…":st.state==="done"?"Done":st.state==="failed"?"Did not happen":"Ready";
+ $("#rsh").textContent=!d.available?"This server cannot restore a backup from here.":st.message?st.message:(d.paused?"Selling is paused. You can restore now.":"Selling is open. Pause it on the Health page first.");
+ const busy=st.state==="running";
+ $("#rsl").innerHTML=d.points.map(p=>`<li style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><div><b>${E(when(p.madeAt))}</b><br><span class="mute">${E(Cake.num(p.sealed))} sealed records · ${E(Cake.num(p.sizeKb))} KB</span></div><button class="b" data-rs="${E(p.file)}" ${d.paused&&!busy?"":"disabled"}>Restore</button></li>`).join("")||'<li><span class="mute">No backups are kept on this server yet.</span></li>';
+ clearInterval(rptimer);rptimer=busy?setInterval(async()=>{const r=await Cake.read("restore_points",{});if(r){RP=r;rpr()}},1500):null}
+$("#rsl").onclick=e=>{const b=e.target.closest("[data-rs]");if(b)guard(b,async()=>{await Cake.confirmChange("restore/start",{file:b.dataset.rs},{title:"Restore this backup?",okLabel:"Restore",okMessage:"Restoring. This takes a moment."});const r=await Cake.read("restore_points",{});if(r){RP=r;rpr()}})};
+$("#bkn").onclick=e=>guard(e.currentTarget,async()=>{const had=RP?RP.points.length:0;const r=await Cake.send("backup/run_now",{},"Backup started");if(!r.ok)return;
+ // The copy is written a moment after the request, so look again until it is listed.
+ for(let i=0;i<20;i++){await new Promise(x=>setTimeout(x,700));const d=await Cake.read("restore_points",{});if(d){RP=d;rpr();if(d.points.length>had)return}}});
 
 /* ---------- staff access ---------- */
 let SF=null;
@@ -263,7 +279,7 @@ $("#dvc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=
  else if(k==="done"){dvcode=null;dvr()}
  else if(k==="cx")guard(b,()=>Cake.send("devices/cancel_code",{codeId:b.dataset.id},"Code cancelled"))
  else if(k==="ren"&&x){const n=prompt("New name for "+x.name,x.name);if(n===null)return;if(!n.trim()){Cake.toast("Give the device a name.");return}guard(b,()=>Cake.send("devices/rename",{deviceId:x.id,name:n.trim()},"Renamed"))}
- else if(k==="rev"&&x){if(!confirm("Revoke "+x.name+"? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet will be refused."))return;guard(b,()=>Cake.send("devices/revoke",{deviceId:x.id},x.name+" was revoked"))}};
+ else if(k==="rev"&&x){if(!confirm("Revoke "+x.name+"? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet are kept for the owner to check."))return;guard(b,()=>Cake.send("devices/revoke",{deviceId:x.id},x.name+" was revoked"))}};
 
 /* ---------- location check ---------- */
 function locr(){const l=D.loc;if(!l)return;
@@ -299,6 +315,7 @@ const xhd=$(".xhead"),xtb=$("nav.xtabs"),xh=()=>{const t=xhd.offsetHeight;xroot.
  Cake.feed("drive_match",{},d=>{DM=d;rdr()});
  Cake.feed("sessions_view",{},d=>{D.ses=d;ser()});
  Cake.feed("staff_list",{},d=>{SF=d;sfr()});
+ Cake.feed("restore_points",{},d=>{RP=d;rpr()});
  Cake.feed("alert_inbox",{},d=>{D.al=d;hr()});
  Cake.feed("panel_map",{},d=>{D.map=d;hr()});
  go("health")})();

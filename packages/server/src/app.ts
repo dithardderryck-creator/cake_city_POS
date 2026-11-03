@@ -6,6 +6,7 @@ import { createPushTerminal, loadOrCreateVapid } from './push';
 import { appendAudit, createIds, createPanel, type Panel, type PinHasher, type Terminals } from '@cake-pos/panel';
 import { createArchiveService, type ArchiveService } from './archive';
 import { createFingerprintService } from './fingerprint';
+import { createRestoreService } from './restore';
 import { createBackupService, createDriveUploader, createFolderUploader, type BackupService, type BackupUploader } from './backup';
 import { createHttpSyncTerminal } from './online-sync';
 import { openDrive } from './cloud';
@@ -130,6 +131,21 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
         panel.exclusive(() => appendAudit({ store: db, ids: fpIds, clock: { now: () => new Date() } }, { actorName: 'The system', intent: 'records/drive_check', summary, outcome })),
     });
     terminals.fingerprint = fingerprint;
+
+    // Putting a backup back, from the IT page: a job that takes a safety backup first and then swaps the records in one turn.
+    terminals.restore = createRestoreService({
+      store: db,
+      backupDir: config.backupDir,
+      statePath: path.join(config.dataDir, 'restore-state.json'),
+      workDir: path.join(config.dataDir, 'restore-work'),
+      exclusive: (fn) => panel.exclusive(fn),
+      takeBackup: () => backup.runNow(),
+      log,
+      onRestored: (info) => {
+        fingerprint.noteRestore?.(info);
+        panel.refresh();
+      },
+    });
 
     // Texts and phone notifications. Each is optional; the panel says plainly when one is not set up.
     const messenger = createMessenger(config.messaging);

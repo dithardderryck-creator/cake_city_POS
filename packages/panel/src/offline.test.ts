@@ -402,7 +402,28 @@ describe('forgery and tampering: each is refused and logged, and nothing is sold
     const id = (await store.list<{ id: string; name: string }>('devices')).find((d) => d.name === 'Counter A')!.id;
     await signIn('owner', devB);
     ok(await send('owner', 'devices/revoke', { deviceId: id }, devB));
-    expect((await replay(till, q, devA)).ok).toBe(false);
+    // The sale is genuine, so it is held for the owner rather than thrown away; nothing is sold until the owner decides.
+    const r = await replay(till, q, devA);
+    expect(statuses(r)).toEqual(['held']);
+    expect(results(r)[0]!.message).toMatch(/switched off in the system/);
+    await nothingSold();
+    const view = await feed<{ held: Array<{ reasons: string[] }> }>('owner', 'offline_review');
+    expect(view.held).toHaveLength(1);
+    expect(view.held[0]!.reasons[0]).toMatch(/switched off in the system/);
+    // The owner can still accept it, and then it is a normal order.
+    const heldId = (await store.list<{ id: string }>('heldActions'))[0]!.id;
+    ok(await send('owner', 'offline/review', { heldId, action: 'approve' }));
+    expect(await orders()).toHaveLength(1);
+  });
+
+  it('a revoked device cannot send anything it did not really make', async () => {
+    const q = await queue(till, [{ payload: sale() }]);
+    const id = (await store.list<{ id: string; name: string }>('devices')).find((d) => d.name === 'Counter A')!.id;
+    await signIn('owner', devB);
+    ok(await send('owner', 'devices/revoke', { deviceId: id }, devB));
+    const forged = { ...q[0]!, payload: sale(5) };
+    expect(statuses(await replay(till, [forged], devA))).toEqual(['rejected']);
+    expect((await replay(till, q, 'not-a-real-token')).ok).toBe(false);
     await nothingSold();
   });
 

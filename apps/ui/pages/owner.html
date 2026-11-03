@@ -623,7 +623,7 @@ $("#dvc").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;const k=
  else if(k==="done"){dvcode=null;dvr()}
  else if(k==="cx")guard(b,()=>Cake.send("devices/cancel_code",{codeId:b.dataset.id},"Code cancelled"))
  else if(k==="ren"&&x){const n=prompt("New name for "+x.name,x.name);if(n===null)return;if(!n.trim()){Cake.toast("Give the device a name.");return}guard(b,()=>Cake.send("devices/rename",{deviceId:x.id,name:n.trim()},"Renamed"))}
- else if(k==="rev"&&x){if(!confirm("Revoke "+x.name+"? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet will be refused."))return;guard(b,()=>Cake.send("devices/revoke",{deviceId:x.id},x.name+" was revoked"))}};
+ else if(k==="rev"&&x){if(!confirm("Revoke "+x.name+"? Everyone signed in on it is signed out now, and it cannot open the system again until it is registered with a new code. Any offline sales it has not sent yet are kept for the owner to check."))return;guard(b,()=>Cake.send("devices/revoke",{deviceId:x.id},x.name+" was revoked"))}};
 
 /* ---------- reports ---------- */
 const hbar=(l,v,w,c,x="")=>`<div class="hb"><span>${E(l)}</span><div class="bar"><i style="width:${w}%;${c?`background:${c}`:""}"></i></div><b class="num">${v}${x}</b></div>`;

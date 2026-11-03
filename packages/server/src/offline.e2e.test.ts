@@ -271,7 +271,7 @@ describe('selling with the network gone, over the real server', () => {
     expect(audit).toHaveLength(1);
   });
 
-  it('a queue sent from a device that was revoked meanwhile is refused as a whole, and kept on view', async () => {
+  it('a queue sent from a device that was revoked meanwhile is held for the owner, not recorded and not lost', async () => {
     const { server, owner, t, a, sale } = await setup();
     t.net.down = true;
     await t.client.offline.quickSale(sale(a));
@@ -284,7 +284,10 @@ describe('selling with the network gone, over the real server', () => {
     expect((await orders(server)).length).toBe(0);
     const st = t.client.offline.status();
     expect(st.waiting).toBe(0);
-    expect(st.notices[0]).toMatchObject({ kind: 'stuck', seq: 1, total: a.price });
+    expect(st.notices[0]).toMatchObject({ kind: 'held', seq: 1, total: a.price });
+    const view = await owner.client.feed('offline_review', {});
+    if (!view.ok) throw new Error('review feed');
+    expect(view.data.held).toHaveLength(1);
   });
 
   it('a sale whose price changed while offline is held, shown to the owner, and approved at the new price', async () => {

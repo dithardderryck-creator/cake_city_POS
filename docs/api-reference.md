@@ -735,6 +735,22 @@ Allowed: **owner**
 
 _No fields. Send an empty object `{}`._
 
+### Operations
+
+#### `backup/run_now`
+
+Allowed: **it, owner**
+
+_No fields. Send an empty object `{}`._
+
+#### `restore/start`
+
+Allowed: **it**
+
+| Field | Type | Required | Limits |
+| --- | --- | --- | --- |
+| `file` | string | yes | min length 1, max length 120 |
+
 ### Messages
 
 #### `requests/send`
@@ -1267,6 +1283,12 @@ Allowed: **it**
 | --- | --- | --- | --- |
 | `level` | "all" \| "warn" \| "error" | no |  |
 | `hours` | integer | no | min 1, max 72 |
+
+#### `restore_points`
+
+Allowed: **it**
+
+_No fields. Send an empty object `{}`._
 
 #### `account_notice`
 
