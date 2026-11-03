@@ -5,6 +5,7 @@ import path from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { MAX_PHOTO_BYTES, type DispatchResult, type FeedName, type FeedResult, type IntentName, type Panel } from '@cake-pos/panel';
 import type { ServerConfig } from './config';
+import type { Assistant } from './assistant';
 import { errorFields, type Logger } from './log';
 
 class HttpError extends Error {
@@ -61,6 +62,8 @@ export interface HttpOptions {
   log: Logger;
   config: Pick<ServerConfig, 'allowedOrigins' | 'staticDir' | 'tls' | 'trustProxy'>;
   version: string;
+  /** IT's Assistant. Left out when it is not set up. */
+  assistant?: Assistant;
 }
 
 export function createHttpServer(o: HttpOptions): HttpHandle {
@@ -287,6 +290,20 @@ export function createHttpServer(o: HttpOptions): HttpHandle {
       const r = await panel.replayOffline(body, deviceOf(req));
       sendJson(req, res, r.ok ? 200 : statusFor(r.error.code), r);
       return { note: r.ok ? `offline replay (${r.results.map((x) => x.status).join(', ')})` : `offline replay -> ${r.error.code}` };
+    }
+
+    if (p === '/api/assistant/status') {
+      const me = await panel.feed('me', {}, token, deviceOf(req));
+      if (!me.ok || me.data.role !== 'it') throw new HttpError(me.ok ? 403 : 401, me.ok ? 'forbidden' : 'unauthenticated', me.ok ? 'The Assistant is for IT.' : 'Sign in first.');
+      sendJson(req, res, 200, { ok: true, data: o.assistant?.status() ?? { available: false, label: null, model: null } });
+      return {};
+    }
+
+    if (p === '/api/assistant/ask') {
+      if (!o.assistant) throw new HttpError(404, 'invalid', 'The Assistant is not set up on this server.');
+      const r = await o.assistant.ask({ token, deviceToken: deviceOf(req), question: body.question, history: body.history });
+      sendJson(req, res, r.ok ? 200 : r.code === 'unauthenticated' ? 401 : r.code === 'forbidden' ? 403 : r.code === 'invalid' ? 422 : r.code === 'limit' ? 429 : r.code === 'unavailable' ? 404 : 502, r);
+      return { note: r.ok ? `assistant (${r.looked.length} look-ups, ${r.propose.length} proposals)` : `assistant -> ${r.code}` };
     }
 
     if (p === '/api/dispatch') {

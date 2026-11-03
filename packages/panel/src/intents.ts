@@ -50,8 +50,8 @@ export interface IntentMap {
   'maintenance/set': { on: boolean; message?: string };
   'account/ack_notice': Record<string, never>;
   'backup/run_now': Record<string, never>;
-  /** IT's Console wrote a command. Changes nothing: it puts the command, as the Console understood it, in the sealed records. */
-  'console/ran': { line: string };
+  /** IT's Console (or the Assistant working for IT, `via`) ran a command. Changes nothing: it puts the command, as the Console understood it, in the sealed records. */
+  'console/ran': { line: string; via?: 'assistant' };
   'restore/start': { file: string };
   /** Change what someone does in the shop. Not for the owner, and nobody can be made owner this way. Ends their sign-ins. */
   'staff/set_role': { userId: Id; role: Exclude<Role, 'owner'> };

@@ -7,6 +7,7 @@
 import type { DispatchResult, FeedMap, FeedName, FeedResult, IntentMap, IntentName, Role, StaffSigninRow } from '@cake-pos/panel';
 import { createOfflineTill, type OfflineStore, type OfflineTill } from './offline';
 
+export * as shell from './shell';
 export type { DispatchResult, FeedMap, FeedName, FeedResult, IntentMap, IntentName, Role, StaffSigninRow };
 
 /** The error shape every call uses when the server answers with a refusal. */
@@ -101,7 +102,19 @@ export type PairResult = { ok: true; name: string } | { ok: false; code: string;
 
 export type SignInResult = { ok: true; session: SessionInfo } | { ok: false; code: string; messages: string[] };
 
+/** IT's Assistant (see the server's assistant.ts). */
+export interface AssistantStatus {
+  available: boolean;
+  label: string | null;
+  model: string | null;
+}
+export type AssistantAnswer = { ok: true; say: string; looked: string[]; propose: { command: string; why: string }[] } | { ok: false; message: string };
+
 export interface Client {
+  /** Is the Assistant set up on this server, and with which provider? Null when it cannot be asked. */
+  assistantStatus(): Promise<AssistantStatus | null>;
+  /** Ask the Assistant. It looks things up and may suggest commands; it never changes anything itself. */
+  assistantAsk(question: string, history: { role: 'user' | 'assistant'; text: string }[]): Promise<AssistantAnswer>;
   /** Is this browser registered? Null when the server cannot be reached. Forgets a saved secret the server no longer knows (revoked). */
   deviceStatus(): Promise<DeviceStatus | null>;
   /** Register this browser with a one-time code from the owner or IT. Saves the secret it gets back. */
@@ -491,6 +504,30 @@ export function createClient(options: ClientOptions = {}): Client {
       if (r.status === 401) lostSignIn();
       if (r.value.kind === 'image') return { ok: true, blob: r.value.blob, mime: r.value.mime };
       return r.value.error ?? { ok: false, error: { code: 'error', messages: ['The server gave an answer this app does not understand.'] } };
+    },
+
+    async assistantStatus() {
+      const r = await post('/api/assistant/status', {});
+      if (r === 'offline') return null;
+      if (r.status === 401) lostSignIn();
+      const j = r.json as { ok?: boolean; data?: AssistantStatus } | null;
+      return j?.ok && j.data ? j.data : null;
+    },
+
+    async assistantAsk(question, history) {
+      // The model can take a while, and asking twice would look things up twice, so it is one try with a long wait.
+      const r = await send(
+        '/api/assistant/ask',
+        (t) => ({ method: 'POST', headers: { 'content-type': 'application/json', ...deviceHeader(), ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify({ question, history }) }),
+        (res) => res.json().catch(() => null) as Promise<unknown>,
+        token,
+        { timeoutMs: 90_000, deadlineMs: 90_000 },
+      );
+      if (r === 'offline') return { ok: false, message: 'Cannot reach the shop server. Check the wifi, then ask again.' };
+      if (r.status === 401) lostSignIn();
+      const j = r.value as { ok?: boolean; say?: string; looked?: string[]; propose?: { command: string; why: string }[]; message?: string; error?: { messages?: string[] } } | null;
+      if (j?.ok) return { ok: true, say: j.say ?? '', looked: j.looked ?? [], propose: j.propose ?? [] };
+      return { ok: false, message: j?.message ?? j?.error?.messages?.[0] ?? 'The Assistant did not answer. Try again.' };
     },
 
     async dispatch(type, payload) {

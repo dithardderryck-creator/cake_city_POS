@@ -8,7 +8,7 @@ import type { ClientResult, FeedMap, FeedName, IntentMap, IntentName, Role, Sess
 import { buildChrome } from './chrome';
 import type { Chrome, ChromeOptions } from './chrome';
 import * as i18n from './i18n';
-import * as cons from './console';
+import { shell as cons } from '@cake-pos/client';
 import type { Lang } from './i18n';
 
 i18n.early();
@@ -1199,20 +1199,17 @@ let consoleData: cons.ConsoleData = { staff: [], devices: [], sessions: [], poin
 
 /** Reads the names the Console matches typed words against. Call when the tab opens and after each command. */
 export async function consoleLoad(): Promise<void> {
-  const [staff, dev, ses, pts] = await Promise.all([client.feed('staff_list', {}), client.feed('device_list', {}), client.feed('sessions_view', {}), client.feed('restore_points', {})]);
-  consoleData = {
-    staff: staff.ok ? staff.data.map((u) => ({ id: u.id, name: u.name, role: u.role, active: u.active })) : consoleData.staff,
-    devices: dev.ok ? dev.data.devices.map((x) => ({ id: x.id, name: x.name })) : consoleData.devices,
-    sessions: ses.ok ? ses.data.rows.map((r) => ({ userId: r.userId, name: r.name })) : consoleData.sessions,
-    points: pts.ok ? [...pts.data.points].sort((a, b) => b.madeAt.localeCompare(a.madeAt)).map((p) => ({ file: p.file, madeAt: p.madeAt })) : consoleData.points,
-  };
+  consoleData = await cons.loadData(async (name, params) => {
+    const r = await client.feed(name, params);
+    return r.ok ? r.data : null;
+  }, consoleData);
 }
 
 export const consoleSuggest = (line: string): string[] => cons.suggest(line, consoleData);
 export const consoleCommands = (): { insert: string; usage: string; what: string }[] => cons.SPECS.map((s) => ({ insert: s.words.join(' ') + (s.args.some((a) => !a.optional) ? ' ' : ''), usage: cons.usage(s), what: s.what }));
 
 /** Runs one typed command. Returns the lines to print. Changes show their preview first and may be cancelled. */
-export async function consoleRun(line: string): Promise<cons.Line[]> {
+export async function consoleRun(line: string, via?: 'assistant'): Promise<cons.Line[]> {
   await consoleLoad();
   const quiet = async (type: IntentName, payload: unknown): Promise<cons.Done> => {
     const r: ClientResult = await client.dispatch(type, payload as never);
@@ -1230,7 +1227,11 @@ export async function consoleRun(line: string): Promise<cons.Line[]> {
     }) as cons.Io['confirm'],
   });
   // The command, as the Console understood it, goes into the sealed records.
-  if (out.ran) await client.dispatch('console/ran', { line: out.ran });
+  if (out.ran) await client.dispatch('console/ran', { line: out.ran, ...(via ? { via } : {}) });
   await consoleLoad();
   return out.lines;
 }
+
+/** Is IT's Assistant set up, and with which provider? Null when it cannot be asked. */
+export const assistantStatus = () => client.assistantStatus();
+export const assistantAsk = (question: string, history: { role: 'user' | 'assistant'; text: string }[]) => client.assistantAsk(question, history);

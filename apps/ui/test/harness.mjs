@@ -188,3 +188,27 @@ export async function addToTicket(page, nth = 0) {
   await page.locator('#tiles .tile:not([disabled])').nth(nth).click();
   if (await page.locator('#mod .pk').count()) await page.click('#mod [data-a="padd"]');
 }
+
+/**
+ * A pretend AI provider for the Assistant: answers POST /v1/chat/completions from a script. `script` is a list of strings (or
+ * functions of the request body) used in turn, the last one repeating. `calls` holds what it was sent.
+ */
+export async function startFakeLlm(script) {
+  const http = await import('node:http');
+  const calls = [];
+  const server = http.createServer((req, res) => {
+    let raw = '';
+    req.on('data', (d) => (raw += d));
+    req.on('end', () => {
+      const body = raw ? JSON.parse(raw) : {};
+      calls.push({ url: req.url, auth: req.headers.authorization, body });
+      const step = script[Math.min(calls.length - 1, script.length - 1)];
+      const content = typeof step === 'function' ? step(body) : step;
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ choices: [{ message: { content } }] }));
+    });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const port = server.address().port;
+  return { calls, base: `http://127.0.0.1:${port}/v1`, stop: () => new Promise((r) => server.close(r)) };
+}

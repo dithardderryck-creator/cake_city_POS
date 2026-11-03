@@ -157,6 +157,12 @@ describe('the Console writing down a command', () => {
     const log = await panel.feed('records_view', {}, sid.it);
     expect(log.ok && log.data.rows.some((x) => x.summary === 'Console: devices revoke "Counter tablet"')).toBe(true);
   });
+  it('says when the Assistant ran it', async () => {
+    ok(await send('it', 'console/ran', { line: 'devices', via: 'assistant' }));
+    expect(bad(await send('it', 'console/ran', { line: 'devices', via: 'someone' as never }))).not.toBe('');
+    const log = await panel.feed('records_view', {}, sid.it);
+    expect(log.ok && log.data.rows.some((x) => x.summary === 'Assistant: devices' && x.who.startsWith('Ibrahim'))).toBe(true);
+  });
   it('is not synced to the online database', async () => {
     const n = (await store.list('outbox')).length;
     ok(await send('it', 'console/ran', { line: 'status' }));

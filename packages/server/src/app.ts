@@ -13,6 +13,7 @@ import { openDrive } from './cloud';
 import type { DriveAccounts } from './drive-accounts';
 import type { DriveDeps } from './google-drive';
 import type { ServerConfig } from './config';
+import { createAssistant } from './assistant';
 import { createHttpServer } from './http';
 import { acquireLock } from './lock';
 import { errorFields, readRecentLogs, type Logger } from './log';
@@ -167,7 +168,8 @@ export async function startServer({ config, log, hasher, driveDeps }: StartOptio
       const a = archive.status();
       return `${a.usedMb} MB used of ${a.whenFullMb} MB; ${a.totalOrdersArchived} orders archived${a.lastError ? `; last problem: ${a.lastError}` : ''}`;
     };
-    const http = createHttpServer({ panel, log, config, version: VERSION });
+    const assistant = createAssistant({ config: config.assistant, panel, log });
+    const http = createHttpServer({ panel, log, config, version: VERSION, assistant });
     const scheme = config.tls ? 'https' : 'http';
     terminals.logs = { recent: async (o) => readRecentLogs(path.join(config.dataDir, 'logs'), o) };
     terminals.system = {

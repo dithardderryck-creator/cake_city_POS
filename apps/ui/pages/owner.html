@@ -277,7 +277,7 @@ nav.xtabs svg{flex:none;width:18px;height:18px}
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 /* A Console line from IT keeps the command as typed, so only the word before it is translated. */
-const SM=t=>t&&t.startsWith("Console: ")?`<span>Console:</span> <span data-notr>${Cake.esc(t.slice(9))}</span>`:Cake.esc(t);
+const SM=t=>t&&/^(Console|Assistant): /.test(t)?`<span>${t.startsWith("A")?"Assistant:":"Console:"}</span> <span data-notr>${Cake.esc(t.replace(/^\w+: /,""))}</span>`:Cake.esc(t);
 const E=Cake.esc,M=Cake.money,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
 const D={};            // the latest data of every feed this page listens to
 const ROLE_L={owner:"Owner",cashier:"Cashier",baker:"Baker",inventory:"Inventory",it:"IT"};

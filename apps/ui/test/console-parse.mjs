@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'cakecons-')), 'console.mjs');
-await build({ entryPoints: [path.join(here, '../src/console.ts')], outfile: out, bundle: true, format: 'esm', platform: 'node', logLevel: 'error' });
+await build({ entryPoints: [path.join(here, '../../../packages/client/src/shell.ts')], outfile: out, bundle: true, format: 'esm', platform: 'node', logLevel: 'error' });
 const C = await import(pathToFileURL(out).href);
 
 const d = {

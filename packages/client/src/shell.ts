@@ -7,7 +7,7 @@
  * also needs the target's name typed. PINs and keys have no command, so they can never be typed, printed or sealed here.
  * Every command that runs is written to the sealed records once, as the Console understood it (never the raw text typed).
  */
-import type { FeedMap, FeedName, IntentMap, IntentName } from '@cake-pos/client';
+import type { FeedMap, FeedName, IntentMap, IntentName } from '@cake-pos/panel';
 
 export interface ConsoleData {
   staff: { id: string; name: string; role: string; active: boolean }[];
@@ -455,7 +455,7 @@ async function readLines(p: Extract<Plan, { kind: 'read' }>, io: Io): Promise<Li
         const head = `#${r.seq} · ${when(r.at)} · ${r.who}${r.sealed ? ' · ' + r.kind : ''}`;
         const tone = r.outcome === 'ok' ? undefined : ('risk' as const);
         // A line the Console wrote keeps its command exactly as it was typed, so only the word before it is translated.
-        if (r.summary?.startsWith('Console: ')) return { t: 'Console:', v: `${r.summary.slice(9)} · ${head}`, tone, raw: true };
+        if (r.summary && /^(Console|Assistant): /.test(r.summary)) return { t: r.summary.startsWith('A') ? 'Assistant:' : 'Console:', v: `${r.summary.replace(/^\w+: /, '')} · ${head}`, tone, raw: true };
         return { t: r.sealed ? 'Sealed, open it with records open ' + r.seq : (r.summary ?? r.kind), v: head, tone };
       }) : [{ t: 'Nothing recorded yet.', tone: 'mute' }];
     }
@@ -464,3 +464,14 @@ async function readLines(p: Extract<Plan, { kind: 'read' }>, io: Io): Promise<Li
 }
 
 export const specById = (id: string): Spec | undefined => SPEC_BY_ID.get(id);
+
+/** Reads the names that typed words are matched against (people, devices, who is signed in, backups). */
+export async function loadData(read: Io['read'], prev: ConsoleData = { staff: [], devices: [], sessions: [], points: [] }): Promise<ConsoleData> {
+  const [staff, dev, ses, pts] = await Promise.all([read('staff_list', {}), read('device_list', {}), read('sessions_view', {}), read('restore_points', {})]);
+  return {
+    staff: staff ? staff.map((u) => ({ id: u.id, name: u.name, role: u.role, active: u.active })) : prev.staff,
+    devices: dev ? dev.devices.map((x) => ({ id: x.id, name: x.name })) : prev.devices,
+    sessions: ses ? ses.rows.map((r) => ({ userId: r.userId, name: r.name })) : prev.sessions,
+    points: pts ? [...pts.points].sort((a, b) => b.madeAt.localeCompare(a.madeAt)).map((p) => ({ file: p.file, madeAt: p.madeAt })) : prev.points,
+  };
+}

@@ -58,6 +58,12 @@ main>section[hidden]{display:none}
 .csl .ok{color:var(--sage)}.csl .risk{color:var(--risk)}.csl .warn{color:#7A4A18}.csl .mute{color:var(--mute)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .csl .warn{color:#e3b878}}
 :root[data-theme="dark"] .csl .warn{color:#e3b878}
+.asx textarea{width:100%;min-height:64px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:16px/1.4 "Plus Jakarta Sans",system-ui,sans-serif;resize:vertical}
+.asx textarea:focus-visible{border-color:var(--cop)}
+.asm{padding:12px 0;border-top:1px solid var(--line)}.asm:first-child{border-top:0}
+.asm .q{font-weight:600;overflow-wrap:anywhere}.asm .a{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.asm code{font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--paper);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
+.asm .pr{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
 .csr{display:flex;gap:8px;align-items:center;margin-top:12px}.csr .csp{font:700 15px ui-monospace,Menlo,Consolas,monospace;color:var(--cop-d)}
 .csr input{flex:1;min-width:0;font:16px ui-monospace,Menlo,Consolas,monospace}
 .css{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.css:empty{display:none}
@@ -128,6 +134,12 @@ main>section[hidden]{display:none}
 <section id="v-console" hidden>
 <h1>Console</h1>
 <p class="sub">Type a command. Anything that changes something shows you what it will do first, and the dangerous ones ask you to type the name. PINs and keys have no command, so they cannot be typed or shown here. Each command is written in the sealed records.</p>
+<section class="card asx" id="asc">
+<div class="row"><h2>Ask the Assistant</h2><span class="tag" id="ast"></span></div>
+<p class="mute" id="asp" style="margin:6px 0 10px"></p>
+<div id="asb" hidden><textarea id="asq" maxlength="1000" placeholder="For example: why did the last backup fail?" aria-label="Question for the Assistant"></textarea><div class="btns" style="margin-top:10px"><button class="b p" id="asg">Ask</button></div></div>
+<div id="asa" aria-live="polite"></div>
+</section>
 <section class="card" id="csc">
 <ul class="csl" id="csl" aria-live="polite"></ul>
 <form class="csr" id="csf" autocomplete="off"><span class="csp" data-notr aria-hidden="true">&gt;</span><input id="csi" maxlength="200" placeholder="Type a command" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Command"><button class="b p" id="csg" type="submit">Run</button></form>
@@ -255,7 +267,24 @@ $("#lgl").onchange=lgsub;$("#lgh").onchange=lgsub;$("#lgq").oninput=lgr;$("#lgr"
 let csbusy=false,cshist=[],cshi=-1,csstart=false;
 function csadd(cmd,lines){const li=document.createElement("li");li.innerHTML=`<div class="cc" data-notr>${E(cmd)}</div>`+lines.map(l=>{const a=l.t?`<span>${E(l.t)}</span>`:"",b=l.v?`<b${l.first||l.raw?" data-notr":""}>${E(l.v)}</b>`:"";return`<div class="cl ${l.tone||""}">${l.first?b+" "+a:a+" "+b}</div>`}).join("");$("#csl").appendChild(li);$("#csl").scrollTop=1e6}
 function cssug(){const v=$("#csi").value;$("#css").innerHTML=v.trim()?Cake.consoleSuggest(v).map(s=>`<button type="button" data-s="${E(s)}">${E(s)}</button>`).join(""):""}
-async function csopen(){if(!csstart){csstart=true;$("#csa").innerHTML=Cake.consoleCommands().map(c=>`<button type="button" data-i="${E(c.insert)}"><code data-notr>${E(c.usage)}</code><span>${E(c.what)}</span></button>`).join("");
+/* ---------- the Assistant ---------- */
+let AS=null,ash=[],asbusy=false;
+function asr(){const s=AS;if(!s)return;
+ $("#ast").className="tag "+(s.available?"ok":"warn");$("#ast").textContent=s.available?"On":"Not set up";
+ $("#asp").innerHTML=s.available?`<span>Your question, and what the Assistant looks up to answer it, are sent to</span> <b data-notr>${E(s.label)}</b><span>. Everything it looks up is written in the records under your name. It can only look things up. Anything that changes something comes back as a suggestion that you review and confirm.</span>`:"The Assistant is not set up on this server. To switch it on, set ASSISTANT_PROVIDER, ASSISTANT_API_KEY and ASSISTANT_MODEL where the server runs (see the runbook), then restart the server.";
+ $("#asb").hidden=!s.available}
+function aslines(lines){return lines.map(l=>{const a=l.t?`<span>${E(l.t)}</span>`:"",b=l.v?`<b${l.first||l.raw?" data-notr":""}>${E(l.v)}</b>`:"";return`<div class="cl ${l.tone||""}">${l.first?b+" "+a:a+" "+b}</div>`}).join("")}
+$("#asg").onclick=async()=>{const q=$("#asq").value.trim();if(!q||asbusy)return;asbusy=true;$("#asg").disabled=true;
+ const box=document.createElement("div");box.className="asm";box.innerHTML=`<div class="q" data-notr>${E(q)}</div><p class="a mute">Thinking…</p>`;$("#asa").prepend(box);$("#asq").value="";
+ try{const r=await Cake.assistantAsk(q,ash);
+  if(!r.ok){box.innerHTML=`<div class="q" data-notr>${E(q)}</div><p class="a" style="color:var(--risk)">${E(r.message)}</p>`;return}
+  ash.push({role:"user",text:q},{role:"assistant",text:r.say});ash=ash.slice(-6);
+  box.innerHTML=`<div class="q" data-notr>${E(q)}</div><p class="a" data-notr>${E(r.say)}</p>`
+   +(r.looked.length?`<p class="mute" style="margin:8px 0 0"><span>Looked up:</span> ${r.looked.map(c=>`<code data-notr>${E(c)}</code>`).join(" ")}</p>`:"")
+   +r.propose.map((p,i)=>`<div class="pr" data-pi="${i}"><div><code data-notr>${E(p.command)}</code></div>${p.why?`<div class="mute" style="margin-top:4px"><span>The Assistant says:</span> <span data-notr>${E(p.why)}</span></div>`:""}<div class="btns" style="margin-top:8px"><button class="b" data-pr="${E(p.command)}">Review and run</button></div></div>`).join("")}
+ finally{asbusy=false;$("#asg").disabled=false}};
+$("#asa").onclick=e=>{const b=e.target.closest("[data-pr]");if(!b)return;guard(b,async()=>{const lines=await Cake.consoleRun(b.dataset.pr,"assistant");if(lines[0]&&lines[0].t.startsWith("Cancelled"))return;b.closest(".pr").insertAdjacentHTML("beforeend",`<div style="margin-top:8px">${aslines(lines)}</div>`);b.hidden=true})};
+async function csopen(){if(!AS){AS=await Cake.assistantStatus()||{available:false,label:null,model:null};asr()}if(!csstart){csstart=true;$("#csa").innerHTML=Cake.consoleCommands().map(c=>`<button type="button" data-i="${E(c.insert)}"><code data-notr>${E(c.usage)}</code><span>${E(c.what)}</span></button>`).join("");
   csadd("help",[{t:"Type help to see the commands. Start typing and the likely commands appear under the box.",tone:"mute"}])}
  await Cake.consoleLoad();if(matchMedia("(pointer:fine)").matches)$("#csi").focus()}
 $("#csf").onsubmit=async e=>{e.preventDefault();const v=$("#csi").value.trim();if(!v||csbusy)return;
@@ -282,7 +311,7 @@ function rcr(){const d=RC;if(!d){$("#aul").innerHTML='<li><span class="mute">Loa
  const pr=k&&!k.ok?k.problems:[];$("#rcx").hidden=!pr.length;$("#rcx").innerHTML=pr.map(x=>`<li><span class="tag risk" style="margin-right:6px">Mismatch</span>${E(x)}</li>`).join("");
  const rows=[...d.rows,...RX.filter(x=>!d.rows.some(y=>y.seq===x.seq))];
  $("#aul").innerHTML=rows.map(a=>{const rl=a.role?ROLE_L[a.role]||a.role:"",who=`<b>${E(a.who)}</b>${rl&&!a.who.includes(rl)?` <span class="mute">(${E(rl)})</span>`:""}`;
-  const body=a.sealed?`<button class="b" data-seq="${a.seq}" style="min-height:34px;padding:0 12px"><span aria-hidden="true">🔒</span> <span>${E(a.kind)}</span> <span>sealed, tap to open</span></button>`:(a.summary&&a.summary.startsWith("Console: ")?`<span>Console:</span> <span data-notr>${E(a.summary.slice(9))}</span>`:E(a.summary||(a.detailsGone?"Details are in the archive.":a.kind)));
+  const body=a.sealed?`<button class="b" data-seq="${a.seq}" style="min-height:34px;padding:0 12px"><span aria-hidden="true">🔒</span> <span>${E(a.kind)}</span> <span>sealed, tap to open</span></button>`:(a.summary&&/^(Console|Assistant): /.test(a.summary)?`<span>${a.summary.startsWith("A")?"Assistant:":"Console:"}</span> <span data-notr>${E(a.summary.replace(/^\w+: /,""))}</span>`:E(a.summary||(a.detailsGone?"Details are in the archive.":a.kind)));
   return`<li style="flex-wrap:wrap"><time>${E(when(a.at))}</time><span>${who} · ${body}${a.outcome!=="ok"?` <span class="tag risk">${a.outcome==="denied"?"Not allowed":a.outcome==="error"?"Problem":"Refused"}</span>`:""} <span class="mute" style="font-size:12px">${E(a.ref)}</span></span></li>`}).join("")||'<li><span class="mute">Nothing recorded yet.</span></li>';
  $("#aum").hidden=RN==null}
 $("#auf").onchange=e=>{auw=e.target.value;rcsub()};

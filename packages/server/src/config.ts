@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import type { MessagingConfig } from './messaging';
+import type { AssistantConfig } from './assistant';
 
 export interface ServerConfig {
   port: number;
@@ -48,6 +49,8 @@ export interface ServerConfig {
   offlineMasterKey: string | null;
   /** How many proxies sit in front of this server (TRUST_PROXY, 0 to 5). Needed so each visitor's own address is used for the sign-in and pairing limits, not the host's proxy. 0 trusts nobody. */
   trustProxy: number;
+  /** The AI model behind IT's Assistant. Null means the Assistant is off. See ASSISTANT_* in the runbook. */
+  assistant: AssistantConfig | null;
   /** TEST_COPY=1: a throw-away copy. Fills an empty database with demo data and prints a one-time device code at every start. Never for a real shop. */
   testCopy: boolean;
 }
@@ -122,6 +125,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     onlineDb: loadOnlineDb(env),
     offlineMasterKey: loadMasterKey(env),
     trustProxy: int(env, 'TRUST_PROXY', 0, 0, 5),
+    assistant: loadAssistant(env),
     testCopy: /^(1|true|yes|on)$/i.test((env.TEST_COPY ?? '').trim()),
   };
 }
@@ -212,4 +216,29 @@ function loadPushContact(env: NodeJS.ProcessEnv): string | null {
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return `mailto:${v}`;
   if (/^https:\/\//.test(v)) return v;
   throw new ConfigError('PUSH_CONTACT must be an email address like shop@example.com (or an https:// address).');
+}
+
+/** Companies whose API speaks the same "chat completions" language, so one adapter serves all of them. Check each company's own page before relying on an address. */
+const ASSISTANT_PRESETS: Record<string, string> = {
+  groq: 'https://api.groq.com/openai/v1',
+  openrouter: 'https://openrouter.ai/api/v1',
+  cerebras: 'https://api.cerebras.ai/v1',
+  mistral: 'https://api.mistral.ai/v1',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta/openai',
+  github: 'https://models.github.ai/inference',
+};
+
+function loadAssistant(env: NodeJS.ProcessEnv): AssistantConfig | null {
+  const kind = (env.ASSISTANT_PROVIDER ?? 'none').trim().toLowerCase() || 'none';
+  if (kind === 'none') return null;
+  const custom = env.ASSISTANT_BASE_URL?.trim();
+  const baseUrl = custom || ASSISTANT_PRESETS[kind];
+  if (!baseUrl) throw new ConfigError(`ASSISTANT_PROVIDER must be one of: none, ${Object.keys(ASSISTANT_PRESETS).join(', ')}, custom (with ASSISTANT_BASE_URL). Got "${kind}".`);
+  if (!/^https:\/\//i.test(baseUrl) && !/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(baseUrl)) throw new ConfigError('ASSISTANT_BASE_URL must start with https:// (http:// is only allowed for localhost).');
+  return {
+    label: (env.ASSISTANT_LABEL?.trim() || kind).slice(0, 40),
+    baseUrl: baseUrl.replace(/\/+$/, ''),
+    apiKey: need(env, 'ASSISTANT_API_KEY', 'the Assistant'),
+    model: need(env, 'ASSISTANT_MODEL', 'the Assistant (the model name, from the provider\'s own list)'),
+  };
 }

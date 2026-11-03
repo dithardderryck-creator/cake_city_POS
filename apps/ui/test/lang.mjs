@@ -1,9 +1,10 @@
 // The whole shop in Kiswahili: the owner switches the language, every role's screens come out in Kiswahili
 // (no English sentences left behind), and switching back to English puts the English text back.
 import assert from 'node:assert/strict';
-import { startShop, loadPlaywright, until, PINS, openMenu, menuGo } from './harness.mjs';
+import { startShop, startFakeLlm, loadPlaywright, until, PINS, openMenu, menuGo } from './harness.mjs';
 const { chromium } = loadPlaywright();
-const shop = await startShop();
+const llm = await startFakeLlm([JSON.stringify({ say: 'Nothing is wrong.', run: ['status'] }), JSON.stringify({ say: 'Everything looks fine.', propose: [{ command: 'records verify', why: 'To be sure.' }] })]);
+const shop = await startShop({ env: { ASSISTANT_PROVIDER: 'custom', ASSISTANT_BASE_URL: llm.base, ASSISTANT_LABEL: 'fakeprov', ASSISTANT_API_KEY: 'k', ASSISTANT_MODEL: 'm' } });
 const browser = await chromium.launch();
 const errs = [];
 const missed = new Set();
@@ -74,6 +75,10 @@ async function sweep(page, role) {
       await page.press('#csi', 'Enter');
       await until(async () => (await page.locator('#csl li').count()) > had, 'console answers ' + c);
     }
+    // The Assistant's own screen text, with an answer and a suggestion on it.
+    await page.fill('#asq', 'Is all well?');
+    await page.click('#asg');
+    await until(async () => (await page.locator('#asa .pr').count()) > 0, 'the Assistant answers');
     await page.waitForTimeout(500);
     for (const l of await englishLines(page)) found.set(l, 'console');
   }
@@ -134,4 +139,5 @@ try {
 } finally {
   await browser.close();
   await shop.stop();
+  await llm.stop();
 }

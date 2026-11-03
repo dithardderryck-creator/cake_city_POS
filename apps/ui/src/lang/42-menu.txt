@@ -484,3 +484,31 @@ Make the code ||| Tengeneza msimbo
 Send every record again? ||| Tuma rekodi zote tena?
 Send everything ||| Tuma zote
 Revoke this device? ||| Futa ruhusa ya kifaa hiki?
+Ask the Assistant ||| Muulize Msaidizi
+Assistant: ||| Msaidizi:
+Ask ||| Uliza
+Thinking… ||| Inafikiri…
+Looked up: ||| Vilivyotafutwa:
+The Assistant says: ||| Msaidizi anasema:
+Review and run ||| Kagua kisha endesha
+For example: why did the last backup fail? ||| Kwa mfano: kwa nini nakala rudufu ya mwisho ilishindwa?
+Question for the Assistant ||| Swali kwa Msaidizi
+Your question, and what the Assistant looks up to answer it, are sent to ||| Swali lako, na kile Msaidizi anachotafuta ili kujibu, vinatumwa kwa
+. Everything it looks up is written in the records under your name. It can only look things up. Anything that changes something comes back as a suggestion that you review and confirm. ||| . Kila anachotafuta kimeandikwa kwenye rekodi chini ya jina lako. Anaweza kutafuta tu. Kitu chochote kinachobadilisha jambo kinarudi kama pendekezo unalolikagua na kulithibitisha.
+The Assistant is not set up on this server. To switch it on, set ASSISTANT_PROVIDER, ASSISTANT_API_KEY and ASSISTANT_MODEL where the server runs (see the runbook), then restart the server. ||| Msaidizi hajaandaliwa kwenye seva hii. Kumuwasha, weka ASSISTANT_PROVIDER, ASSISTANT_API_KEY na ASSISTANT_MODEL mahali seva inapofanya kazi (angalia mwongozo wa uendeshaji), kisha anzisha seva upya.
+The Assistant is not set up on this server. ||| Msaidizi hajaandaliwa kwenye seva hii.
+The Assistant is for IT. ||| Msaidizi ni kwa ajili ya IT.
+Type a question first. ||| Andika swali kwanza.
+That is a lot of questions for one hour. Try again a little later. ||| Haya ni maswali mengi kwa saa moja. Jaribu tena baadaye kidogo.
+The Assistant could not be reached. Check the internet connection. The Console still works. ||| Msaidizi hakuweza kufikiwa. Angalia mtandao. Konsoli bado inafanya kazi.
+The provider refused the Assistant's key. Check ASSISTANT_API_KEY. ||| Mtoa huduma amekataa ufunguo wa Msaidizi. Angalia ASSISTANT_API_KEY.
+The provider does not know that model. Check ASSISTANT_MODEL. ||| Mtoa huduma hakitambui kielelezo hicho. Angalia ASSISTANT_MODEL.
+The provider's limit is used up for now. Free plans refresh daily. Try again later. ||| Kikomo cha mtoa huduma kimeisha kwa sasa. Mipango ya bure hujazwa kila siku. Jaribu tena baadaye.
+The provider had a problem. Try again in a moment. ||| Mtoa huduma alipata tatizo. Jaribu tena baada ya muda mfupi.
+The provider sent back an empty answer. Try again. ||| Mtoa huduma alirudisha jibu tupu. Jaribu tena.
+The Assistant hit a problem. Nothing was changed. ||| Msaidizi alipata tatizo. Hakuna kilichobadilishwa.
+Cannot reach the shop server. Check the wifi, then ask again. ||| Seva ya duka haifikiki. Angalia wifi, kisha uliza tena.
+The Assistant did not answer. Try again. ||| Msaidizi hakujibu. Jaribu tena.
+Here is what I suggest. ||| Hiki ndicho ninachopendekeza.
+I have nothing to add. ||| Sina cha kuongeza.
+I looked at what I could but did not reach an answer. Try asking more narrowly. ||| Nimeangalia niwezavyo lakini sikufikia jibu. Jaribu kuuliza kwa upana mdogo zaidi.

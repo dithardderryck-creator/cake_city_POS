@@ -1,11 +1,16 @@
 // The IT page: the shared top bar and menu, Health first, a locked-out person let back in, the sync buttons and the plain record list.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startShop, signInAs, loadPlaywright, until, menuGo, openMenu } from './harness.mjs';
+import { startShop, startFakeLlm, signInAs, loadPlaywright, until, menuGo, openMenu } from './harness.mjs';
 const { chromium } = loadPlaywright();
 const shots = '/tmp/ui-shots-it';
 fs.mkdirSync(shots, { recursive: true });
-const shop = await startShop();
+// A pretend AI provider for the Assistant. First it looks things up, then it answers and suggests turning someone off.
+const llm = await startFakeLlm([
+  JSON.stringify({ say: '', run: ['status', 'backup now'] }),
+  JSON.stringify({ say: 'Selling is normal. If Baraka keeps being locked out you could turn him off for now.', propose: [{ command: 'staff off Baraka', why: 'He has been locked out several times.' }, { command: 'rm -rf /', why: 'bad' }] }),
+]);
+const shop = await startShop({ env: { ASSISTANT_PROVIDER: 'custom', ASSISTANT_BASE_URL: llm.base, ASSISTANT_LABEL: 'fakeprov', ASSISTANT_API_KEY: 'sk-test-key', ASSISTANT_MODEL: 'fake-model' } });
 const browser = await chromium.launch();
 const errs = [];
 const watch = (p, tag) => {
@@ -309,6 +314,41 @@ try {
   await it.setViewportSize({ width: 1100, height: 800 });
   await it.screenshot({ path: `${shots}/console-wide.png`, fullPage: true });
   await it.setViewportSize({ width: 390, height: 800 });
+  // The Assistant: says where the question goes, looks things up, and only ever suggests a change.
+  await menuGo(it, 'console');
+  await it.waitForSelector('#asc');
+  await until(async () => /On/.test(await txt(it, '#ast')), 'the Assistant shows as on');
+  assert.match(await txt(it, '#asp'), /sent to\s+fakeprov/);
+  await it.fill('#asq', 'Is everything ok with selling?');
+  await it.click('#asg');
+  await until(async () => (await it.locator('#asa .pr').count()) > 0, 'the Assistant answers with a suggestion', 30000);
+  const ans = await txt(it, '#asa');
+  assert.match(ans, /Selling is normal/);
+  assert.match(ans, /Looked up:\s*status/);
+  assert.equal(await it.locator('#asa .pr').count(), 1, 'the made-up command was dropped');
+  assert.match(await txt(it, '#asa .pr'), /staff off "Baraka \(Cashier\)"/);
+  assert.equal(llm.calls[0].auth, 'Bearer sk-test-key');
+  assert.equal(llm.calls[0].body.model, 'fake-model');
+  assert.match(llm.calls[1].body.messages.at(-1).content, /<data command="backup now">[\s\S]*Not allowed/);
+  // Nothing changed yet: Baraka is still on. Reviewing shows the normal preview, and cancelling still changes nothing.
+  const baraka = () => it.evaluate(async () => ((await Cake.client.feed('staff_list', {})).data.find((u) => u.name.startsWith('Baraka')) || {}).active);
+  assert.equal(await baraka(), true);
+  await it.click('#asa [data-pr]');
+  await it.waitForSelector('.cx-d [data-ok]');
+  assert.match(await it.locator('.cx-d').innerText(), /Turn off Baraka/);
+  await it.click('.cx-d [data-no]');
+  await it.waitForSelector('.cx-d', { state: 'detached' });
+  assert.equal(await it.locator('#asa [data-pr]').isVisible(), true, 'the suggestion can be reviewed again');
+  assert.equal(await baraka(), true);
+  await it.screenshot({ path: `${shots}/assistant-phone.png`, fullPage: true });
+  await menuGo(it, 'records');
+  await until(async () => /Assistant:\s*ask \(sent to fakeprov\)/.test(await it.locator('#aul').innerText()), 'the question going out is sealed');
+  const atrail = await it.locator('#aul').innerText();
+  assert.match(atrail, /Assistant:\s*status/);
+  assert.ok(!/Assistant:\s*backup now/.test(atrail), 'a refused look-up is not sealed');
+  assert.ok(!/sk-test-key/.test(await it.content()), 'the key never reaches the page');
+  await menuGo(it, 'console');
+
   // What ran is in the sealed records; what was not a command is not.
   await menuGo(it, 'records');
   await until(async () => /Console: devices revoke "Salma tablet"/.test(await it.locator('#aul').innerText()), 'the revoke command is sealed');
@@ -344,4 +384,5 @@ try {
 } finally {
   await browser.close();
   await shop.stop();
+  await llm.stop();
 }
