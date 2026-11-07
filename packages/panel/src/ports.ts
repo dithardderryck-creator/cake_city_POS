@@ -226,7 +226,7 @@ export interface DriveConnectView {
 export interface DriveStatus {
   /** Whether the Google client ID and secret are known, so a sign-in can be started. */
   clientReady: boolean;
-  clientFrom: 'environment' | 'saved' | null;
+  clientFrom: 'environment' | 'saved' | 'built-in' | null;
   folderName: string;
   accounts: DriveAccountView[];
   connect: DriveConnectView | null;

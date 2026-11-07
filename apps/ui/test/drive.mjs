@@ -56,16 +56,19 @@ try {
   await owner.fill('#cx-gsec', 'also-short');
   await owner.click('#drv [data-x="client"]');
   await until(async () => /does not look like a Google client ID/.test(await owner.locator('body').innerText()), 'a bad client ID is refused in plain words');
-  await owner.fill('#cx-gid', 'client-id-123456.apps.googleusercontent.com');
-  await owner.fill('#cx-gsec', 'GOCSPX-secret-1234');
-  await owner.click('#drv [data-x="client"]');
+  // The file Google lets you download works too. A "web" client is refused with a plain reason.
+  const fileOf = (o) => ({ name: 'client_secret.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(o)) });
+  await owner.setInputFiles('#drv [data-k="gfile"]', fileOf({ web: { client_id: 'client-id-123456.apps.googleusercontent.com', client_secret: 'GOCSPX-secret-1234', redirect_uris: ['https://x.example/cb'] } }));
+  await until(async () => /file is for a web app/.test(await owner.locator('body').innerText()), 'a web client file is refused in plain words');
+  await owner.setInputFiles('#drv [data-k="gfile"]', fileOf({ installed: { client_id: 'client-id-123456.apps.googleusercontent.com', client_secret: 'GOCSPX-secret-1234' } }));
   await owner.waitForSelector('#drv [data-x="add"]');
 
   /* First account: a code to type on google.com/device, then the account appears by itself. */
   await owner.click('#drv [data-x="add"]');
   await owner.waitForSelector('#drv .cx-code strong');
   assert.equal(await owner.locator('#drv .cx-code strong').innerText(), 'ABCD-EFGH');
-  assert.match(await owner.locator('#drv .cx-code').innerText(), /google\.com\/device/);
+  assert.equal(await owner.locator('#drv .cx-code a.cx-b').getAttribute('href'), 'https://www.google.com/device');
+  assert.ok(await owner.locator('#drv .cx-code [data-x="copy"]').isVisible());
   await until(async () => (await emails(owner)).length === 1, 'the first account appears', 20000);
   assert.deepEqual(await emails(owner), ['owner@example.com']);
   assert.match(await rows(owner).first().innerText(), /Working/);

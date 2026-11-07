@@ -17,10 +17,11 @@ let connected: Array<string | null>;
 const MB = 1_048_576;
 const CLIENT = { clientId: 'client-id-123456.apps.googleusercontent.com', clientSecret: 'GOCSPX-secret-1234' };
 
-function open(over: { client?: typeof CLIENT | null } = {}): DriveAccounts {
+function open(over: { client?: typeof CLIENT | null; bundled?: typeof CLIENT | null } = {}): DriveAccounts {
   return createDriveAccounts({
     file,
     client: over.client ?? null,
+    bundled: over.bundled ?? null,
     deps: { endpoints: g.endpoints },
     log: silentLogger,
     sleep: async () => undefined,
@@ -75,6 +76,22 @@ describe('connecting Google accounts from the app', () => {
     expect(await drive.terminal.status()).toMatchObject({ clientReady: true, clientFrom: 'environment' });
     const r = await drive.terminal.saveClient(CLIENT.clientId, CLIENT.clientSecret);
     expect(r.ok).toBe(false);
+  });
+
+  it('uses the details that ship with the system, so a shop can connect straight away', async () => {
+    drive = open({ bundled: CLIENT });
+    expect(await drive.terminal.status()).toMatchObject({ clientReady: true, clientFrom: 'built-in' });
+    const r = await drive.terminal.startConnect();
+    expect(r.ok).toBe(true);
+    await drive.terminal.cancelConnect();
+  });
+
+  it('lets details saved from the screen, then the server settings, win over the built-in ones', async () => {
+    drive = open({ bundled: { clientId: 'bundled-client-id.apps.example', clientSecret: 'bundled-secret' } });
+    expect((await drive.terminal.saveClient(CLIENT.clientId, CLIENT.clientSecret)).ok).toBe(true);
+    expect(await drive.terminal.status()).toMatchObject({ clientFrom: 'saved' });
+    drive = open({ client: CLIENT, bundled: { clientId: 'bundled-client-id.apps.example', clientSecret: 'bundled-secret' } });
+    expect(await drive.terminal.status()).toMatchObject({ clientFrom: 'environment' });
   });
 
   it('shows a code, then connects the account, makes its folders and saves the sign-in privately', async () => {

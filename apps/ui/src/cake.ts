@@ -491,7 +491,7 @@ body{overflow-wrap:anywhere}
 .cx-pbar{height:6px;border-radius:999px;background:var(--paper);overflow:hidden}.cx-pbar i{display:block;height:100%;background:var(--cop)}.cx-pbar.hi i{background:var(--risk,#B4452F)}
 .cx-bad{color:var(--risk,#B4452F);font-size:13px}
 .cx-code{text-align:center;border:1px dashed var(--cop);border-radius:14px;padding:14px;background:var(--cop-s,#C47F3D1f)}.cx-code strong{display:block;font:700 28px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.14em;margin:8px 0}.cx-code a{color:var(--cop-d,#9A5F2A);font-weight:700;overflow-wrap:anywhere}
-.cx-ac .cx-a{margin-top:2px}.cx-ac .cx-b{min-height:36px;padding:0 12px;font-size:13px}
+.cx-ac .cx-a{margin-top:2px}a.cx-b{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.cx-ac .cx-b{min-height:36px;padding:0 12px;font-size:13px}
 `;
 
 function partsCss(): void {
@@ -1058,6 +1058,26 @@ export function unmountDrive(): void {
  * Shows the shop's Google accounts inside `el` and keeps them fresh. Only one is shown at a time.
  * Owner and IT use it to sign accounts in (by a code typed on google.com/device), reorder them, pause, check and disconnect them.
  */
+/**
+ * Reads the file Google lets you download for an OAuth client (or just its two values pasted together).
+ * A "web" client cannot be used here: the sign-in by code only works for the "TVs and Limited Input devices" type.
+ */
+export function parseGoogleClient(text: string): { clientId: string; clientSecret: string } | { error: string } {
+  let j: unknown;
+  try {
+    j = JSON.parse(text);
+  } catch {
+    return { error: 'That is not the file from Google. Choose the .json file you downloaded from the Google Cloud Console.' };
+  }
+  const top = (j ?? {}) as Record<string, unknown>;
+  if (top.web && !top.installed) return { error: 'That file is for a web app. Make the client again with the type "TVs and Limited Input devices" and download that one.' };
+  const c = ((top.installed ?? top) ?? {}) as Record<string, unknown>;
+  const id = typeof c.client_id === 'string' ? c.client_id.trim() : '';
+  const secret = typeof c.client_secret === 'string' ? c.client_secret.trim() : '';
+  if (!id || !secret) return { error: 'That file has no client ID and secret in it. Download it again from the Google Cloud Console.' };
+  return { clientId: id, clientSecret: secret };
+}
+
 export function mountDrive(el: HTMLElement): () => void {
   unmountDrive();
   partsCss();
@@ -1111,14 +1131,16 @@ export function mountDrive(el: HTMLElement): () => void {
     const c = d.connect;
     if (c?.state === 'waiting') {
       const mins = Math.max(1, Math.round((Date.parse(c.expiresAt ?? '') - Date.now()) / 60000));
-      connect = `<div class="cx-code"><p>On your phone or any computer, open</p><a href="${esc(c.url ?? '')}" target="_blank" rel="noopener">${esc(c.url ?? '')}</a><p>and enter this code</p><strong>${esc(c.userCode ?? '')}</strong><p class="cx-m">Sign in with the Google account to add, then press Allow. The code works for about ${Number.isFinite(mins) ? mins : 10} more minutes.</p><div class="cx-a" style="justify-content:center"><button class="cx-b" data-x="cancel">Cancel</button></div></div>`;
+      connect = `<div class="cx-code"><p>Your code</p><strong>${esc(c.userCode ?? '')}</strong><div class="cx-a" style="justify-content:center"><button class="cx-b" data-x="copy" data-code="${esc(c.userCode ?? '')}">Copy code</button><a class="cx-b p" href="${esc(c.url ?? '')}" target="_blank" rel="noopener">Open Google</a></div><p class="cx-m">Copy the code, open Google and enter it.</p><p class="cx-m">Sign in with the Google account to add, then press Allow. The code works for about ${Number.isFinite(mins) ? mins : 10} more minutes.</p><div class="cx-a" style="justify-content:center"><button class="cx-b" data-x="cancel">Cancel</button></div></div>`;
     } else if (c && !dismissed.has(c.at)) {
       connect = `<div class="cx-ac"><p class="${c.state === 'failed' ? 'cx-bad' : ''}">${c.state === 'done' ? '✓ ' : ''}${esc(c.message ?? '')}</p><div class="cx-a"><button class="cx-b" data-x="dismiss" data-at="${esc(c.at)}">OK</button></div></div>`;
     }
     const setup = d.clientReady
       ? `<div class="cx-a"><button class="cx-b p" data-x="add" ${waiting ? 'disabled' : ''}>${d.accounts.length ? 'Add another Google account' : 'Add a Google account'}</button></div>`
       : `<div class="cx-ac"><b>Set up Google first</b>
-          <p class="cx-m">This is done once, by someone comfortable with the Google Cloud Console (IT): make a project, switch on the Google Drive API, publish the consent screen, and create an OAuth client of the type "TVs and Limited Input devices". Then paste its two values here.</p>
+          <p class="cx-m">Google needs to know which app is asking. This is done once, by someone comfortable with the Google Cloud Console (IT). Choose the file Google gave you for an OAuth client of the type "TVs and Limited Input devices", or paste its two values.</p>
+          <div class="cx-a"><button class="cx-b p" data-x="file">Choose the file from Google</button></div><input type="file" data-k="gfile" accept=".json,application/json" hidden>
+          <p class="cx-m">or paste the two values</p>
           <label for="cx-gid">Client ID</label><input id="cx-gid" data-k="gid" autocomplete="off" spellcheck="false">
           <label for="cx-gsec">Client secret</label><input id="cx-gsec" data-k="gsec" type="password" autocomplete="off" spellcheck="false">
           <div class="cx-a"><button class="cx-b p" data-x="client">Save</button></div></div>`;
@@ -1127,8 +1149,10 @@ export function mountDrive(el: HTMLElement): () => void {
       ${d.accounts.length ? accounts : '<p class="cx-m">No Google account is connected yet. Everything stays on the shop computer until one is.</p>'}
       ${connect}${setup}
       <p class="cx-m">Files go in the folder "${esc(d.folderName)}" of each account. Only files this app made are visible to it.</p>`;
-    if (typed.id) q('[data-k="gid"]')!.value = typed.id;
-    if (typed.secret) q('[data-k="gsec"]')!.value = typed.secret;
+    const gid = q('[data-k="gid"]');
+    const gsec = q('[data-k="gsec"]');
+    if (gid && typed.id) gid.value = typed.id;
+    if (gsec && typed.secret) gsec.value = typed.secret;
     if (focus) q(`[data-k="${focus}"]`)?.focus();
   }
 
@@ -1160,15 +1184,30 @@ export function mountDrive(el: HTMLElement): () => void {
     if (x === 'dismiss') {
       dismissed.add(b.dataset.at ?? '');
       render();
-    } else if (x === 'client') {
-      const clientId = q('[data-k="gid"]')?.value.trim() ?? '';
-      const clientSecret = q('[data-k="gsec"]')?.value.trim() ?? '';
+    } else if (x === 'copy') {
+      const code = b.dataset.code ?? '';
+      void navigator.clipboard?.writeText(code).then(
+        () => toast('Copied'),
+        () => toast('Could not copy. Select the code and copy it by hand.'),
+      );
+    } else if (x === 'file') q('[data-k="gfile"]')?.click();
+    else if (x === 'client') {
+      let clientId = q('[data-k="gid"]')?.value.trim() ?? '';
+      let clientSecret = q('[data-k="gsec"]')?.value.trim() ?? '';
+      // The whole downloaded file pasted into the first box works too.
+      if (clientId.startsWith('{')) {
+        const p = parseGoogleClient(clientId);
+        if ('error' in p) return toast(p.error);
+        ({ clientId, clientSecret } = p);
+      }
       if (!clientId || !clientSecret) return toast('Paste both the client ID and the client secret.');
       void run(async () => {
         const r = await send('drive/save_client', { clientId, clientSecret }, 'Google details saved');
         if (r.ok) {
-          q('[data-k="gid"]')!.value = '';
-          q('[data-k="gsec"]')!.value = '';
+          const a = q('[data-k="gid"]');
+          const b2 = q('[data-k="gsec"]');
+          if (a) a.value = '';
+          if (b2) b2.value = '';
         }
       });
     } else if (x === 'add' || x === 'signin') void run(() => send('drive/connect_start', {}));
@@ -1180,6 +1219,20 @@ export function mountDrive(el: HTMLElement): () => void {
       if (!confirm(`Disconnect ${b.dataset.e}? Copies already in that Google Drive stay there, and the server stops using the account. To remove the app's access completely, also remove it in that Google account's security settings.`)) return;
       void run(() => send('drive/remove_account', { accountId: id }, 'Account disconnected'));
     }
+  });
+
+  // Choosing the downloaded file saves it straight away.
+  el.addEventListener('change', (e) => {
+    const f = e.target as HTMLInputElement;
+    if (f.dataset.k !== 'gfile' || !f.files?.[0]) return;
+    const file = f.files[0];
+    f.value = '';
+    void file.text().then(async (text) => {
+      const p = parseGoogleClient(text);
+      if ('error' in p) return toast(p.error);
+      await send('drive/save_client', p, 'Google details saved');
+      await pull();
+    });
   });
 
   render();

@@ -1,6 +1,7 @@
 import { createDriveAccounts, type DriveAccounts } from './drive-accounts';
 import type { ServerConfig } from './config';
 import type { DriveDeps } from './google-drive';
+import { BUNDLED_GOOGLE_CLIENT } from './google-client';
 import type { Logger } from './log';
 
 /**
@@ -15,6 +16,7 @@ export function openDrive(
   return createDriveAccounts({
     file: config.driveFile,
     client: config.googleClient,
+    bundled: BUNDLED_GOOGLE_CLIENT,
     deps: { ...(config.googleEndpoints ? { endpoints: config.googleEndpoints } : {}), ...extra.deps },
     log,
     ...(extra.onConnected ? { onConnected: extra.onConnected } : {}),

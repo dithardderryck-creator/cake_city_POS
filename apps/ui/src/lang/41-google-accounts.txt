@@ -23,13 +23,22 @@ Pause ||| Simamisha
 Resume ||| Endelea
 Check ||| Kagua
 Disconnect ||| Tenganisha
-On your phone or any computer, open ||| Kwenye simu yako au kompyuta yoyote, fungua
-and enter this code ||| kisha weka msimbo huu
+Your code ||| Msimbo wako
+Copy code ||| Nakili msimbo
+Open Google ||| Fungua Google
+Copy the code, open Google and enter it. ||| Nakili msimbo, fungua Google kisha uuweke.
+Copied ||| Imenakiliwa
+Could not copy. Select the code and copy it by hand. ||| Imeshindwa kunakili. Chagua msimbo kisha uunakili mwenyewe.
 Sign in with the Google account to add, then press Allow. The code works for about {n} more minutes. ||| Ingia kwa akaunti ya Google unayotaka kuongeza, kisha bonyeza Ruhusu. Msimbo huu unafanya kazi kwa takriban dakika {n} zaidi.
 Cancel ||| Ghairi
 OK ||| Sawa
 Set up Google first ||| Weka mipangilio ya Google kwanza
-This is done once, by someone comfortable with the Google Cloud Console (IT): make a project, switch on the Google Drive API, publish the consent screen, and create an OAuth client of the type "TVs and Limited Input devices". Then paste its two values here. ||| Hii hufanywa mara moja, na mtu anayeweza kutumia Google Cloud Console (IT): tengeneza mradi, washa Google Drive API, chapisha skrini ya idhini, na tengeneza OAuth client ya aina "TVs and Limited Input devices". Kisha bandika thamani zake mbili hapa.
+Google needs to know which app is asking. This is done once, by someone comfortable with the Google Cloud Console (IT). Choose the file Google gave you for an OAuth client of the type "TVs and Limited Input devices", or paste its two values. ||| Google inahitaji kujua ni programu gani inayoomba. Hii hufanywa mara moja, na mtu anayeweza kutumia Google Cloud Console (IT). Chagua faili ambayo Google ilikupa kwa OAuth client ya aina "TVs and Limited Input devices", au bandika thamani zake mbili.
+Choose the file from Google ||| Chagua faili kutoka Google
+or paste the two values ||| au bandika thamani hizo mbili
+That is not the file from Google. Choose the .json file you downloaded from the Google Cloud Console. ||| Hiyo si faili kutoka Google. Chagua faili ya .json uliyopakua kutoka Google Cloud Console.
+That file is for a web app. Make the client again with the type "TVs and Limited Input devices" and download that one. ||| Faili hiyo ni ya programu ya wavuti. Tengeneza client upya kwa aina "TVs and Limited Input devices" kisha upakue hiyo.
+That file has no client ID and secret in it. Download it again from the Google Cloud Console. ||| Faili hiyo haina client ID na secret. Ipakue tena kutoka Google Cloud Console.
 Client ID ||| Client ID
 Client secret ||| Client secret
 Save ||| Hifadhi

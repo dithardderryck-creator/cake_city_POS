@@ -59,6 +59,8 @@ export interface DriveAccountsOptions {
   file: string;
   /** Client ID and secret from the environment. When set they win over what was saved from the screen. */
   client?: { clientId: string; clientSecret: string } | null;
+  /** The details that ship with the system. Used only when neither the environment nor the screen has set any. */
+  bundled?: { clientId: string; clientSecret: string } | null;
   deps?: DriveDeps;
   log: Logger;
   now?: () => number;
@@ -168,7 +170,8 @@ export function createDriveAccounts(o: DriveAccountsOptions): DriveAccounts {
   };
   const creds = (): { clientId: string; clientSecret: string } | null => {
     if (o.client) return o.client;
-    return data.clientId && data.clientSecret ? { clientId: data.clientId, clientSecret: data.clientSecret } : null;
+    if (data.clientId && data.clientSecret) return { clientId: data.clientId, clientSecret: data.clientSecret };
+    return o.bundled ?? null;
   };
   const iso = () => new Date(now()).toISOString();
   const stateOf = (id: string): RuntimeState => {
@@ -386,7 +389,7 @@ export function createDriveAccounts(o: DriveAccountsOptions): DriveAccounts {
       const k = creds();
       return {
         clientReady: !!k,
-        clientFrom: o.client ? 'environment' : k ? 'saved' : null,
+        clientFrom: o.client ? 'environment' : data.clientId && data.clientSecret ? 'saved' : k ? 'built-in' : null,
         folderName: data.folderName,
         accounts: data.accounts.map((a, i): DriveAccountView => {
           const s = stateOf(a.id);
